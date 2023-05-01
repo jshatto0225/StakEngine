@@ -2,6 +2,11 @@
 
 #include <GLFW/glfw3.h>
 
+#include <iostream>
+#include <fstream>
+#include <string>
+#include <sstream>
+
 int main(void)
 {
     GLFWwindow* window;
@@ -10,8 +15,12 @@ int main(void)
     if (!glfwInit())
         return -1;
 
+    glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, 3);
+    glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, 3);
+    glfwWindowHint(GLFW_OPENGL_PROFILE, GLFW_OPENGL_CORE_PROFILE);
+
     /* Create a windowed mode window and its OpenGL context */
-    window = glfwCreateWindow(640, 480, "Hello World", NULL, NULL);
+    window = glfwCreateWindow(1600, 900, "Hello World", NULL, NULL);
     if (!window)
     {
         glfwTerminate();
@@ -21,17 +30,27 @@ int main(void)
     /* Make the window's context current */
     glfwMakeContextCurrent(window);
 
-    /* Loop until the user closes the window */
-    while (!glfwWindowShouldClose(window))
+    glfwSwapInterval(1);
+
+    std::cout << glGetString(GL_VERSION) << std::endl;
+
     {
-        /* Render here */
-        glClear(GL_COLOR_BUFFER_BIT);
+        glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+        glEnable(GL_BLEND);
 
-        /* Swap front and back buffers */
-        glfwSwapBuffers(window);
+        Renderer renderer;
 
-        /* Poll for and process events */
-        glfwPollEvents();
+        while (!glfwWindowShouldClose(window))
+        {
+            glClearColor(0.0f, 0.0f, 0.0f, 1.0f);
+            renderer.Clear();
+
+            
+
+            glfwSwapBuffers(window);
+
+            glfwPollEvents();
+        }
     }
 
     glfwTerminate();
