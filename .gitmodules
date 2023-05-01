@@ -7,3 +7,6 @@
 [submodule "StakEngine/external/spdlog"]
 	path = StakEngine/external/spdlog
 	url = https://github.com/gabime/spdlog
+[submodule "StakEngine/external/imgui"]
+	path = StakEngine/external/imgui
+	url = https://github.com/jshatto0225/imgui

@@ -10,6 +10,3 @@ Intermediates/
 **.vcxproj.filters
 **.vcxproj.user
 **.csproj
-
-# Windows scripts
-**.bat
