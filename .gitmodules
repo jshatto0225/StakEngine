@@ -1,0 +1,15 @@
+[submodule "StakEngine/external/GLFW"]
+	path = StakEngine/external/GLFW
+	url = https://github.com/TheCherno/glfw
+[submodule "StakEngine/external/ImGuizmo"]
+	path = StakEngine/external/ImGuizmo
+	url = https://github.com/TheCherno/ImGuizmo
+[submodule "StakEngine/external/glm"]
+	path = StakEngine/external/glm
+	url = https://github.com/g-truc/glm
+[submodule "StakEngine/external/imgui"]
+	path = StakEngine/external/imgui
+	url = https://github.com/TheCherno/imgui
+[submodule "StakEngine/external/spdlog"]
+	path = StakEngine/external/spdlog
+	url = https://github.com/gabime/spdlog
