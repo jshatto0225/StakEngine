@@ -1,5 +1,5 @@
-project "StakEngine"
-	kind "StaticLib"
+project "TestApp"
+	kind "ConsoleApp"
 	language "C++"
 	cppdialect "C++17"
 	staticruntime "off"
@@ -7,46 +7,28 @@ project "StakEngine"
 	targetdir ("%{wks.location}/bin/" .. outputdir .. "/%{prj.name}")
 	objdir ("%{wks.location}/bin-int/" .. outputdir .. "/%{prj.name}")
 
-	pchheader "stkpch.h"
-	pchsource "src/stkpch.cpp"
-
 	files
 	{
 		"src/**.h",
-		"src/**.cpp",
-		"external/stb_image/**.h",
-		"external/stb_image/**.cpp",
-		"external/glm/glm/**.hpp",
-		"external/glm/glm/**.inl",
-	}
-
-	defines
-	{
-		"_CRT_SECURE_NO_WARNINGS",
-		"GLFW_INCLUDE_NONE"
+		"src/**.cpp"
 	}
 
 	includedirs
 	{
-		"src",
-		"vendor/spdlog/include",
-		"%{IncludeDir.GLFW}",
-		"%{IncludeDir.Glad}",
-		"%{IncludeDir.ImGui}",
-		"%{IncludeDir.glm}",
-		"%{IncludeDir.stb_image}"
+		"%{wks.location}/StakEngine/external/spdlog/include",
+		"%{wks.location}/StakEngine/src",
+		"%{wks.location}/StakEngine/external",
+		"%{IncludeDir.glm}"
 	}
 
 	links
 	{
-		"GLFW",
-		"Glad",
-		"ImGui",
-		"opengl32.lib",
+		"StakEngine"
 	}
 
 	filter "system:windows"
 		systemversion "latest"
+		defines "STK_PLATFORM_WINDOWS"
 
 	filter "configurations:Debug"
 		defines "STK_DEBUG"
