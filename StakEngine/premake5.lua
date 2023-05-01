@@ -47,6 +47,11 @@ project "StakEngine"
 
 	filter "system:windows"
 		systemversion "latest"
+		defines 
+		{
+			"STK_PLATFORM_WINDOWS",
+			"STK_BUILD_DLL"
+		}
 
 	filter "configurations:Debug"
 		defines "STK_DEBUG"

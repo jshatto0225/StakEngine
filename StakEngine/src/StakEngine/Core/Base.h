@@ -12,4 +12,14 @@ typedef double STKdouble;
 
 #define BIT(x) (1<<x)
 
+// Might not need ----------------------------------
+#ifdef STK_PLATFORM_WINDOWS
+	#ifdef STK_BUILD_DLL
+		#define STAK_API __declspec(dllexport)
+	#else
+		#define STAK_API __declspec(dllimport)
+	#endif
+#endif
+// -------------------------------------------------
+
 #include "Log.h"
