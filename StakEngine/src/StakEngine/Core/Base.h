@@ -9,6 +9,9 @@ typedef unsigned char STKbytes;
 typedef unsigned char STKuchar;
 typedef float STKfloat;
 typedef double STKdouble;
+typedef void STKvoid;
+typedef bool STKbool;
+typedef char STKchar;
 
 #define BIT(x) (1<<x)
 

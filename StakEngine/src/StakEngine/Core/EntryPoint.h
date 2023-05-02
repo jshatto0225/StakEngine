@@ -5,8 +5,12 @@
 
 extern Stak::Application* Stak::CreateApplication();
 
-int main()
+STKint main()
 {
+	Stak::Log::Init();
+	STK_CORE_WARN("Initialized Logger");
+
 	auto app = Stak::CreateApplication();
+	STK_INFO("Started Application");
 	app->Run();
 }

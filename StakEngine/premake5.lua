@@ -1,5 +1,5 @@
 project "StakEngine"
-	kind "StaticLib"
+	kind "SharedLib"
 	language "C++"
 	cppdialect "C++17"
 	staticruntime "off"
@@ -43,6 +43,11 @@ project "StakEngine"
 		"Glad",
 		"ImGui",
 		"opengl32.lib",
+	}
+
+	postbuildcommands
+	{
+		("{COPY} %{cfg.buildtarget.relpath} ../bin/" .. outputdir .. "/TestApp")
 	}
 
 	filter "system:windows"

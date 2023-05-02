@@ -1,14 +1,16 @@
 #pragma once
 
+#include "Base.h"
+
 namespace Stak
 {
-	class Application
+	class STAK_API Application
 	{
 	public:
 		Application() {}
 		virtual ~Application();
 
-		void Run();
+		STKvoid Run();
 	};
 	Application* CreateApplication();
 }

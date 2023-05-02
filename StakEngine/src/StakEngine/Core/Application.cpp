@@ -6,7 +6,7 @@ namespace Stak
 	Application::~Application()
 	{
 	}
-	void Application::Run()
+	STKvoid Application::Run()
 	{
 		while (true);
 	}
