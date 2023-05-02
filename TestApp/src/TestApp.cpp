@@ -1,10 +1,12 @@
 #include <StakEngine.h>
+#include "TestAppLayer.h"
 
 class TestApp : public Stak::Application
 {
 public:
 	TestApp()
 	{
+		PushLayer(new TestAppLayer());
 	}
 	virtual ~TestApp()
 	{

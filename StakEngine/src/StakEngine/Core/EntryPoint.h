@@ -8,7 +8,7 @@ extern Stak::Application* Stak::CreateApplication();
 STKint main()
 {
 	Stak::Log::Init();
-	STK_CORE_WARN("Initialized Logger");
+	STK_CORE_INFO("Initialized Logger");
 
 	auto app = Stak::CreateApplication();
 	STK_INFO("Started Application");
