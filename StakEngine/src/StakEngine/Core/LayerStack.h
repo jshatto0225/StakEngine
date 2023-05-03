@@ -1,11 +1,11 @@
 #pragma once
 
-#include "Base.h"
-#include "layer.h"
+#include "StakEngine/Core/Base.h"
+#include "StakEngine/Core/Layer.h"
 
 namespace Stak
 {
-	class STAK_API LayerStack
+	class LayerStack
 	{
 	public:
 		LayerStack();

@@ -15,14 +15,12 @@ typedef char STKchar;
 
 #define BIT(x) (1<<x)
 
-// Might not need ----------------------------------
-#ifdef STK_PLATFORM_WINDOWS
-	#ifdef STK_BUILD_DLL
-		#define STAK_API __declspec(dllexport)
-	#else
-		#define STAK_API __declspec(dllimport)
-	#endif
-#endif
-// -------------------------------------------------
+#define STK_BIND_EVENT_FN(fn) [this](auto&&... args) -> decltype(auto) { return this->fn(std::forward<decltype(args)>(args)...); }
 
 #include "Log.h"
+
+#define STK_ASSERT(x, message) if(!x)\
+{\
+	STK_CORE_CRITICAL(message);\
+	__debugbreak();\
+}

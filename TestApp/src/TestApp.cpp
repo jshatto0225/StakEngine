@@ -1,4 +1,6 @@
 #include <StakEngine.h>
+#include <StakEngine/Core/EntryPoint.h>
+
 #include "TestAppLayer.h"
 
 class TestApp : public Stak::Application

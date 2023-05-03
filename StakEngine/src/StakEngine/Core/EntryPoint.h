@@ -1,7 +1,7 @@
 #pragma once
 
-#include "Base.h"
-#include "Application.h"
+#include "StakEngine/Core/Base.h"
+#include "StakEngine/Core/Application.h"
 
 extern Stak::Application* Stak::CreateApplication();
 
@@ -12,5 +12,6 @@ STKint main()
 
 	auto app = Stak::CreateApplication();
 	STK_INFO("Started Application");
+
 	app->Run();
 }

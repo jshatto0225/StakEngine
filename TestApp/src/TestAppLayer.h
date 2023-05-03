@@ -1,5 +1,6 @@
 #pragma once
-#include "StakEngine/Core/Layer.h"
+
+#include <StakEngine.h>
 
 class TestAppLayer : public Stak::Layer
 {
@@ -10,4 +11,5 @@ public:
 	void OnDetach();
 	void OnUpdate();
 	void OnImGuiRender();
+	void OnEvent(Stak::Event& e);
 };

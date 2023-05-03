@@ -1,9 +1,11 @@
 #pragma once
 
-#include "Base.h"
+#include "StakEngine/Core/Base.h"
+#include "StakEngine/Events/Event.h"
+
 namespace Stak
 {
-	class STAK_API Layer
+	class Layer
 	{
 	public:
 		Layer(const std::string& name = "Layer");
@@ -13,6 +15,7 @@ namespace Stak
 		virtual STKvoid OnDetach() {}
 		virtual STKvoid OnUpdate() {}
 		virtual STKvoid OnImGuiRender() {}
+		virtual STKvoid OnEvent(Event& e) {}
 		
 		inline const std::string& GetName() const { return m_DebugName; }
 	private:

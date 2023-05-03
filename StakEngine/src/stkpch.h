@@ -12,3 +12,7 @@
 #include <unordered_set>
 #include <algorithm>
 #include <utility>
+
+#include "StakEngine/Core/Base.h"
+
+#include "StakEngine/Core/Log.h"
