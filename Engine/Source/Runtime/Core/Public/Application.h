@@ -25,5 +25,5 @@ public:
 private:
     static bool running;
     static std::vector<ApplicationLayer*> layers;
-    static std::unique_ptr<Window> window;
+    static Scope<Window> window;
 };

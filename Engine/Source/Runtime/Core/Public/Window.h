@@ -82,5 +82,5 @@ private:
     static u64 CurrentId;
 };
 
-std::unique_ptr<Window> MakeWindow(const std::string& name, i32 x, i32 y, i32 width, i32 height);
+Scope<Window> MakeWindow(const std::string& name, i32 x, i32 y, i32 width, i32 height);
 void KillWindowManager();

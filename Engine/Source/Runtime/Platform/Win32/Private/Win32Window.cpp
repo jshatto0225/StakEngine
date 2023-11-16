@@ -1,3 +1,5 @@
+#ifdef WIN32
+
 #include "Win32Window.h"
 #include "Application.h"
 #include "Event.h"
@@ -81,7 +83,9 @@ Win32Window::Win32Window(const std::string& name, i32 x, i32 y, i32 width, i32 h
 
 Win32Window::~Win32Window()
 {
-    Close();
+    if (!open) {
+        Close();
+    }
 }
 
 void Win32Window::Update()
@@ -113,4 +117,7 @@ void Win32Window::Close()
 {
     DestroyWindow(handle);
     UnregisterClassA(name.c_str(), instance);
+    open = false;
 }
+
+#endif

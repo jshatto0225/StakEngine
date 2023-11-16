@@ -1,13 +1,17 @@
 #include "Window.h"
 
-#include "Win32Window.h"
 #include "Event.h"
 #include "Application.h"
+#include "Log.h"
 
-std::unique_ptr<Window> MakeWindow(const std::string& name, i32 x, i32 y, i32 width, i32 height)
+#ifdef WIN32
+#include "Win32Window.h"
+#endif
+
+Scope<Window> MakeWindow(const std::string& name, i32 x, i32 y, i32 width, i32 height)
 {
 #ifdef WIN32
-    return std::make_unique<Win32Window>(name, x, y, width, height);
+    return MakeScope<Win32Window>(name, x, y, width, height);
 #endif
 }
 
@@ -17,7 +21,7 @@ Window::Window()
 {
     if (CurrentId > UINT_MAX)
     {
-        printf("Warning: Used significant number of uniqe windows. Id Overflow is not checked.");
+        SK_CORE_INFO("Warning: Used significant number of uniqe windows. Id Overflow is not checked.");
     }
     id = ++CurrentId;
 }
@@ -35,7 +39,7 @@ void Window::GenerateEvent(EventType e)
     }
     case WINDOW_RECT_CHANGED:
     {
-        // TODO: Maby pass new dims and pos
+        // TODO: Maybe pass new dims and pos
         event.data = GetId();
         event.size = sizeof(u64);
     }

@@ -1,4 +1,6 @@
 #include "Application.h"
+#include "Input.h"
+#include "log.h"
 
 bool Application::running;
 std::vector<ApplicationLayer*> Application::layers;
@@ -19,6 +21,8 @@ void Application::Run()
         {
             layer->Update();
         }
+
+        SK_CORE_TRACE("(%d, %d)", Input::GetMouseX(), Input::GetMouseY());
     }
 }
 
