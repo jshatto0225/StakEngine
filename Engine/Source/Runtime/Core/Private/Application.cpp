@@ -1,6 +1,6 @@
 #include "Application.h"
 #include "Input.h"
-#include "log.h"
+#include "Log.h"
 
 bool Application::running;
 std::vector<ApplicationLayer*> Application::layers;
