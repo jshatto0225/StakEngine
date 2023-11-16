@@ -18,7 +18,8 @@ public:
     template<typename LayerType>
     static void RegisterLayer(LayerType* layer)
     {
-        static_assert(std::is_base_of<ApplicationLayer, LayerType>::value, "All layers must inherit from ApplicationLayer");
+        static_assert(std::is_base_of<ApplicationLayer, LayerType>::value, 
+                      "All layers must inherit from ApplicationLayer");
         layers.push_back(layer);
     }
 
