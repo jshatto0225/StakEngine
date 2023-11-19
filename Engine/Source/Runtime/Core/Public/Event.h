@@ -5,7 +5,7 @@
 enum EventType
 {
     WINDOW_RECT_CHANGED,
-    WINDOW_CLOSE
+    WINDOW_CLOSE,
 };
 
 struct Event

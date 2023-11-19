@@ -13,7 +13,7 @@ public:
     static void Init();
     static void Run();
 
-    static void HandleEvent(Event& e);
+    static void OnEvent(Event& e);
 
     template<typename LayerType>
     static void RegisterLayer(LayerType* layer)

@@ -4,11 +4,11 @@
 
 bool Application::running;
 std::vector<ApplicationLayer*> Application::layers;
-std::unique_ptr<Window> Application::window;
+Scope<Window> Application::window;
 
 void Application::Init()
 {
-    window = MakeWindow("Stak Engine", 0, 0, 1280, 720);
+    window = MakeWindow("Stak Engine", 0, 0, 800, 450);
     running = true;
 }
 
@@ -26,7 +26,7 @@ void Application::Run()
     }
 }
 
-void Application::HandleEvent(Event& e)
+void Application::OnEvent(Event& e)
 {
     switch (e.type)
     {

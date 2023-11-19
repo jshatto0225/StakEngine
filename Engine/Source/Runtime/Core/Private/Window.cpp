@@ -45,5 +45,5 @@ void Window::GenerateEvent(EventType e)
     }
     }
 
-    Application::HandleEvent(event);
+    Application::OnEvent(event);
 }
