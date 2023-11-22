@@ -1,89 +1,90 @@
-#ifdef WIN32
-
 #include "Win32Window.h"
+
 #include "Application.h"
 #include "Event.h"
+#include "Log.h"
 
-LRESULT CALLBACK Win32WindowCallback(HWND handle, u32 msg, WPARAM wParam, LPARAM lParam)
+LRESULT CALLBACK Win32WindowCallback(HWND windowHandle, u32 msg, WPARAM wParam, LPARAM lParam)
 {
-    Win32Window* currentWindow = (Win32Window*)GetWindowLongPtrA(handle, GWLP_USERDATA);
-    if (currentWindow)
+    Win32Window* win32Window = (Win32Window*)GetWindowLongPtrA(windowHandle, GWLP_USERDATA);
+    if (win32Window)
     {
         switch (msg)
         {
         case WM_CLOSE:
         {
-            currentWindow->Close();
+            win32Window->Close();
             return 0;
         } break;
         case WM_DESTROY:
         {
-            currentWindow->GenerateEvent(WINDOW_CLOSE);
+            win32Window->GenerateEvent(WINDOW_CLOSE);
             return 0;
         } break;
         case WM_SIZE:
         {
             RECT rect = {};
-            GetWindowRect((HWND)currentWindow->GetHandle(), &rect);
-            currentWindow->SetSizeAndPos(rect.left,
-                                         rect.top,
-                                         rect.right - rect.left,
-                                         rect.bottom - rect.top);
+            GetWindowRect((HWND)win32Window->GetHandle(), &rect);
+            win32Window->SetSizeAndPos(rect.left,
+                                       rect.top,
+                                       rect.right - rect.left,
+                                       rect.bottom - rect.top);
             return 0;
         } break;
         case WM_MOVE:
         {
             RECT rect = {};
-            GetWindowRect((HWND)currentWindow->GetHandle(), &rect);
-            currentWindow->SetSizeAndPos(rect.left,
-                                         rect.top,
-                                         rect.right - rect.left,
-                                         rect.bottom - rect.top);
+            GetWindowRect((HWND)win32Window->GetHandle(), &rect);
+            win32Window->SetSizeAndPos(rect.left,
+                                       rect.top,
+                                       rect.right - rect.left,
+                                       rect.bottom - rect.top);
             return 0;
         } break;
         }
     }
 
-    return DefWindowProc(handle, msg, wParam, lParam);
+    return DefWindowProc(windowHandle, msg, wParam, lParam);
 }
 
 Win32Window::Win32Window(const std::string& name, i32 x, i32 y, i32 width, i32 height)
 {
-    this->name = name;
-    this->x = x;
-    this->y = y;
-    this->width = width;
-    this->height = height;
+    mName = name;
+    mX = x;
+    mY = y;
+    mWidth = width;
+    mHeight = height;
+    mOpen = true;
 
     WNDCLASSEXA windowClass = {};
     windowClass.cbSize = sizeof(WNDCLASSEXA);
-    windowClass.lpszClassName = this->name.c_str();
-    windowClass.hInstance = this->instance;
+    windowClass.lpszClassName = mName.c_str();
+    windowClass.hInstance = mInstanceHandle;
     windowClass.hIcon = LoadIcon(nullptr, IDI_WINLOGO);
     windowClass.hCursor = LoadCursor(nullptr, IDC_ARROW);
     windowClass.lpfnWndProc = Win32WindowCallback;
-    windowClass.cbClsExtra = sizeof(Window*);
+    windowClass.cbClsExtra = sizeof(Win32Window*);
 
     RegisterClassExA(&windowClass);
 
-    this->handle= CreateWindowExA(0,            // dwExStyle
-        this->name.c_str(),                     // lpClassName
-        this->name.c_str(),                     // lpWindowName
-        WS_OVERLAPPEDWINDOW | WS_VISIBLE,       // dwStyle
-        this->x,                                // X
-        this->y,                                // Y
-        this->width,                            // nWidth
-        this->height,                           // nHeight
-        nullptr,                                // hWndParent
-        nullptr,                                // hMenu
-        this->instance,                         // hInstance
-        nullptr);                               // lpParam
-    SetWindowLongPtrA(this->handle, GWLP_USERDATA, (LONG_PTR)this);
+    mWindowHandle = CreateWindowExA(0,                                      // dwExStyle
+                                    mName.c_str(),                          // lpClassName
+                                    mName.c_str(),                          // lpWindowName
+                                    WS_OVERLAPPEDWINDOW | WS_VISIBLE,       // dwStyle
+                                    mX,                                     // X
+                                    mY,                                     // Y
+                                    mWidth,                                 // nWidth
+                                    mHeight,                                // nHeight
+                                    nullptr,                                // hWndParent
+                                    nullptr,                                // hMenu
+                                    mInstanceHandle,                        // hInstance
+                                    nullptr);                               // lpParam
+    SetWindowLongPtrA(mWindowHandle, GWLP_USERDATA, (LONG_PTR)this);
 }
 
 Win32Window::~Win32Window()
 {
-    if (!open) {
+    if (mOpen) {
         Close();
     }
 }
@@ -105,19 +106,24 @@ void KillWindowManager()
 
 void Win32Window::SetSizeAndPos(i32 x, i32 y, i32 width, i32 height)
 {
-    this->x = x;
-    this->y = y;
-    this->width = width;
-    this->height = height;
-    SetWindowPos(handle, 0, x, y, width, height, 0);
+    mX = x;
+    mY = y;
+    mWidth = width;
+    mHeight = height;
+    SetWindowPos(mWindowHandle, 0, x, y, width, height, 0);
     GenerateEvent(WINDOW_RECT_CHANGED);
 }
 
 void Win32Window::Close()
 {
-    DestroyWindow(handle);
-    UnregisterClassA(name.c_str(), instance);
-    open = false;
+    if(!mOpen)
+    {
+        SK_CORE_WARN("ERROR: Window Already Closed");
+    }
+    else
+    {
+        DestroyWindow(mWindowHandle);
+        UnregisterClassA(mName.c_str(), mInstanceHandle);
+        mOpen = false;
+    }
 }
-
-#endif

@@ -12,75 +12,73 @@ public:
     Window();
     ~Window() {}
 
+    inline virtual void SetX(i32 x) final
+    {
+        mX = x;
+        SetSizeAndPos(x, mY, mWidth, mHeight);
+    }
+
+    inline virtual void SetY(i32 y) final
+    {
+        mY = y;
+        SetSizeAndPos(mX, y, mWidth, mHeight);
+    }
+
+    inline virtual void SetWidth(i32 width) final 
+    { 
+        mWidth = width; 
+        SetSizeAndPos(mX, mY, width, mHeight); 
+    }
+
+    inline virtual void SetHeight(i32 height) final
+    {
+        mHeight = height;
+        SetSizeAndPos(mX, mY, mWidth, height);
+    }
+
+    inline virtual i32 GetWidth() final 
+    {
+        return mWidth;
+    }
+
+    inline virtual i32 GetHeight() final 
+    {
+        return mHeight;
+    }
+
+    inline virtual f32 GetAspect() final 
+    {
+        return mWidth / mHeight;
+    }
+
+    inline virtual bool IsOpen() final
+    { 
+        return mOpen;
+    }
+    inline virtual u64 GetId() final 
+    { 
+        return mId;
+    }
+
+    virtual void GenerateEvent(EventType e) final;
+
     virtual void SetSizeAndPos(i32 x, i32 y, i32 width, i32 height) = 0;
-
-    inline void SetX(i32 x)
-    {
-        this->x = x;
-        SetSizeAndPos(x, y, width, height);
-    }
-
-    inline void SetY(i32 y)
-    {
-        this->y = y;
-        SetSizeAndPos(x, y, width, height);
-    }
-
-    inline void SetWidth(i32 width) 
-    { 
-        this->width = width; 
-        SetSizeAndPos(x, y, width, height); 
-    }
-
-    inline void SetHeight(i32 height)
-    {
-        this->height = height;
-        SetSizeAndPos(x, y, width, height);
-    }
-
-    inline i32 GetWidth() 
-    {
-        return width;
-    }
-
-    inline i32 GetHeight() 
-    {
-        return height;
-    }
-
-    inline f32 GetAspect() 
-    {
-        return width / height;
-    }
-
-    inline bool IsOpen() 
-    { 
-        return open;
-    }
-
     virtual void Update() = 0;
     virtual void* GetHandle() = 0;
-    inline u64 GetId() 
-    { 
-        return id; 
-    }
-
     virtual void Close() = 0;
 
-    void GenerateEvent(EventType e);
-
 protected:
-    bool open;
-    std::string name;
-    i32 x;
-    i32 y;
-    i32 width;
-    i32 height;
+    bool mOpen;
+    std::string mName;
+    i32 mX;
+    i32 mY;
+    i32 mWidth;
+    i32 mHeight;
 
 private:
-    u64 id;
-    static u64 CurrentId;
+    u64 mId;
+    static u64 sCurrentId;
 };
 
-Scope<Window> MakeWindow(const std::string& name, i32 x, i32 y, i32 width, i32 height);
+Unique<Window> MakeWindow(const std::string& name, i32 x, i32 y, i32 width, i32 height);
 void KillWindowManager();

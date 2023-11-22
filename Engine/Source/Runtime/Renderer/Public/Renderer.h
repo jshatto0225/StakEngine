@@ -7,7 +7,9 @@
 class Renderer
 {
 public:
-    virtual void Init() = 0;
+    Renderer() = default;
+    virtual ~Renderer() {}
+    
     virtual void Draw() = 0;
     virtual void Clear() = 0;
     virtual void SetClearColor() = 0;
@@ -15,3 +17,5 @@ public:
 protected:
     std::array<f32, 4> clearColor;
 };
+
+Unique<Renderer> MakeRenderer();

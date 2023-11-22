@@ -6,8 +6,9 @@
 #include "Window.h"
 #include "ApplicationLayer.h"
 #include "Event.h"
+#include "Renderer.h"
 
-class Application
+class Application final
 {
 public:
     static void Init();
@@ -20,11 +21,13 @@ public:
     {
         static_assert(std::is_base_of<ApplicationLayer, LayerType>::value, 
                       "All layers must inherit from ApplicationLayer");
-        layers.push_back(layer);
+        sApplicationLayers.push_back(layer);
     }
 
 private:
-    static bool running;
-    static std::vector<ApplicationLayer*> layers;
-    static Scope<Window> window;
+    static bool sRunning;
+    // TODO: Remove raw pointer
+    static std::vector<ApplicationLayer*> sApplicationLayers;
+    static Unique<Window> sWindow;
+    static Unique<Renderer> sRenderer;
 };

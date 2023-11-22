@@ -1,5 +1,3 @@
-#ifdef WIN32
-
 #include <windows.h>
 
 #include "Input.h"
@@ -16,5 +14,3 @@ MousePosition Input::GetMousePosition()
     GetCursorPos(&pos);
     return { pos.x, pos.y };
 }
-
-#endif

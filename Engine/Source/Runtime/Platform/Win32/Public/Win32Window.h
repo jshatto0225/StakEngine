@@ -2,7 +2,7 @@
 
 #include <windows.h>
 
-class Win32Window : public Window
+class Win32Window final : public Window
 {
 public:
     Win32Window(const std::string& name, i32 x, i32 y, i32 width, i32 height);
@@ -13,12 +13,12 @@ public:
     void Update() override;
     inline void* GetHandle() override
     {
-        return handle;
+        return (void*)mWindowHandle;
     }
 
     void Close() override;
 
 private:
-    HWND handle;
-    HINSTANCE instance;
+    HWND mWindowHandle;
+    HINSTANCE mInstanceHandle;
 };

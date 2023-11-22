@@ -8,22 +8,25 @@
 #include "Win32Window.h"
 #endif
 
-Scope<Window> MakeWindow(const std::string& name, i32 x, i32 y, i32 width, i32 height)
+Unique<Window> MakeWindow(const std::string& name, i32 x, i32 y, i32 width, i32 height)
 {
-#ifdef WIN32
-    return MakeScope<Win32Window>(name, x, y, width, height);
-#endif
+    #ifdef WIN32
+    return MakeUnique<Win32Window>(name, x, y, width, height);
+    #endif
+
+    SK_CORE_CRITICAL("Invalid Window Platform, Returning NULL");
+    return nullptr;
 }
 
-u64 Window::CurrentId = 0;
+u64 Window::sCurrentId = 0;
 
 Window::Window()
 {
-    if (CurrentId > UINT_MAX)
+    if (sCurrentId > UINT_MAX)
     {
         SK_CORE_INFO("Warning: Used significant number of uniqe windows. Id Overflow is not checked.");
     }
-    id = ++CurrentId;
+    mId = ++sCurrentId;
 }
 
 void Window::GenerateEvent(EventType e)

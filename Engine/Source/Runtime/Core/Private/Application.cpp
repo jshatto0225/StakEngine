@@ -2,27 +2,27 @@
 #include "Input.h"
 #include "Log.h"
 
-bool Application::running;
-std::vector<ApplicationLayer*> Application::layers;
-Scope<Window> Application::window;
+bool Application::sRunning;
+std::vector<ApplicationLayer*> Application::sApplicationLayers;
+Unique<Window> Application::sWindow;
+Unique<Renderer> Application::sRenderer;
 
 void Application::Init()
 {
-    window = MakeWindow("Stak Engine", 0, 0, 800, 450);
-    running = true;
+    sWindow = MakeWindow("Stak Engine", 0, 0, 800, 450);
+    sRenderer = MakeRenderer();
+    sRunning = true;
 }
 
 void Application::Run()
 {
-    while (running)
+    while (sRunning)
     {
-        window->Update();
-        for (const auto& layer : layers)
+        sWindow->Update();
+        for (const auto& layer : sApplicationLayers)
         {
             layer->Update();
         }
-
-        SK_CORE_TRACE("(%d, %d)", Input::GetMouseX(), Input::GetMouseY());
     }
 }
 
@@ -32,19 +32,18 @@ void Application::OnEvent(Event& e)
     {
     case WINDOW_CLOSE:
     {
-        if (e.data == window->GetId())
+        // TODO: Make window manager class
+        if (e.data == sWindow->GetId())
         {
-            running = false;
+            sRunning = false;
             KillWindowManager();
         }
     } break;
     case WINDOW_RECT_CHANGED:
     {
-
     } break;
     default:
     {
-
     } break;
     }
 }

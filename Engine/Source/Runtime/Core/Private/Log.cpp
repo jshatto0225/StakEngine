@@ -2,8 +2,8 @@
 
 Logger::Logger(const std::string& name, bool logFile)
 {
-    this->logFile = logFile;
-    this->name = name;
+    mLogFile = logFile;
+    mName = name;
 }
 
 void Logger::Info()
@@ -26,11 +26,11 @@ void Logger::Critical()
 
 }
 
-Logger* Log::CoreLogger;
-Logger* Log::ClientLogger;
+Unique<Logger> Log::sCoreLogger;
+Unique<Logger> Log::sClientLogger;
 
 void Log::Init()
 {
-    CoreLogger = new Logger("STAK", true);
-    ClientLogger = new Logger("APP", false);
+    sCoreLogger = MakeUnique<Logger>("STAK", true);
+    sClientLogger = MakeUnique<Logger>("APP", false);
 }

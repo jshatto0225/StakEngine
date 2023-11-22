@@ -3,14 +3,16 @@
 #include <vector>
 #include <string>
 
-class Logger
+#include "Types.h"
+
+class Logger final
 {
 public:
     Logger(const std::string& name, bool logFile);
 
     // Default Color
-    template<typename ... Args>
-    void Trace(const std::string& format, Args&& ... args)
+    template<typename ...Args>
+    void Trace(const std::string& format, Args&& ...args)
     {
         printf((format + "\n").c_str(), args...);
     }
@@ -24,30 +26,30 @@ public:
     void Critical();
 
 private:
-    std::string name;
-    bool logFile;
+    std::string mName;
+    bool mLogFile;
 };
 
-class Log
+class Log final
 {
 public:
     static void Init();
-    static Logger* CoreLogger;
-    static Logger* ClientLogger;
+    static Unique<Logger> sCoreLogger;
+    static Unique<Logger> sClientLogger;
 };
 
 #ifdef SK_DEBUG
-#define SK_CORE_TRACE(...)      Log::CoreLogger->Trace(__VA_ARGS__)
-#define SK_CORE_INFO(...)       Log::CoreLogger->Trace(__VA_ARGS__)
-#define SK_CORE_WARN(...)       Log::CoreLogger->Trace(__VA_ARGS__)
-#define SK_CORE_ERROR(...)      Log::CoreLogger->Trace(__VA_ARGS__)
-#define SK_CORE_CRITICAL(...)   Log::CoreLogger->Trace(__VA_ARGS__)
+#define SK_CORE_TRACE(...)      Log::sCoreLogger->Trace(__VA_ARGS__)
+#define SK_CORE_INFO(...)       Log::sCoreLogger->Trace(__VA_ARGS__)
+#define SK_CORE_WARN(...)       Log::sCoreLogger->Trace(__VA_ARGS__)
+#define SK_CORE_ERROR(...)      Log::sCoreLogger->Trace(__VA_ARGS__)
+#define SK_CORE_CRITICAL(...)   Log::sCoreLogger->Trace(__VA_ARGS__)
 
-#define SK_TRACE(...)           Log::CoreLogger->Trace(__VA_ARGS__)
-#define SK_INFO(...)            Log::CoreLogger->Trace(__VA_ARGS__)
-#define SK_WARN(...)            Log::CoreLogger->Trace(__VA_ARGS__)
-#define SK_ERROR(...)           Log::CoreLogger->Trace(__VA_ARGS__)
-#define SK_CRITICAL(...)        Log::CoreLogger->Trace(__VA_ARGS__)
+#define SK_TRACE(...)           Log::sCoreLogger->Trace(__VA_ARGS__)
+#define SK_INFO(...)            Log::sCoreLogger->Trace(__VA_ARGS__)
+#define SK_WARN(...)            Log::sCoreLogger->Trace(__VA_ARGS__)
+#define SK_ERROR(...)           Log::sCoreLogger->Trace(__VA_ARGS__)
+#define SK_CRITICAL(...)        Log::sCoreLogger->Trace(__VA_ARGS__)
 #endif
 
 #ifdef SK_RELEASE
