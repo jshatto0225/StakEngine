@@ -6,24 +6,9 @@ Logger::Logger(const std::string& name, bool logFile)
     mName = name;
 }
 
-void Logger::Info()
+void Logger::SetLevel(Level level)
 {
-
-}
-
-void Logger::Warn()
-{
-
-}
-
-void Logger::Error()
-{
-
-}
-
-void Logger::Critical()
-{
-
+    // TODO:
 }
 
 Unique<Logger> Log::sCoreLogger;
