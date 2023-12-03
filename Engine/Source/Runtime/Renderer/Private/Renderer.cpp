@@ -12,6 +12,6 @@ Unique<Renderer> MakeRenderer()
     return MakeUnique<VulkanRenderer>();
     #endif
 
-    SK_CORE_CRITICAL("Invalid Renderer API");
+    SK_CORE_CRITICAL("Invalid Rendering API");
     return nullptr;
 }

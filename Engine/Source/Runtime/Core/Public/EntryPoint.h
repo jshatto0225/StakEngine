@@ -12,5 +12,6 @@ i32 main()
     SK_CORE_INFO("Log Initialized");
     Application::Init();
     Application::Run();
+    Log::Shutdown();
     return 0;
 }
