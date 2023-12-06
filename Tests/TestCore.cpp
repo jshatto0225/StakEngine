@@ -34,6 +34,7 @@ TEST_CASE("Test Types", "[Types]")
     REQUIRE(newShared.use_count() == 2);
 }
 
+//TODO: Make not visual somehow
 TEST_CASE("Test Logging (Visual)", "[Log]")
 {
     Log::Init();
@@ -46,7 +47,10 @@ TEST_CASE("Test Logging (Visual)", "[Log]")
 
     // Test formatting
     SK_CORE_TRACE("Hello, %d %c %s %f", 1, 'a', "string", 5.5);
-
+    // Test Bad Format
+    //TODO: check for bad formatting
+    SK_CORE_TRACE("Hello, %s");
+    SK_CORE_TRACE("Hello", 1);
 
     Log::Shutdown();
 }
