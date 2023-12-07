@@ -24,7 +24,7 @@ Window::Window()
 {
     if (sCurrentId > UINT_MAX)
     {
-        SK_CORE_INFO("Warning: Used significant number of uniqe windows. Id Overflow is not checked.");
+        SK_CORE_INFO("Warning: Used significant number of unique windows. Id Overflow is not checked.");
     }
     mId = ++sCurrentId;
 }

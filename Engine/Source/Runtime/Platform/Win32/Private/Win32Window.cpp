@@ -118,7 +118,7 @@ void Win32Window::Close()
 {
     if(!mOpen)
     {
-        SK_CORE_WARN("ERROR: Window Already Closed");
+        SK_CORE_WARN("Window Already Closed");
     }
     else
     {
