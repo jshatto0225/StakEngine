@@ -4,7 +4,7 @@
 #include "Win32InputManager.h"
 #endif
 
-Unique<InputManager> makeInputManager()
+Unique<InputManager> MakeInputManager()
 {
     #ifdef WIN32
     return MakeUnique<Win32InputManager>();

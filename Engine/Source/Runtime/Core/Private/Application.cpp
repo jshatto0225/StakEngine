@@ -12,6 +12,7 @@ void Application::Init()
 {
     sWindow = MakeWindow("Stak Engine", 0, 0, 800, 450);
     sRenderer = MakeRenderer();
+    sInputManager = MakeInputManager();
     sRunning = true;
 }
 
