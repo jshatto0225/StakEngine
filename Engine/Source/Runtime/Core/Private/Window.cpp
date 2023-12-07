@@ -31,22 +31,17 @@ Window::Window()
 
 void Window::GenerateEvent(EventType e)
 {
-    Event event;
-    event.type = e;
     switch (e)
     {
     case WINDOW_CLOSE:
     {
-        event.data = GetId();
-        event.size = sizeof(u64);
+        WindowCloseEvent event(GetId());
+        Application::OnEvent(event);
     }
     case WINDOW_RECT_CHANGED:
     {
-        // TODO: Maybe pass new dims and pos
-        event.data = GetId();
-        event.size = sizeof(u64);
+        WindowRectChangedEvent event(GetId(), mWidth, mHeight, mX, mY);
+        Application::OnEvent(event);
     }
     }
-
-    Application::OnEvent(event);
 }

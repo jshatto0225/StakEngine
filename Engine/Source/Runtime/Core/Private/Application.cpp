@@ -32,15 +32,15 @@ void Application::OnEvent(Event& e)
     {
     case WINDOW_CLOSE:
     {
-        // TODO: Make window manager class
-        if (e.data == sWindow->GetId())
+        WindowCloseEvent* windowCloseEvent = (WindowCloseEvent*)&e;
+        if(windowCloseEvent->windowId == sWindow->GetId())
         {
-            sRunning = false;
             KillWindowManager();
         }
     } break;
     case WINDOW_RECT_CHANGED:
     {
+        WindowRectChangedEvent* windowRectChangedEvent = (WindowRectChangedEvent*)&e;
     } break;
     default:
     {

@@ -13,5 +13,5 @@ public:
     void Start() override {}
     void End() override {}
     void Update() override {}
-    void OnEvent() override {}
+    void OnEvent(Event& e) override {}
 };
