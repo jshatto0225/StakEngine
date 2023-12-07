@@ -21,7 +21,7 @@ void Application::Run()
     while (sRunning)
     {
         sWindow->Update();
-        for (const auto& layer : sApplicationLayers)
+        for (ApplicationLayer* layer : sApplicationLayers)
         {
             layer->Update();
         }
@@ -30,6 +30,11 @@ void Application::Run()
 
 void Application::OnEvent(Event& e)
 {
+    for (ApplicationLayer* layer : sApplicationLayers)
+    {
+        layer->OnEvent(e);
+    }
+
     switch (e.type)
     {
     case WINDOW_CLOSE:
