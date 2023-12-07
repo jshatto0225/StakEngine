@@ -1,11 +1,12 @@
 #include "Application.h"
-#include "Input.h"
+#include "InputManager.h"
 #include "Log.h"
 
 bool Application::sRunning;
 std::vector<ApplicationLayer*> Application::sApplicationLayers;
 Unique<Window> Application::sWindow;
 Unique<Renderer> Application::sRenderer;
+Unique<InputManager> Application::sInputManager;
 
 void Application::Init()
 {
@@ -36,6 +37,7 @@ void Application::OnEvent(Event& e)
         if(windowCloseEvent->windowId == sWindow->GetId())
         {
             KillWindowManager();
+            sRunning = false;
         }
     } break;
     case WINDOW_RECT_CHANGED:

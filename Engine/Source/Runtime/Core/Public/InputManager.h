@@ -8,14 +8,16 @@ struct MousePosition
     i32 y;
 };
 
-class Input
+class InputManager
 {
 public:
-    static bool KeyDown(i32 key);
-    static MousePosition GetMousePosition();
-    inline static i32 GetMouseX() { return GetMousePosition().x; }
-    inline static i32 GetMouseY() { return GetMousePosition().y; }
+    virtual bool KeyDown(i32 key) = 0;
+    virtual MousePosition GetMousePosition() = 0;
+    virtual inline i32 GetMouseX() final { return GetMousePosition().x; }
+    virtual inline i32 GetMouseY() final { return GetMousePosition().y; }
 };
+
+Unique<InputManager> MakewInputManager();
 
 // NOTE: Windows Key Codes
 #ifdef WIN32

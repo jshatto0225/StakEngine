@@ -17,7 +17,7 @@ struct WindowCloseEvent : public Event
 {
     WindowCloseEvent(u64 windowId)
     {
-        Event(WINDOW_CLOSE);
+        this->type = WINDOW_CLOSE;
         this->windowId = windowId;
     }
 
@@ -28,7 +28,7 @@ struct WindowRectChangedEvent : public Event
 {
     WindowRectChangedEvent(u64 windowId, i32 width, i32 height, i32 x, i32 y)
     {
-        Event(WINDOW_RECT_CHANGED);
+        this->type = WINDOW_RECT_CHANGED;
         this->windowId = windowId;
         this->width = width;
         this->height = height;

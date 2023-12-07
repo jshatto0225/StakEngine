@@ -1,14 +1,14 @@
 #include <windows.h>
 
-#include "Input.h"
+#include "Win32InputManager.h"
 #include "Types.h"
 
-bool Input::KeyDown(i32 key)
+bool Win32InputManager::KeyDown(i32 key)
 {
     return GetAsyncKeyState(key);
 }
 
-MousePosition Input::GetMousePosition()
+MousePosition Win32InputManager::GetMousePosition()
 {
     POINT pos = {};
     GetCursorPos(&pos);

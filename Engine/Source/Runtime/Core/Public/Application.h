@@ -7,6 +7,7 @@
 #include "ApplicationLayer.h"
 #include "Event.h"
 #include "Renderer.h"
+#include "InputManager.h"
 
 class Application final
 {
@@ -30,4 +31,5 @@ private:
     static std::vector<ApplicationLayer*> sApplicationLayers;
     static Unique<Window> sWindow;
     static Unique<Renderer> sRenderer;
+    static Unique<InputManager> sInputManager;
 };
