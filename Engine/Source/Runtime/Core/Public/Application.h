@@ -8,6 +8,7 @@
 #include "Event.h"
 #include "Renderer.h"
 #include "InputManager.h"
+#include "PlatformManager.h"
 
 class Application final
 {

@@ -1,4 +1,4 @@
-file(GLOB SOURCES Core/Private/*.cpp  Renderer/Private/*.cpp)
+file(GLOB SOURCES Core/Private/*.cpp  Renderer/Private/*.cpp Platform/Manager/Private/*.cpp)
 
 if(WIN32)
     file(GLOB WINDOW_PLATFORM Platform/Win32/Private/*.cpp)
@@ -23,6 +23,7 @@ endif()
 
 target_include_directories(StakRuntime PUBLIC Core/Public)
 target_include_directories(StakRuntime PUBLIC Renderer/Public)
+target_include_directories(StakRuntime PUBLIC Platform/Manager/Public)
 
 target_compile_definitions(StakRuntime PRIVATE $<$<CONFIG:Debug>: SK_DEBUG=1>)
 target_compile_definitions(StakRuntime PRIVATE $<$<CONFIG:Release>: SK_RELEASE=1>)

@@ -80,5 +80,4 @@ private:
     static u64 sCurrentId;
 };
 
-Unique<Window> MakeWindow(const std::string& name, i32 x, i32 y, i32 width, i32 height);
 void KillWindowManager();

@@ -1,5 +1,5 @@
 #include "Application.h"
-#include "InputManager.h"
+
 #include "Log.h"
 
 bool Application::sRunning;
@@ -10,9 +10,9 @@ Unique<InputManager> Application::sInputManager;
 
 void Application::Init()
 {
-    sWindow = MakeWindow("Stak Engine", 0, 0, 800, 450);
-    sRenderer = MakeRenderer();
-    sInputManager = MakeInputManager();
+    sWindow = PlatformManager::NewWindow("Stak Engine", 0, 0, 800, 450);
+    sRenderer = PlatformManager::NewRenderer();
+    sInputManager = PlatformManager::NewInputManager();
     sRunning = true;
 }
 

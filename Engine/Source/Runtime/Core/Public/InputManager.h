@@ -17,8 +17,6 @@ public:
     virtual inline i32 GetMouseY() final { return GetMousePosition().y; }
 };
 
-Unique<InputManager> MakeInputManager();
-
 // NOTE: Windows Key Codes
 #ifdef WIN32
 #define MOUSE_LEFT 0x01
