@@ -1,5 +1,7 @@
 file(GLOB SOURCES Core/Private/*.cpp  Renderer/Private/*.cpp Platform/Manager/Private/*.cpp)
 
+set(CMAKE_CXX_STANDARD_REQUIRED 20)
+
 if(WIN32)
     file(GLOB WINDOW_PLATFORM Platform/Win32/Private/*.cpp)
     # Vulkan include and lib paths
@@ -25,5 +27,5 @@ target_include_directories(StakRuntime PUBLIC Core/Public)
 target_include_directories(StakRuntime PUBLIC Renderer/Public)
 target_include_directories(StakRuntime PUBLIC Platform/Manager/Public)
 
-target_compile_definitions(StakRuntime PRIVATE $<$<CONFIG:Debug>: SK_DEBUG=1>)
-target_compile_definitions(StakRuntime PRIVATE $<$<CONFIG:Release>: SK_RELEASE=1>)
+target_compile_definitions(StakRuntime PUBLIC $<$<CONFIG:Debug>: SK_DEBUG=1>)
+target_compile_definitions(StakRuntime PUBLIC $<$<CONFIG:Release>: SK_RELEASE=1>)

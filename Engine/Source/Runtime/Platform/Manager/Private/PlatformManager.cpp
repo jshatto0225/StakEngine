@@ -2,12 +2,9 @@
 
 #ifdef WIN32
 #include "Win32Window.h"
-#include "Win32InputManager.h"
 #define PLATFORM_WINDOW Win32Window
+#include "Win32InputManager.h"
 #define PLATFORM_INPUT_MANAGER Win32InputManager
-#endif
-
-#ifdef VULKAN
 #include "VulkanRenderer.h"
 #define PLATFORM_RENDERER VulkanRenderer
 #endif

@@ -30,6 +30,5 @@ bool CheckValidationLayerSupport()
             return false;
         }
     }
-
     return true;
 }

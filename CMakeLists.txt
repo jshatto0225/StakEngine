@@ -6,6 +6,8 @@ set(CMAKE_CXX_STANDARD_REQUIRED 20)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 set(EXPORT_COMPILE_COMMANDS 1)
 
+set(CMAKE_WINDOWS_EXPORT_ALL_SYMBOLS ON)
+
 add_subdirectory(Engine/Source/Runtime)
 add_subdirectory(Engine/Source/Editor)
 add_subdirectory(Tests)

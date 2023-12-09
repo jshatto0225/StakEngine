@@ -23,11 +23,11 @@ void Window::GenerateEvent(EventType e)
     {
         WindowCloseEvent event(GetId());
         Application::OnEvent(event);
-    }
+    } break;
     case WINDOW_RECT_CHANGED:
     {
         WindowRectChangedEvent event(GetId(), mWidth, mHeight, mX, mY);
         Application::OnEvent(event);
-    }
+    } break;
     }
 }

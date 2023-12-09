@@ -12,6 +12,11 @@
 
 VulkanRenderer::VulkanRenderer()
 {
+    Init();
+}
+
+void VulkanRenderer::Init()
+{
     SK_CORE_INFO("Vulkan Initialization:\n");
     CreateInstance();
     if (kEnableValidationLayers) 
@@ -19,6 +24,23 @@ VulkanRenderer::VulkanRenderer()
         SetupDebugMessenger();
     }
     PickPhysicalDevice();
+    CreateLogicalDevice();
+    mRunning = true;
+}
+
+void VulkanRenderer::Shutdown()
+{
+    if(mRunning)
+    {
+        SK_CORE_WARN("Renderer Shutdown");
+        mRunning = false;
+        vkDestroyDevice(mVkDevice, nullptr);
+        if (kEnableValidationLayers)
+        {
+            DestroyDebugUtilsMessengerEXT(nullptr);
+        }
+        vkDestroyInstance(mVkInstance, nullptr);
+    }
 }
 
 void VulkanRenderer::CreateInstance()
@@ -83,12 +105,10 @@ void VulkanRenderer::SetupDebugMessenger()
 
 VulkanRenderer::~VulkanRenderer()
 {
-    vkDestroyDevice(mVkDevice, nullptr);
-    if (kEnableValidationLayers)
+    if(mRunning)
     {
-        DestroyDebugUtilsMessengerEXT(nullptr);
+        Shutdown();
     }
-    vkDestroyInstance(mVkInstance, nullptr);
 }
 
 void VulkanRenderer::Draw()

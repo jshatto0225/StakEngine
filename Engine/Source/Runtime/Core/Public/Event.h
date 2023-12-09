@@ -4,6 +4,8 @@
 
 enum EventType
 {
+    TEST_EVENT = -1,
+    INVALID_EVENT = -1,
     WINDOW_RECT_CHANGED,
     WINDOW_CLOSE,
 };

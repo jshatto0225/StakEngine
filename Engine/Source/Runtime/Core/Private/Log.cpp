@@ -16,7 +16,10 @@ Logger::Logger(const std::string& name, bool logToFile)
 
 Logger::~Logger()
 {
-    fclose(mLogFile);
+    if(mLogToFile)
+    {
+        fclose(mLogFile);
+    }
 }
 
 void Logger::SetLevel(Level level)
@@ -48,17 +51,52 @@ void Logger::SetLevel(Level level)
     }
 }
 
-Unique<Logger> Log::sCoreLogger;
-Unique<Logger> Log::sClientLogger;
+Shared<Logger> Log::sCoreLogger;
+Shared<Logger> Log::sClientLogger;
 
-void Log::Init()
+bool Log::sInitialized = false;
+
+void Log::Init() noexcept
 {
-    sCoreLogger = MakeUnique<Logger>("StakEngine", true);
-    sClientLogger = MakeUnique<Logger>("Application", false);
+    sCoreLogger = MakeShared<Logger>("StakEngine", true);
+    sClientLogger = MakeShared<Logger>("Application", false);
+    sInitialized = true;
 }
 
-void Log::Shutdown()
+void Log::Shutdown() noexcept
 {
-    sCoreLogger = nullptr;
-    sClientLogger = nullptr;
+    if(!sInitialized)
+    {
+        SK_CORE_WARN("Log already shutdown");
+    }
+    else
+    {
+        sCoreLogger.reset();
+        sClientLogger.reset();
+        sInitialized = false;
+    }
+}
+
+Shared<Logger> Log::GetCoreLogger()
+{
+    if(!sInitialized)
+    {
+        throw std::runtime_error("Core Logger Is NULL");
+    }
+    else
+    {
+        return sCoreLogger;
+    }
+}
+
+Shared<Logger> Log::GetClientLogger()
+{
+    if(!sInitialized)
+    {
+        throw std::runtime_error("Client Logger Is NULL");
+    }
+    else
+    {
+        return sClientLogger;
+    }
 }

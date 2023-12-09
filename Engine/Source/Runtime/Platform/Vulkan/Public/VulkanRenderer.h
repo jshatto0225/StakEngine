@@ -18,6 +18,10 @@ class VulkanRenderer final : public Renderer
 {
 public:
     VulkanRenderer();
+
+    void Init() override;
+    void Shutdown() override;
+
     void Draw() override;
     void Clear() override;
     void SetClearColor() override;

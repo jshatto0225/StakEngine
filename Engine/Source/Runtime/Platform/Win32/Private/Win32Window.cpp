@@ -116,14 +116,11 @@ void Win32Window::SetSizeAndPos(i32 x, i32 y, i32 width, i32 height)
 
 void Win32Window::Close()
 {
-    if(!mOpen)
+    if(mOpen)
     {
-        SK_CORE_WARN("Window Already Closed");
-    }
-    else
-    {
+        mOpen = false;
+        SK_CORE_WARN("Window Closed");
         DestroyWindow(mWindowHandle);
         UnregisterClassA(mName.c_str(), mInstanceHandle);
-        mOpen = false;
     }
 }

@@ -81,24 +81,29 @@ private:
 class Log final
 {
 public:
-    static void Init();
-    static Unique<Logger> sCoreLogger;
-    static Unique<Logger> sClientLogger;
-    static void Shutdown();
+    static void Init() noexcept;
+    static void Shutdown() noexcept;
+    static Shared<Logger> GetCoreLogger();
+    static Shared<Logger> GetClientLogger();
+
+private:
+    static Shared<Logger> sCoreLogger;
+    static Shared<Logger> sClientLogger;
+    static bool sInitialized;
 };
 
 #ifdef SK_DEBUG
-#define SK_CORE_TRACE(...)      Log::sCoreLogger->Trace(__VA_ARGS__)
-#define SK_CORE_INFO(...)       Log::sCoreLogger->Info(__VA_ARGS__)
-#define SK_CORE_WARN(...)       Log::sCoreLogger->Warn(__VA_ARGS__)
-#define SK_CORE_ERROR(...)      Log::sCoreLogger->Error(__VA_ARGS__)
-#define SK_CORE_CRITICAL(...)   Log::sCoreLogger->Critical(__VA_ARGS__)
+#define SK_CORE_TRACE(...)      Log::GetCoreLogger()->Trace(__VA_ARGS__)
+#define SK_CORE_INFO(...)       Log::GetCoreLogger()->Info(__VA_ARGS__)
+#define SK_CORE_WARN(...)       Log::GetCoreLogger()->Warn(__VA_ARGS__)
+#define SK_CORE_ERROR(...)      Log::GetCoreLogger()->Error(__VA_ARGS__)
+#define SK_CORE_CRITICAL(...)   Log::GetCoreLogger()->Critical(__VA_ARGS__)
 
-#define SK_TRACE(...)           Log::sCoreLogger->Trace(__VA_ARGS__)
-#define SK_INFO(...)            Log::sCoreLogger->Info(__VA_ARGS__)
-#define SK_WARN(...)            Log::sCoreLogger->Warn(__VA_ARGS__)
-#define SK_ERROR(...)           Log::sCoreLogger->Error(__VA_ARGS__)
-#define SK_CRITICAL(...)        Log::sCoreLogger->Critical(__VA_ARGS__)
+#define SK_TRACE(...)           Log::GetClientLogger()->Trace(__VA_ARGS__)
+#define SK_INFO(...)            Log::GetClientLogger()->Info(__VA_ARGS__)
+#define SK_WARN(...)            Log::GetClientLogger()->Warn(__VA_ARGS__)
+#define SK_ERROR(...)           Log::GetClientLogger()->Error(__VA_ARGS__)
+#define SK_CRITICAL(...)        Log::GetClientLogger()->Critical(__VA_ARGS__)
 #endif
 
 #ifdef SK_RELEASE

@@ -8,22 +8,22 @@
 #include "Event.h"
 #include "Renderer.h"
 #include "InputManager.h"
-#include "PlatformManager.h"
 
 class Application final
 {
 public:
     static void Init();
     static void Run();
+    static void Shutdown();
 
     static void OnEvent(Event& e);
 
     template<typename LayerType>
-    static void RegisterLayer(LayerType* layer)
+    static void RegisterLayer()
     {
         static_assert(std::is_base_of<ApplicationLayer, LayerType>::value, 
                       "All layers must inherit from ApplicationLayer");
-        sApplicationLayers.push_back(layer);
+        sApplicationLayers.push_back(new LayerType);
     }
 
 private:
