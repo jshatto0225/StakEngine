@@ -1,31 +1,39 @@
 #include "Renderer.h"
 
+#ifdef WIN32
+#define VK_USE_PLATFORM_WIN32_KHR
+#include <windows.h>
+#endif
 #include <vulkan/vulkan.h>
 #include <vector>
 #include <optional>
+#include <unordered_map>
 
 struct QueueFamilyIndices final
 {
     std::optional<u32> graphicsFamily;
+    std::optional<u32> presentFamily;
 
     inline bool IsComplete()
     {
-        return graphicsFamily.has_value();
+        return graphicsFamily.has_value() && presentFamily.has_value();
     }
 };
 
 class VulkanRenderer final : public Renderer
 {
 public:
-    VulkanRenderer();
+    VulkanRenderer(void* window);
+    ~VulkanRenderer() override;
 
-    void Init() override;
+    void Init(void* window) override;
     void Shutdown() override;
 
     void Draw() override;
     void Clear() override;
     void SetClearColor() override;
-    ~VulkanRenderer() override;
+    void AddWindow(void* window) override;
+    void RemoveWindow(void* window) override;
 
 private:
     std::vector<const char*> GetRequiredExtensions();
@@ -42,9 +50,9 @@ private:
                                                         VkDebugUtilsMessageTypeFlagsEXT messageType,
                                                         const VkDebugUtilsMessengerCallbackDataEXT* pCallbackData,
                                                         void* pUserData);
-    static bool IsDeviceSuitable(VkPhysicalDevice vkPhysicalDevice);
-    static i32 RateDeviceSuitability(VkPhysicalDevice vkPhysicalDevice);
-    static QueueFamilyIndices FindQueueFamilies(VkPhysicalDevice vkPhysicalDevice);
+    bool IsDeviceSuitable(VkPhysicalDevice vkPhysicalDevice);
+    i32 RateDeviceSuitability(VkPhysicalDevice vkPhysicalDevice);
+    QueueFamilyIndices FindQueueFamilies(VkPhysicalDevice vkPhysicalDevice);
 
 private:
     VkInstance mVkInstance;
@@ -53,4 +61,7 @@ private:
     VkDevice mVkDevice;
     VkPhysicalDeviceFeatures mVkDeviceFeatures;
     VkQueue mVkGraphicsQueue;
+    VkQueue mVkPresentQueue;
+    std::vector<VkSurfaceKHR> mVkSurfaces;
+    std::unordered_map<void*, VkSurfaceKHR> mWindowSurfaceMap;
 };

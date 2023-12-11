@@ -14,9 +14,9 @@ Unique<Window> PlatformManager::NewWindow(const std::string& name, i32 x, i32 y,
     return MakeUnique<PLATFORM_WINDOW>(name, x, y, width, height);
 }
 
-Unique<Renderer> PlatformManager::NewRenderer()
+Unique<Renderer> PlatformManager::NewRenderer(void* window)
 {
-    return MakeUnique<PLATFORM_RENDERER>();
+    return MakeUnique<PLATFORM_RENDERER>(window);
 }
 
 Unique<InputManager> PlatformManager::NewInputManager()

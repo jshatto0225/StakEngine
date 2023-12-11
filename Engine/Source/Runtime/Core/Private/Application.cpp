@@ -13,7 +13,7 @@ void Application::Init()
 {
     Log::Init();
     sWindow = PlatformManager::NewWindow("Stak Engine", 0, 0, 800, 450);
-    sRenderer = PlatformManager::NewRenderer();
+    sRenderer = PlatformManager::NewRenderer(sWindow->GetHandle());
     sInputManager = PlatformManager::NewInputManager();
     sRunning = true;
 

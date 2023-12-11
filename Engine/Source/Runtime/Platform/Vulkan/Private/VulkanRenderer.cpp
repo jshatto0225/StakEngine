@@ -5,17 +5,19 @@
 #include <array>
 #include <map>
 #include <optional>
+#include <algorithm>
+#include <set>
 
 #include "Types.h"
 #include "Log.h"
 #include "ValidationLayers.h"
 
-VulkanRenderer::VulkanRenderer()
+VulkanRenderer::VulkanRenderer(void* window)
 {
-    Init();
+    Init(window);
 }
 
-void VulkanRenderer::Init()
+void VulkanRenderer::Init(void* window)
 {
     SK_CORE_INFO("Vulkan Initialization:\n");
     CreateInstance();
@@ -23,6 +25,7 @@ void VulkanRenderer::Init()
     {
         SetupDebugMessenger();
     }
+    AddWindow(window);
     PickPhysicalDevice();
     CreateLogicalDevice();
     mRunning = true;
@@ -39,6 +42,12 @@ void VulkanRenderer::Shutdown()
         {
             DestroyDebugUtilsMessengerEXT(nullptr);
         }
+        for(VkSurfaceKHR surface : mVkSurfaces)
+        {
+            vkDestroySurfaceKHR(mVkInstance, surface, nullptr);
+        }
+        mVkSurfaces.clear();
+        mWindowSurfaceMap.clear();
         vkDestroyInstance(mVkInstance, nullptr);
     }
 }
@@ -78,9 +87,13 @@ void VulkanRenderer::CreateInstance()
         createInfo.pNext = nullptr;
     }
 
-    auto extensions = GetRequiredExtensions();
+    std::vector<const char*> extensions = GetRequiredExtensions();
     createInfo.enabledExtensionCount = (u32)extensions.size();
     createInfo.ppEnabledExtensionNames = extensions.data();
+    for(const char* extension : extensions)
+    {
+        SK_CORE_INFO("Extension Name: %s", extension);
+    }
 
     if (vkCreateInstance(&createInfo, nullptr, &mVkInstance))
     {
@@ -133,6 +146,10 @@ std::vector<const char*>  VulkanRenderer::GetRequiredExtensions()
     {
         extensions.push_back(VK_EXT_DEBUG_UTILS_EXTENSION_NAME);
     }
+    extensions.push_back(VK_KHR_SURFACE_EXTENSION_NAME);
+    #ifdef WIN32
+    extensions.push_back(VK_KHR_WIN32_SURFACE_EXTENSION_NAME);
+    #endif
     return extensions;
 }
 
@@ -227,6 +244,7 @@ void VulkanRenderer::PickPhysicalDevice()
 bool VulkanRenderer::IsDeviceSuitable(VkPhysicalDevice vkPhysicalDevice)
 {
     QueueFamilyIndices indices = FindQueueFamilies(vkPhysicalDevice);
+    VkBool32 presentSupport = false;
     return indices.IsComplete();
 }
 
@@ -272,6 +290,14 @@ QueueFamilyIndices VulkanRenderer::FindQueueFamilies(VkPhysicalDevice vkPhysical
             indices.graphicsFamily = i;
         }
 
+        // TODO: Handle all windows
+        VkBool32 presentSupport = false;
+        vkGetPhysicalDeviceSurfaceSupportKHR(vkPhysicalDevice, i, mVkSurfaces[0], &presentSupport);
+        if(presentSupport)
+        {
+            indices.presentFamily = i;
+        }
+
         if (indices.IsComplete())
         {
             break;
@@ -285,32 +311,74 @@ void VulkanRenderer::CreateLogicalDevice()
 {
     QueueFamilyIndices indices = FindQueueFamilies(mVkPhysicalDevice);
 
-    mVkDeviceFeatures = {}; // TODO:
-    
-    VkDeviceQueueCreateInfo queueCreateInfo = {};
-    queueCreateInfo.sType = VK_STRUCTURE_TYPE_DEVICE_QUEUE_CREATE_INFO;
-    queueCreateInfo.queueFamilyIndex = indices.graphicsFamily.value();
-    queueCreateInfo.queueCount = 1;
+    std::vector<VkDeviceQueueCreateInfo> queueCreateInfos;
+    std::set<u32> uniqueQueueFamilies = { indices.graphicsFamily.value(), indices.presentFamily.value() };
+
     f32 queuePriority = 1.0f;
-    queueCreateInfo.pQueuePriorities = &queuePriority;
+    for(u32 queueFamily : uniqueQueueFamilies)
+    {
+        VkDeviceQueueCreateInfo queueCreateInfo = {};
+        queueCreateInfo.sType = VK_STRUCTURE_TYPE_DEVICE_QUEUE_CREATE_INFO;
+        queueCreateInfo.queueFamilyIndex = queueFamily;
+        queueCreateInfo.queueCount = 1;
+        queueCreateInfo.pQueuePriorities = &queuePriority;
+        queueCreateInfos.push_back(queueCreateInfo);
+    }
+
+    VkPhysicalDeviceFeatures physicalDeviceFeatures = {};
 
     VkDeviceCreateInfo deviceCreateInfo = {};
     deviceCreateInfo.sType = VK_STRUCTURE_TYPE_DEVICE_CREATE_INFO;
-    deviceCreateInfo.pQueueCreateInfos = &queueCreateInfo;
-    deviceCreateInfo.queueCreateInfoCount = 1;
-    deviceCreateInfo.pEnabledFeatures = &mVkDeviceFeatures;
+
+    deviceCreateInfo.queueCreateInfoCount = queueCreateInfos.size();
+    deviceCreateInfo.pQueueCreateInfos = queueCreateInfos.data();
+
+    deviceCreateInfo.pEnabledFeatures = &physicalDeviceFeatures;
+    
     deviceCreateInfo.enabledExtensionCount = 0;
 
-    if (kEnableValidationLayers)
+    if(kEnableValidationLayers)
     {
-        deviceCreateInfo.enabledLayerCount = (u32)kValidationLayers.size();
-        deviceCreateInfo.ppEnabledLayerNames = kValidationLayers.data();
+        deviceCreateInfo.enabledLayerCount = kValidationLayers.size();
+        deviceCreateInfo.ppEnabledExtensionNames = kValidationLayers.data();
+    }
+    else
+    {
+        deviceCreateInfo.enabledExtensionCount = 0;
     }
 
-    if (vkCreateDevice(mVkPhysicalDevice, &deviceCreateInfo, nullptr, &mVkDevice) != VK_SUCCESS)
+    if(vkCreateDevice(mVkPhysicalDevice, &deviceCreateInfo, nullptr, &mVkDevice))
     {
-        throw std::runtime_error("ERORR: Failed to create logical device");
+        throw std::runtime_error("ERROR: Failed to create logical device");
     }
 
     vkGetDeviceQueue(mVkDevice, indices.graphicsFamily.value(), 0, &mVkGraphicsQueue);
+    vkGetDeviceQueue(mVkDevice, indices.presentFamily.value(), 0, &mVkPresentQueue);
+}
+
+void VulkanRenderer::AddWindow(void* window)
+{
+    // TODO: I got platform code in my platform code
+    #ifdef WIN32
+    VkWin32SurfaceCreateInfoKHR surfaceCreateInfo = {};
+    surfaceCreateInfo.sType = VK_STRUCTURE_TYPE_WIN32_SURFACE_CREATE_INFO_KHR;
+    surfaceCreateInfo.hwnd = (HWND)window;
+    surfaceCreateInfo.hinstance = GetModuleHandle(nullptr);
+    VkSurfaceKHR newSurface;
+    if(vkCreateWin32SurfaceKHR(mVkInstance, &surfaceCreateInfo, nullptr, &newSurface) != VK_SUCCESS)
+    {
+        throw std::runtime_error("ERROR: Failed to create window surface");
+    }
+    mVkSurfaces.push_back(newSurface);
+    mWindowSurfaceMap[window] = newSurface;
+    #endif
+}
+
+void VulkanRenderer::RemoveWindow(void* window)
+{
+    VkSurfaceKHR surface = mWindowSurfaceMap[window];
+    vkDestroySurfaceKHR(mVkInstance, surface, nullptr);
+    mWindowSurfaceMap.erase(window);
+    std::vector<VkSurfaceKHR>::iterator it = std::find(mVkSurfaces.begin(), mVkSurfaces.end(), surface);
+    mVkSurfaces.erase(it);
 }
