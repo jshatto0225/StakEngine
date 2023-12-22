@@ -93,3 +93,19 @@ TEST_CASE("General Application Test", "[Application]")
     REQUIRE_NOTHROW(Application::Init());
     REQUIRE_NOTHROW(Application::Run());
 }
+
+TEST_CASE("Window Test", "[Window]")
+{
+    REQUIRE_NOTHROW(Application::Init());
+
+    Shared<Window> window = PlatformManager::NewWindow("TempWindow", 0, 0, 800, 450);
+    REQUIRE(window->GetWidth() == 800);
+    REQUIRE(window->GetHeight() == 450);
+    REQUIRE(window->GetAspect() == 16 / 9);
+    window->SetWidth(450);
+    REQUIRE(window->GetWidth() == 450);
+    REQUIRE(window->GetAspect() == 1);
+    window->Close();
+
+    REQUIRE_NOTHROW(Application::Shutdown());
+}

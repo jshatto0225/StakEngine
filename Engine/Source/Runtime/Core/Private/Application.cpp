@@ -5,15 +5,18 @@
 
 bool Application::sRunning;
 std::vector<ApplicationLayer*> Application::sApplicationLayers;
-Unique<Window> Application::sWindow;
-Unique<Renderer> Application::sRenderer;
+//Shared<Window> Application::sWindow;
 Unique<InputManager> Application::sInputManager;
 
 void Application::Init()
 {
     Log::Init();
-    sWindow = PlatformManager::NewWindow("Stak Engine", 0, 0, 800, 450);
-    sRenderer = PlatformManager::NewRenderer(sWindow->GetHandle());
+    //Renderer::Init();
+
+    // TODO: No Windows By Default
+    //sWindow = PlatformManager::NewWindow("TempWindow", 0, 0, 800, 450);
+    //Renderer::AddWindow(sWindow);
+
     sInputManager = PlatformManager::NewInputManager();
     sRunning = true;
 
@@ -25,10 +28,10 @@ void Application::Init()
 
 void Application::Run()
 {
-    while (sRunning)
+    while(sRunning)
     {
-        sWindow->Update();
-        for (ApplicationLayer* layer : sApplicationLayers)
+        //sWindow->Update();
+        for(ApplicationLayer* layer : sApplicationLayers)
         {
             layer->Update();
         }
@@ -37,28 +40,24 @@ void Application::Run()
 
 void Application::OnEvent(Event& e)
 {
-    for (ApplicationLayer* layer : sApplicationLayers)
+    for(ApplicationLayer* layer : sApplicationLayers)
     {
         layer->OnEvent(e);
     }
 
-    switch (e.type)
+    switch(e.type)
     {
-    case WINDOW_CLOSE:
-    {
-        WindowCloseEvent* windowCloseEvent = (WindowCloseEvent*)&e;
-        if(windowCloseEvent->windowId == sWindow->GetId() && sRunning)
+        case WINDOW_CLOSE:
         {
-            Shutdown();
-        }
-    } break;
-    case WINDOW_RECT_CHANGED:
-    {
-        WindowRectChangedEvent* windowRectChangedEvent = (WindowRectChangedEvent*)&e;
-    } break;
-    default:
-    {
-    } break;
+            WindowCloseEvent* windowCloseEvent = (WindowCloseEvent*)&e;
+            //if(windowCloseEvent->windowId == sWindow->GetId() && sRunning)
+            //{
+                //Shutdown();
+            //}
+        } break;
+        default:
+        {
+        } break;
     }
 }
 
@@ -68,20 +67,20 @@ void Application::Shutdown()
     {
         SK_CORE_WARN("Application Shutdown");
         sRunning = false;
-        for (ApplicationLayer* layer : sApplicationLayers)
+        for(ApplicationLayer* layer : sApplicationLayers)
         {
             layer->End();
             delete layer;
         }
         sApplicationLayers.clear();
-        if(sRenderer->IsRunning())
-        {
-            sRenderer->Shutdown();
-        }
-        if(sWindow->IsOpen())
-        {
-            sWindow->Close();
-        }
+        //Renderer::Shutdown();
+
+        // TODO: No Windows By Default
+        //if(sWindow->IsOpen())
+        //{
+            //sWindow->Close();
+        //}
+
         KillWindowManager();
         Log::Shutdown();
     }

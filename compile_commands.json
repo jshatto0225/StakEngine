@@ -1,0 +1,68 @@
+[
+{
+  "directory": "C:/Users/jungl/dev/StakEngine/Build/Debug",
+  "command": "C:\\ProgramData\\chocolatey\\lib\\mingw\\tools\\install\\mingw64\\bin\\c++.exe -DSK_DEBUG=1 -DSK_OPENGL=1 -DSK_WINDOWS=1 -IC:/Users/jungl/dev/StakEngine/Engine/Source/Runtime/Platform/Win32/Public -IC:/Users/jungl/dev/StakEngine/Engine/Source/Runtime/Platform/OpenGL/Public -IC:/Users/jungl/dev/StakEngine/Engine/Source/Runtime/Core/Public -IC:/Users/jungl/dev/StakEngine/Engine/Source/Runtime/Renderer/Public -IC:/Users/jungl/dev/StakEngine/Engine/Source/Runtime/Platform/Manager/Public -g -std=gnu++20 -o Engine\\Source\\Runtime\\CMakeFiles\\StakRuntime.dir\\Core\\Private\\Application.cpp.obj -c C:\\Users\\jungl\\dev\\StakEngine\\Engine\\Source\\Runtime\\Core\\Private\\Application.cpp",
+  "file": "C:\\Users\\jungl\\dev\\StakEngine\\Engine\\Source\\Runtime\\Core\\Private\\Application.cpp",
+  "output": "Engine\\Source\\Runtime\\CMakeFiles\\StakRuntime.dir\\Core\\Private\\Application.cpp.obj"
+},
+{
+  "directory": "C:/Users/jungl/dev/StakEngine/Build/Debug",
+  "command": "C:\\ProgramData\\chocolatey\\lib\\mingw\\tools\\install\\mingw64\\bin\\c++.exe -DSK_DEBUG=1 -DSK_OPENGL=1 -DSK_WINDOWS=1 -IC:/Users/jungl/dev/StakEngine/Engine/Source/Runtime/Platform/Win32/Public -IC:/Users/jungl/dev/StakEngine/Engine/Source/Runtime/Platform/OpenGL/Public -IC:/Users/jungl/dev/StakEngine/Engine/Source/Runtime/Core/Public -IC:/Users/jungl/dev/StakEngine/Engine/Source/Runtime/Renderer/Public -IC:/Users/jungl/dev/StakEngine/Engine/Source/Runtime/Platform/Manager/Public -g -std=gnu++20 -o Engine\\Source\\Runtime\\CMakeFiles\\StakRuntime.dir\\Core\\Private\\Log.cpp.obj -c C:\\Users\\jungl\\dev\\StakEngine\\Engine\\Source\\Runtime\\Core\\Private\\Log.cpp",
+  "file": "C:\\Users\\jungl\\dev\\StakEngine\\Engine\\Source\\Runtime\\Core\\Private\\Log.cpp",
+  "output": "Engine\\Source\\Runtime\\CMakeFiles\\StakRuntime.dir\\Core\\Private\\Log.cpp.obj"
+},
+{
+  "directory": "C:/Users/jungl/dev/StakEngine/Build/Debug",
+  "command": "C:\\ProgramData\\chocolatey\\lib\\mingw\\tools\\install\\mingw64\\bin\\c++.exe -DSK_DEBUG=1 -DSK_OPENGL=1 -DSK_WINDOWS=1 -IC:/Users/jungl/dev/StakEngine/Engine/Source/Runtime/Platform/Win32/Public -IC:/Users/jungl/dev/StakEngine/Engine/Source/Runtime/Platform/OpenGL/Public -IC:/Users/jungl/dev/StakEngine/Engine/Source/Runtime/Core/Public -IC:/Users/jungl/dev/StakEngine/Engine/Source/Runtime/Renderer/Public -IC:/Users/jungl/dev/StakEngine/Engine/Source/Runtime/Platform/Manager/Public -g -std=gnu++20 -o Engine\\Source\\Runtime\\CMakeFiles\\StakRuntime.dir\\Core\\Private\\Window.cpp.obj -c C:\\Users\\jungl\\dev\\StakEngine\\Engine\\Source\\Runtime\\Core\\Private\\Window.cpp",
+  "file": "C:\\Users\\jungl\\dev\\StakEngine\\Engine\\Source\\Runtime\\Core\\Private\\Window.cpp",
+  "output": "Engine\\Source\\Runtime\\CMakeFiles\\StakRuntime.dir\\Core\\Private\\Window.cpp.obj"
+},
+{
+  "directory": "C:/Users/jungl/dev/StakEngine/Build/Debug",
+  "command": "C:\\ProgramData\\chocolatey\\lib\\mingw\\tools\\install\\mingw64\\bin\\c++.exe -DSK_DEBUG=1 -DSK_OPENGL=1 -DSK_WINDOWS=1 -IC:/Users/jungl/dev/StakEngine/Engine/Source/Runtime/Platform/Win32/Public -IC:/Users/jungl/dev/StakEngine/Engine/Source/Runtime/Platform/OpenGL/Public -IC:/Users/jungl/dev/StakEngine/Engine/Source/Runtime/Core/Public -IC:/Users/jungl/dev/StakEngine/Engine/Source/Runtime/Renderer/Public -IC:/Users/jungl/dev/StakEngine/Engine/Source/Runtime/Platform/Manager/Public -g -std=gnu++20 -o Engine\\Source\\Runtime\\CMakeFiles\\StakRuntime.dir\\Platform\\Manager\\Private\\PlatformManager.cpp.obj -c C:\\Users\\jungl\\dev\\StakEngine\\Engine\\Source\\Runtime\\Platform\\Manager\\Private\\PlatformManager.cpp",
+  "file": "C:\\Users\\jungl\\dev\\StakEngine\\Engine\\Source\\Runtime\\Platform\\Manager\\Private\\PlatformManager.cpp",
+  "output": "Engine\\Source\\Runtime\\CMakeFiles\\StakRuntime.dir\\Platform\\Manager\\Private\\PlatformManager.cpp.obj"
+},
+{
+  "directory": "C:/Users/jungl/dev/StakEngine/Build/Debug",
+  "command": "C:\\ProgramData\\chocolatey\\lib\\mingw\\tools\\install\\mingw64\\bin\\c++.exe -DSK_DEBUG=1 -DSK_OPENGL=1 -DSK_WINDOWS=1 -IC:/Users/jungl/dev/StakEngine/Engine/Source/Runtime/Platform/Win32/Public -IC:/Users/jungl/dev/StakEngine/Engine/Source/Runtime/Platform/OpenGL/Public -IC:/Users/jungl/dev/StakEngine/Engine/Source/Runtime/Core/Public -IC:/Users/jungl/dev/StakEngine/Engine/Source/Runtime/Renderer/Public -IC:/Users/jungl/dev/StakEngine/Engine/Source/Runtime/Platform/Manager/Public -g -std=gnu++20 -o Engine\\Source\\Runtime\\CMakeFiles\\StakRuntime.dir\\Renderer\\Private\\RenderCommand.cpp.obj -c C:\\Users\\jungl\\dev\\StakEngine\\Engine\\Source\\Runtime\\Renderer\\Private\\RenderCommand.cpp",
+  "file": "C:\\Users\\jungl\\dev\\StakEngine\\Engine\\Source\\Runtime\\Renderer\\Private\\RenderCommand.cpp",
+  "output": "Engine\\Source\\Runtime\\CMakeFiles\\StakRuntime.dir\\Renderer\\Private\\RenderCommand.cpp.obj"
+},
+{
+  "directory": "C:/Users/jungl/dev/StakEngine/Build/Debug",
+  "command": "C:\\ProgramData\\chocolatey\\lib\\mingw\\tools\\install\\mingw64\\bin\\c++.exe -DSK_DEBUG=1 -DSK_OPENGL=1 -DSK_WINDOWS=1 -IC:/Users/jungl/dev/StakEngine/Engine/Source/Runtime/Platform/Win32/Public -IC:/Users/jungl/dev/StakEngine/Engine/Source/Runtime/Platform/OpenGL/Public -IC:/Users/jungl/dev/StakEngine/Engine/Source/Runtime/Core/Public -IC:/Users/jungl/dev/StakEngine/Engine/Source/Runtime/Renderer/Public -IC:/Users/jungl/dev/StakEngine/Engine/Source/Runtime/Platform/Manager/Public -g -std=gnu++20 -o Engine\\Source\\Runtime\\CMakeFiles\\StakRuntime.dir\\Renderer\\Private\\Renderer.cpp.obj -c C:\\Users\\jungl\\dev\\StakEngine\\Engine\\Source\\Runtime\\Renderer\\Private\\Renderer.cpp",
+  "file": "C:\\Users\\jungl\\dev\\StakEngine\\Engine\\Source\\Runtime\\Renderer\\Private\\Renderer.cpp",
+  "output": "Engine\\Source\\Runtime\\CMakeFiles\\StakRuntime.dir\\Renderer\\Private\\Renderer.cpp.obj"
+},
+{
+  "directory": "C:/Users/jungl/dev/StakEngine/Build/Debug",
+  "command": "C:\\ProgramData\\chocolatey\\lib\\mingw\\tools\\install\\mingw64\\bin\\c++.exe -DSK_DEBUG=1 -DSK_OPENGL=1 -DSK_WINDOWS=1 -IC:/Users/jungl/dev/StakEngine/Engine/Source/Runtime/Platform/Win32/Public -IC:/Users/jungl/dev/StakEngine/Engine/Source/Runtime/Platform/OpenGL/Public -IC:/Users/jungl/dev/StakEngine/Engine/Source/Runtime/Core/Public -IC:/Users/jungl/dev/StakEngine/Engine/Source/Runtime/Renderer/Public -IC:/Users/jungl/dev/StakEngine/Engine/Source/Runtime/Platform/Manager/Public -g -std=gnu++20 -o Engine\\Source\\Runtime\\CMakeFiles\\StakRuntime.dir\\Renderer\\Private\\Renderer2D.cpp.obj -c C:\\Users\\jungl\\dev\\StakEngine\\Engine\\Source\\Runtime\\Renderer\\Private\\Renderer2D.cpp",
+  "file": "C:\\Users\\jungl\\dev\\StakEngine\\Engine\\Source\\Runtime\\Renderer\\Private\\Renderer2D.cpp",
+  "output": "Engine\\Source\\Runtime\\CMakeFiles\\StakRuntime.dir\\Renderer\\Private\\Renderer2D.cpp.obj"
+},
+{
+  "directory": "C:/Users/jungl/dev/StakEngine/Build/Debug",
+  "command": "C:\\ProgramData\\chocolatey\\lib\\mingw\\tools\\install\\mingw64\\bin\\c++.exe -DSK_DEBUG=1 -DSK_OPENGL=1 -DSK_WINDOWS=1 -IC:/Users/jungl/dev/StakEngine/Engine/Source/Runtime/Platform/Win32/Public -IC:/Users/jungl/dev/StakEngine/Engine/Source/Runtime/Platform/OpenGL/Public -IC:/Users/jungl/dev/StakEngine/Engine/Source/Runtime/Core/Public -IC:/Users/jungl/dev/StakEngine/Engine/Source/Runtime/Renderer/Public -IC:/Users/jungl/dev/StakEngine/Engine/Source/Runtime/Platform/Manager/Public -g -std=gnu++20 -o Engine\\Source\\Runtime\\CMakeFiles\\StakRuntime.dir\\Platform\\Win32\\Private\\Win32InputManager.cpp.obj -c C:\\Users\\jungl\\dev\\StakEngine\\Engine\\Source\\Runtime\\Platform\\Win32\\Private\\Win32InputManager.cpp",
+  "file": "C:\\Users\\jungl\\dev\\StakEngine\\Engine\\Source\\Runtime\\Platform\\Win32\\Private\\Win32InputManager.cpp",
+  "output": "Engine\\Source\\Runtime\\CMakeFiles\\StakRuntime.dir\\Platform\\Win32\\Private\\Win32InputManager.cpp.obj"
+},
+{
+  "directory": "C:/Users/jungl/dev/StakEngine/Build/Debug",
+  "command": "C:\\ProgramData\\chocolatey\\lib\\mingw\\tools\\install\\mingw64\\bin\\c++.exe -DSK_DEBUG=1 -DSK_OPENGL=1 -DSK_WINDOWS=1 -IC:/Users/jungl/dev/StakEngine/Engine/Source/Runtime/Platform/Win32/Public -IC:/Users/jungl/dev/StakEngine/Engine/Source/Runtime/Platform/OpenGL/Public -IC:/Users/jungl/dev/StakEngine/Engine/Source/Runtime/Core/Public -IC:/Users/jungl/dev/StakEngine/Engine/Source/Runtime/Renderer/Public -IC:/Users/jungl/dev/StakEngine/Engine/Source/Runtime/Platform/Manager/Public -g -std=gnu++20 -o Engine\\Source\\Runtime\\CMakeFiles\\StakRuntime.dir\\Platform\\Win32\\Private\\Win32Window.cpp.obj -c C:\\Users\\jungl\\dev\\StakEngine\\Engine\\Source\\Runtime\\Platform\\Win32\\Private\\Win32Window.cpp",
+  "file": "C:\\Users\\jungl\\dev\\StakEngine\\Engine\\Source\\Runtime\\Platform\\Win32\\Private\\Win32Window.cpp",
+  "output": "Engine\\Source\\Runtime\\CMakeFiles\\StakRuntime.dir\\Platform\\Win32\\Private\\Win32Window.cpp.obj"
+},
+{
+  "directory": "C:/Users/jungl/dev/StakEngine/Build/Debug",
+  "command": "C:\\ProgramData\\chocolatey\\lib\\mingw\\tools\\install\\mingw64\\bin\\c++.exe -DSK_DEBUG=1 -IC:/Users/jungl/dev/StakEngine/Engine/Source -IC:/Users/jungl/dev/StakEngine/Engine/Source/Runtime/Core/Public -IC:/Users/jungl/dev/StakEngine/Engine/Source/Runtime/Renderer/Public -IC:/Users/jungl/dev/StakEngine/Engine/Source/Runtime/Platform/Manager/Public -g -std=gnu++20 -o Engine\\Source\\Editor\\CMakeFiles\\StakEditor.dir\\TempMain.cpp.obj -c C:\\Users\\jungl\\dev\\StakEngine\\Engine\\Source\\Editor\\TempMain.cpp",
+  "file": "C:\\Users\\jungl\\dev\\StakEngine\\Engine\\Source\\Editor\\TempMain.cpp",
+  "output": "Engine\\Source\\Editor\\CMakeFiles\\StakEditor.dir\\TempMain.cpp.obj"
+},
+{
+  "directory": "C:/Users/jungl/dev/StakEngine/Build/Debug",
+  "command": "C:\\ProgramData\\chocolatey\\lib\\mingw\\tools\\install\\mingw64\\bin\\c++.exe -DSK_DEBUG=1 -IC:/Users/jungl/dev/StakEngine/Engine/Source -IC:/Users/jungl/dev/StakEngine/Engine/Source/Runtime/Core/Public -IC:/Users/jungl/dev/StakEngine/Engine/Source/Runtime/Renderer/Public -IC:/Users/jungl/dev/StakEngine/Engine/Source/Runtime/Platform/Manager/Public -g -std=gnu++20 -o Tests\\CMakeFiles\\UnitTests.dir\\UnitTests.cpp.obj -c C:\\Users\\jungl\\dev\\StakEngine\\Tests\\UnitTests.cpp",
+  "file": "C:\\Users\\jungl\\dev\\StakEngine\\Tests\\UnitTests.cpp",
+  "output": "Tests\\CMakeFiles\\UnitTests.dir\\UnitTests.cpp.obj"
+}
+]

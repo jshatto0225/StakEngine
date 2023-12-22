@@ -1,27 +1,15 @@
 #pragma once
 
-#include <array>
+#include "Window.h"
 
-#include "Types.h"
-
-class Renderer
+class Renderer final
 {
 public:
-    Renderer() = default;
-    virtual ~Renderer() {}
+    static void Init();
+    static void Shutdown();
+    static void AddWindow(Shared<Window> window);
+    static void RemoveWindow(Shared<Window> window);
 
-    virtual void Init(void* window) = 0;
-    virtual void Shutdown() = 0;
-    
-    virtual void Draw() = 0;
-    virtual void Clear() = 0;
-    virtual void SetClearColor() = 0;
-    virtual void AddWindow(void* window) = 0;
-    virtual void RemoveWindow(void* window) = 0;
-
-    virtual bool IsRunning() { return mRunning; };
-
-protected:
-    std::array<f32, 4> clearColor;
-    bool mRunning;
+private:
+    static bool mRunning;
 };

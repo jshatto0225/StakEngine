@@ -30,7 +30,6 @@ private:
     static bool sRunning;
     // TODO: Remove raw pointer
     static std::vector<ApplicationLayer*> sApplicationLayers;
-    static Unique<Window> sWindow;
-    static Unique<Renderer> sRenderer;
+    //static Shared<Window> sWindow;
     static Unique<InputManager> sInputManager;
 };

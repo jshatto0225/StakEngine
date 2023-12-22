@@ -28,26 +28,26 @@ void Logger::SetLevel(Level level)
 
     switch(level)
     {
-    case Level::SK_CRITICAL:
-    {
-        mLevel = "[CRITICAL]: ";
-    } break;
-    case Level::SK_ERROR:
-    {
-        mLevel = "[ERROR]: ";
-    } break;
-    case Level::SK_INFO:
-    {
-        mLevel = "[INFO]: ";
-    } break;
-    case Level::SK_TRACE:
-    {
-        mLevel = "[TRACE]: ";
-    } break;
-    case Level::SK_WARN:
-    {
-        mLevel = "[WARN]: ";
-    } break;
+        case Level::SK_CRITICAL:
+        {
+            mLevel = "[CRITICAL]: ";
+        } break;
+        case Level::SK_ERROR:
+        {
+            mLevel = "[ERROR]: ";
+        } break;
+        case Level::SK_INFO:
+        {
+            mLevel = "[INFO]: ";
+        } break;
+        case Level::SK_TRACE:
+        {
+            mLevel = "[TRACE]: ";
+        } break;
+        case Level::SK_WARN:
+        {
+            mLevel = "[WARN]: ";
+        } break;
     }
 }
 

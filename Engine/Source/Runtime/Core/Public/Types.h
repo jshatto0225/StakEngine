@@ -16,8 +16,6 @@ typedef uint32_t u32;
 typedef uint16_t u16;
 typedef uint8_t u8;
 
-// TODO: Rethink smart pointer names
-
 template<typename T>
 using Shared = std::shared_ptr<T>;
 

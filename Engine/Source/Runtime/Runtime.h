@@ -1,5 +1,16 @@
 #pragma once
 
+#include "Platform/Manager/Public/PlatformManager.h"
+#include "Renderer/Public/Buffer.h"
+#include "Renderer/Public/Camera.h"
+#include "Renderer/Public/RenderCommand.h"
+#include "Renderer/Public/Renderer.h"
+#include "Renderer/Public/Renderer2D.h"
+#include "Renderer/Public/RendererAPI.h"
+#include "Renderer/Public/Shader.h"
+#include "Renderer/Public/Texture.h"
+#include "Renderer/Public/VertexArray.h"
+
 #include "Core/Public/Types.h"
 #include "Core/Public/Window.h"
 #include "Core/Public/ApplicationLayer.h"
