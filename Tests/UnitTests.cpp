@@ -13,6 +13,28 @@ TEST_CASE("Test Log", "[Log]")
     REQUIRE_THROWS(SK_CORE_INFO("throws"));
 }
 
+TEST_CASE("Window Test", "[Window]")
+{
+    REQUIRE_NOTHROW(Application::Init());
+
+    Shared<Window> window = PlatformManager::NewWindow("TempWindow", 0, 0, 800, 450);
+    REQUIRE(window->IsOpen());
+    REQUIRE(window->GetWidth() == 800);
+    REQUIRE(window->GetHeight() == 450);
+    REQUIRE(window->GetAspect() == 16 / 9);
+    window->SetWidth(450);
+    REQUIRE(window->GetWidth() == 450);
+    REQUIRE(window->GetAspect() == 1);
+    window->SetHeight(800);
+    REQUIRE(window->GetHeight() == 800);
+    REQUIRE(window->GetAspect() == 9 / 16);
+    REQUIRE(window->GetId() == 1);
+    window->Close();
+    REQUIRE_FALSE(window->IsOpen());
+
+    REQUIRE_NOTHROW(Application::Shutdown());
+}
+
 TEST_CASE("Test Layers", "[ApplicationLayer]")
 {
     static bool layerStarted = false;
@@ -92,20 +114,4 @@ TEST_CASE("General Application Test", "[Application]")
     REQUIRE_NOTHROW(Application::Run());
     REQUIRE_NOTHROW(Application::Init());
     REQUIRE_NOTHROW(Application::Run());
-}
-
-TEST_CASE("Window Test", "[Window]")
-{
-    REQUIRE_NOTHROW(Application::Init());
-
-    Shared<Window> window = PlatformManager::NewWindow("TempWindow", 0, 0, 800, 450);
-    REQUIRE(window->GetWidth() == 800);
-    REQUIRE(window->GetHeight() == 450);
-    REQUIRE(window->GetAspect() == 16 / 9);
-    window->SetWidth(450);
-    REQUIRE(window->GetWidth() == 450);
-    REQUIRE(window->GetAspect() == 1);
-    window->Close();
-
-    REQUIRE_NOTHROW(Application::Shutdown());
 }
