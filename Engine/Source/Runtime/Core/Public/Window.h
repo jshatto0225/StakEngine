@@ -12,68 +12,26 @@ public:
     Window();
     ~Window() {}
 
-    inline virtual void SetX(i32 x) final
-    {
-        mX = x;
-        SetSizeAndPos(x, mY, mWidth, mHeight);
-    }
+    virtual void SetX(i32 x) = 0;
+    virtual void SetY(i32 y) = 0;
+    virtual void SetWidth(i32 width) = 0;
+    virtual void SetHeight(i32 height) = 0;
+    virtual i32 GetWidth() = 0;
+    virtual i32 GetHeight() = 0;
+    virtual i32 GetX() = 0;
+    virtual i32 GetY() = 0;
+    virtual f32 GetAspect() = 0;
 
-    inline virtual void SetY(i32 y) final
-    {
-        mY = y;
-        SetSizeAndPos(mX, y, mWidth, mHeight);
-    }
+    virtual bool IsOpen() = 0;
+    virtual u64 GetId() final;
 
-    inline virtual void SetWidth(i32 width) final 
-    { 
-        mWidth = width; 
-        SetSizeAndPos(mX, mY, width, mHeight); 
-    }
-
-    inline virtual void SetHeight(i32 height) final
-    {
-        mHeight = height;
-        SetSizeAndPos(mX, mY, mWidth, height);
-    }
-
-    inline virtual i32 GetWidth() final 
-    {
-        return mWidth;
-    }
-
-    inline virtual i32 GetHeight() final 
-    {
-        return mHeight;
-    }
-
-    inline virtual f32 GetAspect() final 
-    {
-        return mWidth / mHeight;
-    }
-
-    inline virtual bool IsOpen() final
-    { 
-        return mOpen;
-    }
-    inline virtual u64 GetId() final 
-    { 
-        return mId;
-    }
-
-    virtual void GenerateEvent(EventType e) final;
 
     virtual void SetSizeAndPos(i32 x, i32 y, i32 width, i32 height) = 0;
     virtual void Update() = 0;
     virtual void* GetHandle() = 0;
     virtual void Close() = 0;
 
-protected:
-    bool mOpen;
-    std::string mName;
-    i32 mX;
-    i32 mY;
-    i32 mWidth;
-    i32 mHeight;
+    virtual void GenerateEvent(EventType e) final;
 
 private:
     u64 mId;

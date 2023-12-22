@@ -26,8 +26,13 @@ void Window::GenerateEvent(EventType e)
         } break;
         case WINDOW_RECT_CHANGED:
         {
-            WindowRectChangedEvent event(GetId(), mWidth, mHeight, mX, mY);
+            WindowRectChangedEvent event(GetId(), GetWidth(), GetHeight(), GetX(), GetY());
             Application::OnEvent(event);
         } break;
     }
+}
+
+u64 Window::GetId()
+{
+    return mId;
 }

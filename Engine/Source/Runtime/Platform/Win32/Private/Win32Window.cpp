@@ -114,6 +114,51 @@ void Win32Window::SetSizeAndPos(i32 x, i32 y, i32 width, i32 height)
     GenerateEvent(WINDOW_RECT_CHANGED);
 }
 
+void Win32Window::SetX(i32 x)
+{
+    SetSizeAndPos(x, mY, mWidth, mHeight);
+}
+
+void Win32Window::SetY(i32 y)
+{
+    SetSizeAndPos(mX, y, mWidth, mHeight);
+}
+
+void Win32Window::SetWidth(i32 width)
+{
+    SetSizeAndPos(mX, mY, width, mHeight);
+}
+
+void Win32Window::SetHeight(i32 height)
+{
+    SetSizeAndPos(mX, mY, mWidth, height);
+}
+
+i32 Win32Window::GetWidth()
+{
+    return mWidth;
+}
+
+i32 Win32Window::GetHeight()
+{
+    return mHeight;
+}
+
+i32 Win32Window::GetX()
+{
+    return mX;
+}
+
+i32 Win32Window::GetY()
+{
+    return mY;
+}
+
+f32 Win32Window::GetAspect()
+{
+    return (f32)mWidth / (f32)mHeight;
+}
+
 void Win32Window::Close()
 {
     if(mOpen)
@@ -123,4 +168,14 @@ void Win32Window::Close()
         DestroyWindow(mWindowHandle);
         UnregisterClassA(mName.c_str(), mInstanceHandle);
     }
+}
+
+void* Win32Window::GetHandle()
+{
+    return (void*)mWindowHandle;
+}
+
+bool Win32Window::IsOpen()
+{
+    return mOpen;
 }
