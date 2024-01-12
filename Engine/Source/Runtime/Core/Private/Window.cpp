@@ -3,6 +3,7 @@
 #include "Event.h"
 #include "Application.h"
 #include "Log.h"
+#include "Renderer.h"
 
 u64 Window::sCurrentId = 0;
 

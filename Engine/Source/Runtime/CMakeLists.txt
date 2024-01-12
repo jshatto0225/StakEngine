@@ -48,6 +48,8 @@ endif()
 
 target_include_directories(StakRuntime PUBLIC Core/Public)
 target_include_directories(StakRuntime PUBLIC Renderer/Public)
+target_include_directories(StakRuntime PUBLIC Math/Vector/Public)
+target_include_directories(StakRuntime PUBLIC Math/Matrix/Public)
 target_include_directories(StakRuntime PUBLIC Platform/Manager/Public)
 
 target_compile_definitions(StakRuntime PUBLIC $<$<CONFIG:Debug>: SK_DEBUG=1>)

@@ -11,7 +11,7 @@ Unique<InputManager> Application::sInputManager;
 void Application::Init()
 {
     Log::Init();
-    //Renderer::Init();
+    Renderer::Init();
 
     // TODO: No Windows By Default
     //sWindow = PlatformManager::NewWindow("TempWindow", 0, 0, 800, 450);
@@ -73,7 +73,7 @@ void Application::Shutdown()
             delete layer;
         }
         sApplicationLayers.clear();
-        //Renderer::Shutdown();
+        Renderer::Shutdown();
 
         // TODO: No Windows By Default
         //if(sWindow->IsOpen())

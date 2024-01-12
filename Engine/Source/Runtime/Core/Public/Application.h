@@ -25,7 +25,7 @@ public:
                       "All layers must inherit from ApplicationLayer");
         sApplicationLayers.push_back(new LayerType);
     }
-
+    
 private:
     static bool sRunning;
     // TODO: Remove raw pointer
@@ -33,3 +33,4 @@ private:
     //static Shared<Window> sWindow;
     static Unique<InputManager> sInputManager;
 };
+

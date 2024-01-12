@@ -1,5 +1,7 @@
 #include "PlatformManager.h"
 
+#include "Renderer.h"
+
 #ifdef SK_WINDOWS
 #include "Win32Window.h"
 #define PLATFORM_WINDOW Win32Window
@@ -41,7 +43,8 @@
 
 Shared<Window> PlatformManager::NewWindow(const std::string& name, i32 x, i32 y, i32 width, i32 height)
 {
-    return MakeShared<PLATFORM_WINDOW>(name, x, y, width, height);
+    Shared<Window> window = MakeShared<PLATFORM_WINDOW>(name, x, y, width, height);
+    return window;
 }
 
 Unique<InputManager> PlatformManager::NewInputManager()

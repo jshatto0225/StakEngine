@@ -1,5 +1,14 @@
 #pragma once
 
+#include "Math/Vector/Public/Vec1Types.h"
+#include "Math/Vector/Public/Vec2Types.h"
+#include "Math/Vector/Public/Vec3Types.h"
+#include "Math/Vector/Public/Vec4Types.h"
+
+#include "Math/Matrix/Public/Mat2x2Types.h"
+#include "Math/Matrix/Public/Mat3x3Types.h"
+#include "Math/Matrix/Public/Mat4x4Types.h"
+
 #include "Platform/Manager/Public/PlatformManager.h"
 #include "Renderer/Public/Buffer.h"
 #include "Renderer/Public/Camera.h"
