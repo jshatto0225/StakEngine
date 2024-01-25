@@ -12,6 +12,10 @@
 #endif
 
 #ifdef SK_OPENGL
+#ifdef SK_WINDOWS
+#include "Win32GLContext.h"
+#define PLATFORM_GL_CONTEXT Win32GLContext
+#endif
 #include "OpenGLRendererAPI.h"
 #define PLATFORM_RENDERER_API OpenGLRendererAPI
 #include "OpenGLTexture.h"
@@ -41,10 +45,9 @@
 #error Platform Not Supported
 #endif
 
-Shared<Window> PlatformManager::NewWindow(const std::string& name, i32 x, i32 y, i32 width, i32 height)
+Unique<Window> PlatformManager::NewWindow(const std::string& name, i32 x, i32 y, i32 width, i32 height)
 {
-    Shared<Window> window = MakeShared<PLATFORM_WINDOW>(name, x, y, width, height);
-    return window;
+    return MakeUnique<PLATFORM_WINDOW>(name, x, y, width, height);
 }
 
 Unique<InputManager> PlatformManager::NewInputManager()
@@ -87,3 +90,16 @@ Shared<Shader> PlatformManager::NewShader(const std::string& vs, const std::stri
     return MakeShared<PLATFORM_SHADER>(vs, fs);
 }
 
+void KillPlatformWindowManager()
+{
+#ifdef WIN32
+    PostQuitMessage(0);
+#endif
+}
+
+#ifdef SK_OPENGL
+Unique<GLContext> PlatformManager::NewContext(u64 window)
+{
+    return MakeUnique<PLATFORM_GL_CONTEXT>(window);
+}
+#endif

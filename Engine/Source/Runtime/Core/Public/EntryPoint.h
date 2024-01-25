@@ -1,13 +1,21 @@
 #pragma once
 
+#include <optional>
+#include <functional>
+
 #include "Application.h"
 #include "Types.h"
 #include "Log.h"
 
+extern void ExternInit();
+
 i32 StakMain()
 {
+    Log::Init();
+    ExternInit();
     Application::Init();
     Application::Run();
+    Log::Shutdown();
     return 0;
 }
 
@@ -29,4 +37,6 @@ i32 StakMain()
             }
         #endif
     #endif
+#else
+void ExternInit() {}
 #endif

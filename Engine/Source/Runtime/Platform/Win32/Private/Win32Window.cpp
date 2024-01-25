@@ -9,7 +9,7 @@ LRESULT CALLBACK Win32WindowCallback(HWND windowHandle, u32 msg, WPARAM wParam, 
     Win32Window* win32Window = (Win32Window*)GetWindowLongPtrA(windowHandle, GWLP_USERDATA);
     if (win32Window)
     {
-        switch (msg)
+        switch(msg)
         {
         case WM_CLOSE:
         {
@@ -84,34 +84,35 @@ Win32Window::Win32Window(const std::string& name, i32 x, i32 y, i32 width, i32 h
 
 Win32Window::~Win32Window()
 {
-    if (mOpen) {
+    if(mOpen) {
         Close();
     }
 }
 
 void Win32Window::Update()
 {
-    MSG msg = {};
-    while (PeekMessageA(&msg, nullptr, 0, 0, PM_REMOVE))
+    if(mOpen)
     {
-        TranslateMessage(&msg);
-        DispatchMessageA(&msg);
+        MSG msg = {};
+        while(PeekMessageA(&msg, nullptr, 0, 0, PM_REMOVE))
+        {
+            TranslateMessage(&msg);
+            DispatchMessageA(&msg);
+        }
     }
-}
-
-void KillWindowManager()
-{
-    PostQuitMessage(0);
 }
 
 void Win32Window::SetSizeAndPos(i32 x, i32 y, i32 width, i32 height)
 {
-    mX = x;
-    mY = y;
-    mWidth = width;
-    mHeight = height;
-    SetWindowPos(mWindowHandle, 0, x, y, width, height, 0);
-    GenerateEvent(WINDOW_RECT_CHANGED);
+    if(mOpen)
+    {
+        mX = x;
+        mY = y;
+        mWidth = width;
+        mHeight = height;
+        SetWindowPos(mWindowHandle, 0, x, y, width, height, 0);
+        GenerateEvent(WINDOW_RECT_CHANGED);
+    }
 }
 
 void Win32Window::SetX(i32 x)

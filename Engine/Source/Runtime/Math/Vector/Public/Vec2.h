@@ -36,7 +36,8 @@ struct Vec<T, 2>
     template<typename U1, typename U2>
     Vec(U1 val1, U2 val2);
 
-    T& operator[](u64 i);
+    T& operator()(u32 i);
+    T operator()(u32 i) const;
 
     template<typename U>
     Vec<T, 2>& operator=(const Vec<U, 2>& other);
@@ -67,8 +68,8 @@ struct Vec<T, 2>
 
     Vec<T, 2>& operator++();
     Vec<T, 2>& operator--();
-    Vec<T, 2>& operator++(i32);
-    Vec<T, 2>& operator--(i32);
+    Vec<T, 2> operator++(i32);
+    Vec<T, 2> operator--(i32);
 };
 
 template<typename T, typename U>

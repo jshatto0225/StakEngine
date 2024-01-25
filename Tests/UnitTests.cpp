@@ -53,8 +53,8 @@ TEST_CASE("Test Vec1", "[Vec1]")
     REQUIRE(v.x == v.r);
     REQUIRE(v.x == v.s);
     REQUIRE(v.x == v.data[0]);
-    REQUIRE(v.x == v[0]);
-    REQUIRE_THROWS(v[1]);
+    REQUIRE(v.x == v(0));
+    REQUIRE_THROWS(v(1));
 } // End Test Vec1
 
 TEST_CASE("Test Vec2", "[Vec2]")
@@ -131,14 +131,14 @@ TEST_CASE("Test Vec2", "[Vec2]")
     REQUIRE(v.x == v.r);
     REQUIRE(v.x == v.s);
     REQUIRE(v.x == v.data[0]);
-    REQUIRE(v.x == v[0]);
+    REQUIRE(v.x == v(0));
 
     REQUIRE(v.y == v.g);
     REQUIRE(v.y == v.t);
     REQUIRE(v.y == v.data[1]);
-    REQUIRE(v.y == v[1]);
+    REQUIRE(v.y == v(1));
 
-    REQUIRE_THROWS(v[2]);
+    REQUIRE_THROWS(v(2));
 } // End Test Vec2
 
 TEST_CASE("Test Vec3", "[Vec3]")
@@ -252,19 +252,19 @@ TEST_CASE("Test Vec3", "[Vec3]")
     REQUIRE(v.x == v.r);
     REQUIRE(v.x == v.s);
     REQUIRE(v.x == v.data[0]);
-    REQUIRE(v.x == v[0]);
+    REQUIRE(v.x == v(0));
 
     REQUIRE(v.y == v.g);
     REQUIRE(v.y == v.t);
     REQUIRE(v.y == v.data[1]);
-    REQUIRE(v.y == v[1]);
+    REQUIRE(v.y == v(1));
 
     REQUIRE(v.z == v.b);
     REQUIRE(v.z == v.p);
     REQUIRE(v.z == v.data[2]);
-    REQUIRE(v.z == v[2]);
+    REQUIRE(v.z == v(2));
 
-    REQUIRE_THROWS(v[3]);
+    REQUIRE_THROWS(v(3));
 } // End Test Vec3
 
 TEST_CASE("Test Vec4", "[Vec4]")
@@ -403,24 +403,24 @@ TEST_CASE("Test Vec4", "[Vec4]")
     REQUIRE(v.x == v.r);
     REQUIRE(v.x == v.s);
     REQUIRE(v.x == v.data[0]);
-    REQUIRE(v.x == v[0]);
+    REQUIRE(v.x == v(0));
 
     REQUIRE(v.y == v.g);
     REQUIRE(v.y == v.t);
     REQUIRE(v.y == v.data[1]);
-    REQUIRE(v.y == v[1]);
+    REQUIRE(v.y == v(1));
 
     REQUIRE(v.z == v.b);
     REQUIRE(v.z == v.p);
     REQUIRE(v.z == v.data[2]);
-    REQUIRE(v.z == v[2]);
+    REQUIRE(v.z == v(2));
 
     REQUIRE(v.w == v.a);
     REQUIRE(v.w == v.q);
     REQUIRE(v.w == v.data[3]);
-    REQUIRE(v.w == v[3]);
+    REQUIRE(v.w == v(3));
 
-    REQUIRE_THROWS(v[4]);
+    REQUIRE_THROWS(v(4));
 } // End Test Vec4
 
 TEST_CASE("Test Mat2x2", "[Mat2x2]")
@@ -1194,7 +1194,7 @@ TEST_CASE("Test Mat4x4", "[Mat4x4]")
     REQUIRE((2 / m)(3, 0) == 0);
     REQUIRE((2 / m)(3, 1) == 0);
     REQUIRE((2 / m)(3, 2) == 0);
-    REQUIRE((2 / m)(3, 2) == 0);
+    REQUIRE((2 / m)(3, 3) == 0);
 } // End Test Mat4x4
 
 
@@ -1209,7 +1209,7 @@ TEST_CASE("Test Log", "[Log]")
 
 TEST_CASE("Test Window", "[Window]")
 {
-    REQUIRE_NOTHROW(Application::Init());
+    Log::Init();
 
     Shared<Window> window = PlatformManager::NewWindow("TempWindow", 0, 0, 800, 450);
     REQUIRE(window->IsOpen());
@@ -1238,7 +1238,7 @@ TEST_CASE("Test Window", "[Window]")
     REQUIRE(window->GetY() == 500);
     REQUIRE_FALSE(window->IsOpen());
 
-    REQUIRE_NOTHROW(Application::Shutdown());
+    Log::Shutdown();
 } // End Test Window
 
 TEST_CASE("General Application Test", "[Application]")
@@ -1252,11 +1252,13 @@ TEST_CASE("General Application Test", "[Application]")
         }
     };
 
+    Log::Init();
     REQUIRE_NOTHROW(Application::RegisterLayer<ShutdownTestLayer>());
     REQUIRE_NOTHROW(Application::Shutdown());
     REQUIRE_NOTHROW(Application::Run());
     REQUIRE_NOTHROW(Application::Init());
     REQUIRE_NOTHROW(Application::Run());
+    Log::Shutdown();
 } // End General Application Test
 
 TEST_CASE("Test Layers", "[ApplicationLayer]")
@@ -1285,12 +1287,14 @@ TEST_CASE("Test Layers", "[ApplicationLayer]")
         }
     };
 
+    Log::Init();
     REQUIRE_NOTHROW(Application::RegisterLayer<AppTestLayer>());
     REQUIRE_NOTHROW(Application::Init());
     REQUIRE_NOTHROW(Application::Run());
     REQUIRE(layerStarted == true);
     REQUIRE(layerEnded == true);
     REQUIRE(layerUpdated == true);
+    Log::Shutdown();
 } // End Test Layers
 
 TEST_CASE("Test Event", "[Application::OnEvent]")
@@ -1316,8 +1320,10 @@ TEST_CASE("Test Event", "[Application::OnEvent]")
         }
     };
 
+    Log::Init();
     REQUIRE_NOTHROW(Application::RegisterLayer<EventTestLayer>());
     REQUIRE_NOTHROW(Application::Init());
     REQUIRE_NOTHROW(Application::Run());
     REQUIRE(eventRecieved == true);
+    Log::Shutdown();
 } // End Test Event

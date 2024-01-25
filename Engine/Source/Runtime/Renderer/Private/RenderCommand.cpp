@@ -16,24 +16,24 @@ void RenderCommand::Shutdown()
     sRendererAPI->Shutdown();
 }
 
-void RenderCommand::AddWindow(const Shared<Window> window)
+void RenderCommand::AddWindow(u64 window)
 {
     sRendererAPI->AddWindow(window);
 }
 
-void RenderCommand::RemoveWindow(const Shared<Window> window)
+void RenderCommand::RemoveWindow(u64 window)
 {
     sRendererAPI->RemoveWindow(window);
 }
 
-void RenderCommand::SetViewport(u32 x, u32 y, u32 width, u32 height)
+void RenderCommand::SetViewport(const Vec4u& viewport)
 {
-    sRendererAPI->SetViewport(x, y, width, height);
+    sRendererAPI->SetViewport(viewport);
 }
 
-void RenderCommand::SetClearColor(f32 r, f32 g, f32 b, f32 a)
+void RenderCommand::SetClearColor(const Vec4f& color)
 {
-    sRendererAPI->SetClearColor(r, g, b, a);
+    sRendererAPI->SetClearColor(color);
 }
 
 void RenderCommand::Clear()
@@ -54,4 +54,9 @@ void RenderCommand::DrawLines(const Shared<VertexArray> vao, u32 count)
 void RenderCommand::SetLineWidth(f32 width)
 {
     sRendererAPI->SetLineWidth(width);
+}
+
+void RenderCommand::MakeContextCurrent(u64 window)
+{
+    sRendererAPI->MakeContextCurrent(window);
 }

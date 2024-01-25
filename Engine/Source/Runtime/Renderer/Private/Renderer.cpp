@@ -8,7 +8,6 @@ bool Renderer::mRunning;
 void Renderer::Init()
 {
     RenderCommand::Init();
-    Renderer2D::Init();
     mRunning = true;
 }
 
@@ -22,12 +21,18 @@ void Renderer::Shutdown()
     }
 }
 
-void Renderer::AddWindow(Shared<Window> window)
+void Renderer::AddWindow(u64 window)
 {
     RenderCommand::AddWindow(window);
 }
 
-void Renderer::RemoveWindow(Shared<Window> window)
+void Renderer::RemoveWindow(u64 window)
 {
     RenderCommand::RemoveWindow(window);
+}
+
+void Renderer::MakeContextCurrent(u64 window)
+{
+    RenderCommand::MakeContextCurrent(window);
+    Renderer2D::Init();
 }

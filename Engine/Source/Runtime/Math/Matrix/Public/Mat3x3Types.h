@@ -1,4 +1,8 @@
+#pragma once
+
 #include "Mat3x3.h"
+
+#include "Types.h"
 
 typedef Mat<f32, 3, 3> Mat3;
 typedef Mat<f32, 3, 3> Mat3f;

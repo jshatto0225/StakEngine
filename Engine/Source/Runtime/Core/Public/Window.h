@@ -37,5 +37,3 @@ private:
     u64 mId;
     static u64 sCurrentId;
 };
-
-void KillWindowManager();

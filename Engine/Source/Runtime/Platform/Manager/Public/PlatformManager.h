@@ -6,11 +6,15 @@
 #include "RendererAPI.h"
 #include "Texture.h"
 
+#ifdef SK_OPENGL
+#include "GLContext.h"
+#endif
+
 
 class PlatformManager final
 {
 public:
-    static Shared<Window> NewWindow(const std::string& name, i32 x, i32 y, i32 width, i32 height);
+    static Unique<Window> NewWindow(const std::string& name, i32 x, i32 y, i32 width, i32 height);
     static Unique<InputManager> NewInputManager();
     static Shared<RendererAPI> NewRendererAPI();
     static Shared<VertexArray> NewVertexArray();
@@ -19,4 +23,9 @@ public:
     static Shared<Shader> NewShader(const std::string& vs, const std::string& fs);
     static Shared<Texture> NewTexture(TextureSpecification textureSpecification);
     static Shared<Texture2D> NewTexture2D(TextureSpecification textureSpecification);
+    static void KillPlatformWindowManager();
+
+#ifdef SK_OPENGL
+    static Unique<GLContext> NewContext(u64 window);
+#endif
 };

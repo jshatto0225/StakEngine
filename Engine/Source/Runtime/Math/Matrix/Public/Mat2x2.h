@@ -33,6 +33,7 @@ struct Mat<T, 2, 2>
     Mat(const Mat<U, 2, 2>& other);
 
     T& operator()(u64 r, u64 c);
+    T operator()(u64 r, u64 c) const;
 
     template<typename U>
     Mat<T, 2, 2>& operator=(const Mat<U, 2, 2>& other);
@@ -56,9 +57,9 @@ struct Mat<T, 2, 2>
     Mat<T, 2, 2>& operator/=(U val);
 
     Mat<T, 2, 2>& operator++();
-    Mat<T, 2, 2>& operator++(i32);
+    Mat<T, 2, 2> operator++(i32);
     Mat<T, 2, 2>& operator--();
-    Mat<T, 2, 2>& operator--(i32);
+    Mat<T, 2, 2> operator--(i32);
 };
 
 template<typename T, typename U>

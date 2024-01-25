@@ -1,4 +1,8 @@
+#pragma once
+
 #include "Mat2x2.h"
+
+#include "Types.h"
 
 typedef Mat<f32, 2, 2> Mat2;
 typedef Mat<f32, 2, 2> Mat2f;

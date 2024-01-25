@@ -1,4 +1,8 @@
+#pragma once
+
 #include "Vec4.h"
+
+#include "Types.h"
 
 typedef Vec<f32, 4> Vec4;
 typedef Vec<f32, 4> Vec4f;

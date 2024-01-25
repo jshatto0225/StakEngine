@@ -27,4 +27,5 @@
 #include "Core/Public/Event.h"
 #include "Core/Public/Log.h"
 #include "Core/Public/InputManager.h"
+#include "Core/Public/WindowManager.h"
 #include "Core/Public/EntryPoint.h"

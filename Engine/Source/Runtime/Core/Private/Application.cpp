@@ -2,21 +2,16 @@
 
 #include "Log.h"
 #include "PlatformManager.h"
+#include "WindowManager.h"
 
 bool Application::sRunning;
 std::vector<ApplicationLayer*> Application::sApplicationLayers;
-//Shared<Window> Application::sWindow;
 Unique<InputManager> Application::sInputManager;
 
 void Application::Init()
 {
-    Log::Init();
+    WindowManager::Init();
     Renderer::Init();
-
-    // TODO: No Windows By Default
-    //sWindow = PlatformManager::NewWindow("TempWindow", 0, 0, 800, 450);
-    //Renderer::AddWindow(sWindow);
-
     sInputManager = PlatformManager::NewInputManager();
     sRunning = true;
 
@@ -30,34 +25,40 @@ void Application::Run()
 {
     while(sRunning)
     {
-        //sWindow->Update();
         for(ApplicationLayer* layer : sApplicationLayers)
         {
             layer->Update();
         }
+        WindowManager::Update();
     }
 }
 
 void Application::OnEvent(Event& e)
 {
-    for(ApplicationLayer* layer : sApplicationLayers)
+    if(sRunning)
     {
-        layer->OnEvent(e);
-    }
+        for(ApplicationLayer* layer : sApplicationLayers)
+        {
+            layer->OnEvent(e);
+            // TODO: wierd way to prevent function from continuing after shutdown
+            // Implement shutdown request or something
+            // Application::RequestShutdown() { mRunning = false; }
+            // Shut down on next loop
+            // Or just handle logging in the entry point (Doing this for now)
+            if(!sRunning)
+            {
+                return;
+            }
+        }
 
-    switch(e.type)
-    {
-        case WINDOW_CLOSE:
+        switch(e.type)
         {
-            WindowCloseEvent* windowCloseEvent = (WindowCloseEvent*)&e;
-            //if(windowCloseEvent->windowId == sWindow->GetId() && sRunning)
-            //{
-                //Shutdown();
-            //}
-        } break;
-        default:
-        {
-        } break;
+            case WINDOW_CLOSE:
+            {
+                WindowCloseEvent* wce = (WindowCloseEvent*)&e;
+                WindowManager::CloseWindow(wce->windowId);
+            } break;
+        }
     }
 }
 
@@ -74,14 +75,6 @@ void Application::Shutdown()
         }
         sApplicationLayers.clear();
         Renderer::Shutdown();
-
-        // TODO: No Windows By Default
-        //if(sWindow->IsOpen())
-        //{
-            //sWindow->Close();
-        //}
-
-        KillWindowManager();
-        Log::Shutdown();
+        WindowManager::Shutdown();
     }
 }

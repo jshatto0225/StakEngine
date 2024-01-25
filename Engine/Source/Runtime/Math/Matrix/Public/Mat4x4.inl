@@ -85,6 +85,16 @@ T& Mat<T, 4, 4>::operator()(u64 r, u64 c)
 }
 
 template<typename T>
+T Mat<T, 4, 4>::operator()(u64 r, u64 c) const
+{
+    if(r > 3 || r < 0 || c > 3 || c < 0)
+    {
+        throw std::invalid_argument("ERROR: Index out of range.");
+    }
+    return data[r + c * colSize];
+}
+
+template<typename T>
 template<typename U>
 Mat<T, 4, 4>& Mat<T, 4, 4>::operator=(const Mat<U, 4, 4>& other)
 {
@@ -268,7 +278,7 @@ Mat<T, 4, 4>& Mat<T, 4, 4>::operator++()
 }
 
 template<typename T>
-Mat<T, 4, 4>& Mat<T, 4, 4>::operator++(i32)
+Mat<T, 4, 4> Mat<T, 4, 4>::operator++(i32)
 {
     Mat<T, 4, 4> ret(*this);
     ++*this;
@@ -298,7 +308,7 @@ Mat<T, 4, 4>& Mat<T, 4, 4>::operator--()
 }
 
 template<typename T>
-Mat<T, 4, 4>& Mat<T, 4, 4>::operator--(i32)
+Mat<T, 4, 4> Mat<T, 4, 4>::operator--(i32)
 {
     Mat<T, 4, 4> ret(*this);
     --*this;

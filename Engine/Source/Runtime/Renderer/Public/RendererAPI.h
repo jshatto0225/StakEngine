@@ -7,6 +7,7 @@
 #include "Buffer.h"
 #include "VertexArray.h"
 #include "Shader.h"
+#include "Vec4Types.h"
 
 class RendererAPI
 {
@@ -21,8 +22,9 @@ public:
     virtual void DrawLines(const Shared<VertexArray> vao, u32 count) = 0;
     virtual void SetLineWidth(f32 width) = 0;
     virtual void Clear() = 0;
-    virtual void SetClearColor(f32 r, f32 g, f32 b, f32 a) = 0;
-    virtual void SetViewport(u32 x, u32 y, u32 width, u32 height) = 0;
-    virtual void AddWindow(const Shared<Window> window) = 0;
-    virtual void RemoveWindow(const Shared<Window> window) = 0;
+    virtual void SetClearColor(const Vec4f& color) = 0;
+    virtual void SetViewport(const Vec4u& viewport) = 0;
+    virtual void AddWindow(u64 window) = 0;
+    virtual void RemoveWindow(u64 window) = 0;
+    virtual void MakeContextCurrent(u64 window) = 0;
 };

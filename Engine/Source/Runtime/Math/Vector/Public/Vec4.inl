@@ -33,7 +33,15 @@ inline Vec<T, 4>::Vec(U1 val1, U2 val2, U3 val3, U4 val4)
 }
 
 template<typename T>
-inline T& Vec<T, 4>::operator[](u64 i)
+inline T& Vec<T, 4>::operator()(u32 i)
+{
+    if(i > 3 || i < 0)
+        throw std::invalid_argument("ERROR: Subsript out of range");
+    return data[i];
+}
+
+template<typename T>
+inline T Vec<T, 4>::operator()(u32 i) const
 {
     if(i > 3 || i < 0)
         throw std::invalid_argument("ERROR: Subsript out of range");
@@ -160,7 +168,7 @@ inline Vec<T, 4>& Vec<T, 4>::operator--()
 }
 
 template<typename T>
-inline Vec<T, 4>& Vec<T, 4>::operator++(i32)
+inline Vec<T, 4> Vec<T, 4>::operator++(i32)
 {
     Vec<T, 4> result(*this);
     ++*this;
@@ -168,7 +176,7 @@ inline Vec<T, 4>& Vec<T, 4>::operator++(i32)
 }
 
 template<typename T>
-inline Vec<T, 4>& Vec<T, 4>::operator--(i32)
+inline Vec<T, 4> Vec<T, 4>::operator--(i32)
 {
     Vec<T, 4> result(*this);
     --*this;
