@@ -31,5 +31,6 @@ private:
     // TODO: Remove raw pointer
     static std::vector<ApplicationLayer*> sApplicationLayers;
     static Unique<InputManager> sInputManager;
+    static Unique<Window> sWindow;
 };
 

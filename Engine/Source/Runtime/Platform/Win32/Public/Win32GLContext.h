@@ -12,13 +12,14 @@
 class Win32GLContext : public GLContext
 {
 public:
-    Win32GLContext(u64 window);
+    Win32GLContext(const Unique<Window>& window);
+    ~Win32GLContext();
 
     void MakeCurrent() override;
     
 private:
     HDC mDeviceContext;
     HGLRC mGLRenderingContext;
-    u64 mWindow;
+    HWND mWindowHandle;
 };
 

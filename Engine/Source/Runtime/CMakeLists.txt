@@ -55,3 +55,4 @@ target_include_directories(StakRuntime PUBLIC Platform/Manager/Public)
 
 target_compile_definitions(StakRuntime PUBLIC $<$<CONFIG:Debug>: SK_DEBUG=1>)
 target_compile_definitions(StakRuntime PUBLIC $<$<CONFIG:Release>: SK_RELEASE=1>)
+target_compile_definitions(StakRuntime PUBLIC "SOURCE_DIR=\"${CMAKE_SOURCE_DIR}\"")

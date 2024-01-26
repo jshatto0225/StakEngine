@@ -2,16 +2,16 @@
 
 #include "Log.h"
 #include "PlatformManager.h"
-#include "WindowManager.h"
 
 bool Application::sRunning;
 std::vector<ApplicationLayer*> Application::sApplicationLayers;
 Unique<InputManager> Application::sInputManager;
+Unique<Window> Application::sWindow;
 
 void Application::Init()
 {
-    WindowManager::Init();
-    Renderer::Init();
+    sWindow = PlatformManager::NewWindow("Stak Applciation", 100, 100, 1280, 720);
+    Renderer::Init(sWindow);
     sInputManager = PlatformManager::NewInputManager();
     sRunning = true;
 
@@ -25,11 +25,12 @@ void Application::Run()
 {
     while(sRunning)
     {
+        sWindow->Update();
+
         for(ApplicationLayer* layer : sApplicationLayers)
         {
             layer->Update();
         }
-        WindowManager::Update();
     }
 }
 
@@ -40,15 +41,6 @@ void Application::OnEvent(Event& e)
         for(ApplicationLayer* layer : sApplicationLayers)
         {
             layer->OnEvent(e);
-            // TODO: wierd way to prevent function from continuing after shutdown
-            // Implement shutdown request or something
-            // Application::RequestShutdown() { mRunning = false; }
-            // Shut down on next loop
-            // Or just handle logging in the entry point (Doing this for now)
-            if(!sRunning)
-            {
-                return;
-            }
         }
 
         switch(e.type)
@@ -56,7 +48,10 @@ void Application::OnEvent(Event& e)
             case WINDOW_CLOSE:
             {
                 WindowCloseEvent* wce = (WindowCloseEvent*)&e;
-                WindowManager::CloseWindow(wce->windowId);
+                if(wce->windowId == sWindow->GetId())
+                {
+                    Application::Shutdown();
+                }
             } break;
         }
     }
@@ -75,6 +70,6 @@ void Application::Shutdown()
         }
         sApplicationLayers.clear();
         Renderer::Shutdown();
-        WindowManager::Shutdown();
+        sWindow.reset();
     }
 }

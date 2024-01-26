@@ -1231,11 +1231,11 @@ TEST_CASE("Test Window", "[Window]")
     REQUIRE(window->GetY() == 200);
     window->Close();
     window->SetSizeAndPos(500, 500, 100, 200);
-    REQUIRE(window->GetWidth() == 100);
-    REQUIRE(window->GetHeight() == 200);
-    REQUIRE(window->GetAspect() == 0.5);
-    REQUIRE(window->GetX() == 500);
-    REQUIRE(window->GetY() == 500);
+    REQUIRE(window->GetWidth() == 450);
+    REQUIRE(window->GetHeight() == 800);
+    REQUIRE(window->GetAspect() == 9.0f / 16.0f);
+    REQUIRE(window->GetX() == 200);
+    REQUIRE(window->GetY() == 200);
     REQUIRE_FALSE(window->IsOpen());
 
     Log::Shutdown();

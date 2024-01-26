@@ -5,25 +5,15 @@
 
 Shared<RendererAPI> RenderCommand::sRendererAPI;
 
-void RenderCommand::Init()
+void RenderCommand::Init(const Unique<Window>& window)
 {
     sRendererAPI = PlatformManager::NewRendererAPI();
-    sRendererAPI->Init();
+    sRendererAPI->Init(window);
 }
 
 void RenderCommand::Shutdown()
 {
     sRendererAPI->Shutdown();
-}
-
-void RenderCommand::AddWindow(u64 window)
-{
-    sRendererAPI->AddWindow(window);
-}
-
-void RenderCommand::RemoveWindow(u64 window)
-{
-    sRendererAPI->RemoveWindow(window);
 }
 
 void RenderCommand::SetViewport(const Vec4u& viewport)
@@ -41,12 +31,12 @@ void RenderCommand::Clear()
     sRendererAPI->Clear();
 }
 
-void RenderCommand::DrawIndexed(const Shared<VertexArray> vao, u32 count)
+void RenderCommand::DrawIndexed(Shared<VertexArray> vao, u32 count)
 {
     sRendererAPI->DrawIndexed(vao, count);
 }
 
-void RenderCommand::DrawLines(const Shared<VertexArray> vao, u32 count)
+void RenderCommand::DrawLines(Shared<VertexArray> vao, u32 count)
 {
     sRendererAPI->DrawLines(vao, count);
 }
@@ -54,9 +44,4 @@ void RenderCommand::DrawLines(const Shared<VertexArray> vao, u32 count)
 void RenderCommand::SetLineWidth(f32 width)
 {
     sRendererAPI->SetLineWidth(width);
-}
-
-void RenderCommand::MakeContextCurrent(u64 window)
-{
-    sRendererAPI->MakeContextCurrent(window);
 }

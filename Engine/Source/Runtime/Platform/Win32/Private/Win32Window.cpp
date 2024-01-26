@@ -4,6 +4,7 @@
 #include "Event.h"
 #include "Log.h"
 
+// The window is handeling its own lifetime which conflicts with the window manager haneling of its lifetime
 LRESULT CALLBACK Win32WindowCallback(HWND windowHandle, u32 msg, WPARAM wParam, LPARAM lParam)
 {
     Win32Window* win32Window = (Win32Window*)GetWindowLongPtrA(windowHandle, GWLP_USERDATA);
@@ -13,12 +14,12 @@ LRESULT CALLBACK Win32WindowCallback(HWND windowHandle, u32 msg, WPARAM wParam, 
         {
         case WM_CLOSE:
         {
-            win32Window->Close();
+            win32Window->GenerateEvent(WINDOW_CLOSE);
             return 0;
         } break;
         case WM_DESTROY:
         {
-            win32Window->GenerateEvent(WINDOW_CLOSE);
+            SK_CORE_TRACE("WM_DESTROY message recieved");
             return 0;
         } break;
         case WM_SIZE:
@@ -160,6 +161,7 @@ f32 Win32Window::GetAspect()
     return (f32)mWidth / (f32)mHeight;
 }
 
+// Wierd bug sometimes fails here sometimes in WindowManager::Update();
 void Win32Window::Close()
 {
     if(mOpen)

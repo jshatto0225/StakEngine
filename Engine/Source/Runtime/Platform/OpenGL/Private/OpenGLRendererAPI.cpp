@@ -47,24 +47,37 @@ OpenGLRendererAPI::~OpenGLRendererAPI()
 
 }
 
-void OpenGLRendererAPI::Init()
+void OpenGLRendererAPI::Init(const Unique<Window>& window)
 {
+    mContext = PlatformManager::NewContext(window);
 
+#ifdef SK_DEBUG
+    // Set After Every Context Switch
+    glEnable(GL_DEBUG_OUTPUT);
+    glEnable(GL_DEBUG_OUTPUT_SYNCHRONOUS);
+    glDebugMessageCallback(OpenGLMessageCallback, nullptr);
+    glDebugMessageControl(GL_DONT_CARE, GL_DONT_CARE, GL_DEBUG_SEVERITY_NOTIFICATION, 0, nullptr, GL_FALSE);
+#endif
+
+    glEnable(GL_BLEND);
+    glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+    glEnable(GL_DEPTH_TEST);
+    glEnable(GL_LINE_SMOOTH);
 }
 
 void OpenGLRendererAPI::Shutdown()
 {
-    mIdContextMap.clear();
+    mContext.reset();
 }
 
-void OpenGLRendererAPI::DrawIndexed(const Shared<VertexArray> vao, u32 count)
+void OpenGLRendererAPI::DrawIndexed(Shared<VertexArray> vao, u32 count)
 {
     vao->Bind();
     u32 newCount = count ? count : vao->GetIndexBuffer()->GetCount();
     glDrawElements(GL_TRIANGLES, newCount, GL_UNSIGNED_INT, nullptr);
 }
 
-void OpenGLRendererAPI::DrawLines(const Shared<VertexArray> vao, u32 count)
+void OpenGLRendererAPI::DrawLines(Shared<VertexArray> vao, u32 count)
 {
     vao->Bind();
     glDrawArrays(GL_LINES, 0, count);
@@ -88,45 +101,4 @@ void OpenGLRendererAPI::SetClearColor(const Vec4f& color)
 void OpenGLRendererAPI::SetViewport(const Vec4u& viewport)
 {
     glViewport(viewport(0), viewport(1), viewport(2), viewport(3));
-}
-
-void OpenGLRendererAPI::AddWindow(u64 window)
-{
-    if(mIdContextMap.count(window) != 0)
-    {
-        SK_CORE_WARN("Window already added to renderer. Not adding.");
-        return;
-    }
-    mIdContextMap.insert({ window, PlatformManager::NewContext(window) });
-}
-
-void OpenGLRendererAPI::RemoveWindow(u64 window)
-{
-    if(mIdContextMap.count(window) == 0)
-    {
-        SK_CORE_WARN("Window already not in renderer. Not removing.");
-        return;
-    }
-    mIdContextMap.erase(window);
-}
-
-void OpenGLRendererAPI::MakeContextCurrent(u64 window)
-{
-    if(mIdContextMap.count(window) == 0)
-    {
-        SK_CORE_WARN("Window does not exist.");
-    }
-    mIdContextMap[window]->MakeCurrent();
-#ifdef SK_DEBUG
-    // Set After Every Context Switch
-    glEnable(GL_DEBUG_OUTPUT);
-    glEnable(GL_DEBUG_OUTPUT_SYNCHRONOUS);
-    glDebugMessageCallback(OpenGLMessageCallback, nullptr);
-    glDebugMessageControl(GL_DONT_CARE, GL_DONT_CARE, GL_DEBUG_SEVERITY_NOTIFICATION, 0, nullptr, GL_FALSE);
-#endif
-
-    glEnable(GL_BLEND);
-    glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
-    glEnable(GL_DEPTH_TEST);
-    glEnable(GL_LINE_SMOOTH);
 }

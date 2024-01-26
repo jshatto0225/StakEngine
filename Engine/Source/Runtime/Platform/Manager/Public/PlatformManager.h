@@ -26,6 +26,6 @@ public:
     static void KillPlatformWindowManager();
 
 #ifdef SK_OPENGL
-    static Unique<GLContext> NewContext(u64 window);
+    static Unique<GLContext> NewContext(const Unique<Window>& window);
 #endif
 };

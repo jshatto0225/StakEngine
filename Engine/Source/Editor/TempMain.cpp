@@ -5,23 +5,21 @@ class TestLayer : public ApplicationLayer
 public:
     void Start()
     {
-        mWindow = WindowManager::AddWindow("NewWindow", 0, 0, 100, 100);
+        SK_CORE_TRACE("Source dir: %s", SOURCE_DIR);
+    }
+
+    void Update()
+    {
+
     }
 
     void OnEvent(Event& e)
     {
-        if(e.type == WINDOW_CLOSE)
-        {
-            WindowCloseEvent* wce = (WindowCloseEvent*)&e;
-            if(wce->windowId == mWindow)
-            {
-                Application::Shutdown();
-            }
-        }
+
     }
 
 private:
-    u64 mWindow;
+    Shared<Window> mWindow;
 };
 
 void ExternInit()

@@ -5,9 +5,10 @@
 
 bool Renderer::mRunning;
 
-void Renderer::Init()
+void Renderer::Init(const Unique<Window>& window)
 {
-    RenderCommand::Init();
+    RenderCommand::Init(window);
+    Renderer2D::Init();
     mRunning = true;
 }
 
@@ -19,20 +20,4 @@ void Renderer::Shutdown()
         Renderer2D::Shutdown();
         RenderCommand::Shutdown();
     }
-}
-
-void Renderer::AddWindow(u64 window)
-{
-    RenderCommand::AddWindow(window);
-}
-
-void Renderer::RemoveWindow(u64 window)
-{
-    RenderCommand::RemoveWindow(window);
-}
-
-void Renderer::MakeContextCurrent(u64 window)
-{
-    RenderCommand::MakeContextCurrent(window);
-    Renderer2D::Init();
 }

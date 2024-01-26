@@ -98,7 +98,7 @@ void KillPlatformWindowManager()
 }
 
 #ifdef SK_OPENGL
-Unique<GLContext> PlatformManager::NewContext(u64 window)
+Unique<GLContext> PlatformManager::NewContext(const Unique<Window>& window)
 {
     return MakeUnique<PLATFORM_GL_CONTEXT>(window);
 }
