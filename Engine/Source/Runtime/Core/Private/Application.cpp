@@ -14,7 +14,7 @@ void Application::Init()
     Renderer::Init(sWindow);
     sInputManager = PlatformManager::NewInputManager();
     sRunning = true;
-
+    
     for(ApplicationLayer* layer : sApplicationLayers)
     {
         layer->Start();
@@ -26,7 +26,7 @@ void Application::Run()
     while(sRunning)
     {
         sWindow->Update();
-
+        
         for(ApplicationLayer* layer : sApplicationLayers)
         {
             layer->Update();
@@ -42,7 +42,7 @@ void Application::OnEvent(Event& e)
         {
             layer->OnEvent(e);
         }
-
+        
         switch(e.type)
         {
             case WINDOW_CLOSE:

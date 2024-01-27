@@ -7,13 +7,12 @@ Shared<RendererAPI> RenderCommand::sRendererAPI;
 
 void RenderCommand::Init(const Unique<Window>& window)
 {
-    sRendererAPI = PlatformManager::NewRendererAPI();
-    sRendererAPI->Init(window);
+    sRendererAPI = PlatformManager::NewRendererAPI(window);
 }
 
 void RenderCommand::Shutdown()
 {
-    sRendererAPI->Shutdown();
+    sRendererAPI.reset();
 }
 
 void RenderCommand::SetViewport(const Vec4u& viewport)

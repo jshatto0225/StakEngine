@@ -37,37 +37,26 @@ void APIENTRY OpenGLMessageCallback(u32 source,
     }
 }
 
-OpenGLRendererAPI::OpenGLRendererAPI()
-{
-
-}
-
-OpenGLRendererAPI::~OpenGLRendererAPI()
-{
-
-}
-
-void OpenGLRendererAPI::Init(const Unique<Window>& window)
+OpenGLRendererAPI::OpenGLRendererAPI(const Unique<Window>& window)
 {
     mContext = PlatformManager::NewContext(window);
 
 #ifdef SK_DEBUG
-    // Set After Every Context Switch
     glEnable(GL_DEBUG_OUTPUT);
     glEnable(GL_DEBUG_OUTPUT_SYNCHRONOUS);
     glDebugMessageCallback(OpenGLMessageCallback, nullptr);
-    glDebugMessageControl(GL_DONT_CARE, GL_DONT_CARE, GL_DEBUG_SEVERITY_NOTIFICATION, 0, nullptr, GL_FALSE);
+    glDebugMessageControl(GL_DONT_CARE,
+                          GL_DONT_CARE,
+                          GL_DEBUG_SEVERITY_NOTIFICATION,
+                          0,
+                          nullptr,
+                          GL_FALSE);
 #endif
 
     glEnable(GL_BLEND);
     glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
     glEnable(GL_DEPTH_TEST);
     glEnable(GL_LINE_SMOOTH);
-}
-
-void OpenGLRendererAPI::Shutdown()
-{
-    mContext.reset();
 }
 
 void OpenGLRendererAPI::DrawIndexed(Shared<VertexArray> vao, u32 count)

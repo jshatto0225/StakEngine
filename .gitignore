@@ -3,3 +3,5 @@
 Build/*
 .cache
 .*
+*.4coder
+*.log

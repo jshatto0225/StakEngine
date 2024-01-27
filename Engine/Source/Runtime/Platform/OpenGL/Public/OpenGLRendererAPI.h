@@ -9,11 +9,7 @@
 class OpenGLRendererAPI : public RendererAPI
 {
 public:
-    OpenGLRendererAPI();
-    ~OpenGLRendererAPI();
-
-    void Init(const Unique<Window>& window) override;
-    void Shutdown() override;
+    OpenGLRendererAPI(const Unique<Window>& window);
 
     void DrawIndexed(Shared<VertexArray> vao, u32 count) override;
     void DrawLines(Shared<VertexArray> vao, u32 count) override;

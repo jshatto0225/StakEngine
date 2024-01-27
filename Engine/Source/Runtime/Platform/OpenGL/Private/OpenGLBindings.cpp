@@ -7,6 +7,12 @@ PFNGLDELETEBUFFERSPROC glDeleteBuffers;
 PFNGLBUFFERSUBDATAPROC glBufferSubData;
 PFNGLDEBUGMESSAGECALLBACKPROC glDebugMessageCallback;
 PFNGLDEBUGMESSAGECONTROLPROC glDebugMessageControl;
+PFNGLCREATEVERTEXARRAYSPROC glCreateVertexArrays;
+PFNGLDELETEVERTEXARRAYSPROC glDeleteVertexArrays;
+PFNGLENABLEVERTEXATTRIBARRAYPROC glEnableVertexAttribArray;
+PFNGLVERTEXATTRIBPOINTERPROC glVertexAttribPointer;
+PFNGLVERTEXATTRIBDIVISORPROC glVertexAttribDivisor;
+PFNGLBINDVERTEXARRAYPROC glBindVertexArray;
 
 void BindGL()
 {
@@ -18,5 +24,11 @@ void BindGL()
     glBufferSubData = (PFNGLBUFFERSUBDATAPROC)wglGetProcAddress("glBufferSubData");
     glDebugMessageCallback = (PFNGLDEBUGMESSAGECALLBACKPROC)wglGetProcAddress("glDebugMessageCallback");
     glDebugMessageControl = (PFNGLDEBUGMESSAGECONTROLPROC)wglGetProcAddress("glDebugMessageControl");
+    glCreateVertexArrays = (PFNGLCREATEVERTEXARRAYSPROC)wglGetProcAddress("glCreateVertexArrays");
+    glDeleteVertexArrays = (PFNGLDELETEVERTEXARRAYSPROC)wglGetProcAddress("glDeleteVertexArrays");
+    glEnableVertexAttribArray = (PFNGLENABLEVERTEXATTRIBARRAYPROC)wglGetProcAddress("glEnableVertexAttribArray");
+    glVertexAttribPointer = (PFNGLVERTEXATTRIBPOINTERPROC)wglGetProcAddress("glVertexAttribPointer");
+    glVertexAttribDivisor = (PFNGLVERTEXATTRIBDIVISORPROC)wglGetProcAddress("glVertexAttribDivisor");
+    glBindVertexArray = (PFNGLBINDVERTEXARRAYPROC)wglGetProcAddress("glBindVertexArray");
 #endif
 }

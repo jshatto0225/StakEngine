@@ -16,7 +16,7 @@ class PlatformManager final
 public:
     static Unique<Window> NewWindow(const std::string& name, i32 x, i32 y, i32 width, i32 height);
     static Unique<InputManager> NewInputManager();
-    static Shared<RendererAPI> NewRendererAPI();
+    static Shared<RendererAPI> NewRendererAPI(const Unique<Window>& window);
     static Shared<VertexArray> NewVertexArray();
     static Shared<VertexBuffer> NewVertexBuffer(u32 size);
     static Shared<IndexBuffer> NewIndexBuffer(u32* indices, u32 size);

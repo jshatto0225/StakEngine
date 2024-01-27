@@ -14,9 +14,6 @@ class RendererAPI
 public:
     RendererAPI() = default;
     virtual ~RendererAPI() {}
-
-    virtual void Init(const Unique<Window>& window) = 0;
-    virtual void Shutdown() = 0;
     
     virtual void DrawIndexed(Shared<VertexArray> vao, u32 count) = 0;
     virtual void DrawLines(Shared<VertexArray> vao, u32 count) = 0;

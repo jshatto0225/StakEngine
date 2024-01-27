@@ -55,9 +55,9 @@ Unique<InputManager> PlatformManager::NewInputManager()
     return MakeUnique<PLATFORM_INPUT_MANAGER>();
 }
 
-Shared<RendererAPI> PlatformManager::NewRendererAPI()
+Shared<RendererAPI> PlatformManager::NewRendererAPI(const Unique<Window>& window)
 {
-    return MakeShared<PLATFORM_RENDERER_API>();
+    return MakeShared<PLATFORM_RENDERER_API>(window);
 }
 
 Shared<Texture> PlatformManager::NewTexture(TextureSpecification textureSpecification)

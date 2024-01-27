@@ -19,4 +19,6 @@ public:
 private:
     std::vector<Shared<VertexBuffer>> mVertexBuffers;
     Shared<IndexBuffer> mIndexBuffer;
+    u32 mRendererId;
+    u32 mVertexBufferIndex;
 };
