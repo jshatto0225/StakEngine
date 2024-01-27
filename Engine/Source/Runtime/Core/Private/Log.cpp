@@ -7,7 +7,7 @@ Logger::Logger(const std::string& name, bool logToFile)
     mLogToFile = logToFile;
     mName = name;
     mFormat = "[" + name + "] ";
-    SetLevel(Level::SK_TRACE);
+    SetLevel(Level::SKTRACE);
     if(logToFile)
     {
         mLogFile = fopen((name + ".log").c_str(), "w");
@@ -25,26 +25,26 @@ Logger::~Logger()
 void Logger::SetLevel(Level level)
 {
     // TODO: Switch to using colors
-
+    
     switch(level)
     {
-        case Level::SK_CRITICAL:
+        case Level::SKCRITICAL:
         {
             mLevel = "[CRITICAL]: ";
         } break;
-        case Level::SK_ERROR:
+        case Level::SKERROR:
         {
             mLevel = "[ERROR]: ";
         } break;
-        case Level::SK_INFO:
+        case Level::SKINFO:
         {
             mLevel = "[INFO]: ";
         } break;
-        case Level::SK_TRACE:
+        case Level::SKTRACE:
         {
             mLevel = "[TRACE]: ";
         } break;
-        case Level::SK_WARN:
+        case Level::SKWARN:
         {
             mLevel = "[WARN]: ";
         } break;

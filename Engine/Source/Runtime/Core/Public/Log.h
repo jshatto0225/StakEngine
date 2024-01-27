@@ -9,68 +9,68 @@
 
 enum class Level
 {
-    SK_CRITICAL,
-    SK_ERROR,
-    SK_INFO,
-    SK_WARN,
-    SK_TRACE
+    SKCRITICAL,
+    SKERROR,
+    SKINFO,
+    SKWARN,
+    SKTRACE
 };
 
 class Logger final
 {
-public:
+    public:
     Logger(const std::string& name, bool logFile);
     ~Logger();
-
+    
     // Default Color
     template<typename ...Args>
-    void Trace(const std::string& format, Args&& ...args)
+        void Trace(const std::string& format, Args&& ...args)
     {
-        SetLevel(Level::SK_TRACE);
+        SetLevel(Level::SKTRACE);
         std::string message = mFormat + mLevel + format + "\n";
         printf(message.c_str(), args...);
         fprintf(mLogFile, message.c_str(), args...);
     }
     // Green
     template<typename ...Args>
-    void Info(const std::string& format, Args&& ...args)
+        void Info(const std::string& format, Args&& ...args)
     {
-        SetLevel(Level::SK_INFO);
+        SetLevel(Level::SKINFO);
         std::string message = mFormat + mLevel + format + "\n";
         printf(message.c_str(), args...);
         fprintf(mLogFile, message.c_str(), args...);
     }
     // Yellow
     template<typename ...Args>
-    void Warn(const std::string& format, Args&& ...args)
+        void Warn(const std::string& format, Args&& ...args)
     {
-        SetLevel(Level::SK_WARN);
+        SetLevel(Level::SKWARN);
         std::string message = mFormat + mLevel + format + "\n";
         printf(message.c_str(), args...);
-       fprintf(mLogFile, message.c_str(), args...);
+        fprintf(mLogFile, message.c_str(), args...);
     }
     // Bright Red
     template<typename ...Args>
-    void Error(const std::string& format, Args&& ...args)
+        void Error(const std::string& format, Args&& ...args)
     {
-        SetLevel(Level::SK_ERROR);
+        SetLevel(Level::SKERROR);
         std::string message = mFormat + mLevel + format + "\n";
         printf(message.c_str(), args...);
         fprintf(mLogFile, message.c_str(), args...);
     }
     // Dark Red
     template<typename ...Args>
-    void Critical(const std::string& format, Args&& ...args)
+        void Critical(const std::string& format, Args&& ...args)
     {
-        SetLevel(Level::SK_CRITICAL);
+        SetLevel(Level::SKCRITICAL);
         std::string message = mFormat + mLevel + format + "\n";
         printf(message.c_str(), args...);
         fprintf(mLogFile, message.c_str(), args...);
     }
-
-private:
+    
+    private:
     void SetLevel(Level level);
-
+    
     std::string mName;
     bool mLogToFile;
     std::string mFormat;
@@ -80,13 +80,13 @@ private:
 
 class Log final
 {
-public:
+    public:
     static void Init() noexcept;
     static void Shutdown() noexcept;
     static Shared<Logger> GetCoreLogger();
     static Shared<Logger> GetClientLogger();
-
-private:
+    
+    private:
     static Shared<Logger> sCoreLogger;
     static Shared<Logger> sClientLogger;
     static bool sInitialized;
