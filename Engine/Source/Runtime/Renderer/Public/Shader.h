@@ -1,11 +1,15 @@
 #pragma once
 
-class Shader
+namespace SK
 {
-public:
-    Shader() = default;
-    virtual ~Shader() {}
+    class Shader
+    {
+    public:
+        Shader() = default;
+        virtual ~Shader() {}
 
-    virtual void Bind() const = 0;
-    virtual void Unbind() const = 0;
-};
+        virtual void Bind() const = 0;
+        virtual void Unbind() const = 0;
+    };
+}
+

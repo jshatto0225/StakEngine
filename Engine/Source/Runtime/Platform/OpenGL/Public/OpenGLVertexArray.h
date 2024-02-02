@@ -2,23 +2,27 @@
 
 #include "VertexArray.h"
 
-class OpenGLVertexArray : public VertexArray
+namespace SK
 {
-public:
-    OpenGLVertexArray();
-    ~OpenGLVertexArray();
+    class OpenGLVertexArray : public VertexArray
+    {
+    public:
+        OpenGLVertexArray();
+        ~OpenGLVertexArray();
 
-    void AddVertexBuffer(const Shared<VertexBuffer> vbo) override;
-    void SetIndexBuffer(const Shared<IndexBuffer> ibo) override;
-    void Bind() const override;
-    void Unbind() const override;
+        void AddVertexBuffer(const Shared<VertexBuffer> vbo) override;
+        void SetIndexBuffer(const Shared<IndexBuffer> ibo) override;
+        void Bind() const override;
+        void Unbind() const override;
 
-    const std::vector<Shared<VertexBuffer>>& GetVertexBuffers() const override;
-    const Shared<IndexBuffer> GetIndexBuffer() const override;
+        const std::vector<Shared<VertexBuffer>>& GetVertexBuffers() const override;
+        const Shared<IndexBuffer> GetIndexBuffer() const override;
 
-private:
-    std::vector<Shared<VertexBuffer>> mVertexBuffers;
-    Shared<IndexBuffer> mIndexBuffer;
-    u32 mRendererId;
-    u32 mVertexBufferIndex;
-};
+    private:
+        std::vector<Shared<VertexBuffer>> mVertexBuffers;
+        Shared<IndexBuffer> mIndexBuffer;
+        u32 mRendererId;
+        u32 mVertexBufferIndex;
+    };
+}
+

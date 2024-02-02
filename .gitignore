@@ -7,3 +7,4 @@ Build/*
 *.log
 *.cmake
 Makefile
+compile_commands.json

@@ -13,7 +13,7 @@ public:
 
     }
 
-    void OnEvent(Event& e)
+    void OnEvent(SK::Event& e)
     {
 
     }

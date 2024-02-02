@@ -53,61 +53,65 @@
     #error Platform Not Supported
 #endif
 
-Unique<Window> PlatformManager::NewWindow(const std::string& name, i32 x, i32 y, i32 width, i32 height)
+namespace SK
 {
-    return MakeUnique<PLATFORM_WINDOW>(name, x, y, width, height);
+    Unique<Window> PlatformManager::NewWindow(const std::string& name, i32 x, i32 y, i32 width, i32 height)
+    {
+        return MakeUnique<PLATFORM_WINDOW>(name, x, y, width, height);
+    }
+
+    Unique<InputManager> PlatformManager::NewInputManager()
+    {
+        return MakeUnique<PLATFORM_INPUT_MANAGER>();
+    }
+
+    Shared<RendererAPI> PlatformManager::NewRendererAPI(const Unique<Window>& window)
+    {
+        return MakeShared<PLATFORM_RENDERER_API>(window);
+    }
+
+    Shared<Texture> PlatformManager::NewTexture(TextureSpecification textureSpecification)
+    {
+        return MakeShared<PLATFORM_TEXTURE>(textureSpecification);
+    }
+
+    Shared<Texture2D> PlatformManager::NewTexture2D(TextureSpecification textureSpecification)
+    {
+        return MakeShared<PLATFORM_TEXTURE_2D>(textureSpecification);
+    }
+
+    Shared<VertexBuffer> PlatformManager::NewVertexBuffer(u32 size)
+    {
+        return MakeShared<PLATFORM_VERTEX_BUFFER>(size);
+    }
+
+    Shared<IndexBuffer> PlatformManager::NewIndexBuffer(u32* indices, u32 size)
+    {
+        return MakeShared<PLATFORM_INDEX_BUFFER>(indices, size);
+    }
+
+    Shared<VertexArray> PlatformManager::NewVertexArray()
+    {
+        return MakeShared<PLATFORM_VERTEX_ARRAY>();
+    }
+
+    Shared<Shader> PlatformManager::NewShader(const std::string& vs, const std::string& fs)
+    {
+        return MakeShared<PLATFORM_SHADER>(vs, fs);
+    }
+
+    void KillPlatformWindowManager()
+    {
+    #ifdef WIN32
+        PostQuitMessage(0);
+    #endif
+    }
+
+    #ifdef SK_OPENGL
+    Unique<GLContext> PlatformManager::NewContext(const Unique<Window>& window)
+    {
+        return MakeUnique<PLATFORM_GL_CONTEXT>(window);
+    }
+    #endif
 }
 
-Unique<InputManager> PlatformManager::NewInputManager()
-{
-    return MakeUnique<PLATFORM_INPUT_MANAGER>();
-}
-
-Shared<RendererAPI> PlatformManager::NewRendererAPI(const Unique<Window>& window)
-{
-    return MakeShared<PLATFORM_RENDERER_API>(window);
-}
-
-Shared<Texture> PlatformManager::NewTexture(TextureSpecification textureSpecification)
-{
-    return MakeShared<PLATFORM_TEXTURE>(textureSpecification);
-}
-
-Shared<Texture2D> PlatformManager::NewTexture2D(TextureSpecification textureSpecification)
-{
-    return MakeShared<PLATFORM_TEXTURE_2D>(textureSpecification);
-}
-
-Shared<VertexBuffer> PlatformManager::NewVertexBuffer(u32 size)
-{
-    return MakeShared<PLATFORM_VERTEX_BUFFER>(size);
-}
-
-Shared<IndexBuffer> PlatformManager::NewIndexBuffer(u32* indices, u32 size)
-{
-    return MakeShared<PLATFORM_INDEX_BUFFER>(indices, size);
-}
-
-Shared<VertexArray> PlatformManager::NewVertexArray()
-{
-    return MakeShared<PLATFORM_VERTEX_ARRAY>();
-}
-
-Shared<Shader> PlatformManager::NewShader(const std::string& vs, const std::string& fs)
-{
-    return MakeShared<PLATFORM_SHADER>(vs, fs);
-}
-
-void KillPlatformWindowManager()
-{
-#ifdef WIN32
-    PostQuitMessage(0);
-#endif
-}
-
-#ifdef SK_OPENGL
-Unique<GLContext> PlatformManager::NewContext(const Unique<Window>& window)
-{
-    return MakeUnique<PLATFORM_GL_CONTEXT>(window);
-}
-#endif

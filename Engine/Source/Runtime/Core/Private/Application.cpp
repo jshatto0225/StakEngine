@@ -2,6 +2,7 @@
 
 #include "Log.h"
 #include "PlatformManager.h"
+#include "Renderer.h"
 
 namespace SK
 {

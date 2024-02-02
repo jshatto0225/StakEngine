@@ -34,7 +34,7 @@
     {
       "name": "Debug",
       "displayName": "Debug",
-      "inherits": "linux-base",
+      "inherits": "windows-base",
       "architecture": {
         "value": "x64",
         "strategy": "external"

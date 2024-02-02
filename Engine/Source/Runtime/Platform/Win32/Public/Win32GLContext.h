@@ -9,17 +9,20 @@
 // TODO: Handle Window Deletion
 // Maby send app event to renderer which sends window close to rendererAPI?
 
-class Win32GLContext : public GLContext
+namespace SK
 {
-public:
-    Win32GLContext(const Unique<Window>& window);
-    ~Win32GLContext();
+    class Win32GLContext : public GLContext
+    {
+    public:
+        Win32GLContext(const Unique<Window>& window);
+        ~Win32GLContext();
 
-    void MakeCurrent() override;
-    
-private:
-    HDC mDeviceContext;
-    HGLRC mGLRenderingContext;
-    HWND mWindowHandle;
-};
+        void MakeCurrent() override;
+
+    private:
+        HDC mDeviceContext;
+        HGLRC mGLRenderingContext;
+        HWND mWindowHandle;
+    };
+}
 

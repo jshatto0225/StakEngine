@@ -1,10 +1,14 @@
 #pragma once
 
-class GLContext
+namespace SK
 {
-public:
-    GLContext() = default;
-    virtual ~GLContext() {}
+    class GLContext
+    {
+    public:
+        GLContext() = default;
+        virtual ~GLContext() {}
 
-    virtual void MakeCurrent() = 0;
-};
+        virtual void MakeCurrent() = 0;
+    };
+}
+

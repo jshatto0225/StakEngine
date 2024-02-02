@@ -3,14 +3,18 @@
 #include "Win32InputManager.h"
 #include "Types.h"
 
-bool Win32InputManager::KeyDown(i32 key)
+namespace SK
 {
-    return GetAsyncKeyState(key);
+    bool Win32InputManager::KeyDown(i32 key)
+    {
+        return GetAsyncKeyState(key);
+    }
+
+    MousePosition Win32InputManager::GetMousePosition()
+    {
+        POINT pos = {};
+        GetCursorPos(&pos);
+        return { pos.x, pos.y };
+    }
 }
 
-MousePosition Win32InputManager::GetMousePosition()
-{
-    POINT pos = {};
-    GetCursorPos(&pos);
-    return { pos.x, pos.y };
-}

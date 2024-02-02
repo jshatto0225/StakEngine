@@ -461,7 +461,7 @@ TEST_CASE("Test Mat2x2", "[Mat2x2]")
     REQUIRE(m(0, 1) == 2);
     REQUIRE(m(1, 0) == 3);
     REQUIRE(m(1, 1) == 4);
-    
+
     m++;
     REQUIRE(m(0, 0) == 2);
     REQUIRE(m(0, 1) == 3);
@@ -1201,17 +1201,17 @@ TEST_CASE("Test Mat4x4", "[Mat4x4]")
 TEST_CASE("Test Log", "[Log]")
 {
     REQUIRE_THROWS(SK_CORE_INFO("throws"));
-    Log::Init();
+    SK::Log::Init();
     REQUIRE_NOTHROW(SK_CORE_INFO("nothrow"));
-    Log::Shutdown();
+    SK::Log::Shutdown();
     REQUIRE_THROWS(SK_CORE_INFO("throws"));
 } // End Test Log
 
 TEST_CASE("Test Window", "[Window]")
 {
-    Log::Init();
+    SK::Log::Init();
 
-    Shared<Window> window = PlatformManager::NewWindow("TempWindow", 0, 0, 800, 450);
+    Shared<SK::Window> window = SK::PlatformManager::NewWindow("TempWindow", 0, 0, 800, 450);
     REQUIRE(window->IsOpen());
     REQUIRE(window->GetWidth() == 800);
     REQUIRE(window->GetHeight() == 450);
@@ -1238,27 +1238,27 @@ TEST_CASE("Test Window", "[Window]")
     REQUIRE(window->GetY() == 200);
     REQUIRE_FALSE(window->IsOpen());
 
-    Log::Shutdown();
+    SK::Log::Shutdown();
 } // End Test Window
 
 TEST_CASE("General Application Test", "[Application]")
 {
-    class ShutdownTestLayer : public ApplicationLayer
+    class ShutdownTestLayer : public SK::ApplicationLayer
     {
     public:
         void Update() override
         {
-            Application::Shutdown();
+            SK::Application::Shutdown();
         }
     };
 
-    Log::Init();
-    REQUIRE_NOTHROW(Application::RegisterLayer<ShutdownTestLayer>());
-    REQUIRE_NOTHROW(Application::Shutdown());
-    REQUIRE_NOTHROW(Application::Run());
-    REQUIRE_NOTHROW(Application::Init());
-    REQUIRE_NOTHROW(Application::Run());
-    Log::Shutdown();
+    SK::Log::Init();
+    REQUIRE_NOTHROW(SK::Application::RegisterLayer<ShutdownTestLayer>());
+    REQUIRE_NOTHROW(SK::Application::Shutdown());
+    REQUIRE_NOTHROW(SK::Application::Run());
+    REQUIRE_NOTHROW(SK::Application::Init());
+    REQUIRE_NOTHROW(SK::Application::Run());
+    SK::Log::Shutdown();
 } // End General Application Test
 
 TEST_CASE("Test Layers", "[ApplicationLayer]")
@@ -1267,7 +1267,7 @@ TEST_CASE("Test Layers", "[ApplicationLayer]")
     static bool layerEnded = false;
     static bool layerUpdated = false;
 
-    class AppTestLayer : public ApplicationLayer
+    class AppTestLayer : public SK::ApplicationLayer
     {
     public:
         void Start() override
@@ -1283,47 +1283,48 @@ TEST_CASE("Test Layers", "[ApplicationLayer]")
         void Update() override
         {
             layerUpdated = true;
-            Application::Shutdown();
+            SK::Application::Shutdown();
         }
     };
 
-    Log::Init();
-    REQUIRE_NOTHROW(Application::RegisterLayer<AppTestLayer>());
-    REQUIRE_NOTHROW(Application::Init());
-    REQUIRE_NOTHROW(Application::Run());
+    SK::Log::Init();
+    REQUIRE_NOTHROW(SK::Application::RegisterLayer<AppTestLayer>());
+    REQUIRE_NOTHROW(SK::Application::Init());
+    REQUIRE_NOTHROW(SK::Application::Run());
     REQUIRE(layerStarted == true);
     REQUIRE(layerEnded == true);
     REQUIRE(layerUpdated == true);
-    Log::Shutdown();
+    SK::Log::Shutdown();
 } // End Test Layers
 
 TEST_CASE("Test Event", "[Application::OnEvent]")
 {
     static bool eventRecieved = false;
 
-    class EventTestLayer : public ApplicationLayer
+    class EventTestLayer : public SK::ApplicationLayer
     {
     public:
         void Update() override
         {
-            Event e = { TEST_EVENT };
-            Application::OnEvent(e);
-            Application::Shutdown();
+            SK::Event e = { SK::TEST_EVENT };
+            SK::Application::OnEvent(e);
+            SK::Application::Shutdown();
         }
 
-        void OnEvent(Event& e)
+        void OnEvent(SK::Event& e)
         {
-            if (e.type == TEST_EVENT)
+            if (e.type == SK::TEST_EVENT)
             {
                 eventRecieved = true;
             }
         }
     };
 
-    Log::Init();
-    REQUIRE_NOTHROW(Application::RegisterLayer<EventTestLayer>());
-    REQUIRE_NOTHROW(Application::Init());
-    REQUIRE_NOTHROW(Application::Run());
+    SK::Log::Init();
+    REQUIRE_NOTHROW(SK::Application::RegisterLayer<EventTestLayer>());
+    REQUIRE_NOTHROW(SK::Application::Init());
+    REQUIRE_NOTHROW(SK::Application::Run());
     REQUIRE(eventRecieved == true);
-    Log::Shutdown();
+    SK::Log::Shutdown();
 } // End Test Event
+

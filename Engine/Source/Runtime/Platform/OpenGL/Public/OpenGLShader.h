@@ -4,12 +4,16 @@
 
 #include "Shader.h"
 
-class OpenGLShader : public Shader
+namespace SK
 {
-public:
-    OpenGLShader(const std::string& vs, const std::string& fs);
-    ~OpenGLShader();
+    class OpenGLShader : public Shader
+    {
+    public:
+        OpenGLShader(const std::string& vs, const std::string& fs);
+        ~OpenGLShader();
 
-    void Bind() const override;
-    void Unbind() const override;
-};
+        void Bind() const override;
+        void Unbind() const override;
+    };
+}
+
