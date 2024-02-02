@@ -1,6 +1,6 @@
 #include "Runtime/Runtime.h"
 
-class TestLayer : public ApplicationLayer
+class TestLayer : public SK::ApplicationLayer
 {
 public:
     void Start()
@@ -19,10 +19,10 @@ public:
     }
 
 private:
-    Shared<Window> mWindow;
+    Shared<SK::Window> mWindow;
 };
 
 void ExternInit()
 {
-    Application::RegisterLayer<TestLayer>();
+    SK::Application::RegisterLayer<TestLayer>();
 }

@@ -2,20 +2,22 @@
 
 #include "Types.h"
 
-struct MousePosition
+namespace SK
 {
-    i32 x;
-    i32 y;
-};
+    struct MousePosition
+    {
+        i32 x;
+        i32 y;
+    };
 
-class InputManager
-{
-public:
-    virtual bool KeyDown(i32 key) = 0;
-    virtual MousePosition GetMousePosition() = 0;
-    virtual inline i32 GetMouseX() final { return GetMousePosition().x; }
-    virtual inline i32 GetMouseY() final { return GetMousePosition().y; }
-};
+    class InputManager
+    {
+    public:
+        virtual bool KeyDown(i32 key) = 0;
+        virtual MousePosition GetMousePosition() = 0;
+        virtual inline i32 GetMouseX() final { return GetMousePosition().x; }
+        virtual inline i32 GetMouseY() final { return GetMousePosition().y; }
+    };
 
 // NOTE: Windows Key Codes
 #ifdef WIN32
@@ -190,3 +192,5 @@ public:
 #define KEY_PA1 0xFD
 #define KEY_CLEAR 0xFE
 #endif
+}
+

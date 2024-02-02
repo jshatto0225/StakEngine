@@ -17,9 +17,24 @@
       }
     },
     {
+      "name": "linux-base",
+      "hidden": true,
+      "generator": "Unix Makefiles",
+      "binaryDir": "${sourceDir}/Build/${presetName}",
+      "installDir": "${sourceDir}/Build/${presetName}",
+      "condition": {
+        "type": "equals",
+        "lhs": "${hostSystemName}",
+        "rhs": "Linux"
+      },
+      "cacheVariables": {
+        "CMAKE_CXX_STANDARD": "20"
+      }
+    },
+    {
       "name": "Debug",
       "displayName": "Debug",
-      "inherits": "windows-base",
+      "inherits": "linux-base",
       "architecture": {
         "value": "x64",
         "strategy": "external"
@@ -31,7 +46,7 @@
     {
       "name": "Release",
       "displayName": "Release",
-      "inherits": "Debug",
+      "inherits": ["Debug"],
       "cacheVariables": {
         "CMAKE_BUILD_TYPE": "Release"
       }

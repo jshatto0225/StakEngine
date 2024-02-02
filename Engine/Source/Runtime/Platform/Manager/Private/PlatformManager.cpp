@@ -2,47 +2,55 @@
 
 #include "Renderer.h"
 
-#ifdef SK_WINDOWS
-#include "Win32Window.h"
-#define PLATFORM_WINDOW Win32Window
-#include "Win32InputManager.h"
-#define PLATFORM_INPUT_MANAGER Win32InputManager
+#if defined(SK_WINDOWS)
+    #include "Win32Window.h"
+    #define PLATFORM_WINDOW Win32Window
+    #include "Win32InputManager.h"
+    #define PLATFORM_INPUT_MANAGER Win32InputManager
+#elif defined(SK_LINUX)
+    #include "LinuxWindow.h"
+    #define PLATFORM_WINDOW LinuxWindow
+    #include "LinuxInputManager.h"
+    #define PLATFORM_INPUT_MANAGER LinuxInputManager
 #else
-#error Platform Not Supported
+    #error Platform Not Supported
 #endif
 
-#ifdef SK_OPENGL
-#ifdef SK_WINDOWS
-#include "Win32GLContext.h"
-#define PLATFORM_GL_CONTEXT Win32GLContext
-#endif
-#include "OpenGLRendererAPI.h"
-#define PLATFORM_RENDERER_API OpenGLRendererAPI
-#include "OpenGLTexture.h"
-#define PLATFORM_TEXTURE OpenGLTexture
-#define PLATFORM_TEXTURE_2D OpenGLTexture2D
-#include "OpenGLBuffer.h"
-#define PLATFORM_VERTEX_BUFFER OpenGLVertexBuffer
-#define PLATFORM_INDEX_BUFFER OpenGLIndexBuffer
-#include "OpenGLVertexArray.h"
-#define PLATFORM_VERTEX_ARRAY OpenGLVertexArray
-#include "OpenGLShader.h"
-#define PLATFORM_SHADER OpenGLShader
-#elif defined(SK_VULKAN)
-#include "VulkanRendererAPI.h"
-#define PLATFORM_RENDERER_API VulkanRendererAPI
-#include "VulkanTexture.h"
-#define PLATFORM_TEXTURE VulkanTexture
-#define PLATFORM_TEXTURE_2D VulkanTexture2D
-#include "VulkanBuffer.h"
-#define PLATFORM_VERTEX_BUFFER VulkanVertexBuffer
-#define PLATFORM_INDEX_BUFFER VulkanIndexBuffer
-#include "VulkanVertexArray.h"
-#define PLATFORM_VERTEX_ARRAY VulkanVertexArray
-#include "Shader.h"
-#define PLATFORM_SHADER VulkanShader
+#if defined(SK_OPENGL)
+    #if defined(SK_WINDOWS)
+        #include "Win32GLContext.h"
+        #define PLATFORM_GL_CONTEXT Win32GLContext
+    #elif defined(SK_LINUX)
+        #include "LinuxGLContext.h"
+        #define PLATFORM_GL_CONTEXT LinuxGLContext
+    #endif
+    #include "OpenGLRendererAPI.h"
+    #define PLATFORM_RENDERER_API OpenGLRendererAPI
+    #include "OpenGLTexture.h"
+    #define PLATFORM_TEXTURE OpenGLTexture
+    #define PLATFORM_TEXTURE_2D OpenGLTexture2D
+    #include "OpenGLBuffer.h"
+    #define PLATFORM_VERTEX_BUFFER OpenGLVertexBuffer
+    #define PLATFORM_INDEX_BUFFER OpenGLIndexBuffer
+    #include "OpenGLVertexArray.h"
+    #define PLATFORM_VERTEX_ARRAY OpenGLVertexArray
+    #include "OpenGLShader.h"
+    #define PLATFORM_SHADER OpenGLShader
+    #elif defined(SK_VULKAN)
+    #include "VulkanRendererAPI.h"
+    #define PLATFORM_RENDERER_API VulkanRendererAPI
+    #include "VulkanTexture.h"
+    #define PLATFORM_TEXTURE VulkanTexture
+    #define PLATFORM_TEXTURE_2D VulkanTexture2D
+    #include "VulkanBuffer.h"
+    #define PLATFORM_VERTEX_BUFFER VulkanVertexBuffer
+    #define PLATFORM_INDEX_BUFFER VulkanIndexBuffer
+    #include "VulkanVertexArray.h"
+    #define PLATFORM_VERTEX_ARRAY VulkanVertexArray
+    #include "Shader.h"
+    #define PLATFORM_SHADER VulkanShader
 #else
-#error Platform Not Supported
+    #error Platform Not Supported
 #endif
 
 Unique<Window> PlatformManager::NewWindow(const std::string& name, i32 x, i32 y, i32 width, i32 height)

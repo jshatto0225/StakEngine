@@ -5,3 +5,5 @@ Build/*
 .*
 *.4coder
 *.log
+*.cmake
+Makefile

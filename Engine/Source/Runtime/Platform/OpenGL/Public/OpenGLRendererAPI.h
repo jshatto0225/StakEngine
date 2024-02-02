@@ -4,7 +4,7 @@
 
 #include "RendererAPI.h"
 #include "Types.h"
-#include "GlContext.h"
+#include "GLContext.h"
 
 class OpenGLRendererAPI : public RendererAPI
 {

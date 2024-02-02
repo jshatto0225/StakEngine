@@ -2,11 +2,15 @@
 
 #include "Event.h"
 
-class ApplicationLayer
+namespace SK
 {
-public:
-    virtual void Start() {}
-    virtual void End() {}
-    virtual void Update() {}
-    virtual void OnEvent(Event& e) {}
-};
+    class ApplicationLayer
+    {
+    public:
+        virtual void Start() {}
+        virtual void End() {}
+        virtual void Update() {}
+        virtual void OnEvent(Event& e) {}
+    };
+}
+

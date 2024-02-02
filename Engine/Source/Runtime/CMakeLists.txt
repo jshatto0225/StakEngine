@@ -2,32 +2,51 @@ file(GLOB SOURCES Core/Private/*.cpp  Renderer/Private/*.cpp Platform/Manager/Pr
 
 set(CMAKE_CXX_STANDARD_REQUIRED 20)
 
-if(WIN32) 
+if(CMAKE_HOST_WIN32)
     set(SK_WINDOWS 1 GLOBAL)
+    set(SK_LINUX 0 GLOBAL)
     set(SK_VULKAN 0 GLOBAL)
     set(SK_OPENGL 1 GLOBAL)
 endif()
 
-if(WIN32)
+if(CMAKE_HOST_UNIX)
+    set(SK_WINDOWS 0 GLOBAL)
+    set(SK_LINUX 1 GLOBAL)
+    set(SK_OPENGL 1 GLOBAL)
+    set(SK_VULKAN 0 GLOBAL)
+endif()
+
+if(SK_WINDOWS EQUAL 1)
     file(GLOB WINDOW_PLATFORM Platform/Win32/Private/*.cpp)
     # Vulkan include and lib paths
-    if(SK_VULKAN EQUAL 1)
-        #set(Vulkan_LIBRARY C:/VulkanSDK/1.3.268.0/Lib)
-        #set(Vulkan_INCLUDE_DIR C:/VulkanSDK/1.3.268.0/Include)
-        file(GLOB RENDERER_PLATFORM Platform/Vulkan/Private/*.cpp)
-    endif()
-    if(SK_OPENGL EQUAL 1)
+
+endif()
+
+if(SK_VULKAN EQUAL 1)
+    #set(Vulkan_LIBRARY C:/VulkanSDK/1.3.268.0/Lib)
+    #set(Vulkan_INCLUDE_DIR C:/VulkanSDK/1.3.268.0/Include)
+    file(GLOB RENDERER_PLATFORM Platform/Vulkan/Private/*.cpp)
+endif()
+
+if(SK_OPENGL EQUAL 1)
         file(GLOB RENDERER_PLATFORM Platform/OpenGL/Private/*.cpp)
-    endif()
+endif()
+
+if(SK_LINUX EQUAL 1)
+    file(GLOB WINDOW_PLATFORM Platform/Linux/Private/*.cpp)
 endif()
 
 add_library(StakRuntime STATIC ${SOURCES} ${WINDOW_PLATFORM} ${RENDERER_PLATFORM})
 
-
-if(WIN32)
+if(SK_WINDOWS EQUAL 1)
     target_compile_definitions(StakRuntime PRIVATE SK_WINDOWS=1)
     target_include_directories(StakRuntime PRIVATE Platform/Win32/Public)
     target_link_libraries(StakRuntime PRIVATE user32.lib)
+endif()
+
+if(SK_LINUX EQUAL 1)
+    target_compile_definitions(StakRuntime PRIVATE SK_LINUX=1)
+    target_include_directories(StakRuntime PRIVATE Platform/Linux/Public)
 endif()
 
 if(SK_VULKAN EQUAL 1)

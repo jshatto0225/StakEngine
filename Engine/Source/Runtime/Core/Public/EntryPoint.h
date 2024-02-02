@@ -1,26 +1,23 @@
 #pragma once
 
-#include <optional>
-#include <functional>
-
 #include "Application.h"
 #include "Types.h"
 #include "Log.h"
 
 extern void ExternInit();
 
-i32 StakMain()
+inline i32 StakMain()
 {
-    Log::Init();
+    SK::Log::Init();
     ExternInit();
-    Application::Init();
-    Application::Run();
-    Log::Shutdown();
+    SK::Application::Init();
+    SK::Application::Run();
+    SK::Log::Shutdown();
     return 0;
 }
 
 #ifndef SK_NO_MAIN
-    #ifdef SK_DEBUG or SK_RELEASE
+    #if defined(SK_DEBUG) or defined(SK_RELEASE)
         int main(int argc, char** argv)
         {
             return StakMain();

@@ -1,6 +1,6 @@
 #pragma once
 
-#include <cstdint>
+#include <stdint.h>
 #include <memory>
 
 typedef double f64;
@@ -33,3 +33,4 @@ constexpr Unique<T> MakeUnique(Args&& ...args)
 {
     return std::make_unique<T>(std::forward<Args>(args)...);
 }
+
