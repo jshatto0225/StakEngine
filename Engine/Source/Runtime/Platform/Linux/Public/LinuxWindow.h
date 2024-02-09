@@ -1,31 +1,31 @@
+#pragma once
+
 #include "Window.h"
 
-#include <X11/Xlib.h>
-
-class LinuxWindow : public Window
-{
+namespace sk {
+class LinuxWindow : public Window {
 public:
-    LinuxWindow(const std::string& name, i32 x, i32 y, i32 width, i32 height);
-    ~LinuxWindow();
+  LinuxWindow(const std::string &name, i32 x, i32 y, i32 width, i32 height);
+  ~LinuxWindow();
 
-    void SetX(i32 x) override;
-    void SetY(i32 y) override;
-    void SetWidth(i32 width) override;
-    void SetHeight(i32 height) override;
-    i32 GetWidth() override;
-    i32 GetHeight() override;
-    i32 GetX() override;
-    i32 GetY() override;
-    f32 GetAspect() override;
+  void set_x(i32 x) override;
+  void set_y(i32 y) override;
+  void set_width(i32 width) override;
+  void set_height(i32 height) override;
+  i32 get_width() override;
+  i32 get_height() override;
+  i32 get_x() override;
+  i32 get_y() override;
+  f32 get_aspect() override;
 
-    bool IsOpen() override;
+  bool is_open() override;
 
-    void SetSizeAndPos(i32 x, i32 y, i32 width, i32 height) override;
-    void Update() override;
-    void* GetHandle() override;
-    void Close() override;
+  void set_size_and_pos(i32 x, i32 y, i32 width, i32 height) override;
+  void update() override;
+  void *get_handle() override;
+  void close() override;
 
 private:
-    bool mOpen;
+  bool open;
 };
-
+}

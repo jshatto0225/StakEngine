@@ -4,22 +4,19 @@
 #include "VertexArray.h"
 #include "Window.h"
 
-namespace SK
-{
-    class RenderCommand final
-    {
-    public:
-        static void Init(const Unique<Window>& window);
-        static void Shutdown();
-        static void SetViewport(const Vec4u& viewport);
-        static void SetClearColor(const Vec4f& color);
-        static void Clear();
-        static void DrawIndexed(Shared<VertexArray> vao, u32 count);
-        static void DrawLines(Shared<VertexArray> vao, u32 count);
-        static void SetLineWidth(f32 width);
+namespace sk {
+class RenderCommand final {
+public:
+  static void init(const Unique<Window> &window);
+  static void shutdown();
+  static void set_viewport(const Vec4u &viewport);
+  static void set_clear_color(const Vec4f &color);
+  static void clear();
+  static void draw_indexed(Shared<VertexArray> vao, u32 count);
+  static void draw_lines(Shared<VertexArray> vao, u32 count);
+  static void set_line_width(f32 width);
 
-    private:
-        static Shared<RendererAPI> sRendererAPI;
-    };
-}
-
+private:
+  static Shared<RendererAPI> renderer_api;
+};
+} // namespace SK

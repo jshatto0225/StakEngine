@@ -2,39 +2,19 @@
   "version": 3,
   "configurePresets": [
     {
-      "name": "windows-base",
+      "name": "base",
       "hidden": true,
       "generator": "Ninja",
       "binaryDir": "${sourceDir}/Build/${presetName}",
       "installDir": "${sourceDir}/Build/${presetName}",
-      "condition": {
-        "type": "equals",
-        "lhs": "${hostSystemName}",
-        "rhs": "Windows"
-      },
       "cacheVariables": {
         "CMAKE_CXX_STANDARD":  "20"
       }
     },
     {
-      "name": "linux-base",
-      "hidden": true,
-      "generator": "Unix Makefiles",
-      "binaryDir": "${sourceDir}/Build/${presetName}",
-      "installDir": "${sourceDir}/Build/${presetName}",
-      "condition": {
-        "type": "equals",
-        "lhs": "${hostSystemName}",
-        "rhs": "Linux"
-      },
-      "cacheVariables": {
-        "CMAKE_CXX_STANDARD": "20"
-      }
-    },
-    {
       "name": "Debug",
       "displayName": "Debug",
-      "inherits": "windows-base",
+      "inherits": "base",
       "architecture": {
         "value": "x64",
         "strategy": "external"

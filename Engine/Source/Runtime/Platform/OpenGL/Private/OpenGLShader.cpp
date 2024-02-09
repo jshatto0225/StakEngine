@@ -1,25 +1,11 @@
 #include "OpenGLShader.h"
 
-namespace SK
-{
-    OpenGLShader::OpenGLShader(const std::string& vs, const std::string& fs)
-    {
+namespace sk {
+OpenGLShader::OpenGLShader(const std::string &vs, const std::string &fs) {}
 
-    }
+OpenGLShader::~OpenGLShader() {}
 
-    OpenGLShader::~OpenGLShader()
-    {
+void OpenGLShader::bind() const {}
 
-    }
-
-    void OpenGLShader::Bind() const
-    {
-
-    }
-
-    void OpenGLShader::Unbind() const
-    {
-
-    }
-}
-
+void OpenGLShader::unbind() const {}
+} // namespace SK

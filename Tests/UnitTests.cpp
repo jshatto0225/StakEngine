@@ -1201,130 +1201,130 @@ TEST_CASE("Test Mat4x4", "[Mat4x4]")
 TEST_CASE("Test Log", "[Log]")
 {
     REQUIRE_THROWS(SK_CORE_INFO("throws"));
-    SK::Log::Init();
+    sk::Log::init();
     REQUIRE_NOTHROW(SK_CORE_INFO("nothrow"));
-    SK::Log::Shutdown();
+    sk::Log::shutdown();
     REQUIRE_THROWS(SK_CORE_INFO("throws"));
 } // End Test Log
 
 TEST_CASE("Test Window", "[Window]")
 {
-    SK::Log::Init();
+    sk::Log::init();
 
-    Shared<SK::Window> window = SK::PlatformManager::NewWindow("TempWindow", 0, 0, 800, 450);
-    REQUIRE(window->IsOpen());
-    REQUIRE(window->GetWidth() == 800);
-    REQUIRE(window->GetHeight() == 450);
-    REQUIRE(window->GetAspect() == 16.0f / 9.0f);
-    REQUIRE(window->GetX() == 0);
-    REQUIRE(window->GetY() == 0);
-    window->SetWidth(450);
-    REQUIRE(window->GetWidth() == 450);
-    REQUIRE(window->GetAspect() == 1);
-    window->SetHeight(800);
-    REQUIRE(window->GetHeight() == 800);
-    REQUIRE(window->GetAspect() == 9.0f / 16.0f);
-    REQUIRE(window->GetId() == 1);
-    window->SetX(200);
-    REQUIRE(window->GetX() == 200);
-    window->SetY(200);
-    REQUIRE(window->GetY() == 200);
-    window->Close();
-    window->SetSizeAndPos(500, 500, 100, 200);
-    REQUIRE(window->GetWidth() == 450);
-    REQUIRE(window->GetHeight() == 800);
-    REQUIRE(window->GetAspect() == 9.0f / 16.0f);
-    REQUIRE(window->GetX() == 200);
-    REQUIRE(window->GetY() == 200);
-    REQUIRE_FALSE(window->IsOpen());
+    Shared<sk::Window> window = sk::PlatformManager::new_window("TempWindow", 0, 0, 800, 450);
+    REQUIRE(window->is_open());
+    REQUIRE(window->get_width() == 800);
+    REQUIRE(window->get_height() == 450);
+    REQUIRE(window->get_aspect() == 16.0f / 9.0f);
+    REQUIRE(window->get_x() == 0);
+    REQUIRE(window->get_y() == 0);
+    window->set_width(450);
+    REQUIRE(window->get_width() == 450);
+    REQUIRE(window->get_aspect() == 1);
+    window->set_height(800);
+    REQUIRE(window->get_height() == 800);
+    REQUIRE(window->get_aspect() == 9.0f / 16.0f);
+    REQUIRE(window->get_id() == 1);
+    window->set_x(200);
+    REQUIRE(window->get_x() == 200);
+    window->set_y(200);
+    REQUIRE(window->get_y() == 200);
+    window->close();
+    window->set_size_and_pos(500, 500, 100, 200);
+    REQUIRE(window->get_width() == 450);
+    REQUIRE(window->get_height() == 800);
+    REQUIRE(window->get_aspect() == 9.0f / 16.0f);
+    REQUIRE(window->get_x() == 200);
+    REQUIRE(window->get_y() == 200);
+    REQUIRE_FALSE(window->is_open());
 
-    SK::Log::Shutdown();
+    sk::Log::shutdown();
 } // End Test Window
 
 TEST_CASE("General Application Test", "[Application]")
 {
-    class ShutdownTestLayer : public SK::ApplicationLayer
+    class ShutdownTestLayer : public sk::ApplicationLayer
     {
     public:
-        void Update() override
+        void update() override
         {
-            SK::Application::Shutdown();
+            sk::Application::shutdown();
         }
     };
 
-    SK::Log::Init();
-    REQUIRE_NOTHROW(SK::Application::RegisterLayer<ShutdownTestLayer>());
-    REQUIRE_NOTHROW(SK::Application::Shutdown());
-    REQUIRE_NOTHROW(SK::Application::Run());
-    REQUIRE_NOTHROW(SK::Application::Init());
-    REQUIRE_NOTHROW(SK::Application::Run());
-    SK::Log::Shutdown();
+    sk::Log::init();
+    REQUIRE_NOTHROW(sk::Application::register_layer<ShutdownTestLayer>());
+    REQUIRE_NOTHROW(sk::Application::shutdown());
+    REQUIRE_NOTHROW(sk::Application::run());
+    REQUIRE_NOTHROW(sk::Application::init());
+    REQUIRE_NOTHROW(sk::Application::run());
+    sk::Log::shutdown();
 } // End General Application Test
 
 TEST_CASE("Test Layers", "[ApplicationLayer]")
 {
-    static bool layerStarted = false;
-    static bool layerEnded = false;
-    static bool layerUpdated = false;
+    static bool layer_started = false;
+    static bool layer_ended = false;
+    static bool layer_updated = false;
 
-    class AppTestLayer : public SK::ApplicationLayer
+    class AppTestLayer : public sk::ApplicationLayer
     {
     public:
-        void Start() override
+        void start() override
         {
-            layerStarted = true;
+            layer_started = true;
         }
 
-        void End() override
+        void end() override
         {
-            layerEnded = true;
+            layer_ended = true;
         }
 
-        void Update() override
+        void update() override
         {
-            layerUpdated = true;
-            SK::Application::Shutdown();
+            layer_updated = true;
+            sk::Application::shutdown();
         }
     };
 
-    SK::Log::Init();
-    REQUIRE_NOTHROW(SK::Application::RegisterLayer<AppTestLayer>());
-    REQUIRE_NOTHROW(SK::Application::Init());
-    REQUIRE_NOTHROW(SK::Application::Run());
-    REQUIRE(layerStarted == true);
-    REQUIRE(layerEnded == true);
-    REQUIRE(layerUpdated == true);
-    SK::Log::Shutdown();
+    sk::Log::init();
+    REQUIRE_NOTHROW(sk::Application::register_layer<AppTestLayer>());
+    REQUIRE_NOTHROW(sk::Application::init());
+    REQUIRE_NOTHROW(sk::Application::run());
+    REQUIRE(layer_started == true);
+    REQUIRE(layer_ended == true);
+    REQUIRE(layer_updated == true);
+    sk::Log::shutdown();
 } // End Test Layers
 
 TEST_CASE("Test Event", "[Application::OnEvent]")
 {
-    static bool eventRecieved = false;
+    static bool event_recieved = false;
 
-    class EventTestLayer : public SK::ApplicationLayer
+    class EventTestLayer : public sk::ApplicationLayer
     {
     public:
-        void Update() override
+        void update() override
         {
-            SK::Event e = { SK::TEST_EVENT };
-            SK::Application::OnEvent(e);
-            SK::Application::Shutdown();
+            sk::Event e = { sk::TEST_EVENT };
+            sk::Application::on_event(e);
+            sk::Application::shutdown();
         }
 
-        void OnEvent(SK::Event& e)
+        void OnEvent(sk::Event& e)
         {
-            if (e.type == SK::TEST_EVENT)
+            if (e.type == sk::TEST_EVENT)
             {
-                eventRecieved = true;
+                event_recieved = true;
             }
         }
     };
 
-    SK::Log::Init();
-    REQUIRE_NOTHROW(SK::Application::RegisterLayer<EventTestLayer>());
-    REQUIRE_NOTHROW(SK::Application::Init());
-    REQUIRE_NOTHROW(SK::Application::Run());
-    REQUIRE(eventRecieved == true);
-    SK::Log::Shutdown();
+    sk::Log::init();
+    REQUIRE_NOTHROW(sk::Application::register_layer<EventTestLayer>());
+    REQUIRE_NOTHROW(sk::Application::init());
+    REQUIRE_NOTHROW(sk::Application::run());
+    REQUIRE(event_recieved == true);
+    sk::Log::shutdown();
 } // End Test Event
 

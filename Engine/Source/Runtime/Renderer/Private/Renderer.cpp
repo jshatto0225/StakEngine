@@ -3,25 +3,20 @@
 #include "RenderCommand.h"
 #include "Renderer2D.h"
 
-namespace SK
-{
-    bool Renderer::mRunning;
+namespace sk {
+bool Renderer::running;
 
-    void Renderer::Init(const Unique<Window>& window)
-    {
-        RenderCommand::Init(window);
-        Renderer2D::Init();
-        mRunning = true;
-    }
-
-    void Renderer::Shutdown()
-    {
-        if(mRunning)
-        {
-            mRunning = false;
-            Renderer2D::Shutdown();
-            RenderCommand::Shutdown();
-        }
-    }
+void Renderer::init(const Unique<Window> &window) {
+  RenderCommand::init(window);
+  Renderer2D::init();
+  running = true;
 }
 
+void Renderer::shutdown() {
+  if (running) {
+    running = false;
+    Renderer2D::shutdown();
+    RenderCommand::shutdown();
+  }
+}
+} // namespace SK

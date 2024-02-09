@@ -2,50 +2,46 @@
 
 #include "Texture.h"
 
-namespace SK
-{
-    class OpenGLTexture : public Texture
-    {
-    public:
-        OpenGLTexture(const TextureSpecification& textureSpecification);
-        ~OpenGLTexture();
+namespace sk {
+class OpenGLTexture : public Texture {
+public:
+  OpenGLTexture(const TextureSpecification &textureSpecification);
+  ~OpenGLTexture();
 
-        const TextureSpecification& GetSpecification() const override;
-        u32 GetWidth() const override;
-        u32 GetHeight() const override;
-        u32 GetRendererId() const override;
-        const std::string& GetPath() const override;
-        void SetData(void* data, u32 size) override;
-        void Bind(u32 slot = 0) const override;
-        bool IsLoaded() const override;
-        bool operator==(const Texture& other) const override;
+  const TextureSpecification &get_specification() const override;
+  u32 get_width() const override;
+  u32 get_height() const override;
+  u32 get_renderer_id() const override;
+  const std::string &get_path() const override;
+  void set_data(void *data, u32 size) override;
+  void bind(u32 slot = 0) const override;
+  bool is_loaded() const override;
+  bool operator==(const Texture &other) const override;
 
-    private:
-        TextureSpecification mTextureSpecification;
-        std::string mPath;
-        u32 mRendererId;
-    };
+private:
+  TextureSpecification spec;
+  std::string path;
+  u32 renderer_id;
+};
 
-    class OpenGLTexture2D : public Texture2D
-    {
-    public:
-        OpenGLTexture2D(const TextureSpecification& textureSpecification);
-        ~OpenGLTexture2D();
+class OpenGLTexture2D : public Texture2D {
+public:
+  OpenGLTexture2D(const TextureSpecification &textureSpecification);
+  ~OpenGLTexture2D();
 
-        const TextureSpecification& GetSpecification() const override;
-        u32 GetWidth() const override;
-        u32 GetHeight() const override;
-        u32 GetRendererId() const override;
-        const std::string& GetPath() const override;
-        void SetData(void* data, u32 size) override;
-        void Bind(u32 slot = 0) const override;
-        bool IsLoaded() const override;
-        bool operator==(const Texture& other) const override;
+  const TextureSpecification &get_specification() const override;
+  u32 get_width() const override;
+  u32 get_height() const override;
+  u32 get_renderer_id() const override;
+  const std::string &get_path() const override;
+  void set_data(void *data, u32 size) override;
+  void bind(u32 slot = 0) const override;
+  bool is_loaded() const override;
+  bool operator==(const Texture &other) const override;
 
-    private:
-        TextureSpecification mTextureSpecification;
-        std::string mPath;
-        u32 mRendererId;
-    };
-}
-
+private:
+  TextureSpecification spec;
+  std::string path;
+  u32 renderer_id;
+};
+} // namespace SK

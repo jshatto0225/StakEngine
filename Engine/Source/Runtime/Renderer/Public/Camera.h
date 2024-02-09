@@ -4,13 +4,10 @@
 
 #include "Types.h"
 
-namespace SK
-{
-    class Camera
-    {
-    public:
-        std::array<std::array<f32, 4>, 4> GetViewProjection() const;
-        std::array<std::array<f32, 4>, 4> GetProjection() const;
-    };
-}
-
+namespace sk {
+class Camera {
+public:
+  std::array<std::array<f32, 4>, 4> get_view_projection() const;
+  std::array<std::array<f32, 4>, 4> get_projection() const;
+};
+} // namespace SK

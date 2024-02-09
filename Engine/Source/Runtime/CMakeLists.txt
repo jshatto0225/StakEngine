@@ -23,8 +23,6 @@ if(SK_WINDOWS EQUAL 1)
 endif()
 
 if(SK_VULKAN EQUAL 1)
-    #set(Vulkan_LIBRARY C:/VulkanSDK/1.3.268.0/Lib)
-    #set(Vulkan_INCLUDE_DIR C:/VulkanSDK/1.3.268.0/Include)
     file(GLOB RENDERER_PLATFORM Platform/Vulkan/Private/*.cpp)
 endif()
 
@@ -33,6 +31,7 @@ if(SK_OPENGL EQUAL 1)
 endif()
 
 if(SK_LINUX EQUAL 1)
+    message("Globbed linux")
     file(GLOB WINDOW_PLATFORM Platform/Linux/Private/*.cpp)
 endif()
 

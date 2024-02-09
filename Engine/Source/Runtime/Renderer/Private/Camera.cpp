@@ -1,15 +1,9 @@
 #include "Camera.h"
 
-namespace SK
-{
-    std::array<std::array<f32, 4>, 4> Camera::GetViewProjection() const
-    {
-        return {};
-    }
-
-    std::array<std::array<f32, 4>, 4> Camera::GetProjection() const
-    {
-        return {};
-    }
+namespace sk {
+std::array<std::array<f32, 4>, 4> Camera::get_view_projection() const {
+  return {};
 }
 
+std::array<std::array<f32, 4>, 4> Camera::get_projection() const { return {}; }
+} // namespace SK

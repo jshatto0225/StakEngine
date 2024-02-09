@@ -1,130 +1,119 @@
 #pragma once
 
-#include <queue>
-
-#include "RenderCommand.h"
 #include "Buffer.h"
-#include "VertexArray.h"
-#include "Shader.h"
 #include "Camera.h"
+#include "Shader.h"
 #include "Texture.h"
+#include "VertexArray.h"
 
 #define MAX_QUADS 1000
 #define VERTICES_PER_QUAD 4
 #define INDICES_PER_QUAD 6
 #define MAX_TEXTURE_SLOTS 32
 
-namespace SK
-{
-    struct QuadVertex
-    {
-        std::array<f32, 3> position;
-        std::array<f32, 4> color;
-        std::array<f32, 2> textureCoordinate;
-        f32 textureIndex;
-        f32 tilingFactor;
-    };
+namespace sk {
+struct QuadVertex {
+  std::array<f32, 3> position;
+  std::array<f32, 4> color;
+  std::array<f32, 2> texture_coordinate;
+  f32 texture_index;
+  f32 tiling_factor;
+};
 
-    struct CircleVertex
-    {
-        std::array<f32, 3> worldPosition;
-        std::array<f32, 3> locaPosition;
-        std::array<f32, 4> color;
-        f32 thickness;
-        f32 fade;
-    };
+struct CircleVertex {
+  std::array<f32, 3> world_position;
+  std::array<f32, 3> local_position;
+  std::array<f32, 4> color;
+  f32 thickness;
+  f32 fade;
+};
 
-    struct LineVertex
-    {
-        std::array<f32, 3> position;
-        std::array<f32, 4> color;
-    };
+struct LineVertex {
+  std::array<f32, 3> position;
+  std::array<f32, 4> color;
+};
 
-    struct TextVertex
-    {
-        std::array<f32, 3> position;
-        std::array<f32, 4> color;
-        std::array<f32, 2> textureCoordinate;
-    };
+struct TextVertex {
+  std::array<f32, 3> position;
+  std::array<f32, 4> color;
+  std::array<f32, 2> texture_coordinate;
+};
 
-    struct Renderer2DData
-    {
-        static const u32 maxQuads = MAX_QUADS;
-        static const u32 maxVertices = maxQuads * VERTICES_PER_QUAD;
-        static const u32 maxIndices = maxQuads * INDICES_PER_QUAD;
-        static const u32 maxTextureSlots = MAX_TEXTURE_SLOTS;
+struct Renderer2DData {
+  static const u32 max_quads = MAX_QUADS;
+  static const u32 max_vertices = max_quads * VERTICES_PER_QUAD;
+  static const u32 max_indices = max_quads * INDICES_PER_QUAD;
+  static const u32 max_texture_slots = MAX_TEXTURE_SLOTS;
 
-        Shared<VertexArray> quadVertexArray;
-        Shared<VertexBuffer> quadVertexBuffer;
-        Shared<Shader> quadShader;
+  Shared<VertexArray> quad_vertex_array;
+  Shared<VertexBuffer> quad_vertex_buffer;
+  Shared<Shader> quad_shader;
 
-        Shared<VertexArray> circleVertexArray;
-        Shared<VertexBuffer> circleVertexBuffer;
-        Shared<Shader> circleShader;
+  Shared<VertexArray> circle_vertex_array;
+  Shared<VertexBuffer> circle_vertex_buffer;
+  Shared<Shader> circle_shader;
 
-        Shared<VertexArray> lineVertexArray;
-        Shared<VertexBuffer> lineVertexBuffer;
-        Shared<Shader> lineShader;
+  Shared<VertexArray> line_vertex_array;
+  Shared<VertexBuffer> line_vertex_buffer;
+  Shared<Shader> line_shader;
 
-        Shared<VertexArray> textVertexArray;
-        Shared<VertexBuffer> textVertexBuffer;
-        Shared<Shader> textShader;
+  Shared<VertexArray> text_vertex_array;
+  Shared<VertexBuffer> text_vertex_buffer;
+  Shared<Shader> text_shader;
 
-        QuadVertex* quadVertexBufferBase;
-        QuadVertex* quadVertexBufferPtr;
-        u32 quadIndexCount;
+  QuadVertex *quad_vertex_buffer_base;
+  QuadVertex *quad_vertex_buffer_ptr;
+  u32 quad_index_count;
 
-        CircleVertex* circleVertexBufferBase;
-        CircleVertex* circleVertexBufferPtr;
-        u32 circleIndexCount;
+  CircleVertex *circle_vertex_buffer_base;
+  CircleVertex *circle_vertex_buffer_ptr;
+  u32 circle_index_count;
 
-        LineVertex* lineVertexBufferBase;
-        LineVertex* lineVertexBufferPtr;
-        u32 lineVertexCount;
+  LineVertex *line_vertex_buffer_base;
+  LineVertex *line_vertex_buffer_ptr;
+  u32 line_vertex_count;
 
-        TextVertex* textVertexBufferBase;
-        TextVertex* textVertexBufferPtr;
-        u32 textIndexCount;
+  TextVertex *text_vertex_buffer_base;
+  TextVertex *text_vertex_buffer_ptr;
+  u32 text_index_count;
 
-        Shared<Texture2D> whiteTexture;
+  Shared<Texture2D> white_texture;
 
-        f32 lineWidth;
+  f32 line_width;
 
-        std::array<Shared<Texture2D>, maxTextureSlots> textureSlots;
-        u32 textureSlotIndex;
+  std::array<Shared<Texture2D>, max_texture_slots> texture_slots;
+  u32 texture_slot_index;
 
-        std::array<std::array<f32, 4>, 4> quadVertexPositions;
+  std::array<std::array<f32, 4>, 4> quad_vertex_positions;
 
-        struct CameraBuffer
-        {
-            std::array<std::array<f32, 4>, 4> viewProj;
-        };
-        CameraBuffer cameraBuffer;
-    };
+  struct CameraBuffer {
+    std::array<std::array<f32, 4>, 4> view_proj;
+  };
+  CameraBuffer camera_buffer;
+};
 
-    class Renderer2D final
-    {
-    public:
-        static void Init();
-        static void Shutdown();
+class Renderer2D final {
+public:
+  static void init();
+  static void shutdown();
 
-        static void BeginScene(const Camera& camera);
-        static void BeginScene(const Camera& camera, const std::array<std::array<f32, 4>, 4>& position);
-        static void EndScene();
+  static void begin_scene(const Camera &camera);
+  static void begin_scene(const Camera &camera,
+                         const std::array<std::array<f32, 4>, 4> &position);
+  static void end_scene();
 
-        static void DrawQuad();
-        static void DrawCircle();
-        static void DrawTriangle();
-        static void DrawLine();
-        static void DrawSprite();
-        static void DrawString();
+  static void draw_quad();
+  static void draw_circle();
+  static void draw_triangle();
+  static void draw_line();
+  static void draw_sprite();
+  static void draw_string();
 
-        static void Flush();
-        static void StartBatch();
-        static void Nextbatch();
+  static void flush();
+  static void start_batch();
+  static void next_batch();
 
-    private:
-        static Renderer2DData sData;
-    };
-}
-
+private:
+  static Renderer2DData data;
+};
+} // namespace SK

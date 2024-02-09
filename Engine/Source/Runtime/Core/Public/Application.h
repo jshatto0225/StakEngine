@@ -2,36 +2,31 @@
 
 #include <vector>
 
-#include "Window.h"
 #include "ApplicationLayer.h"
 #include "Event.h"
 #include "InputManager.h"
+#include "Window.h"
 
-namespace SK
-{
-    class Application final
-    {
-    public:
-        static void Init();
-        static void Run();
-        static void Shutdown();
+namespace sk {
+class Application final {
+public:
+  static void init();
+  static void run();
+  static void shutdown();
 
-        static void OnEvent(Event& e);
+  static void on_event(Event &e);
 
-        template<typename LayerType>
-        static void RegisterLayer()
-        {
-            static_assert(std::is_base_of<ApplicationLayer, LayerType>::value,
-                          "All layers must inherit from ApplicationLayer");
-            sApplicationLayers.push_back(new LayerType);
-        }
+  template <typename LayerType> static void register_layer() {
+    static_assert(std::is_base_of<ApplicationLayer, LayerType>::value,
+                  "All layers must inherit from ApplicationLayer");
+    application_layers.push_back(new LayerType);
+  }
 
-    private:
-        static bool sRunning;
-        // TODO: Remove raw pointer
-        static std::vector<ApplicationLayer*> sApplicationLayers;
-        static Unique<InputManager> sInputManager;
-        static Unique<Window> sWindow;
-    };
-}
-
+private:
+  static bool running;
+  // TODO: Remove raw pointer
+  static std::vector<ApplicationLayer *> application_layers;
+  static Unique<InputManager> input_manager;
+  static Unique<Window> window;
+};
+} // namespace SK

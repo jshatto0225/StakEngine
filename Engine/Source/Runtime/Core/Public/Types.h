@@ -1,7 +1,7 @@
 #pragma once
 
-#include <stdint.h>
 #include <memory>
+#include <stdint.h>
 
 typedef double f64;
 typedef float f32;
@@ -16,21 +16,16 @@ typedef uint32_t u32;
 typedef uint16_t u16;
 typedef uint8_t u8;
 
-template<typename T>
-using Shared = std::shared_ptr<T>;
+template <typename T> using Shared = std::shared_ptr<T>;
 
-template<typename T, typename ...Args>
-constexpr Shared<T> MakeShared(Args&& ...args)
-{
-    return std::make_shared<T>(std::forward<Args>(args)...);
+template <typename T, typename... Args>
+constexpr Shared<T> new_shared(Args &&...args) {
+  return std::make_shared<T>(std::forward<Args>(args)...);
 }
 
-template<typename T>
-using Unique = std::unique_ptr<T>;
+template <typename T> using Unique = std::unique_ptr<T>;
 
-template<typename T, typename ...Args>
-constexpr Unique<T> MakeUnique(Args&& ...args)
-{
-    return std::make_unique<T>(std::forward<Args>(args)...);
+template <typename T, typename... Args>
+constexpr Unique<T> new_unique(Args &&...args) {
+  return std::make_unique<T>(std::forward<Args>(args)...);
 }
-

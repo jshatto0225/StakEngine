@@ -2,5 +2,4 @@
 
 #include "Types.h"
 
-template<typename T, u64 N>
-struct Vec{};
+template <typename T, u64 N> struct Vec {};

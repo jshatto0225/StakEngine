@@ -1,11 +1,7 @@
 #pragma once
 
-#if WIN32
-#include <windows.h>
-#endif
-
-#include <gl/GL.h>
-#include "glext.h"
+#include <GL/gl.h>
+#include <GL/glext.h>
 
 extern PFNGLGENBUFFERSPROC glGenBuffers;
 extern PFNGLBINDBUFFERPROC glBindBuffer;
@@ -21,4 +17,4 @@ extern PFNGLVERTEXATTRIBPOINTERPROC glVertexAttribPointer;
 extern PFNGLVERTEXATTRIBDIVISORPROC glVertexAttribDivisor;
 extern PFNGLBINDVERTEXARRAYPROC glBindVertexArray;
 
-void BindGL();
+void bind_gl();

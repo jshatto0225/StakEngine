@@ -1,7 +1,12 @@
+#pragma once
+
 #include "GLContext.h"
+#include "Window.h"
 
-class LinuxGLContext : public GLContext
-{
-
+namespace sk {
+class LinuxGLContext : public GLContext {
+public:
+  LinuxGLContext(const Unique<Window> &window);
+  void make_current() override;
 };
-
+}

@@ -1,7 +1,11 @@
+#pragma once
+
 #include "InputManager.h"
 
-class LinuxInputManager : public InputManager
-{
-
+namespace sk {
+class LinuxInputManager : public InputManager {
+public:
+  bool key_down(i32 key) override;
+  MousePosition get_mouse_position() override;
 };
-
+}

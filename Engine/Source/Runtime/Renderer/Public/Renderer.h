@@ -2,15 +2,13 @@
 
 #include "Window.h"
 
-namespace SK
-{
-    class Renderer final
-    {
-    public:
-        static void Init(const Unique<Window>& window);
-        static void Shutdown();
+namespace sk {
+class Renderer final {
+public:
+  static void init(const Unique<Window> &window);
+  static void shutdown();
 
-    private:
-        static bool mRunning;
-    };
-}
+private:
+  static bool running;
+};
+} // namespace SK

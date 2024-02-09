@@ -2,40 +2,36 @@
 
 #include "Buffer.h"
 
-namespace SK
-{
-    class OpenGLIndexBuffer : public IndexBuffer
-    {
-    public:
-        OpenGLIndexBuffer(u32* indices, u32 size);
-        ~OpenGLIndexBuffer();
+namespace sk {
+class OpenGLIndexBuffer : public IndexBuffer {
+public:
+  OpenGLIndexBuffer(u32 *indices, u32 size);
+  ~OpenGLIndexBuffer();
 
-        void Bind() const override;
-        void Unbind() const override;
+  void bind() const override;
+  void unbind() const override;
 
-        u32 GetCount() const override;
+  u32 get_count() const override;
 
-    private:
-        u32 mRendererId;
-        u32 mCount;
-    };
+private:
+  u32 renderer_id;
+  u32 count;
+};
 
-    class OpenGLVertexBuffer : public VertexBuffer
-    {
-    public:
-        OpenGLVertexBuffer(u32 size);
-        ~OpenGLVertexBuffer();
+class OpenGLVertexBuffer : public VertexBuffer {
+public:
+  OpenGLVertexBuffer(u32 size);
+  ~OpenGLVertexBuffer();
 
-        void Bind() const override;
-        void Unbind() const override;
-        void SetData(const void* data, u32 size) override;
+  void bind() const override;
+  void unbind() const override;
+  void set_data(const void *data, u32 size) override;
 
-        const BufferLayout& GetLayout() const override;
-        void SetLayout(const BufferLayout& layout) override;
+  const BufferLayout &get_layout() const override;
+  void set_layout(const BufferLayout &layout) override;
 
-    private:
-        u32 mRendererId;
-        BufferLayout mLayout;
-    };
-}
-
+private:
+  u32 renderer_id;
+  BufferLayout layout;
+};
+} // namespace SK
