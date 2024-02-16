@@ -1,3 +1,5 @@
+#pragma once
+
 #include "InputManager.h"
 
 namespace sk {

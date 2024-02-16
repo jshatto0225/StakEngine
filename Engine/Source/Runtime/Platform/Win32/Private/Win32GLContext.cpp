@@ -34,7 +34,8 @@ Win32GLContext::Win32GLContext(const Unique<Window> &window) {
     0,
     0,
     0,
-    0};
+    0
+  };
   i32 let_windows_choose_pixel_format = ChoosePixelFormat(device_context, &pfd);
   SetPixelFormat(device_context, let_windows_choose_pixel_format, &pfd);
 

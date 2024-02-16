@@ -5,35 +5,42 @@
 #include "Renderer.h"
 
 namespace sk {
-bool Application::running;
-std::vector<ApplicationLayer *> Application::application_layers;
-Unique<InputManager> Application::input_manager;
-Unique<Window> Application::window;
+static bool running;
+static std::vector<Shared<ApplicationLayer>> application_layers;
+static Unique<InputManager> input_manager;
+static Unique<Window> window;
 
-void Application::init() {
-  window = PlatformManager::new_window("Stak Applciation", 100, 100, 1280, 720);
-  Renderer::init(window);
-  input_manager = PlatformManager::new_input_manager();
+void application_add_layer(Unique<ApplicationLayer> layer) {
+  application_layers.push_back(std::move(layer));
+}
+
+void application_init() {
+  SK_CORE_TRACE("New Window");
+  window = new_window("Stak Applciation", 100, 100, 1280, 720);
+  SK_CORE_TRACE("Initializing renderer");
+  renderer_init(window);
+  SK_CORE_TRACE("New input manager");
+  input_manager = new_input_manager();
   running = true;
 
-  for (ApplicationLayer *layer : application_layers) {
+  for (Shared<ApplicationLayer> layer : application_layers) {
     layer->start();
   }
 }
 
-void Application::run() {
+void application_run() {
   while (running) {
     window->update();
 
-    for (ApplicationLayer *layer : application_layers) {
+    for (Shared<ApplicationLayer> layer : application_layers) {
       layer->update();
     }
   }
 }
 
-void Application::on_event(Event &e) {
+void application_on_event(Event &e) {
   if (running) {
-    for (ApplicationLayer *layer : application_layers) {
+    for (Shared<ApplicationLayer> layer : application_layers) {
       layer->on_event(e);
     }
 
@@ -41,7 +48,7 @@ void Application::on_event(Event &e) {
     case WINDOW_CLOSE: {
       WindowCloseEvent *wce = (WindowCloseEvent *)&e;
       if (wce->window_id == window->get_id()) {
-        Application::shutdown();
+        application_shutdown();
       }
       break;
     }
@@ -53,17 +60,17 @@ void Application::on_event(Event &e) {
   }
 }
 
-void Application::shutdown() {
+void application_shutdown() {
   if (running) {
     SK_CORE_WARN("Application Shutdown");
     running = false;
-    for (ApplicationLayer *layer : application_layers) {
+    for (Shared<ApplicationLayer> layer : application_layers) {
       layer->end();
-      delete layer;
+      //layer.reset();
     }
     application_layers.clear();
-    Renderer::shutdown();
-    window.reset();
+    renderer_shutdown();
+    //window.reset();
   }
 }
-} // namespace SK
+} // namespace sk

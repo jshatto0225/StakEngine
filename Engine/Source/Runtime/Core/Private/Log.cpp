@@ -39,38 +39,40 @@ void Logger::set_level(Level level) {
   }
 }
 
-Shared<Logger> Log::core_logger;
-Shared<Logger> Log::client_logger;
+static Shared<Logger> core_logger;
+static Shared<Logger> client_logger;
 
-bool Log::initialized = false;
+static bool initialized = false;
 
-void Log::init() noexcept {
+void log_init() noexcept {
   core_logger = new_shared<Logger>("StakEngine", true);
   client_logger = new_shared<Logger>("Application", false);
   initialized = true;
 }
 
-void Log::shutdown() noexcept {
+void log_shutdown() noexcept {
   if (initialized) {
-    core_logger.reset();
-    client_logger.reset();
+    //core_logger.reset();
+    //client_logger.reset();
     initialized = false;
   }
 }
 
-Shared<Logger> Log::get_core_logger() {
+Shared<Logger> log_get_core_logger() {
   if (!initialized) {
-    throw std::runtime_error("Core Logger Is NULL");
-  } else {
+    fprintf(stderr, "Log Not Initialized");
+  }
+  else {
     return core_logger;
   }
 }
 
-Shared<Logger> Log::get_client_logger() {
+Shared<Logger> log_get_client_logger() {
   if (!initialized) {
-    throw std::runtime_error("Client Logger Is NULL");
-  } else {
+    fprintf(stderr, "Log Not Initialized");
+  }
+  else {
     return client_logger;
   }
 }
-} // namespace SK
+} // namespace sk

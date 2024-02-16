@@ -63,35 +63,25 @@ private:
   FILE *log_file;
 };
 
-class Log final {
-public:
-  static void init() noexcept;
-  static void shutdown() noexcept;
-  static Shared<Logger> get_core_logger();
-  static Shared<Logger> get_client_logger();
-
-private:
-  static Shared<Logger> core_logger;
-  static Shared<Logger> client_logger;
-  static bool initialized;
-};
+void log_init() noexcept;
+void log_shutdown() noexcept;
+Shared<Logger> log_get_core_logger();
+Shared<Logger> log_get_client_logger();
 } // namespace SK
 
 #ifdef SK_DEBUG
-#define SK_CORE_TRACE(...) ::sk::Log::get_core_logger()->trace(__VA_ARGS__)
-#define SK_CORE_INFO(...) ::sk::Log::get_core_logger()->info(__VA_ARGS__)
-#define SK_CORE_WARN(...) ::sk::Log::get_core_logger()->warn(__VA_ARGS__)
-#define SK_CORE_ERROR(...) ::sk::Log::get_core_logger()->error(__VA_ARGS__)
-#define SK_CORE_CRITICAL(...) ::sk::Log::get_core_logger()->critical(__VA_ARGS__)
+#define SK_CORE_TRACE(...) ::sk::log_get_core_logger()->trace(__VA_ARGS__)
+#define SK_CORE_INFO(...) ::sk::log_get_core_logger()->info(__VA_ARGS__)
+#define SK_CORE_WARN(...) ::sk::log_get_core_logger()->warn(__VA_ARGS__)
+#define SK_CORE_ERROR(...) ::sk::log_get_core_logger()->error(__VA_ARGS__)
+#define SK_CORE_CRITICAL(...) ::sk::log_get_core_logger()->critical(__VA_ARGS__)
 
-#define SK_TRACE(...) ::sk::Log::get_client_logger()->trace(__VA_ARGS__)
-#define SK_INFO(...) ::sk::Log::get_client_logger()->info(__VA_ARGS__)
-#define SK_WARN(...) ::sk::Log::get_client_logger()->warn(__VA_ARGS__)
-#define SK_ERROR(...) ::sk::Log::get_client_logger()->error(__VA_ARGS__)
-#define SK_CRITICAL(...) ::sk::Log::get_client_logger()->critical(__VA_ARGS__)
-#endif
-
-#ifdef SK_RELEASE
+#define SK_TRACE(...) ::sk::log_get_client_logger()->trace(__VA_ARGS__)
+#define SK_INFO(...) ::sk::log_get_client_logger()->info(__VA_ARGS__)
+#define SK_WARN(...) ::sk::log_get_client_logger()->warn(__VA_ARGS__)
+#define SK_ERROR(...) ::sk::log_get_client_logger()->error(__VA_ARGS__)
+#define SK_CRITICAL(...) ::sk::log_get_client_logger()->critical(__VA_ARGS__)
+#else
 #define SK_CORE_TRACE(...)
 #define SK_CORE_INFO(...)
 #define SK_CORE_WARN(...)

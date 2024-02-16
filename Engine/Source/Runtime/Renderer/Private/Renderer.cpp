@@ -2,21 +2,24 @@
 
 #include "RenderCommand.h"
 #include "Renderer2D.h"
+#include "Log.h"
 
 namespace sk {
-bool Renderer::running;
+static bool running;
 
-void Renderer::init(const Unique<Window> &window) {
-  RenderCommand::init(window);
-  Renderer2D::init();
+void renderer_init(const Unique<Window> &window) {
+  SK_CORE_TRACE("Render command init");
+  render_command_init(window);
+  SK_CORE_TRACE("Renderer 2d init");
+  renderer_2d_init();
   running = true;
 }
 
-void Renderer::shutdown() {
+void renderer_shutdown() {
   if (running) {
     running = false;
-    Renderer2D::shutdown();
-    RenderCommand::shutdown();
+    renderer_2d_shutdown();
+    render_command_shutdown();
   }
 }
 } // namespace SK

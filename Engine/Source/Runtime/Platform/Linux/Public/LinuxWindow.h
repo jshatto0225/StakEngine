@@ -1,9 +1,13 @@
 #pragma once
 
+#include <X11/Xlib.h>
+using X11Window = Window;
+
 #include "Window.h"
+#include "Types.h"
 
 namespace sk {
-class LinuxWindow : public Window {
+class LinuxWindow : public sk::Window {
 public:
   LinuxWindow(const std::string &name, i32 x, i32 y, i32 width, i32 height);
   ~LinuxWindow();
@@ -22,10 +26,18 @@ public:
 
   void set_size_and_pos(i32 x, i32 y, i32 width, i32 height) override;
   void update() override;
-  void *get_handle() override;
   void close() override;
 
 private:
   bool open;
+  Display *display;
+  i32 screen;
+  X11Window root;
+  X11Window window;
+  i32 width;
+  i32 height;
+  i32 x;
+  i32 y;
+  std::string name;
 };
 }

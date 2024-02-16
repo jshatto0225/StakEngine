@@ -31,7 +31,7 @@ void APIENTRY opengl_message_callback(u32 source, u32 type, u32 id, u32 severity
 }
 
 OpenGLRendererAPI::OpenGLRendererAPI(const Unique<Window> &window) {
-  context = PlatformManager::new_context(window);
+  context = new_context(window);
 
 #ifdef SK_DEBUG
   glEnable(GL_DEBUG_OUTPUT);

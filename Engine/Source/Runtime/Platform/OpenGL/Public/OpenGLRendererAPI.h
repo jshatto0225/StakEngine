@@ -20,4 +20,4 @@ public:
 private:
   Unique<GLContext> context;
 };
-} // namespace SK
+} // namespace sk

@@ -54,55 +54,44 @@
 #endif
 
 namespace sk {
-Unique<Window> PlatformManager::new_window(const std::string &name, i32 x, i32 y,
-                                          i32 width, i32 height) {
+Unique<Window> new_window(const std::string &name, i32 x, i32 y, i32 width, i32 height) {
   return new_unique<PLATFORM_WINDOW>(name, x, y, width, height);
 }
 
-Unique<InputManager> PlatformManager::new_input_manager() {
+Unique<InputManager> new_input_manager() {
   return new_unique<PLATFORM_INPUT_MANAGER>();
 }
 
-Shared<RendererAPI>
-PlatformManager::new_renderer_api(const Unique<Window> &window) {
+Shared<RendererAPI> new_renderer_api(const Unique<Window> &window) {
   return new_shared<PLATFORM_RENDERER_API>(window);
 }
 
-Shared<Texture>
-PlatformManager::new_texture(TextureSpecification texture_spec) {
+Shared<Texture> new_texture(TextureSpecification texture_spec) {
   return new_shared<PLATFORM_TEXTURE>(texture_spec);
 }
 
-Shared<Texture2D>
-PlatformManager::new_texture_2d(TextureSpecification texture_spec) {
+Shared<Texture2D> new_texture_2d(TextureSpecification texture_spec) {
   return new_shared<PLATFORM_TEXTURE_2D>(texture_spec);
 }
 
-Shared<VertexBuffer> PlatformManager::new_vertex_buffer(u32 size) {
+Shared<VertexBuffer> new_vertex_buffer(u32 size) {
   return new_shared<PLATFORM_VERTEX_BUFFER>(size);
 }
 
-Shared<IndexBuffer> PlatformManager::new_index_buffer(u32 *indices, u32 size) {
+Shared<IndexBuffer> new_index_buffer(u32 *indices, u32 size) {
   return new_shared<PLATFORM_INDEX_BUFFER>(indices, size);
 }
 
-Shared<VertexArray> PlatformManager::new_vertex_array() {
+Shared<VertexArray> new_vertex_array() {
   return new_shared<PLATFORM_VERTEX_ARRAY>();
 }
 
-Shared<Shader> PlatformManager::new_shader(const std::string &vs,
-                                          const std::string &fs) {
+Shared<Shader> new_shader(const std::string &vs, const std::string &fs) {
   return new_shared<PLATFORM_SHADER>(vs, fs);
 }
 
-void kill_platform_window_manager() {
-#ifdef WIN32
-  PostQuitMessage(0);
-#endif
-}
-
 #ifdef SK_OPENGL
-Unique<GLContext> PlatformManager::new_context(const Unique<Window> &window) {
+Unique<GLContext> new_context(const Unique<Window> &window) {
   return new_unique<PLATFORM_GL_CONTEXT>(window);
 }
 #endif

@@ -12,4 +12,6 @@ private:
   Shared<sk::Window> window;
 };
 
-void extern_init() { sk::Application::register_layer<TestLayer>(); }
+void extern_init() {
+  sk::application_add_layer(new_unique<TestLayer>());
+}

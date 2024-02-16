@@ -1,3 +1,5 @@
+#pragma once
+
 #include "GLContext.h"
 
 #include <windows.h>

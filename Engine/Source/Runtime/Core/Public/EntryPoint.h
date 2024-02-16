@@ -7,11 +7,11 @@
 extern void extern_init();
 
 inline i32 stak_main() {
-  sk::Log::init();
+  sk::log_init();
   extern_init();
-  sk::Application::init();
-  sk::Application::run();
-  sk::Log::shutdown();
+  sk::application_init();
+  sk::application_run();
+  sk::log_shutdown();
   return 0;
 }
 

@@ -24,7 +24,6 @@ public:
 
   virtual void set_size_and_pos(i32 x, i32 y, i32 width, i32 height) = 0;
   virtual void update() = 0;
-  virtual void *get_handle() = 0;
   virtual void close() = 0;
 
   virtual void generate_event(EventType e) final;
