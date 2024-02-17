@@ -11,7 +11,7 @@ void render_command_init(const Unique<Window> &window) {
 }
 
 void render_command_shutdown() {
-  //renderer_api.reset();
+  renderer_api.reset();
 }
 
 void render_command_set_viewport(const Vec4u &viewport) {

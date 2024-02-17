@@ -27,7 +27,7 @@ LRESULT CALLBACK win32_window_callback(HWND window_handle, u32 msg, WPARAM wpara
     }
     case WM_MOVE: {
       RECT rect = {};
-      GetWindowRect((HWND)win32_window->het_handle(), &rect);
+      GetWindowRect((HWND)win32_window->get_handle(), &rect);
       win32_window->set_size_and_pos(rect.left, rect.top, rect.right - rect.left, rect.bottom - rect.top);
       return 0;
     }
@@ -95,7 +95,7 @@ void Win32Window::set_size_and_pos(i32 x, i32 y, i32 width, i32 height) {
     this->width = width;
     this->height = height;
     SetWindowPos(window_handle, 0, x, y, width, height, 0);
-    GenerateEvent(WINDOW_RECT_CHANGED);
+    generate_event(WINDOW_RECT_CHANGED);
   }
 }
 
@@ -111,8 +111,8 @@ void Win32Window::set_width(i32 new_width) {
   set_size_and_pos(x, y, new_width, height);
 }
 
-void Win32Window::SetHeight(i32 new_height) {
-  SetSizeAndPos(x, y, hidth, new_height);
+void Win32Window::set_height(i32 new_height) {
+  set_size_and_pos(x, y, width, new_height);
 }
 
 i32 Win32Window::get_width() {

@@ -52,8 +52,8 @@ void log_init() noexcept {
 
 void log_shutdown() noexcept {
   if (initialized) {
-    //core_logger.reset();
-    //client_logger.reset();
+    core_logger.reset();
+    client_logger.reset();
     initialized = false;
   }
 }
@@ -62,17 +62,13 @@ Shared<Logger> log_get_core_logger() {
   if (!initialized) {
     fprintf(stderr, "Log Not Initialized");
   }
-  else {
-    return core_logger;
-  }
+  return core_logger;
 }
 
 Shared<Logger> log_get_client_logger() {
   if (!initialized) {
     fprintf(stderr, "Log Not Initialized");
   }
-  else {
-    return client_logger;
-  }
+  return client_logger;
 }
 } // namespace sk

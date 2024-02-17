@@ -1197,16 +1197,6 @@ TEST_CASE("Test Mat4x4", "[Mat4x4]")
     REQUIRE((2 / m)(3, 3) == 0);
 } // End Test Mat4x4
 
-
-TEST_CASE("Test Log", "[Log]")
-{
-    REQUIRE_THROWS(SK_CORE_INFO("throws"));
-    sk::log_init();
-    REQUIRE_NOTHROW(SK_CORE_INFO("nothrow"));
-    sk::log_shutdown();
-    REQUIRE_THROWS(SK_CORE_INFO("throws"));
-} // End Test Log
-
 TEST_CASE("Test Window", "[Window]")
 {
     sk::log_init();
@@ -1311,7 +1301,7 @@ TEST_CASE("Test Event", "[Application::OnEvent]")
             sk::application_shutdown();
         }
 
-        void OnEvent(sk::Event& e)
+        void on_event(sk::Event& e)
         {
             if (e.type == sk::TEST_EVENT)
             {

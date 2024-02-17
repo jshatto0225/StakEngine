@@ -180,24 +180,24 @@ void renderer_2d_init() {
 }
 
 void renderer_2d_shutdown() {
-  //data.quad_shader.reset();
-  //data.circle_shader.reset();
-  //data.line_shader.reset();
-  //data.text_shader.reset();
+  data.quad_shader.reset();
+  data.circle_shader.reset();
+  data.line_shader.reset();
+  data.text_shader.reset();
 
-  //data.white_texture.reset();
+  data.white_texture.reset();
 
-  //data.quad_vertex_array.reset();
-  //data.quad_vertex_buffer.reset();
+  data.quad_vertex_array.reset();
+  data.quad_vertex_buffer.reset();
 
-  //data.circle_vertex_array.reset();
-  //data.circle_vertex_buffer.reset();
+  data.circle_vertex_array.reset();
+  data.circle_vertex_buffer.reset();
 
-  //data.line_vertex_array.reset();
-  //data.line_vertex_buffer.reset();
+  data.line_vertex_array.reset();
+  data.line_vertex_buffer.reset();
 
-  //data.text_vertex_array.reset();
-  //data.text_vertex_buffer.reset();
+  data.text_vertex_array.reset();
+  data.text_vertex_buffer.reset();
 
   delete[] data.quad_vertex_buffer_base;
   delete[] data.circle_vertex_buffer_base;

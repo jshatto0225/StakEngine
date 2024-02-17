@@ -66,11 +66,11 @@ void application_shutdown() {
     running = false;
     for (Shared<ApplicationLayer> layer : application_layers) {
       layer->end();
-      //layer.reset();
+      layer.reset();
     }
     application_layers.clear();
     renderer_shutdown();
-    //window.reset();
+    window.reset();
   }
 }
 } // namespace sk

@@ -47,7 +47,7 @@ Win32GLContext::~Win32GLContext() {
   if (wglGetCurrentContext() == gl_rendering_context) {
     wglMakeCurrent(nullptr, nullptr);
   }
-  wglDeleteContext(glrendering_context);
+  wglDeleteContext(gl_rendering_context);
   ReleaseDC(window_handle, device_context);
 }
 

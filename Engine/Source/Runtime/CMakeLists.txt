@@ -7,8 +7,6 @@ if(CMAKE_HOST_WIN32)
   set(SK_LINUX 0 GLOBAL)
   set(SK_VULKAN 0 GLOBAL)
   set(SK_OPENGL 1 GLOBAL)
-
-  set(SK_GLFW 0 GLOBAL)
 endif()
 
 if(CMAKE_HOST_UNIX)
@@ -16,8 +14,6 @@ if(CMAKE_HOST_UNIX)
   set(SK_LINUX 1 GLOBAL)
   set(SK_OPENGL 1 GLOBAL)
   set(SK_VULKAN 0 GLOBAL)
-
-  set(SK_GLFW 0 GLOBAL)
 endif()
 
 if(SK_WINDOWS EQUAL 1)
@@ -35,11 +31,6 @@ endif()
 
 if(SK_LINUX EQUAL 1)
   file(GLOB WINDOW_PLATFORM Platform/Linux/Private/*.cpp)
-endif()
-
-if(SK_GLFW EQUAL 1)
-  file(GLOB WINDOW_PLATFORM Platform/GLFW/Private/*.cpp)
-  add_subdirectory(External/GLFW)
 endif()
 
 add_library(StakRuntime STATIC ${SOURCES} ${WINDOW_PLATFORM} ${RENDERER_PLATFORM})
@@ -70,13 +61,6 @@ if(SK_OPENGL EQUAL 1)
   target_link_libraries(StakRuntime PUBLIC ${OPENGL_LIBRARIES})
   target_include_directories(StakRuntime PRIVATE ${OPENGL_INCLUDE_DIRS})
   target_include_directories(StakRuntime PRIVATE Platform/OpenGL/Public)
-endif()
-
-if(SK_GLFW EQUAL 1)
-  target_compile_definitions(StakRuntime PRIVATE SK_GLFW=1)
-  target_include_directories(StakRuntime PRIVATE External/GLFW/include)
-  target_include_directories(StakRuntime PRIVATE Platform/GLFW/Public)
-  target_link_libraries(StakRuntime PUBLIC glfw3)
 endif()
 
 target_include_directories(StakRuntime PUBLIC Core/Public)
