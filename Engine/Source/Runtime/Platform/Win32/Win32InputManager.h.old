@@ -1,0 +1,10 @@
+#pragma once
+
+#include "InputManager.h"
+
+class Win32InputManager : public InputManager {
+public:
+  bool key_down(i32 key) override;
+  MousePosition get_mouse_position() override;
+};
+
