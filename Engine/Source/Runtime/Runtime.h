@@ -1,30 +1,22 @@
 #pragma once
 
-#include "Math/Vector/Public/Vec1Types.h"
-#include "Math/Vector/Public/Vec2Types.h"
-#include "Math/Vector/Public/Vec3Types.h"
-#include "Math/Vector/Public/Vec4Types.h"
+#include "Math/Vector/Vec1Types.h"
+#include "Math/Vector/Vec2Types.h"
+#include "Math/Vector/Vec3Types.h"
+#include "Math/Vector/Vec4Types.h"
 
-#include "Math/Matrix/Public/Mat2x2Types.h"
-#include "Math/Matrix/Public/Mat3x3Types.h"
-#include "Math/Matrix/Public/Mat4x4Types.h"
+#include "Math/Matrix/Mat2x2Types.h"
+#include "Math/Matrix/Mat3x3Types.h"
+#include "Math/Matrix/Mat4x4Types.h"
 
-#include "Platform/Manager/Public/PlatformManager.h"
-#include "Renderer/Public/Buffer.h"
-#include "Renderer/Public/Camera.h"
-#include "Renderer/Public/RenderCommand.h"
-#include "Renderer/Public/Renderer.h"
-#include "Renderer/Public/Renderer2D.h"
-#include "Renderer/Public/RendererAPI.h"
-#include "Renderer/Public/Shader.h"
-#include "Renderer/Public/Texture.h"
-#include "Renderer/Public/VertexArray.h"
+#include "Core/Types.h"
+#include "Core/AppLayer.h"
+#include "Core/Event.h"
+#include "Core/EntryPoint.h"
+#include "Core/Log.h"
 
-#include "Core/Public/Types.h"
-#include "Core/Public/Window.h"
-#include "Core/Public/ApplicationLayer.h"
-#include "Core/Public/Application.h"
-#include "Core/Public/Event.h"
-#include "Core/Public/Log.h"
-#include "Core/Public/InputManager.h"
-#include "Core/Public/EntryPoint.h"
+struct SKWindow;
+struct SKWindowConfig;
+
+SKWindow *sk_create_window(SKWindowConfig *config);
+void sk_app_add_layer(AppLayer *layer);

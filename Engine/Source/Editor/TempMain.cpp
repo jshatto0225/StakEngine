@@ -1,17 +1,21 @@
 #include "Runtime/Runtime.h"
 
-class TestLayer : public sk::ApplicationLayer {
-public:
-  void start() { SK_CORE_TRACE("Source dir: %s", SOURCE_DIR); }
+void test_start() {
+  SK_TRACE("Source dir: %s\n", SOURCE_DIR);
+}
 
-  void update() {}
+void test_update() {
 
-  void on_event(sk::Event &e) {}
+}
 
-private:
-  Shared<sk::Window> window;
-};
+void test_on_event(Event &e) {
+
+}
 
 void extern_init() {
-  sk::application_add_layer(new_unique<TestLayer>());
+  AppLayer *test_layer = new AppLayer;
+  test_layer->start = test_start;
+  test_layer->update = test_update;
+  test_layer->on_event = test_on_event;
+  sk_app_add_layer(test_layer);
 }
