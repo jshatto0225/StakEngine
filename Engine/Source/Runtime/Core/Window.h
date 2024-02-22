@@ -8,6 +8,8 @@ struct SKWindow;
 struct _SKContext;
 
 struct _SKWindow {
+  _SKWindow *next;
+
   bool should_close;
   i32 x;
   i32 y;
@@ -21,8 +23,8 @@ struct _SKWindow {
     void (*window_close_fun)(SKWindow *) = [](SKWindow *) {};
   } callbacks;
 
-  SK_PLATFORM_WINDOW_STATE
-  SK_PLATFORM_CONTEXT_STATE
+  SK_PLATFORM_WINDOW_STATE;
+  SK_PLATFORM_CONTEXT_STATE;
 };
 
 struct SKWindowConfig {
@@ -30,7 +32,7 @@ struct SKWindowConfig {
   i32 y;
   i32 width;
   i32 height;
-  const char* title;
+  const char *title;
 };
 
 SKWindow *sk_create_window(const SKWindowConfig &config);

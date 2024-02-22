@@ -4,3 +4,5 @@
 	-- Try to get application to support local structs (Fix on_event and add_layer)
 
 -- Also try to include all libs in repo since cmake is annoying
+
+-- Consider changine win32 poll events to not use while loop or move to different thread

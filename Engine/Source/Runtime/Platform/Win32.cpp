@@ -90,6 +90,16 @@ SKWindow *sk_create_window(const SKWindowConfig &config) {
                                          nullptr);
   SetWindowLongPtrA(window->win32.handle, GWLP_USERDATA, (LONG_PTR)window);
   _sk_create_context(window);
+
+  // Add window to linked list
+  if (_sk.head == nullptr) {
+    _sk.head = window;
+  }
+  else {
+    _sk.last->next = window;
+  }
+  _sk.last = window;
+
   return (SKWindow *)window;
 }
 
@@ -98,7 +108,21 @@ void sk_destroy_window(SKWindow *win) {
     return;
   }
   _SKWindow *internal_window = (_SKWindow *)win;
+  sk_make_context_current(nullptr);
   DestroyWindow(internal_window->win32.handle);
+
+  // Remove window from list
+  _SKWindow *curr = _sk.head;
+  _SKWindow *prev = curr;
+  while (curr != nullptr) {
+    if (curr == internal_window) {
+      prev->next = curr->next;
+      break;
+    }
+    prev = curr;
+    curr = curr->next;
+  }
+
   delete internal_window;
 }
 

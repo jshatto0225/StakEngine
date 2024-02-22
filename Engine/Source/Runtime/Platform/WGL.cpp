@@ -1,3 +1,5 @@
+#if defined(SK_WGL)
+
 #include <windows.h>
 
 #include "Window.h"
@@ -32,7 +34,7 @@ void _sk_create_context(_SKWindow *win) {
 
 void sk_make_context_current(SKWindow *win) {
   if (!win) {
-    return;
+    wglMakeCurrent(nullptr, nullptr);
   }
   _SKWindow *internal_window = (_SKWindow *)win;
   wglMakeCurrent(internal_window->wgl.device_context, internal_window->wgl.gl_rendering_context);
@@ -52,3 +54,5 @@ void sk_window_swap_buffers(SKWindow *win) {
   _SKWindow *internal_window = (_SKWindow *)win;
   SwapBuffers(internal_window->wgl.device_context);
 }
+
+#endif
