@@ -2,10 +2,10 @@
 
 #include "Event.h"
 
-struct AppLayer {
+struct SKAppLayer {
   void (*start)() = []() {};
   void (*end)() = []() {};
   void (*update)() = []() {};
-  void (*on_event)(Event &e) = [](Event &) {};
+  void (*on_event)(SKEvent &e) = [](SKEvent &) {};
 };
 

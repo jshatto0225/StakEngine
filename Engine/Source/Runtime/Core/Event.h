@@ -2,40 +2,35 @@
 
 #include "Types.h"
 
-enum class EventType {
-  TEST_EVENT = -1,
-  INVALID_EVENT = -1,
-  WINDOW_RECT_CHANGED,
-  WINDOW_CLOSE,
+struct SKWindow;
+
+enum SKEventType {
+  SK_TEST_EVENT = -1,
+  SK_INVALID_EVENT = -1,
+  SK_WINDOW_RECT_CHANGED,
+  SK_WINDOW_CLOSE,
 };
 
-//TODO: clean
-struct Event {
-  EventType type;
+struct SKWindowCloseEvent {
+  SKWindow *window = nullptr;
 };
 
-struct WindowCloseEvent : public Event {
-  WindowCloseEvent(u64 window_id) {
-    this->type = EventType::WINDOW_CLOSE;
-    this->window_id = window_id;
-  }
-
-  u64 window_id;
+struct SKWindowMoveEvent {
+  SKWindow *window = nullptr;
+  i32 x = 0;
+  i32 y = 0;
 };
 
-struct WindowRectChangedEvent : public Event {
-  WindowRectChangedEvent(u64 window_id, i32 width, i32 height, i32 x, i32 y) {
-    this->type = EventType::WINDOW_RECT_CHANGED;
-    this->window_id = window_id;
-    this->width = width;
-    this->height = height;
-    this->x = x;
-    this->y = y;
-  }
-
-  u64 window_id;
-  i32 width;
-  i32 height;
-  i32 x;
-  i32 y;
+struct SKWindowResizeEvent {
+  SKWindow *window = nullptr;
+  i32 width = 0;
+  i32 height = 0;
 };
+
+struct SKEvent {
+  SKEventType type = SK_INVALID_EVENT;
+  SKWindowCloseEvent win_close_event;
+  SKWindowMoveEvent win_move_event;
+  SKWindowResizeEvent window_resize_event;
+};
+

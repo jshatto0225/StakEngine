@@ -1,7 +1,11 @@
 #pragma once
 
-#include <GL/gl.h>
-#include <GL/glext.h>
+#ifdef SK_WINDOWS
+#include <windows.h>
+#endif
+
+#include <gl/GL.h>
+#include <gl/glext.h>
 
 extern PFNGLGENBUFFERSPROC glGenBuffers;
 extern PFNGLBINDBUFFERPROC glBindBuffer;
@@ -16,5 +20,3 @@ extern PFNGLENABLEVERTEXATTRIBARRAYPROC glEnableVertexAttribArray;
 extern PFNGLVERTEXATTRIBPOINTERPROC glVertexAttribPointer;
 extern PFNGLVERTEXATTRIBDIVISORPROC glVertexAttribDivisor;
 extern PFNGLBINDVERTEXARRAYPROC glBindVertexArray;
-
-void bind_gl();

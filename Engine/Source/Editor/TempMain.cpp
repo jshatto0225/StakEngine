@@ -8,12 +8,12 @@ void test_update() {
 
 }
 
-void test_on_event(Event &e) {
+void test_on_event(SKEvent &e) {
 
 }
 
 void extern_init() {
-  AppLayer *test_layer = new AppLayer;
+  SKAppLayer *test_layer = new SKAppLayer;
   test_layer->start = test_start;
   test_layer->update = test_update;
   test_layer->on_event = test_on_event;

@@ -19,4 +19,4 @@ struct SKWindow;
 struct SKWindowConfig;
 
 SKWindow *sk_create_window(SKWindowConfig *config);
-void sk_app_add_layer(AppLayer *layer);
+void sk_app_add_layer(SKAppLayer *layer);

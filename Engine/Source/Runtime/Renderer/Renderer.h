@@ -1,7 +1,9 @@
 #pragma once
 
-#include "Window.h"
+struct SKWindow;
 
-void sk_renderer_init(Window *window);
-void sk_renderer_shutdown();
+void sk_initialize_rendering_context();
+
+// TODO: move
+void sk_window_swap_buffers(SKWindow *);
 
