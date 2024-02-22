@@ -5,3 +5,5 @@
 -- Fix Logging
 
 -- Look into reducing number of globals. Possible by consolidating them into one _SKApplciation struct created in EntryPoint.h
+
+-- Also try to include all libs in repo since cmake is annoying
