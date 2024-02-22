@@ -3,7 +3,7 @@
 #include "Window.h"
 #include "Renderer.h"
 
-void sk_init_context(_SKWindow *win) {
+void _sk_create_context(_SKWindow *win) {
   if (!win) {
     return;
   }
@@ -36,7 +36,7 @@ void sk_make_context_current(SKWindow *win) {
   }
   _SKWindow *internal_window = (_SKWindow *)win;
   wglMakeCurrent(internal_window->wgl.device_context, internal_window->wgl.gl_rendering_context);
-  sk_initialize_rendering_context();
+  sk_bind_renderer();
 }
 
 // TODO: move

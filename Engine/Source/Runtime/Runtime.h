@@ -13,10 +13,15 @@
 #include "Core/AppLayer.h"
 #include "Core/Event.h"
 #include "Core/EntryPoint.h"
-#include "Core/Log.h"
 
 struct SKWindow;
 struct SKWindowConfig;
+
+void sk_debug_trace(const char *, ...);
+void sk_debug_info(const char *, ...);
+void sk_debug_warn(const char *, ...);
+void sk_debug_error(const char *, ...);
+void sk_debug_critical(const char *, ...);
 
 SKWindow *sk_create_window(SKWindowConfig *config);
 void sk_app_add_layer(SKAppLayer *layer);

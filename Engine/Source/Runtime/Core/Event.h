@@ -7,7 +7,8 @@ struct SKWindow;
 enum SKEventType {
   SK_TEST_EVENT = -1,
   SK_INVALID_EVENT = -1,
-  SK_WINDOW_RECT_CHANGED,
+  SK_WINDOW_RESIZED,
+  SK_WINDOW_MOVED,
   SK_WINDOW_CLOSE,
 };
 
@@ -31,6 +32,6 @@ struct SKEvent {
   SKEventType type = SK_INVALID_EVENT;
   SKWindowCloseEvent win_close_event;
   SKWindowMoveEvent win_move_event;
-  SKWindowResizeEvent window_resize_event;
+  SKWindowResizeEvent win_resize_event;
 };
 

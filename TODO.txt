@@ -1,9 +1,6 @@
--- Might simplify to Win32.h/cpp, WGL.h/cpp and so on, then move them out of their respective directories directly into Platform.
-
--- Also MAYBE combine renderer and context somehow. Might not be necessary though.
-
 -- Fix Logging
 
 -- Look into reducing number of globals. Possible by consolidating them into one _SKApplciation struct created in EntryPoint.h
+	-- Try to get application to support local structs (Fix on_event and add_layer)
 
 -- Also try to include all libs in repo since cmake is annoying

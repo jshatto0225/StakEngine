@@ -1,7 +1,7 @@
 #include "Runtime/Runtime.h"
 
 void test_start() {
-  SK_TRACE("Source dir: %s\n", SOURCE_DIR);
+  sk_debug_trace("Source dir: %s\n", SOURCE_DIR);
 }
 
 void test_update() {

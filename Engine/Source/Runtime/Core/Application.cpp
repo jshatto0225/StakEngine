@@ -2,95 +2,106 @@
 
 #include <vector>
 
-#include "AppLayer.h"
 #include "Log.h"
-#include "Window.h"
 #include "Platform.h"
-#include "Context.h"
 #include "Renderer.h"
 
-// TODO: Remove
-#include "OpenGLBindings.h"
-
-static bool running;
-static std::vector<SKAppLayer *> layers;
-//static InputManager *input_manager;
-static SKWindow *window;
+_SKApplication _app;
 
 void sk_app_add_layer(SKAppLayer *layer) {
-  layers.push_back(layer);
+  _app.layers.push_back(layer);
 }
 
 void sk_app_init() {
-  SK_CORE_TRACE("Initializing Platform\n");
+  sk_debug_core_trace("Initializing Platform");
   sk_platform_init();
-  SK_CORE_TRACE("New Window\n");
-  window = sk_create_window({ 100, 100, 1280, 720, "WINDOW" });
-  sk_set_window_close_callback(window, [](SKWindow *win) {
+
+  sk_debug_core_trace("New Window");
+  _app.window = sk_create_window({ 100, 100, 1280, 720, "WINDOW" });
+  sk_set_window_close_callback(_app.window, [](SKWindow *win) {
     SKEvent e = {};
     e.type = SK_WINDOW_CLOSE;
     e.win_close_event.window = win;
     sk_app_on_event(e);
   });
-  sk_make_context_current(window);
+  sk_set_window_size_callback(_app.window, [](SKWindow *win, i32 width, i32 height) {
+    SKEvent e = {};
+    e.type = SK_WINDOW_RESIZED;
+    e.win_resize_event.window = win;
+    e.win_resize_event.width = width;
+    e.win_resize_event.height = height;
+    sk_app_on_event(e);
+  });
+  sk_set_window_pos_callback(_app.window, [](SKWindow *win, i32 x, i32 y) {
+    SKEvent e = {};
+    e.type = SK_WINDOW_MOVED;
+    e.win_move_event.window = win;
+    e.win_move_event.x = x;
+    e.win_move_event.y = y;
+    sk_app_on_event(e);
+  });
+  sk_make_context_current(_app.window);
   
-  //SK_CORE_TRACE("Initializing renderer\n");
-  //sk_renderer_init(window);
-  //SK_CORE_TRACE("New input manager\n");
-  //input_manager = sk_create_input_manager();
-  running = true;
+  sk_debug_core_trace("Initializing renderer");
+  sk_render_command_init(_app.window);
+  _app.running = true;
 
-  for (SKAppLayer *layer : layers) {
+  for (SKAppLayer *layer : _app.layers) {
     layer->start();
   }
 }
 
 void sk_app_run() {
-  while (running) {
+  while (_app.running) {
     sk_poll_events();
+    sk_window_swap_buffers(_app.window);
 
-    // TODO: move
-    glClearColor(0, 255, 255, 0);
-    glClear(GL_COLOR_BUFFER_BIT);
-    sk_window_swap_buffers(window);
-
-    for (SKAppLayer *layer : layers) {
+    for (SKAppLayer *layer : _app.layers) {
       layer->update();
     }
   }
 }
 
 void sk_app_on_event(SKEvent &e) {
-  if (running) {
-    for (SKAppLayer *layer : layers) {
+  if (_app.running) {
+    for (SKAppLayer *layer : _app.layers) {
       layer->on_event(e);
     }
     switch (e.type) {
-    case SK_WINDOW_CLOSE: {
-      if (e.win_close_event.window == window) {
+    case SK_WINDOW_CLOSE:
+      if (e.win_close_event.window == _app.window) {
+        sk_debug_core_trace("Main Window Closed");
         sk_app_shutdown();
       }
       break;
-    }
-    default:
-    {
+
+    case SK_WINDOW_RESIZED:
+      sk_debug_core_trace("Window size changed");
+      sk_render_command_set_viewport(e.win_resize_event.window);
       break;
-    }
+
+    case SK_WINDOW_MOVED:
+      sk_debug_core_trace("Window pos changed");
+      sk_render_command_set_viewport(e.win_move_event.window);
+      break;
+
+    default:
+      break;
     }
   }
 }
 
 void sk_app_shutdown() {
-  if (running) {
-    //SK_CORE_WARN("Application Shutdown\n");
-    running = false;
-    for (SKAppLayer *layer : layers) {
+  if (_app.running) {
+    sk_debug_core_trace("Application Shutdown");
+    _app.running = false;
+    for (SKAppLayer *layer : _app.layers) {
       layer->end();
       delete layer;
     }
-    layers.clear();
-    //sk_renderer_shutdown();
-    sk_destroy_window(window);
+    _app.layers.clear();
+    sk_render_command_shutdown();
+    sk_destroy_window(_app.window);
     sk_platform_shutdown();
   }
 }

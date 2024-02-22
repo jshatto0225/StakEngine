@@ -1,9 +1,8 @@
 #pragma once
 
 #ifdef SK_WINDOWS
-#include "Win32Window.h"
-#include "Win32Platform.h"
-#include "WGLContext.h"
+#include "Win32.h"
+#include "WGL.h"
 #else
 #define SK_WIN32_WINDOW_STATE
 #define SK_WIN32_PLATFORM_STATE
@@ -29,6 +28,3 @@ void sk_platform_shutdown();
 
 typedef void (*SKProc)();
 SKProc sk_get_proc_address(const char *);
-
-extern _SKPlatform _sk;
-

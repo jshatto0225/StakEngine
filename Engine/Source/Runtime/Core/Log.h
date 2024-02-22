@@ -2,28 +2,14 @@
 
 #include <stdio.h>
 
-#ifdef SK_DEBUG
-#define SK_CORE_TRACE(...) fprintf(stdout, __VA_ARGS__)
-#define SK_CORE_INFO(...) fprintf(stdout, __VA_ARGS__)
-#define SK_CORE_WARN(...) fprintf(stderr, __VA_ARGS__)
-#define SK_CORE_ERROR(...) fprintf(stderr, __VA_ARGS__)
-#define SK_CORE_CRITICAL(...) fprintf(stderr, __VA_ARGS__)
+void sk_debug_core_trace(const char *fmt, ...);
+void sk_debug_core_info(const char *fmt, ...);
+void sk_debug_core_warn(const char *fmt, ...);
+void sk_debug_core_error(const char *fmt, ...);
+void sk_debug_core_critical(const char *fmt, ...);
 
-#define SK_TRACE(...) fprintf(stdout, __VA_ARGS__)
-#define SK_INFO(...) fprintf(stdout, __VA_ARGS__)
-#define SK_WARN(...) fprintf(stderr, __VA_ARGS__)
-#define SK_ERROR(...) fprintf(stderr, __VA_ARGS__)
-#define SK_CRITICAL(...) fprintf(stderr, __VA_ARGS__)
-#else
-#define SK_CORE_TRACE(...)
-#define SK_CORE_INFO(...)
-#define SK_CORE_WARN(...)
-#define SK_CORE_ERROR(...)
-#define SK_CORE_CRITICAL(...)
-
-#define SK_TRACE(...)
-#define SK_INFO(...)
-#define SK_WARN(...)
-#define SK_ERROR(...)
-#define SK_CRITICAL(...)
-#endif
+void sk_debug_trace(const char *fmt, ...);
+void sk_debug_info(const char *fmt, ...);
+void sk_debug_warn(const char *fmt, ...);
+void sk_debug_error(const char *fmt, ...);
+void sk_debug_critical(const char *fmt, ...);

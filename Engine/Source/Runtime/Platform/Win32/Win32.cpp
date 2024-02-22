@@ -1,20 +1,23 @@
 #if defined(SK_WINDOWS)
 
-#include <windows.h>
-
+#include "Platform.h"
 #include "Window.h"
-#include "Context.h"
+#include "Renderer.h"
+
+_SKPlatform _sk;
 
 LRESULT CALLBACK Win32WindowCallback(HWND window, u32 msg, WPARAM wparam, LPARAM lparam) {
   _SKWindow *sk_win = (_SKWindow *)GetWindowLongPtrA(window, GWLP_USERDATA);
   if (sk_win) {
     switch (msg) {
-    case WM_CLOSE: {
+    case WM_CLOSE:
+    {
       sk_win->should_close = true;
       sk_win->callbacks.window_close_fun((SKWindow *)sk_win);
       return 0;
     }
-    case WM_SIZE: {
+    case WM_SIZE:
+    {
       RECT rect = {};
       GetWindowRect((HWND)sk_win->win32.handle, &rect);
       sk_win->width = rect.right - rect.bottom;
@@ -24,7 +27,8 @@ LRESULT CALLBACK Win32WindowCallback(HWND window, u32 msg, WPARAM wparam, LPARAM
                                         rect.bottom - rect.top);
       return 0;
     }
-    case WM_MOVE: {
+    case WM_MOVE:
+    {
       RECT rect = {};
       GetWindowRect((HWND)sk_win->win32.handle, &rect);
       sk_win->x = rect.left;
@@ -35,6 +39,31 @@ LRESULT CALLBACK Win32WindowCallback(HWND window, u32 msg, WPARAM wparam, LPARAM
     }
   }
   return DefWindowProc(window, msg, wparam, lparam);
+}
+
+void sk_platform_init() {
+  if (_sk.initialized) {
+    return;
+  }
+  _sk.win32.instance = GetModuleHandle(nullptr);
+  WNDCLASSEXA wnd_class = {};
+  wnd_class.cbSize = sizeof(WNDCLASSEXA);
+  wnd_class.lpszClassName = SK_WIN32_DEFAULT_WNDCLASS_NAME;
+  wnd_class.hInstance = _sk.win32.instance;
+  wnd_class.hIcon = LoadIcon(nullptr, IDI_WINLOGO);
+  wnd_class.hCursor = LoadCursor(nullptr, IDC_ARROW);
+  wnd_class.lpfnWndProc = Win32WindowCallback;
+  wnd_class.cbClsExtra = sizeof(_SKWindow *);
+
+  _sk.win32.default_window_class = RegisterClassExA(&wnd_class);
+}
+
+void sk_platform_shutdown() {
+  if (!_sk.initialized) {
+    return;
+  }
+  UnregisterClassA(MAKEINTATOM(_sk.win32.default_window_class), _sk.win32.instance);
+  _sk = {};
 }
 
 SKWindow *sk_create_window(const SKWindowConfig &config) {
@@ -60,7 +89,7 @@ SKWindow *sk_create_window(const SKWindowConfig &config) {
                                          window->win32.instance,
                                          nullptr);
   SetWindowLongPtrA(window->win32.handle, GWLP_USERDATA, (LONG_PTR)window);
-  sk_init_context(window);
+  _sk_create_context(window);
   return (SKWindow *)window;
 }
 
@@ -121,7 +150,7 @@ void sk_set_window_size_callback(SKWindow *win, void(*func)(SKWindow *, i32 widt
   internal_window->callbacks.window_size_fun = func;
 }
 
-void sk_set_window_posallback(SKWindow *win, void(*func)(SKWindow *, i32 x, i32 y)) {
+void sk_set_window_pos_callback(SKWindow *win, void(*func)(SKWindow *, i32 x, i32 y)) {
   if (!func || !win) {
     return;
   }
