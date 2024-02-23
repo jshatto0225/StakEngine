@@ -6,10 +6,12 @@
 #include "Platform.h"
 #include "Renderer.h"
 
-_SKApplication _app;
+_SKApplication app;
 
 void sk_app_add_layer(SKAppLayer *layer) {
-  _app.layers.push_back(layer);
+  if (layer) {
+    app.layers.push_back(layer);
+  }
 }
 
 void sk_app_init() {
@@ -17,14 +19,14 @@ void sk_app_init() {
   sk_platform_init();
 
   sk_debug_core_trace("New Window");
-  _app.window = sk_create_window({ 100, 100, 1280, 720, "WINDOW" });
-  sk_set_window_close_callback(_app.window, [](SKWindow *win) {
+  app.window = sk_create_window({ 100, 100, 1280, 720, "WINDOW" });
+  sk_set_window_close_callback(app.window, [](SKWindow *win) {
     SKEvent e = {};
     e.type = SK_WINDOW_CLOSE;
     e.win_close_event.window = win;
     sk_app_on_event(e);
   });
-  sk_set_window_size_callback(_app.window, [](SKWindow *win, i32 width, i32 height) {
+  sk_set_window_size_callback(app.window, [](SKWindow *win, i32 width, i32 height) {
     SKEvent e = {};
     e.type = SK_WINDOW_RESIZED;
     e.win_resize_event.window = win;
@@ -32,7 +34,7 @@ void sk_app_init() {
     e.win_resize_event.height = height;
     sk_app_on_event(e);
   });
-  sk_set_window_pos_callback(_app.window, [](SKWindow *win, i32 x, i32 y) {
+  sk_set_window_pos_callback(app.window, [](SKWindow *win, i32 x, i32 y) {
     SKEvent e = {};
     e.type = SK_WINDOW_MOVED;
     e.win_move_event.window = win;
@@ -40,36 +42,42 @@ void sk_app_init() {
     e.win_move_event.y = y;
     sk_app_on_event(e);
   });
-  sk_make_context_current(_app.window);
+  sk_make_context_current(app.window);
   
   sk_debug_core_trace("Initializing renderer");
-  sk_render_command_init(_app.window);
-  _app.running = true;
+  sk_render_command_init(app.window);
+  app.running = true;
 
-  for (SKAppLayer *layer : _app.layers) {
+  for (SKAppLayer *layer : app.layers) {
     layer->start();
   }
 }
 
 void sk_app_run() {
-  while (_app.running) {
+  while (app.running) {
     sk_poll_events();
-    sk_window_swap_buffers(_app.window);
 
-    for (SKAppLayer *layer : _app.layers) {
+    // TODO: For testing only
+    sk_render_command_set_clear_color(1, 1, 1, 1);
+    sk_debug_core_trace("Redraw");
+    sk_render_command_clear();
+
+    sk_window_swap_buffers(app.window);
+
+    for (SKAppLayer *layer : app.layers) {
       layer->update();
     }
   }
 }
 
 void sk_app_on_event(SKEvent &e) {
-  if (_app.running) {
-    for (SKAppLayer *layer : _app.layers) {
+  if (app.running) {
+    for (SKAppLayer *layer : app.layers) {
       layer->on_event(e);
     }
     switch (e.type) {
     case SK_WINDOW_CLOSE:
-      if (e.win_close_event.window == _app.window) {
+      if (e.win_close_event.window == app.window) {
         sk_debug_core_trace("Main Window Closed");
         sk_app_shutdown();
       }
@@ -81,7 +89,7 @@ void sk_app_on_event(SKEvent &e) {
       break;
 
     case SK_WINDOW_MOVED:
-      sk_debug_core_trace("Window pos changed");
+      sk_debug_core_trace("Window position changed");
       sk_render_command_set_viewport(e.win_move_event.window);
       break;
 
@@ -92,16 +100,16 @@ void sk_app_on_event(SKEvent &e) {
 }
 
 void sk_app_shutdown() {
-  if (_app.running) {
+  if (app.running) {
     sk_debug_core_trace("Application Shutdown");
-    _app.running = false;
-    for (SKAppLayer *layer : _app.layers) {
+    app.running = false;
+    for (SKAppLayer *layer : app.layers) {
       layer->end();
       delete layer;
     }
-    _app.layers.clear();
+    app.layers.clear();
     sk_render_command_shutdown();
-    sk_destroy_window(_app.window);
+    sk_destroy_window(app.window);
     sk_platform_shutdown();
   }
 }

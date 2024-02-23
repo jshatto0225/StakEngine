@@ -25,3 +25,8 @@ void sk_debug_critical(const char *, ...);
 
 SKWindow *sk_create_window(SKWindowConfig *config);
 void sk_app_add_layer(SKAppLayer *layer);
+
+// They appear in entry point
+// Remove outside accessability
+#define sk_app_init
+#define sk_app_run

@@ -45,8 +45,8 @@ bool sk_window_should_close(SKWindow *win);
 void sk_poll_events();
 
 void sk_set_window_close_callback(SKWindow *win, void(*func)(SKWindow *));
-void sk_set_window_size_callback(SKWindow *win, void(*func)(SKWindow *, i32 width, i32 height));
-void sk_set_window_pos_callback(SKWindow *win, void(*func)(SKWindow *, i32 x, i32 y));
+void sk_set_window_size_callback(SKWindow *win, void(*func)(SKWindow *, i32, i32));
+void sk_set_window_pos_callback(SKWindow *win, void(*func)(SKWindow *, i32, i32));
 
 void sk_window_swap_buffers(SKWindow *);
 

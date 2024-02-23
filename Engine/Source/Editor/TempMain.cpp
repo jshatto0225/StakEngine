@@ -5,7 +5,7 @@ void test_start() {
 }
 
 void test_update() {
-
+  
 }
 
 void test_on_event(SKEvent &e) {

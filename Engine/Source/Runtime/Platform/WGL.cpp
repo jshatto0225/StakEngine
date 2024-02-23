@@ -35,6 +35,7 @@ void _sk_create_context(_SKWindow *win) {
 void sk_make_context_current(SKWindow *win) {
   if (!win) {
     wglMakeCurrent(nullptr, nullptr);
+    return;
   }
   _SKWindow *internal_window = (_SKWindow *)win;
   wglMakeCurrent(internal_window->wgl.device_context, internal_window->wgl.gl_rendering_context);

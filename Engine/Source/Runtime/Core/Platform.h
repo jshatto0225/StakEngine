@@ -18,6 +18,7 @@
 #else
 #define SK_X11_WINDOW_STATE
 #define SK_X11_PLATFORM_STATE
+#define SK_X11_CONTEXT_STATE
 #endif
 
 #define SK_PLATFORM_WINDOW_STATE \

@@ -2,7 +2,8 @@
 
 #include <stdarg.h>
 
-static FILE *core_log_file = fopen("StakRuntime.log", "w");
+// Goofy aah string concat
+static FILE *core_log_file = fopen(SOURCE_DIR "StakRuntime.log", "w");
 
 void sk_debug_core_trace(const char *fmt, ...) {
   fprintf(stdout, "[StakRuntime] [TRACE]: ");

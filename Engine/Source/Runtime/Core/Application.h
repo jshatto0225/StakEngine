@@ -12,6 +12,7 @@ struct _SKApplication {
   std::vector<SKAppLayer *> layers;
   //InputManager *input_manager;
   SKWindow *window= nullptr;
+  _SKPlatform platform;
 };
 
 void sk_app_init();

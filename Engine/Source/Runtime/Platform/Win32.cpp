@@ -6,7 +6,7 @@
 
 _SKPlatform _sk;
 
-LRESULT CALLBACK Win32WindowCallback(HWND window, u32 msg, WPARAM wparam, LPARAM lparam) {
+LRESULT CALLBACK _sk_win32_message_callback(HWND window, u32 msg, WPARAM wparam, LPARAM lparam) {
   _SKWindow *sk_win = (_SKWindow *)GetWindowLongPtrA(window, GWLP_USERDATA);
   if (sk_win) {
     switch (msg) {
@@ -19,7 +19,7 @@ LRESULT CALLBACK Win32WindowCallback(HWND window, u32 msg, WPARAM wparam, LPARAM
     case WM_SIZE:
     {
       RECT rect = {};
-      GetWindowRect((HWND)sk_win->win32.handle, &rect);
+      GetClientRect((HWND)sk_win->win32.handle, &rect);
       sk_win->width = rect.right - rect.bottom;
       sk_win->height = rect.bottom - rect.top;
       sk_win->callbacks.window_size_fun((SKWindow *)sk_win,
@@ -30,7 +30,7 @@ LRESULT CALLBACK Win32WindowCallback(HWND window, u32 msg, WPARAM wparam, LPARAM
     case WM_MOVE:
     {
       RECT rect = {};
-      GetWindowRect((HWND)sk_win->win32.handle, &rect);
+      GetClientRect((HWND)sk_win->win32.handle, &rect);
       sk_win->x = rect.left;
       sk_win->y = rect.top;
       sk_win->callbacks.window_pos_fun((SKWindow *)sk_win, rect.left, rect.top);
@@ -52,7 +52,7 @@ void sk_platform_init() {
   wnd_class.hInstance = _sk.win32.instance;
   wnd_class.hIcon = LoadIcon(nullptr, IDI_WINLOGO);
   wnd_class.hCursor = LoadCursor(nullptr, IDC_ARROW);
-  wnd_class.lpfnWndProc = Win32WindowCallback;
+  wnd_class.lpfnWndProc = _sk_win32_message_callback;
   wnd_class.cbClsExtra = sizeof(_SKWindow *);
 
   _sk.win32.default_window_class = RegisterClassExA(&wnd_class);
@@ -92,13 +92,13 @@ SKWindow *sk_create_window(const SKWindowConfig &config) {
   _sk_create_context(window);
 
   // Add window to linked list
-  if (_sk.head == nullptr) {
-    _sk.head = window;
+  if (_sk.window_head == nullptr) {
+    _sk.window_head = window;
   }
   else {
-    _sk.last->next = window;
+    _sk.window_last->next = window;
   }
-  _sk.last = window;
+  _sk.window_last = window;
 
   return (SKWindow *)window;
 }
@@ -112,7 +112,7 @@ void sk_destroy_window(SKWindow *win) {
   DestroyWindow(internal_window->win32.handle);
 
   // Remove window from list
-  _SKWindow *curr = _sk.head;
+  _SKWindow *curr = _sk.window_head;
   _SKWindow *prev = curr;
   while (curr != nullptr) {
     if (curr == internal_window) {
@@ -152,10 +152,9 @@ bool sk_window_should_close(SKWindow *win) {
 
 void sk_poll_events() {
   MSG msg = {};
-  while (PeekMessageA(&msg, nullptr, 0, 0, PM_REMOVE)) {
-    TranslateMessage(&msg);
-    DispatchMessage(&msg);
-  }
+  PeekMessageA(&msg, nullptr, 0, 0, PM_REMOVE);
+  TranslateMessage(&msg);
+  DispatchMessage(&msg);
 }
 
 void sk_set_window_close_callback(SKWindow *win, void(*func)(SKWindow *)) {
@@ -166,7 +165,7 @@ void sk_set_window_close_callback(SKWindow *win, void(*func)(SKWindow *)) {
   internal_window->callbacks.window_close_fun = func;
 }
 
-void sk_set_window_size_callback(SKWindow *win, void(*func)(SKWindow *, i32 width, i32 height)) {
+void sk_set_window_size_callback(SKWindow *win, void(*func)(SKWindow *, i32, i32)) {
   if (!func || !win) {
     return;
   }
@@ -174,7 +173,7 @@ void sk_set_window_size_callback(SKWindow *win, void(*func)(SKWindow *, i32 widt
   internal_window->callbacks.window_size_fun = func;
 }
 
-void sk_set_window_pos_callback(SKWindow *win, void(*func)(SKWindow *, i32 x, i32 y)) {
+void sk_set_window_pos_callback(SKWindow *win, void(*func)(SKWindow *, i32, i32)) {
   if (!func || !win) {
     return;
   }

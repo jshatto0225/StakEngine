@@ -204,6 +204,7 @@ void _sk_create_context(_SKWindow *win) {
 void sk_make_context_current(SKWindow *win) {
   if (!win) {
     glXMakeCurrent(_sk.x11.display, None, nullptr);
+    return;
   }
   _SKWindow *internal_window = (_SKWindow *)win;
   glXMakeCurrent(_sk.x11.display, internal_window->x11.window, internal_window->x11ctx.gl_context);
