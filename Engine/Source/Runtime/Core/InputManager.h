@@ -2,18 +2,8 @@
 
 #include "Types.h"
 
-struct MousePosition {
-  i32 x;
-  i32 y;
-};
-
-class InputManager {
-public:
-  virtual bool key_down(i32 key) = 0;
-  virtual MousePosition get_mouse_position() = 0;
-  virtual inline i32 get_mouse_x() final { return get_mouse_position().x; }
-  virtual inline i32 get_mouse_y() final { return get_mouse_position().y; }
-};
+bool sk_key_down(i32);
+void sk_get_mouse_position(i32 *, i32*);
 
 // NOTE: Windows Key Codes
 #ifdef WIN32

@@ -42,12 +42,10 @@ void sk_make_context_current(SKWindow *win) {
   sk_bind_renderer();
 }
 
-// TODO: move
 SKProc sk_get_proc_address(const char *proc) {
   return (SKProc)wglGetProcAddress(proc);
 }
 
-// TODO: Move
 void sk_window_swap_buffers(SKWindow *win) {
   if (!win) {
     return;

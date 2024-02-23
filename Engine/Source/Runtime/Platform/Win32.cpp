@@ -10,14 +10,12 @@ LRESULT CALLBACK _sk_win32_message_callback(HWND window, u32 msg, WPARAM wparam,
   _SKWindow *sk_win = (_SKWindow *)GetWindowLongPtrA(window, GWLP_USERDATA);
   if (sk_win) {
     switch (msg) {
-    case WM_CLOSE:
-    {
+    case WM_CLOSE: {
       sk_win->should_close = true;
       sk_win->callbacks.window_close_fun((SKWindow *)sk_win);
       return 0;
     }
-    case WM_SIZE:
-    {
+    case WM_SIZE: {
       RECT rect = {};
       GetClientRect((HWND)sk_win->win32.handle, &rect);
       sk_win->width = rect.right - rect.bottom;
@@ -27,14 +25,16 @@ LRESULT CALLBACK _sk_win32_message_callback(HWND window, u32 msg, WPARAM wparam,
                                         rect.bottom - rect.top);
       return 0;
     }
-    case WM_MOVE:
-    {
+    case WM_MOVE: {
       RECT rect = {};
       GetClientRect((HWND)sk_win->win32.handle, &rect);
       sk_win->x = rect.left;
       sk_win->y = rect.top;
       sk_win->callbacks.window_pos_fun((SKWindow *)sk_win, rect.left, rect.top);
       return 0;
+    }
+    case WM_SYSCOMMAND: {
+      break;
     }
     }
   }
@@ -179,6 +179,18 @@ void sk_set_window_pos_callback(SKWindow *win, void(*func)(SKWindow *, i32, i32)
   }
   _SKWindow *internal_window = (_SKWindow *)win;
   internal_window->callbacks.window_pos_fun = func;
+}
+
+// Input
+bool sk_key_down(i32 key) {
+  return GetAsyncKeyState(key);
+}
+
+void sk_get_mouse_position(i32 *x, i32 *y) {
+  POINT pos = {};
+  GetCursorPos(&pos);
+  *x = pos.x;
+  *y = pos.y;
 }
 
 #endif

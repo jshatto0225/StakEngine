@@ -3,7 +3,7 @@
 #include <windows.h>
 
 struct _SKWin32Platform {
-  HINSTANCE instance = {};;
+  HINSTANCE instance = {};
   ATOM default_window_class = {};
 };
 
