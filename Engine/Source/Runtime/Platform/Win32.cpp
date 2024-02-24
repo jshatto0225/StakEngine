@@ -33,9 +33,6 @@ LRESULT CALLBACK _sk_win32_message_callback(HWND window, u32 msg, WPARAM wparam,
       sk_win->callbacks.window_pos_fun((SKWindow *)sk_win, rect.left, rect.top);
       return 0;
     }
-    case WM_SYSCOMMAND: {
-      break;
-    }
     }
   }
   return DefWindowProc(window, msg, wparam, lparam);

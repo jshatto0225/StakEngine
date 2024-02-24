@@ -1,3 +1,3 @@
 @echo off
 
-.\Build\Debug\Tests\UnitTests.exe
+.\Build\Tests\UnitTests.exe

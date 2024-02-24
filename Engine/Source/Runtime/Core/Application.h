@@ -4,7 +4,6 @@
 
 #include "AppLayer.h"
 #include "Event.h"
-#include "InputManager.h"
 #include "Window.h"
 
 struct _SKApplication {

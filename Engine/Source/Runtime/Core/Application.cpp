@@ -1,7 +1,5 @@
 #include "Application.h"
 
-#include <vector>
-
 #include "Log.h"
 #include "Platform.h"
 #include "Renderer.h"

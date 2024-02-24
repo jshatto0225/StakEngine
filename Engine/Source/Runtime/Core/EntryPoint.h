@@ -1,6 +1,6 @@
 #pragma once
 
-#include "Log.h"
+#include "Types.h"
 
 extern void extern_init();
 
@@ -19,7 +19,7 @@ inline i32 sk_main() {
 int main(int argc, char **argv) {
   return sk_main();
 }
-#elif defined SK_DIST
+#elif defined(SK_DIST)
 #ifdef SK_WINDOWS
 #include <windows.h>
 i32 WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR commandLine, i32 showCommand) {
