@@ -14,9 +14,7 @@ struct Win32Window {
 };
 }
 
-constexpr const char* SK_WIN32_DEFAULT_WNDCLASS_NAME = "SK_DEFAULT_WNDCLASS";
+constexpr const char *SK_WIN32_DEFAULT_WNDCLASS_NAME = "SK_DEFAULT_WNDCLASS";
 
-#define WIN32_PLATFORM_STATE_DECLARATION Win32Platform Platform::win32;
-
-#define WIN32_PLATFORM_STATE Win32Platform win32;
+#define WIN32_PLATFORM_STATE static Win32Platform win32;
 #define WIN32_WINDOW_STATE Win32Window win32;

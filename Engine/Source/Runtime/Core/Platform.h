@@ -10,7 +10,7 @@
 #ifdef SK_WGL
 #include "WGL.h"
 #else
-#define WGL_CONTEXT_STATE_DEFINIITON
+#define WGL_CONTEXT_STATE
 #endif
 
 #ifdef SK_X11
@@ -33,9 +33,6 @@
   WGL_CONTEXT_STATE \
   X11_CONTEXT_STATE
 
-#define PLATFORM_STATE_DECLARATION \
-  WIN32_PLATFORM_STATE_DECLARATION
-
 namespace sk {
 
 typedef void (*Proc)();
@@ -52,6 +49,7 @@ public:
 private:
   static bool initialized;
 
-  static PLATFORM_STATE;
+public:
+  PLATFORM_STATE;
 };
 }

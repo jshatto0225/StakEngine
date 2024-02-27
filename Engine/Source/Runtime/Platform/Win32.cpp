@@ -21,7 +21,7 @@ LRESULT CALLBACK _sk_win32_message_callback(HWND window, u32 msg, WPARAM wparam,
     case WM_SIZE: {
       RECT rect = {};
       GetClientRect(window, &rect);
-      
+
       data->width = rect.right - rect.left;
       data->height = rect.bottom - rect.top;
 
@@ -60,7 +60,7 @@ LRESULT CALLBACK _sk_win32_message_callback(HWND window, u32 msg, WPARAM wparam,
 
 namespace sk {
 bool Platform::initialized = false;
-PLATFORM_STATE_DECLARATION;
+Win32Platform Platform::win32;
 
 void Platform::init() {
   if (Platform::initialized) {
@@ -120,6 +120,7 @@ Window::Window(const WindowConfig &config) {
 }
 
 Window::~Window() {
+  delete this->context;
   DestroyWindow(this->data.win32.handle);
 }
 
@@ -145,19 +146,17 @@ void  Window::make_current() {
   this->context->make_current();
 }
 
-void Window::swap_buffers() {
-  this->context->swap_buffers();
-}
-
-void Window::set_event_callback(const std::function<void(Event &)>& func) {
-  this->data.event_function = func;
-}
-
-void poll_events() {
+void Window::update() {
   MSG msg = {};
   PeekMessageA(&msg, nullptr, 0, 0, PM_REMOVE);
   TranslateMessage(&msg);
   DispatchMessage(&msg);
+
+  this->context->swap_buffers();
+}
+
+void Window::set_event_callback(const std::function<void(Event &)> &func) {
+  this->data.event_function = func;
 }
 
 namespace Input {

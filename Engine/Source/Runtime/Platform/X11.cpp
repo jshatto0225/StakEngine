@@ -5,32 +5,52 @@
 #include "Renderer.h"
 #include "Event.h"
 
-_SKPlatform _sk;
+namespace sk {
+bool Platform::initialized = false;
+X11Platform Platform::x11;
 
-void sk_platform_init() {
-  if (_sk.initialized) {
+void Platform::init() {
+  if (Platform::initialized) {
     return;
   }
-  _sk.x11.display = XOpenDisplay(nullptr);
-  _sk.x11.wm_delete_window = XInternAtom(_sk.x11.display, "WM_DELETE_WINDOW", False);
+  Platform::x11.display = XOpenDisplay(nullptr);
+  Platform::x11.wm_delete_window = XInternAtom(Platform::x11.display, "WM_DELETE_WINDOW", false);
 }
 
-void sk_platform_shutdown() {
-  if (!_sk.initialized) {
-    return;
+bool Platform::is_initialized() {
+  return Platform::initialized;
+}
+
+Proc Platform::get_proc_address(const char *name) {
+  return (Proc)glXGetProcAddress((const unsigned char *)name);
+}
+
+Context::Context(Window *win) {
+  this->x11.context = glXCreateContext(Platform::x11.display, win->data.x11.visual_info, nullptr, GL_TRUE);
+  glXMakeCurrent(Platform::x11.display, win->data.x11.window, this->x11.context);
+}
+
+Context::~Context() {
+  glXMakeCurrent(Platform::x11.display, None, nullptr);
+  glXDestroyContext(Platform::x11.display, this->x11.context);
+}
+
+void Context::make_current() {
+  glXMakeCurrent(Platform::x11.display, this->window->data.x11.window, this->x11.context);
+  RenderApi::bind();
+}
+
+Window::Window(const WindowConfig &config) {
+  if (!Platform::is_initialized()) {
+    Platform::init();
   }
-  XCloseDisplay(_sk.x11.display);
-}
-
-SKWindow *sk_create_window(const SKWindowConfig &config) {
-  _SKWindow *window = new _SKWindow;
-  window->x = config.x;
-  window->y = config.y;
-  window->width = config.width;
-  window->height = config.height;
-  window->title = config.title;
-  window->should_close = false;
-  window->x11.root = DefaultRootWindow(_sk.x11.display);
+  this->data.x = config.x;
+  this->data.y = config.y;
+  this->data.width = config.width;
+  this->data.height = config.height;
+  this->data.title = config.title;
+  this->data.should_close = false;
+  this->data.x11.root = DefaultRootWindow(Platform::x11.display);
 
   int attribs[] = {
     GLX_RGBA,
@@ -38,189 +58,74 @@ SKWindow *sk_create_window(const SKWindowConfig &config) {
     GLX_DOUBLEBUFFER,
     None
   };
-  window->x11.visual_info = glXChooseVisual(_sk.x11.display, DefaultScreen(_sk.x11.display), attribs);
-  window->x11.colormap = XCreateColormap(_sk.x11.display, window->x11.root, window->x11.visual_info->visual, AllocNone);
-  window->x11.attribs.colormap = window->x11.colormap;
-  window->x11.attribs.event_mask = ExposureMask | KeyPressMask;
+  this->data.x11.visual_info = glXChooseVisual(Platform::x11.display, DefaultScreen(Platform::x11.display), attribs);
+  this->data.x11.colormap = XCreateColormap(Platform::x11.display, this->data.x11.root, this->data.x11.visual_info->visual, AllocNone);
+  this->data.x11.attribs.colormap = this->data.x11.colormap;
+  this->data.x11.attribs.event_mask = ExposureMask | KeyPressMask;
 
-  window->x11.window = XCreateSimpleWindow(_sk.x11.display,
-                                           window->x11.root,
-                                           window->x,
-                                           window->y,
-                                           (u32)window->width,
-                                           (u32)window->height,
-                                           0,
-                                           0,
-                                           0xffffffff);
-  XMapWindow(_sk.x11.display, window->x11.window);
-  _sk_create_context(window);
-
-  // Add window to linked list
-  if (_sk.window_head == nullptr) {
-    _sk.window_head = window;
-  }
-  else {
-    _sk.window_last->next = window;
-  }
-  _sk.window_head = window;
-
-  return (SKWindow *)window;
+  this->data.x11.window = XCreateSimpleWindow(Platform::x11.display,
+                                              this->data.x11.root,
+                                              this->data.x,
+                                              this->data.y,
+                                              (u32)this->data.width,
+                                              (u32)this->data.height,
+                                              0,
+                                              0,
+                                              0xffffffff);
+  XMapWindow(Platform::x11.display, this->data.x11.window);
+  this->context = new Context(this);
 }
 
-void sk_destroy_window(SKWindow *win) {
-  if (!win) {
-    return;
-  }
-  _SKWindow *internal_window = (_SKWindow *)win;
-
-  sk_make_context_current(nullptr);
-  glXDestroyContext(_sk.x11.display, internal_window->x11ctx.gl_context);
-  XDestroyWindow(_sk.x11.display, internal_window->x11.window);
-  XFreeColormap(_sk.x11.display, internal_window->x11.colormap);
-
-  // Remove window from list
-  _SKWindow *curr = _sk.window_head;
-  _SKWindow *prev = curr;
-  while (curr != nullptr) {
-    if (curr == internal_window) {
-      prev->next = curr->next;
-      break;
-    }
-    prev = curr;
-    curr = curr->next;
-  }
-
-  delete internal_window;
+Window::~Window() {
+  delete this->context;
+  XDestroyWindow(Platform::x11.display, this->data.x11.window);
+  XFreeColormap(Platform::x11.display, this->data.x11.colormap);
 }
 
-void sk_set_window_pos(SKWindow *win, i32 x, i32 y) {
-  if (!win) {
-    return;
-  }
-  _SKWindow *internal_window = (_SKWindow *)win;
-  XMoveWindow(_sk.x11.display, internal_window->x11.window, x, y);
+void Window::set_event_callback(const std::function<void(Event &)> &func) {
+  this->data.event_function = func;
 }
 
-void sk_set_window_size(SKWindow *win, i32 width, i32 height) {
-  if (!win) {
-    return;
-  }
-  _SKWindow *internal_window = (_SKWindow *)win;
-  XResizeWindow(_sk.x11.display, internal_window->x11.window, (u32)width, (u32)height);
+void Window::set_pos(i32 x, i32 y) {
+  XMoveWindow(Platform::x11.display, this->data.x11.window, x, y);
 }
 
-void sk_get_window_pos(SKWindow *win, i32 *x, i32 *y) {
-  if (!win) {
-    return;
-  }
-  _SKWindow *internal_window = (_SKWindow *)win;
+void Window::set_size(i32 width, i32 height) {
+  XResizeWindow(Platform::x11.display, this->data.x11.window, (u32)width, (u32)height);
+}
+
+void Window::get_pos(i32 *x, i32 *y) {
   XWindowAttributes attr;
-  XGetWindowAttributes(_sk.x11.display, internal_window->x11.window, &attr);
+  XGetWindowAttributes(Platform::x11.display, this->data.x11.window, &attr);
   *x = attr.x;
   *y = attr.y;
 }
 
-void sk_get_window_size(SKWindow *win, i32 *width, i32 *height) {
-  if (!win) {
-    return;
-  }
-  _SKWindow *internal_window = (_SKWindow *)win;
+void Window::get_size(i32 *width, i32 *height) {
   XWindowAttributes attr;
-  XGetWindowAttributes(_sk.x11.display, internal_window->x11.window, &attr);
+  XGetWindowAttributes(Platform::x11.display, this->data.x11.window, &attr);
   *width = attr.height;
   *height = attr.width;
 }
 
-bool sk_window_should_close(SKWindow *win) {
-  if (!win) {
-    return false;
-  }
-  _SKWindow *internal_window = (_SKWindow *)win;
-  return internal_window->should_close;
-}
-
-_SKWindow *_sk_x11_get_window_from_id(Window id) {
-  _SKWindow *win = _sk.window_head;
-  while (win != nullptr) {
-    if (win->x11.window == id) {
-      return (_SKWindow *)win;
-    }
-    win = win->next;
-  }
-  return nullptr;
-}
-
-void sk_poll_events() {
+void Window::update() {
   XEvent event;
-  XNextEvent(_sk.x11.display, &event);
-
+  XNextEvent(Platform::x11.display, &event);
   switch (event.type) {
   case ClientMessage:
-    if ((Atom)event.xclient.data.l[0] == _sk.x11.wm_delete_window) {
-      _SKWindow *win = _sk_x11_get_window_from_id(event.xclient.window);
-      win->callbacks.window_close_fun((SKWindow *)win);
+    if ((Atom)event.xclient.data.l[0] == Platform::x11.wm_delete_window) {
+      Event e = {};
+      e.type = WINDOW_CLOSE;
+      e.win_close_event.window = this;
+      this->data.event_function(e);
     }
     break;
   default:
     break;
   }
+
+  glXSwapBuffers(Platform::x11.display, this->data.x11.window);
 }
-
-void sk_set_window_close_callback(SKWindow *win, void(*func)(SKWindow *)) {
-  if (!func || !win) {
-    return;
-  }
-  _SKWindow *internal_window = (_SKWindow *)win;
-  internal_window->callbacks.window_close_fun = func;
-}
-
-void sk_set_window_size_callback(SKWindow *win, void(*func)(SKWindow *, i32 width, i32 height)) {
-  if (!func || !win) {
-    return;
-  }
-  _SKWindow *internal_window = (_SKWindow *)win;
-  internal_window->callbacks.window_size_fun = func;
-}
-
-void sk_set_window_pos_callback(SKWindow *win, void(*func)(SKWindow *, i32 x, i32 y)) {
-  if (!func || !win) {
-    return;
-  }
-  _SKWindow *internal_window = (_SKWindow *)win;
-  internal_window->callbacks.window_pos_fun = func;
-}
-
-// Context
-void _sk_create_context(_SKWindow *win) {
-  if (!win) {
-    return;
-  }
-  _SKWindow *internal_window = (_SKWindow *)win;
-
-  internal_window->x11ctx.gl_context = glXCreateContext(_sk.x11.display, internal_window->x11.visual_info, nullptr, GL_TRUE);
-  glXMakeCurrent(_sk.x11.display, internal_window->x11.window, internal_window->x11ctx.gl_context);
-}
-
-void sk_make_context_current(SKWindow *win) {
-  if (!win) {
-    glXMakeCurrent(_sk.x11.display, None, nullptr);
-    return;
-  }
-  _SKWindow *internal_window = (_SKWindow *)win;
-  glXMakeCurrent(_sk.x11.display, internal_window->x11.window, internal_window->x11ctx.gl_context);
-  sk_bind_renderer();
-}
-
-SKProc sk_get_proc_address(const char *proc) {
-  return (SKProc)glXGetProcAddress((const unsigned char *)proc);
-}
-
-void sk_window_swap_buffers(SKWindow *win) {
-  if (!win) {
-    return;
-  }
-  _SKWindow *internal_window = (_SKWindow *)win;
-  glXSwapBuffers(_sk.x11.display, internal_window->x11.window);
 }
 
 #endif

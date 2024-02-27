@@ -2,24 +2,27 @@
 
 #include <X11/Xlib.h>
 #include <GL/glx.h>
+using XWindow = Window;
 
-struct _X11Window {
-  Window window;
-  Window root;
+namespace sk {
+struct X11Window {
+  XWindow window;
+  XWindow root;
   XSetWindowAttributes attribs;
   XVisualInfo *visual_info;
   Colormap colormap;
 };
 
-struct _X11Platform {
+struct X11Platform {
   Display *display;
   Atom wm_delete_window;
 };
 
-struct _X11Context {
-  GLXContext gl_context;
+struct X11Context {
+  GLXContext context;
 };
+}
 
-#define SK_X11_CONTEXT_STATE _X11Context x11ctx;
-#define SK_X11_PLATFORM_STATE _X11Platform x11;
-#define SK_X11_WINDOW_STATE _X11Window x11;
+#define X11_CONTEXT_STATE X11Context x11;
+#define X11_PLATFORM_STATE static X11Platform x11;
+#define X11_WINDOW_STATE X11Window x11;

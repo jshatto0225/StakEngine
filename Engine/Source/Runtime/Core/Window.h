@@ -27,6 +27,7 @@ public:
   void swap_buffers();
 
 private:
+  Window *window;
   PLATFORM_CONTEXT_STATE;
 };
 
@@ -54,9 +55,9 @@ public:
   void get_pos(i32 *x, i32 *y);
   void get_size(i32 *width, i32 *height);
 
-  void set_event_callback(const std::function<void(Event &)>& func);
+  void set_event_callback(const std::function<void(Event &)> &func);
 
-  void swap_buffers();
+  void update();
 
   void make_current();
 
@@ -68,6 +69,4 @@ private:
 
   friend class Context;
 };
-
-void poll_events();
 }

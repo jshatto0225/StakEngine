@@ -5,7 +5,7 @@
 #include "Renderer.h"
 
 namespace sk {
-Application::Application() 
+Application::Application()
   : window({ 100, 100, 1280, 720, "WINDOW" }), running(true) {
   this->window.set_event_callback(std::bind(&Application::on_event, this, std::placeholders::_1));
 }
@@ -15,8 +15,7 @@ void Application::run() {
     for (ApplicationLayer *layer : this->layers) {
       layer->update();
     }
-    poll_events();
-    this->window.swap_buffers();
+    this->window.update();
   }
 }
 
