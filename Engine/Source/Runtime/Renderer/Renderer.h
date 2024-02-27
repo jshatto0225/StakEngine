@@ -7,7 +7,7 @@ enum ShaderDataType {
 
 };
 
-struct _SKBufferElement {
+struct BufferElement {
   const char *name;
   ShaderDataType type;
   u32 size;
@@ -15,27 +15,46 @@ struct _SKBufferElement {
   bool normalized;
 };
 
-struct _SKBufferLayout {
-  _SKBufferElement *elements;
+struct BufferLayout {
+  BufferElement *elements;
   i32 num_elements;
   u32 stride;
 };
 
-struct _SKVertexBuffer {
+class VertexBuffer {
 
 };
 
-struct _SKIndexBuffer {
+class IndexBuffer {
 
 };
 
-// Render Commands
-void sk_render_api_set_clear_color(f32, f32, f32, f32);
-void sk_render_api_clear();
-void sk_render_api_init();
-void sk_render_api_set_viewport(i32, i32, i32, i32);
-void sk_render_api_shutdown();
+class VertexArray {
 
-// Rendering Context Stuff
-void sk_bind_renderer();
+};
+
+class Shader {
+
+};
+
+class Texture {
+
+};
+
+namespace RenderApi {
+void init();
+void shutdown();
+
+void set_clear_color(f32 r, f32 g, f32 b, f32 a);
+// NOTE: x and y are relative to the window. (0, 0) is 
+// always the bottom left
+void set_viewport(i32 x, i32 y, i32 width, i32 height);
+void set_line_width(f32 width);
+
+void bind();
+void clear();
+
+void draw_indexed(const VertexArray &vao, u32 count);
+void draw_lines(const VertexArray &vao, u32 count);
+};
 } // namespace sk

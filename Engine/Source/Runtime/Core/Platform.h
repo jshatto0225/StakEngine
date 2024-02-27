@@ -40,10 +40,12 @@ namespace sk {
 
 typedef void (*Proc)();
 
+// NOTE: As of now shutting down platform is not necessary
+// clean up will happen automatically when the program ends
 class Platform {
 public:
   static void init();
-  static void shutdown();
+  static bool is_initialized();
 
   static Proc get_proc_address(const char *name);
 

@@ -24,6 +24,6 @@ public:
 private:
   bool running;
   std::vector<ApplicationLayer *> layers;
-  Window *window;
+  Window window;
 };
 }

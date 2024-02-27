@@ -20,7 +20,7 @@ PFNGLVERTEXATTRIBDIVISORPROC glVertexAttribDivisor;
 PFNGLBINDVERTEXARRAYPROC glBindVertexArray;
 
 namespace sk {
-void sk_bind_renderer() {
+void RenderApi::bind() {
   glGenBuffers = (PFNGLGENBUFFERSPROC)Platform::get_proc_address("glGenBuffers");
   glBindBuffer = (PFNGLBINDBUFFERPROC)Platform::get_proc_address("glBindBuffer");
   glBufferData = (PFNGLBUFFERDATAPROC)Platform::get_proc_address("glBufferData");
@@ -53,16 +53,16 @@ void APIENTRY _sk_opengl_message_callback(u32 source, u32 type, u32 id, u32 seve
   }
 }
 
-void sk_render_api_set_clear_color(f32 r, f32 g, f32 b, f32 a) {
+void RenderApi::set_clear_color(f32 r, f32 g, f32 b, f32 a) {
   glClearColor(r, g, b, a);
 }
 
-void sk_render_api_clear() {
+void RenderApi::clear() {
   glClear(GL_COLOR_BUFFER_BIT);
 }
 
-void sk_render_api_init() {
-#ifdef SK_DEBUG
+void RenderApi::init() {
+#if defined(SK_DEBUG) or defined(SK_RELEASE)
   glEnable(GL_DEBUG_OUTPUT);
   glEnable(GL_DEBUG_OUTPUT_SYNCHRONOUS);
   glDebugMessageCallback(_sk_opengl_message_callback, nullptr);
@@ -75,11 +75,11 @@ void sk_render_api_init() {
   glEnable(GL_LINE_SMOOTH);
 }
 
-void sk_render_api_set_viewport(i32 x, i32 y, i32 width, i32 height) {
-  glViewport(x, y, width, height);
+void RenderApi::shutdown() {
+  // Unused
 }
 
-void sk_render_command_shutdown() {
-
+void RenderApi::set_viewport(i32 x, i32 y, i32 width, i32 height) {
+  glViewport(x, y, width, height);
 }
 } // namespace sk

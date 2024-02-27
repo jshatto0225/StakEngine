@@ -2,6 +2,7 @@
 
 #include "Types.h"
 #include "Application.h"
+#include "Platform.h"
 
 sk::Application *get_app();
 

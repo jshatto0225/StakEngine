@@ -5,26 +5,18 @@
 #include "Renderer.h"
 
 namespace sk {
-Application::Application() {
-  sk_debug_core_trace("Initializing Platform");
-  Platform::init();
-
-  this->window = new Window({ 100, 100, 1280, 720, "WINDOW" });
-  this->window->set_event_callback(std::bind(&Application::on_event, this, std::placeholders::_1));
-
-  sk_debug_core_trace("Initializing renderer");
-  this->running = true;
+Application::Application() 
+  : window({ 100, 100, 1280, 720, "WINDOW" }), running(true) {
+  this->window.set_event_callback(std::bind(&Application::on_event, this, std::placeholders::_1));
 }
 
 void Application::run() {
   while (this->running) {
-    poll_events();
-
-    this->window->swap_buffers();
-
     for (ApplicationLayer *layer : this->layers) {
       layer->update();
     }
+    poll_events();
+    this->window.swap_buffers();
   }
 }
 
@@ -36,7 +28,7 @@ void Application::on_event(Event &e) {
     switch (e.type) {
     case WINDOW_CLOSE:
       sk_debug_core_trace("Window Closed");
-      if (e.win_close_event.window == this->window) {
+      if (e.win_close_event.window == &this->window) {
         sk_debug_core_trace("Main Window Closed");
         this->running = false;
       }
@@ -57,16 +49,10 @@ void Application::on_event(Event &e) {
 }
 
 Application::~Application() {
-  if (this->running) {
-    sk_debug_core_trace("Application Shutdown");
-    this->running = false;
-    for (ApplicationLayer *layer : this->layers) {
-      layer->end();
-      delete layer;
-    }
-    this->layers.clear();
-    delete this->window;
-    Platform::shutdown();
+  sk_debug_core_trace("Application Shutdown");
+  for (ApplicationLayer *layer : this->layers) {
+    layer->end();
+    delete layer;
   }
 }
 } // namespace sk

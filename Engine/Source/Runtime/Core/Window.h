@@ -24,6 +24,7 @@ public:
   ~Context();
 
   void make_current();
+  void swap_buffers();
 
 private:
   PLATFORM_CONTEXT_STATE;
@@ -62,6 +63,8 @@ public:
 private:
   WindowData data;
   Context *context;
+
+  static u64 count;
 
   friend class Context;
 };

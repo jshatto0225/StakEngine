@@ -4,8 +4,8 @@
 
 namespace sk {
 struct Win32Platform {
-  HINSTANCE instance = {};
-  ATOM default_window_class = {};
+  HINSTANCE instance;
+  ATOM default_window_class;
 };
 
 struct Win32Window {

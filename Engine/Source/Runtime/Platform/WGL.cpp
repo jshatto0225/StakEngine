@@ -42,7 +42,11 @@ Context::~Context() {
 
 void Context::make_current() {
   wglMakeCurrent(this->wgl.device_context, this->wgl.gl_rendering_context);
-  sk_bind_renderer();
+  RenderApi::bind();
+}
+
+void Context::swap_buffers() {
+  SwapBuffers(this->wgl.device_context);
 }
 } // namespace sk
 
