@@ -2,20 +2,28 @@
 
 #include <vector>
 
-#include "AppLayer.h"
+#include "ApplicationLayer.h"
 #include "Event.h"
 #include "Window.h"
 
-struct _SKApplication {
-  bool running = false;
-  std::vector<SKAppLayer *> layers;
-  //InputManager *input_manager;
-  SKWindow *window = nullptr;
+namespace sk {
+class Application {
+public:
+  Application();
+  ~Application();
+
+  virtual void run() final;
+  virtual void on_event(Event &e) final;
+
+  template<typename T>
+  void add_layer() {
+    static_assert(std::is_base_of<ApplicationLayer, T>().value, "Layer does not inherit from ApplicationLayer");
+    layers.push_back(new T());
+  }
+
+private:
+  bool running;
+  std::vector<ApplicationLayer *> layers;
+  Window *window;
 };
-
-void sk_app_init();
-void sk_app_run();
-void sk_app_shutdown();
-void sk_app_on_event(SKEvent &e);
-void sk_app_add_layer(SKAppLayer *layer);
-
+}

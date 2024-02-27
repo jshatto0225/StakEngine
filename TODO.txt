@@ -1,3 +1,24 @@
 -- Also try to include all libs in repo since cmake is annoying
 
--- Consider changine win32 poll events to not use while loop or move to different thread
+-- Implement graphics API abstraction
+
+-- Create a GUI Renderer in the editor
+  -- For the eitor itself
+
+-- Create a GUI Renderer in the runtime
+  -- For game GUIs
+
+-- Create a 2D Renderer in the runtime
+-- Creata a 3D Renderer in the runtime
+  -- Both will also be used in the editor for a preview window
+  -- Could make a seperate renderer entirely for the editor to support more debug fatures
+     but that would be much later down the line
+
+-- Audio
+
+-- ECS
+
+-- Make test app without editor
+
+-- Rework Input
+  -- Add Gamepad Support

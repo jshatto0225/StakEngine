@@ -2,36 +2,38 @@
 
 #include "Types.h"
 
-struct SKWindow;
+namespace sk {
 
-enum SKEventType {
-  SK_TEST_EVENT = -1,
-  SK_INVALID_EVENT = -1,
-  SK_WINDOW_RESIZED,
-  SK_WINDOW_MOVED,
-  SK_WINDOW_CLOSE,
+class Window;
+
+enum EventType {
+  TEST_EVENT = -1,
+  INVALID_EVENT = -1,
+  WINDOW_RESIZED,
+  WINDOW_MOVED,
+  WINDOW_CLOSE,
 };
 
-struct SKWindowCloseEvent {
-  SKWindow *window = nullptr;
+struct WindowCloseEvent {
+  const Window *window = nullptr;
 };
 
-struct SKWindowMoveEvent {
-  SKWindow *window = nullptr;
+struct WindowMoveEvent {
+  const Window *window = nullptr;
   i32 x = 0;
   i32 y = 0;
 };
 
-struct SKWindowResizeEvent {
-  SKWindow *window = nullptr;
+struct WindowResizeEvent {
+  const Window *window = nullptr;
   i32 width = 0;
   i32 height = 0;
 };
 
-struct SKEvent {
-  SKEventType type = SK_INVALID_EVENT;
-  SKWindowCloseEvent win_close_event;
-  SKWindowMoveEvent win_move_event;
-  SKWindowResizeEvent win_resize_event;
+struct Event {
+  EventType type = INVALID_EVENT;
+  WindowCloseEvent win_close_event;
+  WindowMoveEvent win_move_event;
+  WindowResizeEvent win_resize_event;
 };
-
+}

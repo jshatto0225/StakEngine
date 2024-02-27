@@ -2,8 +2,12 @@
 
 #include "Types.h"
 
-bool sk_key_down(i32);
-void sk_get_mouse_position(i32 *, i32*);
+namespace sk {
+namespace Input {
+bool is_key_down(i32 key);
+void get_mouse_pos(i32 *x, i32 *y);
+}
+}
 
 // NOTE: Windows Key Codes
 #ifdef WIN32

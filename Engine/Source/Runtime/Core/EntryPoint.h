@@ -1,16 +1,13 @@
 #pragma once
 
 #include "Types.h"
+#include "Application.h"
 
-extern void extern_init();
-
-void sk_app_init();
-void sk_app_run();
+sk::Application *get_app();
 
 inline i32 sk_main() {
-  extern_init();
-  sk_app_init();
-  sk_app_run();
+  sk::Application *app = get_app();
+  app->run();
   return 0;
 }
 
@@ -23,7 +20,7 @@ int main(int argc, char **argv) {
 #ifdef SK_WINDOWS
 #include <windows.h>
 i32 WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR commandLine, i32 showCommand) {
-  return sk_main();
+  return _sk_main();
 }
 #endif
 #endif

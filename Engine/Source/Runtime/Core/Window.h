@@ -1,53 +1,70 @@
 #pragma once
 
+#include <functional>
+
 #include "Types.h"
 #include "Platform.h"
+#include "Event.h"
 
-struct SKWindow;
+namespace sk {
+struct WindowConfig {
+  i32 x;
+  i32 y;
+  i32 width;
+  i32 height;
+  const char *title;
+};
 
-struct _SKContext;
+class Window;
 
-struct _SKWindow {
-  _SKWindow *next;
+class Context {
+public:
 
+  Context(Window *win);
+  ~Context();
+
+  void make_current();
+
+private:
+  PLATFORM_CONTEXT_STATE;
+};
+
+struct WindowData {
+  i32 x;
+  i32 y;
+  i32 width;
+  i32 height;
+  const char *title;
   bool should_close;
-  i32 x;
-  i32 y;
-  i32 width;
-  i32 height;
-  const char *title;
+  std::function<void(Event &)> event_function;
 
-  struct {
-    void (*window_size_fun)(SKWindow *, i32, i32) = [](SKWindow *, i32, i32) {};
-    void (*window_pos_fun)(SKWindow *, i32, i32) = [](SKWindow *, i32, i32) {};
-    void (*window_close_fun)(SKWindow *) = [](SKWindow *) {};
-  } callbacks;
+  const Window *window;
 
-  SK_PLATFORM_WINDOW_STATE;
-  SK_PLATFORM_CONTEXT_STATE;
+  PLATFORM_WINDOW_STATE;
 };
 
-struct SKWindowConfig {
-  i32 x;
-  i32 y;
-  i32 width;
-  i32 height;
-  const char *title;
+class Window {
+public:
+  Window(const WindowConfig &config);
+  ~Window();
+
+  void set_pos(i32 x, i32 y);
+  void set_size(i32 width, i32 height);
+  void get_pos(i32 *x, i32 *y);
+  void get_size(i32 *width, i32 *height);
+
+  void set_event_callback(const std::function<void(Event &)>& func);
+
+  void swap_buffers();
+
+  void make_current();
+
+private:
+  WindowData data;
+  Context *context;
+
+  friend class Context;
 };
 
-SKWindow *sk_create_window(const SKWindowConfig &config);
-void sk_destroy_window(SKWindow *win);
-void sk_set_window_pos(SKWindow *win, i32 x, i32 y);
-void sk_set_window_size(SKWindow *win, i32 width, i32 height);
-void sk_get_window_pos(SKWindow *win, i32 *x, i32 *y);
-void sk_get_window_size(SKWindow *win, i32 *width, i32 *height);
-bool sk_window_should_close(SKWindow *win);
-void sk_poll_events();
-
-void sk_set_window_close_callback(SKWindow *win, void(*func)(SKWindow *));
-void sk_set_window_size_callback(SKWindow *win, void(*func)(SKWindow *, i32, i32));
-void sk_set_window_pos_callback(SKWindow *win, void(*func)(SKWindow *, i32, i32));
-
-void sk_window_swap_buffers(SKWindow *);
-
-
+void poll_events();
+}

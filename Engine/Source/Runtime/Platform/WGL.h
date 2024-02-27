@@ -2,9 +2,11 @@
 
 #include <windows.h>
 
-struct _SKWGLContext {
+namespace sk {
+struct WGLContext {
   HDC device_context = {};
   HGLRC gl_rendering_context = {};
 };
+}
 
-#define SK_WGL_CONTEXT_STATE _SKWGLContext wgl;
+#define WGL_CONTEXT_STATE WGLContext wgl;

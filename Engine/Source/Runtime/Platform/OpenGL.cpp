@@ -19,23 +19,24 @@ PFNGLVERTEXATTRIBPOINTERPROC glVertexAttribPointer;
 PFNGLVERTEXATTRIBDIVISORPROC glVertexAttribDivisor;
 PFNGLBINDVERTEXARRAYPROC glBindVertexArray;
 
+namespace sk {
 void sk_bind_renderer() {
-  glGenBuffers = (PFNGLGENBUFFERSPROC)sk_get_proc_address("glGenBuffers");
-  glBindBuffer = (PFNGLBINDBUFFERPROC)sk_get_proc_address("glBindBuffer");
-  glBufferData = (PFNGLBUFFERDATAPROC)sk_get_proc_address("glBufferData");
-  glDeleteBuffers = (PFNGLDELETEBUFFERSPROC)sk_get_proc_address("glDeleteBuffers");
-  glBufferSubData = (PFNGLBUFFERSUBDATAPROC)sk_get_proc_address("glBufferSubData");
-  glDebugMessageCallback = (PFNGLDEBUGMESSAGECALLBACKPROC)sk_get_proc_address("glDebugMessageCallback");
-  glDebugMessageControl = (PFNGLDEBUGMESSAGECONTROLPROC)sk_get_proc_address("glDebugMessageControl");
-  glCreateVertexArrays = (PFNGLCREATEVERTEXARRAYSPROC)sk_get_proc_address("glCreateVertexArrays");
-  glDeleteVertexArrays = (PFNGLDELETEVERTEXARRAYSPROC)sk_get_proc_address("glDeleteVertexArrays");
-  glEnableVertexAttribArray = (PFNGLENABLEVERTEXATTRIBARRAYPROC)sk_get_proc_address("glEnableVertexAttribArray");
-  glVertexAttribPointer = (PFNGLVERTEXATTRIBPOINTERPROC)sk_get_proc_address("glVertexAttribPointer");
-  glVertexAttribDivisor = (PFNGLVERTEXATTRIBDIVISORPROC)sk_get_proc_address("glVertexAttribDivisor");
-  glBindVertexArray = (PFNGLBINDVERTEXARRAYPROC)sk_get_proc_address("glBindVertexArray");
+  glGenBuffers = (PFNGLGENBUFFERSPROC)Platform::get_proc_address("glGenBuffers");
+  glBindBuffer = (PFNGLBINDBUFFERPROC)Platform::get_proc_address("glBindBuffer");
+  glBufferData = (PFNGLBUFFERDATAPROC)Platform::get_proc_address("glBufferData");
+  glDeleteBuffers = (PFNGLDELETEBUFFERSPROC)Platform::get_proc_address("glDeleteBuffers");
+  glBufferSubData = (PFNGLBUFFERSUBDATAPROC)Platform::get_proc_address("glBufferSubData");
+  glDebugMessageCallback = (PFNGLDEBUGMESSAGECALLBACKPROC)Platform::get_proc_address("glDebugMessageCallback");
+  glDebugMessageControl = (PFNGLDEBUGMESSAGECONTROLPROC)Platform::get_proc_address("glDebugMessageControl");
+  glCreateVertexArrays = (PFNGLCREATEVERTEXARRAYSPROC)Platform::get_proc_address("glCreateVertexArrays");
+  glDeleteVertexArrays = (PFNGLDELETEVERTEXARRAYSPROC)Platform::get_proc_address("glDeleteVertexArrays");
+  glEnableVertexAttribArray = (PFNGLENABLEVERTEXATTRIBARRAYPROC)Platform::get_proc_address("glEnableVertexAttribArray");
+  glVertexAttribPointer = (PFNGLVERTEXATTRIBPOINTERPROC)Platform::get_proc_address("glVertexAttribPointer");
+  glVertexAttribDivisor = (PFNGLVERTEXATTRIBDIVISORPROC)Platform::get_proc_address("glVertexAttribDivisor");
+  glBindVertexArray = (PFNGLBINDVERTEXARRAYPROC)Platform::get_proc_address("glBindVertexArray");
 }
 
-void APIENTRY _sk_opengl_message_callback(u32 source, u32 type, u32 id, u32 severity, i32 length, const char* message, const void* user_param) {
+void APIENTRY _sk_opengl_message_callback(u32 source, u32 type, u32 id, u32 severity, i32 length, const char *message, const void *user_param) {
   switch (severity) {
   case GL_DEBUG_SEVERITY_HIGH:
     sk_debug_core_critical(message);
@@ -52,15 +53,15 @@ void APIENTRY _sk_opengl_message_callback(u32 source, u32 type, u32 id, u32 seve
   }
 }
 
-void sk_render_command_set_clear_color(f32 r, f32 g, f32 b, f32 a) {
+void sk_render_api_set_clear_color(f32 r, f32 g, f32 b, f32 a) {
   glClearColor(r, g, b, a);
 }
 
-void sk_render_command_clear() {
+void sk_render_api_clear() {
   glClear(GL_COLOR_BUFFER_BIT);
 }
 
-void sk_render_command_init(SKWindow *win) {
+void sk_render_api_init() {
 #ifdef SK_DEBUG
   glEnable(GL_DEBUG_OUTPUT);
   glEnable(GL_DEBUG_OUTPUT_SYNCHRONOUS);
@@ -74,14 +75,11 @@ void sk_render_command_init(SKWindow *win) {
   glEnable(GL_LINE_SMOOTH);
 }
 
-void sk_render_command_set_viewport(SKWindow *win) {
-  if (!win) {
-    return;
-  }
-  _SKWindow *internal_window = (_SKWindow *)win;
-  glViewport(internal_window->x, internal_window->y, internal_window->width, internal_window->height);
+void sk_render_api_set_viewport(i32 x, i32 y, i32 width, i32 height) {
+  glViewport(x, y, width, height);
 }
 
 void sk_render_command_shutdown() {
 
 }
+} // namespace sk
