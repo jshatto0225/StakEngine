@@ -4,7 +4,7 @@
     {
       "name": "base",
       "hidden": true,
-      "generator": "Ninja",
+      //"generator": "Ninja",
       "binaryDir": "${sourceDir}/Build/",
       "installDir": "${sourceDir}/Build/",
       "cacheVariables": {

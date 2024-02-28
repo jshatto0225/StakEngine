@@ -3,15 +3,18 @@
 #include "Platform.h"
 #include "Window.h"
 #include "Renderer.h"
+#include "Log.h"
+#include "Input.h"
+#include "Math.h"
 
-LRESULT CALLBACK _sk_win32_message_callback(HWND window, u32 msg, WPARAM wparam, LPARAM lparam) {
-  sk::WindowData *data = (sk::WindowData *)GetWindowLongPtrA(window, GWLP_USERDATA);
+LRESULT CALLBACK Win32MessageCallback(HWND window, u32 msg, WPARAM wparam, LPARAM lparam) {
+  WindowData *data = (WindowData *)GetWindowLongPtrA(window, GWLP_USERDATA);
   if (data) {
     switch (msg) {
     case WM_CLOSE: {
       if (data->event_function) {
-        sk::Event e = {};
-        e.type = sk::WINDOW_CLOSE;
+        Event e = {};
+        e.type = WINDOW_CLOSE;
         e.win_close_event.window = data->window;
         data->event_function(e);
         return 0;
@@ -26,8 +29,8 @@ LRESULT CALLBACK _sk_win32_message_callback(HWND window, u32 msg, WPARAM wparam,
       data->height = rect.bottom - rect.top;
 
       if (data->event_function) {
-        sk::Event e;
-        e.type = sk::WINDOW_RESIZED;
+        Event e;
+        e.type = WINDOW_RESIZED;
         e.win_resize_event.window = data->window;
         e.win_resize_event.height = rect.right - rect.left;
         e.win_resize_event.width = rect.bottom - rect.top;
@@ -43,8 +46,8 @@ LRESULT CALLBACK _sk_win32_message_callback(HWND window, u32 msg, WPARAM wparam,
       data->y = rect.top;
 
       if (data->event_function) {
-        sk::Event e;
-        e.type = sk::WINDOW_MOVED;
+        Event e;
+        e.type = WINDOW_MOVED;
         e.win_move_event.window = data->window;
         e.win_move_event.x = rect.left;
         e.win_move_event.y = rect.top;
@@ -58,11 +61,10 @@ LRESULT CALLBACK _sk_win32_message_callback(HWND window, u32 msg, WPARAM wparam,
   return DefWindowProc(window, msg, wparam, lparam);
 }
 
-namespace sk {
 bool Platform::initialized = false;
 Win32Platform Platform::win32;
 
-void Platform::init() {
+void Platform::Init() {
   if (Platform::initialized) {
     return;
   }
@@ -73,34 +75,43 @@ void Platform::init() {
   wnd_class.hInstance = Platform::win32.instance;
   wnd_class.hIcon = LoadIcon(nullptr, IDI_WINLOGO);
   wnd_class.hCursor = LoadCursor(nullptr, IDC_ARROW);
-  wnd_class.lpfnWndProc = _sk_win32_message_callback;
+  wnd_class.lpfnWndProc = Win32MessageCallback;
   wnd_class.cbClsExtra = sizeof(Window *);
 
   Platform::win32.default_window_class = RegisterClassExA(&wnd_class);
   Platform::initialized = true;
 }
 
-bool Platform::is_initialized() {
+void Platform::Shutdown() {
+  if (!Platform::initialized) {
+    return;
+  }
+  Platform::initialized = false;
+  UnregisterClassA(SK_WIN32_DEFAULT_WNDCLASS_NAME, Platform::win32.instance);
+}
+
+bool Platform::IsInitialized() {
   return Platform::initialized;
 }
 
-Proc Platform::get_proc_address(const char *name) {
+Proc Platform::GetProcAddress(const char *name) {
   return (Proc)wglGetProcAddress(name);
 }
 
 u64 Window::count = 0;
 
 Window::Window(const WindowConfig &config) {
-  if (!Platform::is_initialized()) {
-    Platform::init();
+  if (Window::count == 0) {
+    Platform::Init();
   }
+  Window::count++;
+
   this->data.x = config.x;
   this->data.y = config.y;
   this->data.width = config.width;
   this->data.height = config.height;
   this->data.title = config.title;
   this->data.win32.instance = GetModuleHandle(nullptr);
-  this->data.should_close = false;
   this->data.window = this;
 
   this->data.win32.handle = CreateWindowExA(0,
@@ -115,35 +126,40 @@ Window::Window(const WindowConfig &config) {
                                             nullptr,
                                             this->data.win32.instance,
                                             nullptr);
-  SetWindowLongPtrA(this->data.win32.handle, GWLP_USERDATA, (LONG_PTR)this);
-  this->context = new Context(this);
+  SetWindowLongPtrA(this->data.win32.handle, GWLP_USERDATA, (LONG_PTR)&this->data);
+  this->context = std::make_unique<Context>(this);
 }
 
 Window::~Window() {
-  delete this->context;
   DestroyWindow(this->data.win32.handle);
+  Window::count--;
+  if (Window::count == 0) {
+    Platform::Shutdown();
+  }
 }
 
-void Window::set_pos(i32 x, i32 y) {
+void Window::setPos(i32 x, i32 y) {
   SetWindowPos(this->data.win32.handle, nullptr, x, y, this->data.width, this->data.height, 0);
+  this->data.x = x;
+  this->data.y = y;
 }
 
-void Window::set_size(i32 width, i32 height) {
+void Window::setSize(i32 width, i32 height) {
   SetWindowPos(this->data.win32.handle, nullptr, this->data.x, this->data.y, width, height, 0);
+  this->data.width = width;
+  this->data.height = height;
 }
 
-void Window::get_pos(i32 *x, i32 *y) {
-  *x = this->data.x;
-  *y = this->data.y;
+Vec2 Window::getPos() {
+  return Vec2(this->data.x, this->data.y);
 }
 
-void Window::get_size(i32 *width, i32 *height) {
-  *width = this->data.width;
-  *height = this->data.height;
+Vec2 Window::getSize() {
+  return Vec2(this->data.width, this->data.height);
 }
 
-void  Window::make_current() {
-  this->context->make_current();
+void  Window::makeCurrent() {
+  this->context->makeCurrent();
 }
 
 void Window::update() {
@@ -152,25 +168,21 @@ void Window::update() {
   TranslateMessage(&msg);
   DispatchMessage(&msg);
 
-  this->context->swap_buffers();
+  this->context->swapBuffers();
 }
 
-void Window::set_event_callback(const std::function<void(Event &)> &func) {
+void Window::setEventCallback(const std::function<void(Event &)> &func) {
   this->data.event_function = func;
 }
 
-namespace Input {
-bool is_key_down(i32 key) {
+bool Input::GetKeyDown(i32 key) {
   return GetAsyncKeyState(key);
 }
 
-void get_mouse_pos(i32 *x, i32 *y) {
+Vec2 Input::GetMousePos() {
   POINT pos = {};
   GetCursorPos(&pos);
-  *x = pos.x;
-  *y = pos.y;
+  return Vec2(pos.x, pos.y);
 }
-} // namespace Input
-} // namespace sk
 
 #endif

@@ -2,7 +2,6 @@
 
 #include <windows.h>
 
-namespace sk {
 struct Win32Platform {
   HINSTANCE instance;
   ATOM default_window_class;
@@ -12,7 +11,6 @@ struct Win32Window {
   HWND handle;
   HINSTANCE instance;
 };
-}
 
 constexpr const char *SK_WIN32_DEFAULT_WNDCLASS_NAME = "SK_DEFAULT_WNDCLASS";
 

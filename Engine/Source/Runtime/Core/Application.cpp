@@ -4,43 +4,38 @@
 #include "Platform.h"
 #include "Renderer.h"
 
-namespace sk {
-Application::Application()
-  : window({ 100, 100, 1280, 720, "WINDOW" }), running(true) {
-  this->window.set_event_callback(std::bind(&Application::on_event, this, std::placeholders::_1));
+Application::Application() {
+  this->window = std::make_unique<Window>(WindowConfig({ 100, 100, 1280, 720, "Window" }));
+  this->window->setEventCallback(std::bind(&Application::onEvent, this, std::placeholders::_1));
+
+  // TODO: Renderer
+  RenderApi::Init();
+
+  this->running = true;
+  Log::CoreInfo("Application Initialized");
 }
 
 void Application::run() {
   while (this->running) {
-    for (ApplicationLayer *layer : this->layers) {
+    for (const std::unique_ptr<ApplicationLayer>& layer : this->layers) {
       layer->update();
     }
-    this->window.update();
+    this->window->update();
   }
 }
 
-void Application::on_event(Event &e) {
+void Application::onEvent(Event &e) {
   if (this->running) {
-    for (ApplicationLayer *layer : this->layers) {
-      layer->on_event(e);
+    for (const std::unique_ptr<ApplicationLayer> &layer : this->layers) {
+      layer->onEvent(e);
     }
     switch (e.type) {
     case WINDOW_CLOSE:
-      sk_debug_core_trace("Window Closed");
-      if (e.win_close_event.window == &this->window) {
-        sk_debug_core_trace("Main Window Closed");
+      Log::CoreTrace("Window Closed");
+      if (e.win_close_event.window == this->window.get()) {
         this->running = false;
       }
       break;
-
-    case WINDOW_RESIZED:
-      sk_debug_core_trace("Window size changed");
-      break;
-
-    case WINDOW_MOVED:
-      sk_debug_core_trace("Window position changed");
-      break;
-
     default:
       break;
     }
@@ -48,13 +43,8 @@ void Application::on_event(Event &e) {
 }
 
 Application::~Application() {
-  sk_debug_core_trace("Application Shutdown");
-  for (ApplicationLayer *layer : this->layers) {
-    layer->end();
-    delete layer;
-  }
+  Log::CoreTrace("Application Shutdown");
+
+  // TODO: Renderer
+  RenderApi::Shutdown();
 }
-} // namespace sk
-
-
-

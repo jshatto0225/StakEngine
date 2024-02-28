@@ -1,4 +1,4 @@
--- Also try to include all libs in repo since cmake is annoying
+-- Also try to include all libs in repo since cmake is annoying (Windows was missing some gl headers)
 
 -- Implement graphics API abstraction
 

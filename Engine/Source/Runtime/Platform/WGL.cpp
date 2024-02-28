@@ -5,11 +5,11 @@
 #include "Window.h"
 #include "Renderer.h"
 
-namespace sk {
 Context::Context(Window *win) {
   if (!win) {
     return;
   }
+  this->window = win;
   this->wgl.device_context = GetDC(win->data.win32.handle);
   PIXELFORMATDESCRIPTOR pfd = {
     sizeof(PIXELFORMATDESCRIPTOR),
@@ -31,6 +31,7 @@ Context::Context(Window *win) {
 
   this->wgl.gl_rendering_context = wglCreateContext(this->wgl.device_context);
   wglMakeCurrent(this->wgl.device_context, this->wgl.gl_rendering_context);
+  RenderApi::Bind();
 }
 
 Context::~Context() {
@@ -40,14 +41,13 @@ Context::~Context() {
   wglDeleteContext(this->wgl.gl_rendering_context);
 }
 
-void Context::make_current() {
+void Context::makeCurrent() {
   wglMakeCurrent(this->wgl.device_context, this->wgl.gl_rendering_context);
-  RenderApi::bind();
+  RenderApi::Bind();
 }
 
-void Context::swap_buffers() {
+void Context::swapBuffers() {
   SwapBuffers(this->wgl.device_context);
 }
-} // namespace sk
 
 #endif

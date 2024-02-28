@@ -5,7 +5,6 @@
 #include "Renderer.h"
 #include "Event.h"
 
-namespace sk {
 bool Platform::initialized = false;
 X11Platform Platform::x11;
 
@@ -125,7 +124,6 @@ void Window::update() {
   }
 
   glXSwapBuffers(Platform::x11.display, this->data.x11.window);
-}
 }
 
 #endif

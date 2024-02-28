@@ -4,7 +4,6 @@
 #include <GL/glx.h>
 using XWindow = Window;
 
-namespace sk {
 struct X11Window {
   XWindow window;
   XWindow root;
@@ -21,7 +20,6 @@ struct X11Platform {
 struct X11Context {
   GLXContext context;
 };
-}
 
 #define X11_CONTEXT_STATE X11Context x11;
 #define X11_PLATFORM_STATE static X11Platform x11;

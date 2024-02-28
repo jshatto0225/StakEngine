@@ -2,8 +2,6 @@
 
 #include "Types.h"
 
-namespace sk {
-
 class Window;
 
 enum EventType {
@@ -15,25 +13,24 @@ enum EventType {
 };
 
 struct WindowCloseEvent {
-  const Window *window = nullptr;
+  const Window *window;
 };
 
 struct WindowMoveEvent {
-  const Window *window = nullptr;
+  const Window *window;
   i32 x = 0;
   i32 y = 0;
 };
 
 struct WindowResizeEvent {
-  const Window *window = nullptr;
-  i32 width = 0;
-  i32 height = 0;
+  const Window *window;
+  i32 width;
+  i32 height;
 };
 
 struct Event {
-  EventType type = INVALID_EVENT;
+  EventType type;
   WindowCloseEvent win_close_event;
   WindowMoveEvent win_move_event;
   WindowResizeEvent win_resize_event;
 };
-}

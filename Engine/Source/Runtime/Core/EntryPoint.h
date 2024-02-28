@@ -4,10 +4,10 @@
 #include "Application.h"
 #include "Platform.h"
 
-sk::Application *get_app();
+std::unique_ptr<Application> GetApp();
 
-inline i32 sk_main() {
-  sk::Application *app = get_app();
+inline i32 StakMain() {
+  std::unique_ptr<Application> app = GetApp();
   app->run();
   return 0;
 }
@@ -15,16 +15,14 @@ inline i32 sk_main() {
 #ifndef SK_NO_MAIN
 #if defined(SK_DEBUG) or defined(SK_RELEASE)
 int main(int argc, char **argv) {
-  return sk_main();
+  return StakMain();
 }
 #elif defined(SK_DIST)
 #ifdef SK_WINDOWS
 #include <windows.h>
 i32 WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR commandLine, i32 showCommand) {
-  return _sk_main();
+  return StakMain();
 }
 #endif
 #endif
-#else
-void extern_init() {}
 #endif

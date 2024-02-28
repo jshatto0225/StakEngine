@@ -1,12 +1,13 @@
 #pragma once
 
 #include <functional>
+#include <memory>
 
 #include "Types.h"
+#include "StakMath.h"
 #include "Platform.h"
 #include "Event.h"
 
-namespace sk {
 struct WindowConfig {
   i32 x;
   i32 y;
@@ -19,15 +20,14 @@ class Window;
 
 class Context {
 public:
-
   Context(Window *win);
   ~Context();
 
-  void make_current();
-  void swap_buffers();
+  void makeCurrent();
+  void swapBuffers();
 
 private:
-  Window *window;
+  const Window *window;
   PLATFORM_CONTEXT_STATE;
 };
 
@@ -37,7 +37,6 @@ struct WindowData {
   i32 width;
   i32 height;
   const char *title;
-  bool should_close;
   std::function<void(Event &)> event_function;
 
   const Window *window;
@@ -50,23 +49,22 @@ public:
   Window(const WindowConfig &config);
   ~Window();
 
-  void set_pos(i32 x, i32 y);
-  void set_size(i32 width, i32 height);
-  void get_pos(i32 *x, i32 *y);
-  void get_size(i32 *width, i32 *height);
+  void setPos(i32 x, i32 y);
+  void setSize(i32 width, i32 height);
+  Vec2 getPos();
+  Vec2 getSize();
 
-  void set_event_callback(const std::function<void(Event &)> &func);
+  void setEventCallback(const std::function<void(Event &)> &func);
 
   void update();
 
-  void make_current();
+  void makeCurrent();
 
 private:
   WindowData data;
-  Context *context;
+  std::unique_ptr<Context> context;
 
   static u64 count;
 
   friend class Context;
 };
-}

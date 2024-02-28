@@ -33,18 +33,15 @@
   WGL_CONTEXT_STATE \
   X11_CONTEXT_STATE
 
-namespace sk {
-
 typedef void (*Proc)();
 
-// NOTE: As of now shutting down platform is not necessary
-// clean up will happen automatically when the program ends
 class Platform {
 public:
-  static void init();
-  static bool is_initialized();
+  static void Init();
+  static void Shutdown();
+  static bool IsInitialized();
 
-  static Proc get_proc_address(const char *name);
+  static Proc GetProcAddress(const char *name);
 
 private:
   static bool initialized;
@@ -52,4 +49,3 @@ private:
 public:
   PLATFORM_STATE;
 };
-}

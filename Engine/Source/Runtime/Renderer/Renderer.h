@@ -2,7 +2,6 @@
 
 #include "Types.h"
 
-namespace sk {
 enum ShaderDataType {
 
 };
@@ -41,20 +40,23 @@ class Texture {
 
 };
 
-namespace RenderApi {
-void init();
-void shutdown();
+class RenderApi {
+public:
+  static void Init();
+  static void Shutdown();
 
-void set_clear_color(f32 r, f32 g, f32 b, f32 a);
-// NOTE: x and y are relative to the window. (0, 0) is 
-// always the bottom left
-void set_viewport(i32 x, i32 y, i32 width, i32 height);
-void set_line_width(f32 width);
+  static void SetClearColor(f32 r, f32 g, f32 b, f32 a);
+  // NOTE: x and y are relative to the window. (0, 0) is 
+  // always the bottom left
+  static void SetViewPort(i32 x, i32 y, i32 width, i32 height);
+  static void SetLineWidth(f32 width);
 
-void bind();
-void clear();
+  static void Bind();
+  static void Clear();
 
-void draw_indexed(const VertexArray &vao, u32 count);
-void draw_lines(const VertexArray &vao, u32 count);
+ static void DrawIndexed(const VertexArray &vao, u32 count);
+ static void DrawLines(const VertexArray &vao, u32 count);
+
+private:
+  static bool initialized;
 };
-} // namespace sk

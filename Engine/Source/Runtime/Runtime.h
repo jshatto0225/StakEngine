@@ -9,8 +9,12 @@
 #include "Math/Matrix/Mat3x3Types.h"
 #include "Math/Matrix/Mat4x4Types.h"
 
+#include "Renderer/Renderer.h"
+
 #include "Core/Types.h"
 #include "Core/ApplicationLayer.h"
 #include "Core/Event.h"
 #include "Core/Application.h"
+#include "Core/Input.h"
+#include "Core/Log.h"
 #include "Core/EntryPoint.h"

@@ -55,6 +55,7 @@ target_include_directories(StakRuntime PUBLIC Core)
 target_include_directories(StakRuntime PUBLIC Renderer)
 target_include_directories(StakRuntime PUBLIC Math/Vector)
 target_include_directories(StakRuntime PUBLIC Math/Matrix)
+target_include_directories(StakRuntime PUBLIC Math)
 target_include_directories(StakRuntime PUBLIC Platform)
 
 target_compile_definitions(StakRuntime PUBLIC $<$<CONFIG:Debug>: SK_DEBUG=1>)

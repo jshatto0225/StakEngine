@@ -1,13 +1,13 @@
 #pragma once
 
 #include "Types.h"
+#include "StakMath.h"
 
-namespace sk {
-namespace Input {
-bool is_key_down(i32 key);
-void get_mouse_pos(i32 *x, i32 *y);
-}
-}
+class Input {
+public:
+  static bool GetKeyDown(i32 key);
+  static Vec2 GetMousePos();
+};
 
 // NOTE: Windows Key Codes
 #ifdef WIN32
