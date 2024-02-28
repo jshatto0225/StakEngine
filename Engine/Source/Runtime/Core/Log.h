@@ -4,6 +4,9 @@
 
 class Log {
 public:
+  static void Init();
+  static void Shutdown();
+
   static void CoreTrace(const char *fmt, ...);
   static void CoreInfo(const char *fmt, ...);
   static void CoreWarn(const char *fmt, ...);

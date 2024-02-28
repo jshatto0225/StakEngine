@@ -17,6 +17,6 @@ public:
   }
 };
 
-std::unique_ptr<Application> GetApp() {
-  return std::make_unique<TempApp>();
+Application *GetApp() {
+  return new TempApp();
 }

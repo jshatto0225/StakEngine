@@ -4,11 +4,16 @@
 #include "Application.h"
 #include "Platform.h"
 
-std::unique_ptr<Application> GetApp();
+Application *GetApp();
 
 inline i32 StakMain() {
-  std::unique_ptr<Application> app = GetApp();
+  Log::Init();
+
+  Application *app = GetApp();
   app->run();
+  delete app;
+
+  Log::Shutdown();
   return 0;
 }
 

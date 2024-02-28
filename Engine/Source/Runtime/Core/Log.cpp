@@ -2,8 +2,16 @@
 
 #include <stdarg.h>
 
-// Goofy aah string concat
-FILE *Log::core_log_file = fopen(SOURCE_DIR "StakRuntime.log", "w");
+FILE *Log::core_log_file;
+
+void Log::Init() {
+  // Goofy aah string concat
+  Log::core_log_file = fopen(SOURCE_DIR "StakRuntime.log", "w");
+}
+
+void Log::Shutdown() {
+  fclose(Log::core_log_file);
+}
 
 void Log::CoreTrace(const char *fmt, ...) {
   fprintf(stdout, "[StakRuntime] [TRACE]: ");

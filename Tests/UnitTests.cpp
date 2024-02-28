@@ -1199,6 +1199,8 @@ TEST_CASE("Test Mat4x4", "[Mat4x4]")
 
 TEST_CASE("Test Window", "[Window]")
 {
+    Log::Init();
+
     Window window({ 0, 0, 800, 450, "TempWindow" });
     Log::Trace("%d, %d", window.getSize().x, window.getSize().y);
     REQUIRE(window.getSize() == Vec2(800, 450));
@@ -1207,4 +1209,6 @@ TEST_CASE("Test Window", "[Window]")
     REQUIRE(window.getSize() == Vec2(450, 800));
     window.setPos(200, 200);
     REQUIRE(window.getPos() == Vec2(200, 200));
+
+    Log::Shutdown();
 } // End Test Window
