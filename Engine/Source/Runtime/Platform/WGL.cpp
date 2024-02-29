@@ -31,6 +31,7 @@ Context::Context(Window *win) {
 
   this->wgl.gl_rendering_context = wglCreateContext(this->wgl.device_context);
   wglMakeCurrent(this->wgl.device_context, this->wgl.gl_rendering_context);
+
   RenderApi::Bind();
 }
 

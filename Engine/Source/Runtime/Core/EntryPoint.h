@@ -4,7 +4,7 @@
 #include "Application.h"
 #include "Platform.h"
 
-Application *GetApp();
+extern Application *GetApp();
 
 inline i32 StakMain() {
   Log::Init();

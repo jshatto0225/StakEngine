@@ -17,4 +17,3 @@
 #include "Core/Application.h"
 #include "Core/Input.h"
 #include "Core/Log.h"
-#include "Core/EntryPoint.h"

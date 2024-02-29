@@ -1,4 +1,4 @@
-file(GLOB SOURCES Core/*.cpp Platform/*.cpp)
+file(GLOB SOURCES Core/*.cpp Platform/*.cpp Renderer/*.cpp)
 
 set(CMAKE_CXX_STANDARD_REQUIRED 20)
 
