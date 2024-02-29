@@ -7,9 +7,8 @@
 Application::Application() {
   this->window = std::make_unique<Window>(WindowConfig({ 100, 100, 1280, 720, "Window" }));
   this->window->setEventCallback(std::bind(&Application::onEvent, this, std::placeholders::_1));
-
-  // TODO: Renderer
-  RenderApi::Init();
+  
+  Renderer::Init();
 
   this->running = true;
   Log::CoreInfo("Application Initialized");
@@ -32,10 +31,13 @@ void Application::onEvent(Event &e) {
     switch (e.type) {
     case WINDOW_CLOSE:
       Log::CoreTrace("Window Closed");
-      if (e.win_close_event.window == this->window.get()) {
-        this->running = false;
-      }
+      this->running = false;
       break;
+
+    case WINDOW_RESIZED:
+      Renderer::OnWindowResize(e.win_resize_event.width, e.win_resize_event.height);
+      break;
+
     default:
       break;
     }
@@ -45,6 +47,5 @@ void Application::onEvent(Event &e) {
 Application::~Application() {
   Log::CoreTrace("Application Shutdown");
 
-  // TODO: Renderer
-  RenderApi::Shutdown();
+  Renderer::Shutdown();
 }

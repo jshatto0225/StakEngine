@@ -1,7 +1,5 @@
 -- Also try to include all libs in repo since cmake is annoying (Windows was missing some gl headers)
 
--- Implement graphics API abstraction
-
 -- Create a GUI Renderer in the editor
   -- For the eitor itself
 
@@ -14,6 +12,8 @@
   -- Could make a seperate renderer entirely for the editor to support more debug fatures
      but that would be much later down the line
 
+-- Camera System
+
 -- Audio
 
 -- ECS
@@ -22,3 +22,5 @@
 
 -- Rework Input
   -- Add Gamepad Support
+
+-- Load Images

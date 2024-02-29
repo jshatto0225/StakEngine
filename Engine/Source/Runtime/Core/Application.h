@@ -6,7 +6,6 @@
 #include "ApplicationLayer.h"
 #include "Event.h"
 #include "Window.h"
-#include "Renderer.h"
 
 class Application {
 public:
@@ -26,6 +25,5 @@ private:
   bool running;
   std::vector<std::unique_ptr<ApplicationLayer>> layers;
   std::unique_ptr<Window> window;
-  std::unique_ptr<RenderApi> render_api;
   std::unique_ptr<Platform> platform;
 };

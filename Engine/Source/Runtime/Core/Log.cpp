@@ -26,7 +26,7 @@ void Log::CoreTrace(const char *fmt, ...) {
 }
 
 void Log::CoreInfo(const char *fmt, ...) {
-  fprintf(stdout, "[StakRuntime] [TRACE]: ");
+  fprintf(stdout, "[StakRuntime] [INFO]: ");
   fprintf(Log::core_log_file, "[StakRuntime] [TRACE]: ");
   va_list args;
   va_start(args, fmt);
@@ -38,7 +38,7 @@ void Log::CoreInfo(const char *fmt, ...) {
 }
 
 void Log::CoreWarn(const char *fmt, ...) {
-  fprintf(stderr, "[StakRuntime] [TRACE]: ");
+  fprintf(stderr, "[StakRuntime] [WARN]: ");
   fprintf(Log::core_log_file, "[StakRuntime] [WARN]: ");
   va_list args;
   va_start(args, fmt);
@@ -50,7 +50,7 @@ void Log::CoreWarn(const char *fmt, ...) {
 }
 
 void Log::CoreError(const char *fmt, ...) {
-  fprintf(stderr, "[StakRuntime] [TRACE]: ");
+  fprintf(stderr, "[StakRuntime] [ERROR]: ");
   fprintf(Log::core_log_file, "[StakRuntime] [ERROR]: ");
   va_list args;
   va_start(args, fmt);
@@ -62,7 +62,7 @@ void Log::CoreError(const char *fmt, ...) {
 }
 
 void Log::CoreCritical(const char *fmt, ...) {
-  fprintf(stderr, "[StakRuntime] [TRACE]: ");
+  fprintf(stderr, "[StakRuntime] [CRITICAL]: ");
   fprintf(Log::core_log_file, "[StakRuntime] [CRITICAL]: ");
   va_list args;
   va_start(args, fmt);

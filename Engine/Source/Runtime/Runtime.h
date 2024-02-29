@@ -11,6 +11,9 @@
 
 #include "Renderer/Renderer.h"
 
+#include "AssetLoading/Image.h"
+#include "AssetLoading/Font.h"
+
 #include "Core/Types.h"
 #include "Core/ApplicationLayer.h"
 #include "Core/Event.h"

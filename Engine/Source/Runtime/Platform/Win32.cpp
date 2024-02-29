@@ -71,6 +71,7 @@ void Platform::Init() {
     return;
   }
   Platform::win32.instance = GetModuleHandle(nullptr);
+
   WNDCLASSEXA wnd_class = {};
   wnd_class.cbSize = sizeof(WNDCLASSEXA);
   wnd_class.lpszClassName = SK_WIN32_DEFAULT_WNDCLASS_NAME;
@@ -79,8 +80,23 @@ void Platform::Init() {
   wnd_class.hCursor = LoadCursor(nullptr, IDC_ARROW);
   wnd_class.lpfnWndProc = Win32MessageCallback;
   wnd_class.cbClsExtra = sizeof(Window *);
-
   Platform::win32.default_window_class = RegisterClassExA(&wnd_class);
+
+  Platform::win32.dummy_window = CreateWindowExA(0,
+                                                 SK_WIN32_DEFAULT_WNDCLASS_NAME,
+                                                 "Dummy Window",
+                                                 0,
+                                                 0,
+                                                 0,
+                                                 0,
+                                                 0,
+                                                 nullptr,
+                                                 nullptr,
+                                                 Platform::win32.instance,
+                                                 nullptr);
+
+  Platform::InitExtensions();
+
   Platform::initialized = true;
 }
 
@@ -96,10 +112,6 @@ bool Platform::IsInitialized() {
   return Platform::initialized;
 }
 
-Proc Platform::GetProcAddress(const char *name) {
-  return (Proc)wglGetProcAddress(name);
-}
-
 u64 Window::count = 0;
 
 Window::Window(const WindowConfig &config) {
@@ -113,7 +125,6 @@ Window::Window(const WindowConfig &config) {
   this->data.width = config.width;
   this->data.height = config.height;
   this->data.title = config.title;
-  this->data.win32.instance = GetModuleHandle(nullptr);
   this->data.window = this;
 
   this->data.win32.handle = CreateWindowExA(0,
@@ -126,7 +137,7 @@ Window::Window(const WindowConfig &config) {
                                             this->data.height,
                                             nullptr,
                                             nullptr,
-                                            this->data.win32.instance,
+                                            Platform::win32.instance,
                                             nullptr);
   SetWindowLongPtrA(this->data.win32.handle, GWLP_USERDATA, (LONG_PTR)&this->data);
   this->context = std::make_unique<Context>(this);

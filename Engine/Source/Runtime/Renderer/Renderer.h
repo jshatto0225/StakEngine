@@ -2,6 +2,7 @@
 
 #include <string>
 #include <vector>
+#include <memory>
 
 #include "Types.h"
 
@@ -101,25 +102,40 @@ public:
   VertexArray();
   ~VertexArray();
 
-  void addVertexBuffer(const VertexBuffer &vbo);
-  void setIndexBuffer(const IndexBuffer &ibo);
+  void addVertexBuffer(std::shared_ptr<VertexBuffer> vbo);
+  void setIndexBuffer(std::shared_ptr<IndexBuffer> ibo);
   void bind() const;
   void unbind() const;
 
-  const std::vector<VertexBuffer> &getVertexBuffers() const;
-  const IndexBuffer &getIndexBuffer() const;
+  const std::vector<std::shared_ptr<VertexBuffer>> &getVertexBuffers() const;
+  const std::shared_ptr<IndexBuffer> getIndexBuffer() const;
 
 private:
-  std::vector<VertexBuffer> vertex_buffers;
-  IndexBuffer index_buffer;
+  std::vector<std::shared_ptr<VertexBuffer>> vertex_buffers;
+  std::shared_ptr<IndexBuffer> index_buffer;
   u32 renderer_id;
   u32 vertex_buffer_index;
+};
+
+struct ShaderSource {
+  std::string vs;
+  std::string fs;
+};
+
+enum class ShaderType {
+  FRAGMENT,
+  VERTEX,
+  NONE,
 };
 
 class Shader {
 public:
   Shader(const std::string &vs, const std::string &fs);
+  Shader(const std::string &path);
   ~Shader();
+
+  ShaderSource Parse(const std::string &path);
+  void compile(const std::string &vs, const std::string &fs);
 
   void bind() const;
   void unbind() const;
@@ -194,15 +210,38 @@ public:
   static void SetClearColor(f32 r, f32 g, f32 b, f32 a);
   // NOTE: x and y are relative to the window. (0, 0) is 
   // always the bottom left
-  static void SetViewPort(i32 x, i32 y, i32 width, i32 height);
+  static void SetViewport(i32 x, i32 y, i32 width, i32 height);
   static void SetLineWidth(f32 width);
 
   static void Bind();
   static void Clear();
 
- static void DrawIndexed(const VertexArray &vao, u32 count);
- static void DrawLines(const VertexArray &vao, u32 count);
+ static void DrawIndexed(std::shared_ptr<VertexArray> vao, u32 count);
+ static void DrawLines(std::shared_ptr<VertexArray> vao, u32 count);
 
 private:
   static bool initialized;
+};
+
+class RenderCommand {
+public:
+  static void Init();
+  static void Shutdown();
+  static void SetClearColor(f32 r, f32 g, f32 b, f32 a);
+  static void SetViewport(i32 x, i32 y, i32 width, i32 height);
+  static void SetLineWidth(f32 width);
+  static void Bind();
+  static void Clear();
+  static void DrawIndexed(std::shared_ptr<VertexArray> vao, u32 count);
+  static void DrawLines(std::shared_ptr<VertexArray> vao, u32 count);
+};
+
+class Renderer {
+public:
+  static void Init();
+  static void Shutdown();
+  static void OnWindowResize(i32 width, i32 height);
+  static void BeginScene();
+  static void EndScene();
+  static void Submit(std::shared_ptr<Shader> shader, std::shared_ptr<VertexArray> vao);
 };

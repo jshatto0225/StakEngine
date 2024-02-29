@@ -40,6 +40,7 @@ public:
   static void Init();
   static void Shutdown();
   static bool IsInitialized();
+  static void InitExtensions();
 
   static Proc GetProcAddress(const char *name);
 

@@ -38,7 +38,6 @@ BufferElement::BufferElement(ShaderDataType type, const std::string &name, bool 
 
 u32 BufferElement::getComponentCount() const {
   switch (this->type) {
-    switch (type) {
     case ShaderDataType::FLOAT:
       return 1;
     case ShaderDataType::FLOAT2:
@@ -63,7 +62,6 @@ u32 BufferElement::getComponentCount() const {
       return 1;
     default:
       return 0;
-    }
   }
 }
 
@@ -124,4 +122,66 @@ std::vector<BufferElement>::const_iterator BufferLayout::begin() const {
 
 std::vector<BufferElement>::const_iterator BufferLayout::end() const {
   return elements.end();
+}
+
+void RenderCommand::Init() {
+  RenderApi::Init();
+}
+
+void RenderCommand::Shutdown() {
+  RenderApi::Shutdown();
+}
+
+void RenderCommand::SetClearColor(f32 r, f32 g, f32 b, f32 a) {
+  RenderApi::SetClearColor(r, g, b, a);
+}
+
+void RenderCommand::SetViewport(i32 x, i32 y, i32 width, i32 height) {
+  RenderApi::SetViewport(x, y, width, height);
+}
+
+void RenderCommand::SetLineWidth(f32 width) {
+  RenderApi::SetLineWidth(width);
+}
+
+void RenderCommand::Bind() {
+  RenderApi::Bind();
+}
+
+void RenderCommand::Clear() {
+  RenderApi::Clear();
+}
+
+void RenderCommand::DrawIndexed(std::shared_ptr<VertexArray> vao, u32 count) {
+  RenderApi::DrawIndexed(vao, count);
+}
+
+void RenderCommand::DrawLines(std::shared_ptr<VertexArray> vao, u32 count) {
+  RenderApi::DrawLines(vao, count);
+}
+
+void Renderer::Init() {
+  RenderApi::Init();
+}
+
+void Renderer::Shutdown() {
+  RenderApi::Shutdown();
+}
+
+void Renderer::OnWindowResize(i32 width, i32 height) {
+  RenderApi::SetViewport(0, 0, width, height);
+}
+
+void Renderer::BeginScene() {
+
+}
+
+void Renderer::EndScene() {
+
+}
+
+void Renderer::Submit(std::shared_ptr<Shader> shader, std::shared_ptr<VertexArray> vao) {
+  shader->bind();
+  vao->bind();
+  RenderCommand::DrawIndexed(vao, vao->getIndexBuffer()->getCount());
 }

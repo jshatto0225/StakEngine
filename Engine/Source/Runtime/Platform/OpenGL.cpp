@@ -1,5 +1,7 @@
 #include "OpenGL.h"
 
+#include <fstream>
+
 #include "Platform.h"
 #include "Renderer.h"
 #include "Window.h"
@@ -167,10 +169,10 @@ void RenderApi::SetClearColor(f32 r, f32 g, f32 b, f32 a) {
 }
 
 void RenderApi::Clear() {
-  glClear(GL_COLOR_BUFFER_BIT);
+  glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 }
 
-void RenderApi::SetViewPort(i32 x, i32 y, i32 width, i32 height) {
+void RenderApi::SetViewport(i32 x, i32 y, i32 width, i32 height) {
   glViewport(x, y, width, height);
 }
 
@@ -178,15 +180,14 @@ void RenderApi::SetLineWidth(f32 width) {
 
 }
 
-void RenderApi::DrawIndexed(const VertexArray &vao, u32 count) {
-  vao.bind();
+void RenderApi::DrawIndexed(std::shared_ptr<VertexArray> vao, u32 count) {
   if (count == 0) {
-    count = vao.getIndexBuffer().getCount();
+    count = vao->getIndexBuffer()->getCount();
   }
   glDrawElements(GL_TRIANGLES, count, GL_UNSIGNED_INT, nullptr);
 }
 
-void RenderApi::DrawLines(const VertexArray &vao, u32 count) {
+void RenderApi::DrawLines(std::shared_ptr<VertexArray> vao, u32 count) {
 
 }
 
@@ -259,17 +260,17 @@ u32 IndexBuffer::getCount() const {
 
 VertexArray::VertexArray() {
   glGenVertexArrays(1, &this->renderer_id);
-  vertex_buffer_index = 0;
+  this->vertex_buffer_index = 0;
 }
 
 VertexArray::~VertexArray() {
   glDeleteVertexArrays(1, &this->renderer_id);
 }
 
-void VertexArray::addVertexBuffer(const VertexBuffer &vbo) {
+void VertexArray::addVertexBuffer(std::shared_ptr<VertexBuffer> vbo) {
   this->bind();
-  vbo.bind();
-  const BufferLayout &layout = vbo.getLayout();
+  vbo->bind();
+  const BufferLayout &layout = vbo->getLayout();
   for (const BufferElement &element : layout) {
     switch (element.getType()) {
     case ShaderDataType::INT:
@@ -320,9 +321,9 @@ void VertexArray::addVertexBuffer(const VertexBuffer &vbo) {
   }
 }
 
-void VertexArray::setIndexBuffer(const IndexBuffer &ibo) {
+void VertexArray::setIndexBuffer(std::shared_ptr<IndexBuffer> ibo) {
   this->bind();
-  ibo.bind();
+  ibo->bind();
   this->index_buffer = ibo;
 }
 
@@ -334,34 +335,43 @@ void VertexArray::unbind() const {
   glBindVertexArray(0);
 }
 
-const std::vector<VertexBuffer> &VertexArray::getVertexBuffers() const {
+const std::vector<std::shared_ptr<VertexBuffer>> &VertexArray::getVertexBuffers() const {
   return this->vertex_buffers;
 }
 
-const IndexBuffer &VertexArray::getIndexBuffer() const {
+const std::shared_ptr<IndexBuffer> VertexArray::getIndexBuffer() const {
   return this->index_buffer;
 }
 
 Shader::Shader(const std::string &vs, const std::string &fs) {
+  this->compile(vs, fs);
+}
+
+Shader::Shader(const std::string &path) {
+  ShaderSource src = Parse(path);
+  this->compile(src.vs, src.fs);
+}
+
+void Shader::compile(const std::string &vs, const std::string &fs) {
   this->renderer_id = glCreateProgram();
   u32 vs_id = glCreateShader(GL_VERTEX_SHADER);
   const char *src = vs.c_str();
   glShaderSource(vs_id, 1, &src, nullptr);
   glCompileShader(vs_id);
-  glAttachShader(renderer_id, vs_id);
+  glAttachShader(this->renderer_id, vs_id);
 
   u32 fs_id = glCreateShader(GL_FRAGMENT_SHADER);
   src = fs.c_str();
   glShaderSource(fs_id, 1, &src, nullptr);
   glCompileShader(fs_id);
-  glAttachShader(renderer_id, fs_id);
+  glAttachShader(this->renderer_id, fs_id);
 
-  glLinkProgram(renderer_id);
-  glValidateProgram(renderer_id);
+  glLinkProgram(this->renderer_id);
+  glValidateProgram(this->renderer_id);
 
   i32 result;
   glGetShaderiv(vs_id, GL_COMPILE_STATUS, &result);
-  if (result== GL_FALSE) {
+  if (result == GL_FALSE) {
     Log::CoreError("Failed to compile vertex shader");
   }
   glGetShaderiv(fs_id, GL_COMPILE_STATUS, &result);
@@ -375,6 +385,44 @@ Shader::Shader(const std::string &vs, const std::string &fs) {
 
 Shader::~Shader() {
   glDeleteProgram(this->renderer_id);
+}
+
+ShaderSource Shader::Parse(const std::string &path) {
+  ShaderSource src;
+  ShaderType current_type = ShaderType::NONE;
+  std::ifstream in(path);
+  std::string line;
+  while (std::getline(in, line)) {
+    switch (current_type) {
+    case ShaderType::FRAGMENT:
+      if (line.find("#shader vertex") != std::string::npos) {
+        current_type = ShaderType::VERTEX;
+        break;
+      }
+      src.fs.append(line);
+      src.fs.append("\n");
+      break;
+
+    case ShaderType::VERTEX:
+      if (line.find("#shader fragment") != std::string::npos) {
+        current_type = ShaderType::FRAGMENT;
+        break;
+      }
+      src.vs.append(line);
+      src.vs.append("\n");
+      break;
+
+    case ShaderType::NONE:
+      if (line.find("#shader vertex") != std::string::npos) {
+        current_type = ShaderType::VERTEX;
+      }
+      else if (line == "#shader fragment") {
+        current_type = ShaderType::FRAGMENT;
+      }
+      break;
+    }
+  }
+  return src;
 }
 
 void Shader::bind() const {
