@@ -20,7 +20,7 @@ class Window;
 
 class Context {
 public:
-  Context(Window *win);
+  Context(const Window *win);
   ~Context();
 
   void makeCurrent();
@@ -37,7 +37,7 @@ struct WindowData {
   i32 width;
   i32 height;
   const char *title;
-  std::function<void(Event &)> event_function;
+  EventFn event_function;
 
   const Window *window;
 
@@ -54,7 +54,7 @@ public:
   Vec2 getPos();
   Vec2 getSize();
 
-  void setEventCallback(const std::function<void(Event &)> &func);
+  void setEventCallback(const EventFn &func);
 
   void update();
 

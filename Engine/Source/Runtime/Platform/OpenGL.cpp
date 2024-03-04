@@ -1,11 +1,10 @@
 #include "OpenGL.h"
 
-#include <fstream>
-
 #include "Platform.h"
 #include "Renderer.h"
 #include "Window.h"
 #include "Log.h"
+#include "Image.h"
 
 PFNGLGENBUFFERSPROC glGenBuffers;
 PFNGLBINDBUFFERPROC glBindBuffer;
@@ -34,11 +33,18 @@ PFNGLGETSHADERIVPROC glGetShaderiv;
 PFNGLGETPROGRAMIVPROC glGetProgramiv;
 PFNGLGETSHADERINFOLOGPROC glGetShaderInfoLog;
 PFNGLGETPROGRAMINFOLOGPROC glGetProgramInfoLog;
+PFNGLGETUNIFORMLOCATIONPROC glGetUniformLocation;
+PFNGLUNIFORM1IPROC glUniform1i;
+PFNGLTEXSTORAGE2DPROC glTexStorage2D;
+PFNGLACTIVETEXTUREPROC glActiveTexture;
+PFNGLBINDTEXTUREUNITPROC glBindTextureUnit;
+
 
 void RenderApi::Bind() {
   const unsigned char *version = glGetString(GL_VERSION);
   Log::CoreTrace("%s", version);
 
+  glBindTextureUnit = (PFNGLBINDTEXTUREUNITPROC)Platform::GetProcAddress("glBindTextureUnit");
   glGenBuffers = (PFNGLGENBUFFERSPROC)Platform::GetProcAddress("glGenBuffers");
   glBindBuffer = (PFNGLBINDBUFFERPROC)Platform::GetProcAddress("glBindBuffer");
   glBufferData = (PFNGLBUFFERDATAPROC)Platform::GetProcAddress("glBufferData");
@@ -66,6 +72,10 @@ void RenderApi::Bind() {
   glGetProgramiv = (PFNGLGETPROGRAMIVPROC)Platform::GetProcAddress("glGetProgramiv");
   glGetShaderInfoLog = (PFNGLGETSHADERINFOLOGPROC)Platform::GetProcAddress("glGetShaderInfoLog");
   glGetProgramInfoLog = (PFNGLGETPROGRAMINFOLOGPROC)Platform::GetProcAddress("glGetProgramInfoLog");
+  glGetUniformLocation = (PFNGLGETUNIFORMLOCATIONPROC)Platform::GetProcAddress("glGetUniformLocation");
+  glUniform1i = (PFNGLUNIFORM1IPROC)Platform::GetProcAddress("glUniform1i");
+  glTexStorage2D = (PFNGLTEXSTORAGE2DPROC)Platform::GetProcAddress("glTexStorage2D");
+  glActiveTexture = (PFNGLACTIVETEXTUREPROC)Platform::GetProcAddress("glActiveTexture");
 }
 
 static GLenum ShaderDataTypeToOpenglType(ShaderDataType type) {
@@ -101,6 +111,19 @@ static GLenum ShaderDataTypeToOpenglType(ShaderDataType type) {
 static GLenum ImageFormatToOpenGLDataFormat(ImageFormat format) {
   switch (format) {
   case ImageFormat::R8:
+    return GL_RED;
+  case ImageFormat::RGB8:
+    return GL_RGB;
+  case ImageFormat::RGBA8:
+    return GL_RGBA;
+  case ImageFormat::RGBA32F:
+    return GL_RGBA;
+  }
+}
+
+static GLenum ImageFormatToOpenGLInternalFormat(ImageFormat format) {
+  switch (format) {
+  case ImageFormat::R8:
     return GL_R8;
   case ImageFormat::RGB8:
     return GL_RGB8;
@@ -111,12 +134,12 @@ static GLenum ImageFormatToOpenGLDataFormat(ImageFormat format) {
   }
 }
 
-static void APIENTRY OpenGLMessageCallback(u32 source, 
-                                           u32 type, 
-                                           u32 id, u32 
-                                           severity, 
-                                           i32 length, 
-                                           const char *message, 
+static void APIENTRY OpenGLMessageCallback(u32 source,
+                                           u32 type,
+                                           u32 id, u32
+                                           severity,
+                                           i32 length,
+                                           const char *message,
                                            const void *user_param) {
   switch (severity) {
   case GL_DEBUG_SEVERITY_HIGH:
@@ -145,10 +168,10 @@ void RenderApi::Init() {
   glEnable(GL_DEBUG_OUTPUT);
   glEnable(GL_DEBUG_OUTPUT_SYNCHRONOUS);
   glDebugMessageCallback(OpenGLMessageCallback, nullptr);
-  glDebugMessageControl(GL_DONT_CARE, GL_DONT_CARE, 
-                        GL_DEBUG_SEVERITY_NOTIFICATION, 
-                        0, 
-                        nullptr, 
+  glDebugMessageControl(GL_DONT_CARE, GL_DONT_CARE,
+                        GL_DEBUG_SEVERITY_NOTIFICATION,
+                        0,
+                        nullptr,
                         GL_FALSE);
 #endif
 
@@ -180,14 +203,14 @@ void RenderApi::SetLineWidth(f32 width) {
 
 }
 
-void RenderApi::DrawIndexed(std::shared_ptr<VertexArray> vao, u32 count) {
+void RenderApi::DrawIndexed(Shared<VertexArray> vao, u32 count) {
   if (count == 0) {
     count = vao->getIndexBuffer()->getCount();
   }
   glDrawElements(GL_TRIANGLES, count, GL_UNSIGNED_INT, nullptr);
 }
 
-void RenderApi::DrawLines(std::shared_ptr<VertexArray> vao, u32 count) {
+void RenderApi::DrawLines(Shared<VertexArray> vao, u32 count) {
 
 }
 
@@ -267,7 +290,7 @@ VertexArray::~VertexArray() {
   glDeleteVertexArrays(1, &this->renderer_id);
 }
 
-void VertexArray::addVertexBuffer(std::shared_ptr<VertexBuffer> vbo) {
+void VertexArray::addVertexBuffer(Shared<VertexBuffer> vbo) {
   this->bind();
   vbo->bind();
   const BufferLayout &layout = vbo->getLayout();
@@ -282,22 +305,22 @@ void VertexArray::addVertexBuffer(std::shared_ptr<VertexBuffer> vbo) {
     case ShaderDataType::FLOAT3:
     case ShaderDataType::FLOAT4: {
       glEnableVertexAttribArray(this->vertex_buffer_index);
-      glVertexAttribPointer(this->vertex_buffer_index, 
+      glVertexAttribPointer(this->vertex_buffer_index,
                             element.getComponentCount(),
                             ShaderDataTypeToOpenglType(element.getType()),
                             element.isNormalized() ? GL_TRUE : GL_FALSE,
-                            layout.getStride(), 
+                            layout.getStride(),
                             (const void *)element.getOffset());
       this->vertex_buffer_index++;
       break;
     }
     case ShaderDataType::BOOL: {
       glEnableVertexAttribArray(this->vertex_buffer_index);
-      glVertexAttribPointer(this->vertex_buffer_index, 
+      glVertexAttribPointer(this->vertex_buffer_index,
                             element.getComponentCount(),
                             ShaderDataTypeToOpenglType(element.getType()),
                             element.isNormalized() ? GL_TRUE : GL_FALSE,
-                            layout.getStride(), 
+                            layout.getStride(),
                             (const void *)element.getOffset());
       this->vertex_buffer_index++;
       break;
@@ -321,7 +344,7 @@ void VertexArray::addVertexBuffer(std::shared_ptr<VertexBuffer> vbo) {
   }
 }
 
-void VertexArray::setIndexBuffer(std::shared_ptr<IndexBuffer> ibo) {
+void VertexArray::setIndexBuffer(Shared<IndexBuffer> ibo) {
   this->bind();
   ibo->bind();
   this->index_buffer = ibo;
@@ -335,11 +358,11 @@ void VertexArray::unbind() const {
   glBindVertexArray(0);
 }
 
-const std::vector<std::shared_ptr<VertexBuffer>> &VertexArray::getVertexBuffers() const {
+const std::vector<Shared<VertexBuffer>> &VertexArray::getVertexBuffers() const {
   return this->vertex_buffers;
 }
 
-const std::shared_ptr<IndexBuffer> VertexArray::getIndexBuffer() const {
+const Shared<IndexBuffer> VertexArray::getIndexBuffer() const {
   return this->index_buffer;
 }
 
@@ -359,6 +382,16 @@ void Shader::compile(const std::string &vs, const std::string &fs) {
   glShaderSource(vs_id, 1, &src, nullptr);
   glCompileShader(vs_id);
   glAttachShader(this->renderer_id, vs_id);
+  i32 result;
+  glGetShaderiv(vs_id, GL_COMPILE_STATUS, &result);
+  if (result == GL_FALSE) {
+    i32 size;
+    glGetShaderiv(vs_id, GL_INFO_LOG_LENGTH, &size);
+    char *message = (char *)malloc(size);
+    glGetShaderInfoLog(vs_id, size, &size, message);
+    Log::CoreError("Failed to compile shader: %s", message);
+    free(message);
+  }
 
   u32 fs_id = glCreateShader(GL_FRAGMENT_SHADER);
   src = fs.c_str();
@@ -366,17 +399,27 @@ void Shader::compile(const std::string &vs, const std::string &fs) {
   glCompileShader(fs_id);
   glAttachShader(this->renderer_id, fs_id);
 
+  glGetShaderiv(fs_id, GL_COMPILE_STATUS, &result);
+  if (result == GL_FALSE) {
+    i32 size;
+    glGetShaderiv(fs_id, GL_INFO_LOG_LENGTH, &size);
+    char *message = (char *)malloc(size);
+    glGetShaderInfoLog(fs_id, size, &size, message);
+    Log::CoreError("Failed to compile shader: %s", message);
+    free(message);
+  }
+
   glLinkProgram(this->renderer_id);
   glValidateProgram(this->renderer_id);
 
-  i32 result;
-  glGetShaderiv(vs_id, GL_COMPILE_STATUS, &result);
+  glGetProgramiv(this->renderer_id, GL_LINK_STATUS, &result);
   if (result == GL_FALSE) {
-    Log::CoreError("Failed to compile vertex shader");
-  }
-  glGetShaderiv(fs_id, GL_COMPILE_STATUS, &result);
-  if (result == GL_FALSE) {
-    Log::CoreError("Failed to compile fragment shader");
+    i32 size;
+    glGetProgramiv(this->renderer_id, GL_INFO_LOG_LENGTH, &size);
+    char *message = (char *)malloc(size);
+    glGetProgramInfoLog(this->renderer_id, size, &size, message);
+    Log::CoreError("Failed to link shader: %s", message);
+    free(message);
   }
 
   glDeleteShader(vs_id);
@@ -423,6 +466,10 @@ ShaderSource Shader::Parse(const std::string &path) {
     }
   }
   return src;
+}
+
+void Shader::setUniformi(const std::string &name, i32 value) {
+  glUniform1i(glGetUniformLocation(this->renderer_id, name.c_str()), value);
 }
 
 void Shader::bind() const {
@@ -478,32 +525,70 @@ bool Texture::operator==(const Texture &other) const {
 }
 
 Texture2D::Texture2D(const std::string &path) {
-  this->loaded = false;
+  this->loaded = true;
   this->path = path;
 
   // LOAD IMAGE
+  i32 width;
+  i32 height;
+  i32 channels;
+  u8 *data = Image::Load(path, &this->spec.width, &this->spec.height, &channels, 4);
+  switch (channels) {
+  case 4:
+    this->spec.format = ImageFormat::RGBA8;
+    break;
+  case 3:
+    this->spec.format = ImageFormat::RGB8;
+    break;
+  default:
+    break;
+  }
+
+  Log::CoreTrace("%d, %d", this->spec.width, this->spec.height);
 
   glGenTextures(1, &this->renderer_id);
-
   glBindTexture(GL_TEXTURE_2D, this->renderer_id);
+  glTexStorage2D(GL_TEXTURE_2D,
+                 1,
+                 ImageFormatToOpenGLInternalFormat(this->spec.format),
+                 this->spec.width,
+                 this->spec.height);
+
   // set the texture wrapping parameters
   glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT);	// set texture wrapping to GL_REPEAT (default wrapping method)
   glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT);
   // set texture filtering parameters
   glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
-  glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+  glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST /* GL_LINEAR */);
+
+  glTexSubImage2D(GL_TEXTURE_2D,
+                  0,
+                  0,
+                  0,
+                  this->spec.width,
+                  this->spec.height,
+                  ImageFormatToOpenGLDataFormat(this->spec.format),
+                  GL_UNSIGNED_BYTE,
+                  data);
+  Image::Free(data);
 }
 
 Texture2D::Texture2D(const TextureSpecification &textureSpecification) {
+  this->spec = textureSpecification;
   glGenTextures(1, &this->renderer_id);
-
   glBindTexture(GL_TEXTURE_2D, this->renderer_id);
+  glTexStorage2D(GL_TEXTURE_2D,
+                 1,
+                 ImageFormatToOpenGLInternalFormat(this->spec.format),
+                 this->spec.width,
+                 this->spec.height);
+
   // set the texture wrapping parameters
   glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT);	// set texture wrapping to GL_REPEAT (default wrapping method)
   glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT);
   // set texture filtering parameters
   glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
-  glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+  glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST /* GL_LINEAR */);
 
   this->loaded = false;
 }
@@ -533,20 +618,23 @@ const std::string &Texture2D::getPath() const {
 }
 
 void Texture2D::setData(void *data, u32 size) {
-  glTexSubImage2D(this->renderer_id, 
-                      0, 
-                      0, 
-                      0, 
-                      this->spec.width, 
-                      this->spec.height, 
-                      ImageFormatToOpenGLDataFormat(this->spec.format),
-                      GL_UNSIGNED_BYTE,
-                      data);
+  glBindTexture(GL_TEXTURE_2D, this->renderer_id);
+  glTexSubImage2D(GL_TEXTURE_2D,
+                  0,
+                  0,
+                  0,
+                  this->spec.width,
+                  this->spec.height,
+                  ImageFormatToOpenGLDataFormat(this->spec.format),
+                  GL_UNSIGNED_BYTE,
+                  data);
   this->loaded = true;
 }
 
 void Texture2D::bind(u32 slot) const {
-  glBindTexture(GL_TEXTURE_2D, this->renderer_id);
+  //glActiveTexture(GL_TEXTURE0 + slot);
+  //glBindTexture(GL_TEXTURE_2D, this->renderer_id);
+  glBindTextureUnit(slot, this->renderer_id);
 }
 
 bool Texture2D::isLoaded() const {

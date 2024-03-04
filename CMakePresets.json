@@ -4,11 +4,10 @@
     {
       "name": "base",
       "hidden": true,
-      //"generator": "Ninja",
       "binaryDir": "${sourceDir}/Build/",
       "installDir": "${sourceDir}/Build/",
       "cacheVariables": {
-        "CMAKE_CXX_STANDARD":  "20"
+        "CMAKE_CXX_STANDARD": "20"
       }
     },
     {
@@ -26,7 +25,9 @@
     {
       "name": "Release",
       "displayName": "Release",
-      "inherits": ["Debug"],
+      "inherits": [
+        "Debug"
+      ],
       "cacheVariables": {
         "CMAKE_BUILD_TYPE": "Release"
       }

@@ -7,7 +7,8 @@
 #include "Renderer.h"
 #include "Log.h"
 #include "Input.h"
-#include "Math.h"
+#include "StakMath.h"
+#include "Image.h"
 
 LRESULT CALLBACK Win32MessageCallback(HWND window, u32 msg, WPARAM wparam, LPARAM lparam) {
   WindowData *data = (WindowData *)GetWindowLongPtrA(window, GWLP_USERDATA);
@@ -184,7 +185,7 @@ void Window::update() {
   this->context->swapBuffers();
 }
 
-void Window::setEventCallback(const std::function<void(Event &)> &func) {
+void Window::setEventCallback(const EventFn &func) {
   this->data.event_function = func;
 }
 
@@ -320,6 +321,64 @@ Vec2 Input::GetMousePos() {
   POINT pos = {};
   GetCursorPos(&pos);
   return Vec2(pos.x, pos.y);
+}
+
+constexpr int BMP_HEADER_SIZE = 54;
+
+u8 *Image::LoadBMP(FILE *f, i32 *width, i32 *height, i32 *channels_in_image, i32 desired_channels) {
+  if (!f) {
+    Log::CoreError("Failed to load file");
+    return nullptr;
+  }
+
+  // Read BMP header
+  fseek(f, 0, SEEK_SET);
+  char header[BMP_HEADER_SIZE];
+  if (fread(header, 1, BMP_HEADER_SIZE, f) != BMP_HEADER_SIZE) {
+    Log::CoreError("Failed to read BMP header");
+    return nullptr;
+  }
+
+  // Verify BMP magic number
+  if (header[0] != 'B' || header[1] != 'M') {
+    Log::CoreError("Invalid BMP format");
+    return nullptr;
+  }
+
+  // Extract width, height, and bit depth from BMP header
+  *width = *reinterpret_cast<int *>(&header[18]);
+  *height = *reinterpret_cast<int *>(&header[22]);
+  u16 bit_depth = *reinterpret_cast<u16 *>(&header[28]);
+
+  // Ensure bit depth is 32 bits (8 bits per channel)
+  if (bit_depth != 32) {
+    Log::CoreWarn("Bit Depth: %d", bit_depth);
+    return nullptr;
+  }
+
+  // Move to the beginning of image data
+  fseek(f, *reinterpret_cast<int *>(&header[10]), SEEK_SET);
+
+  // Calculate pixel count and allocate memory for pixel data
+  u32 pixel_count = *width * *height;
+  u8 *pixels = new u8[pixel_count * desired_channels];
+  if (!pixels) {
+    Log::CoreError("Failed to allocate memory for pixel data");
+    return nullptr;
+  }
+
+  // Read pixel data
+  u32 actual_count = fread(pixels, desired_channels, pixel_count, f);
+  if (actual_count != pixel_count) {
+    Log::CoreError("Failed to read pixel data");
+    delete[] pixels;
+    return nullptr;
+  }
+
+  // Set the number of channels
+  *channels_in_image = desired_channels;
+
+  return pixels;
 }
 
 #endif

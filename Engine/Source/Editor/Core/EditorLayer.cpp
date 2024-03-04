@@ -4,26 +4,9 @@
 #include <Runtime/Platform/OpenGL.h>
 
 EditorLayer::EditorLayer() {
-  float vertices[] = {
-         0.5f,  0.5f, 0.0f,  // top right
-         0.5f, -0.5f, 0.0f,  // bottom right
-        -0.5f, -0.5f, 0.0f,  // bottom left
-        -0.5f,  0.5f, 0.0f   // top left 
-  };
-  unsigned int indices[] = {  // note that we start from 0!
-      0, 1, 3,  // first Triangle
-      1, 2, 3   // second Triangle
-  };
-
-  shader = std::make_shared<Shader>(SHADER_DIR "Basic.glsl");
-  vao = std::make_shared<VertexArray>();
-  vbo = std::make_shared<VertexBuffer>(vertices, sizeof(vertices));
-  vbo->setLayout({
-    {ShaderDataType::FLOAT3, "aPosition", false}
-  });
-  vao->addVertexBuffer(vbo);
-  ibo = std::make_shared<IndexBuffer>(indices, 6);
-  vao->setIndexBuffer(ibo);
+  this->tex = MakeShared<Texture2D>(ASSET_DIR "Images/VerticalTest.bmp");
+  this->tex2 = MakeShared<Texture2D>(ASSET_DIR "Images/WhiteImage.bmp");
+  //this->tex3 = MakeShared<Texture2D>(ASSET_DIR "Images/BigTexture.bmp");
 }
 
 EditorLayer::~EditorLayer() {
@@ -34,15 +17,12 @@ void EditorLayer::update() {
   RenderCommand::SetClearColor(1, 0, 1, 1);
   RenderCommand::Clear();
 
-  Renderer::BeginScene();
-  {
-    Renderer::Submit(shader, vao);
-  }
-  Renderer::EndScene();
+  Renderer2D::DrawQuad({ 0.0f, 0.0f }, { 1.0f, 1.0f }, tex);
+  Renderer2D::DrawQuad({ -1.0f, -1.0f }, { 1.0f, 1.0f }, tex2);
+  Renderer2D::DrawQuad({ -0.25f, -0.25f }, { 0.5f, 0.5f }, tex);
+  Renderer2D::Flush();
 }
 
 void EditorLayer::onEvent(Event &e) {
-  if (e.type == WINDOW_RESIZED) {
-    Log::Trace("Window Resized");
-  }
+
 }

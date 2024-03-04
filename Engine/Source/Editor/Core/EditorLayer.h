@@ -11,8 +11,7 @@ public:
   void onEvent(Event &e) override;
 
 private:
-  std::shared_ptr<Shader> shader;
-  std::shared_ptr<VertexArray> vao;
-  std::shared_ptr<VertexBuffer> vbo;
-  std::shared_ptr<IndexBuffer> ibo;
+  Shared<Texture2D> tex;
+  Shared<Texture2D> tex2;
+  Shared<Texture2D> tex3;
 };

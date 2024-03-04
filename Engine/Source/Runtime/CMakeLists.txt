@@ -1,4 +1,4 @@
-file(GLOB SOURCES Core/*.cpp Platform/*.cpp Renderer/*.cpp)
+file(GLOB SOURCES Core/*.cpp Platform/*.cpp Renderer/*.cpp AssetLoading/*.cpp)
 
 set(CMAKE_CXX_STANDARD_REQUIRED 20)
 
@@ -57,6 +57,7 @@ target_include_directories(StakRuntime PUBLIC Math/Vector)
 target_include_directories(StakRuntime PUBLIC Math/Matrix)
 target_include_directories(StakRuntime PUBLIC Math)
 target_include_directories(StakRuntime PUBLIC Platform)
+target_include_directories(StakRuntime PUBLIC AssetLoading)
 
 target_compile_definitions(StakRuntime PUBLIC $<$<CONFIG:Debug>: SK_DEBUG=1>)
 target_compile_definitions(StakRuntime PUBLIC $<$<CONFIG:Release>: SK_RELEASE=1>)

@@ -1,4 +1,4 @@
-add_executable(StakEditor "Core/Editor.cpp" "Core/EditorLayer.h" "Core/EditorLayer.cpp" "Renderer/UIRenderer.h")
+add_executable(StakEditor "Core/Editor.cpp"  "Core/EditorLayer.cpp" "Renderer/UIRenderer.h")
 
 target_link_libraries(StakEditor StakRuntime)
 

@@ -18,12 +18,11 @@ public:
   template<typename T>
   void addLayer() {
     static_assert(std::is_base_of<ApplicationLayer, T>().value, "Layer does not inherit from ApplicationLayer");
-    layers.push_back(std::make_unique<T>());
+    layers.push_back(MakeUnique<T>());
   }
 
 private:
   bool running;
-  std::vector<std::unique_ptr<ApplicationLayer>> layers;
-  std::unique_ptr<Window> window;
-  std::unique_ptr<Platform> platform;
+  std::vector<Unique<ApplicationLayer>> layers;
+  Unique<Window> window;
 };
