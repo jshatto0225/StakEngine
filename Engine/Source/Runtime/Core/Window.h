@@ -8,6 +8,7 @@
 #include "Platform.h"
 #include "Event.h"
 
+namespace sk {
 /**
  * Config for window creation
  */
@@ -83,3 +84,5 @@ private:
 
   friend class Context;
 };
+
+} // namespace sk

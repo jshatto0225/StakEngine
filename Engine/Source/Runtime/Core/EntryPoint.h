@@ -4,16 +4,16 @@
 #include "Application.h"
 #include "Platform.h"
 
-extern Application *GetApp();
+extern sk::Application *GetApp();
 
 inline i32 StakMain() {
-  Log::Init();
+  sk::Log::Init();
 
-  Application *app = GetApp();
+  sk::Application *app = GetApp();
   app->run();
   delete app;
 
-  Log::Shutdown();
+  sk::Log::Shutdown();
   return 0;
 }
 

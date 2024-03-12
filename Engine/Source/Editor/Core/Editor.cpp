@@ -6,16 +6,16 @@
 /**
  * Editor Application
  */
-class Editor : public Application {
+class Editor : public sk::Application {
 public:
-  Editor(const ApplcationSpec &spec) 
+  Editor(const sk::ApplcationSpec &spec)
     : Application(spec) {
     this->addLayer<EditorLayer>(spec.window_width, spec.window_height);
   }
 };
 
-Application *GetApp() {
-  ApplcationSpec s;
+sk::Application *GetApp() {
+    sk::ApplcationSpec s;
   s.window_width = 1280;
   s.window_height = 720;
   s.window_x = 0;

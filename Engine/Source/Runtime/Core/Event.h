@@ -2,6 +2,7 @@
 
 #include "Types.h"
 
+namespace sk {
 class Window;
 
 /**
@@ -38,3 +39,5 @@ struct Event {
   WindowMoveEvent win_move_event;
   WindowResizeEvent win_resize_event;
 };
+
+} //namespace sk

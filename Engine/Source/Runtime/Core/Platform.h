@@ -33,6 +33,7 @@
   WGL_CONTEXT_STATE \
   X11_CONTEXT_STATE
 
+namespace sk {
 typedef void (*Proc)();
 
 /**
@@ -56,3 +57,5 @@ private:
 public:
   PLATFORM_STATE;
 };
+
+} // namespace sk

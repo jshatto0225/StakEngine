@@ -2,6 +2,7 @@
 
 #include "StakMath.h"
 
+namespace sk {
 /**
  * Type of prohection a camera uses
  */
@@ -20,9 +21,9 @@ public:
 
   /**
    * Sets camera as orthographic
-   * 
+   *
    * near_plane and far_plane are clipping planes
-   * 
+   *
    * Size is the relative size of the cameras viewport.
    * Determines what coordinate space
    */
@@ -70,3 +71,5 @@ private:
   f32 ortho_far; /// far clipping plane
   f32 ortho_size; /// world viewport size
 };
+
+} // namespace sk

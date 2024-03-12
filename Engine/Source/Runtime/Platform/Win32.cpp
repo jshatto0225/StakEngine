@@ -9,6 +9,7 @@
 #include "Image.h"
 #include "File.h"
 
+namespace sk {
 LRESULT CALLBACK Win32MessageCallback(HWND window, u32 msg, WPARAM wparam, LPARAM lparam) {
   WindowData *data = (WindowData *)GetWindowLongPtrA(window, GWLP_USERDATA);
   if (data) {
@@ -386,7 +387,7 @@ Image::Image(const std::string &path) {
 }
 
 Image::~Image() {
-  if (!this->bytes) {
+  if (this->bytes) {
     VirtualFree(this->bytes, this->data.size_in_bytes, MEM_RESERVE);
   }
 }
@@ -434,5 +435,7 @@ u8 *Image::getBytes() {
 const ImageData &Image::getData() {
   return this->data;
 }
+
+} // namespace sk
 
 #endif

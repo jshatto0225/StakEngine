@@ -3,6 +3,7 @@
 #include "Log.h"
 #include "StakMath.h"
 
+namespace sk {
 SceneViewCamera::SceneViewCamera() {
   this->pos = { 0, 0, 0 };
   this->orientation = { 0, 0, 0 };
@@ -11,6 +12,8 @@ SceneViewCamera::SceneViewCamera() {
   this->ortho_near = -1;
   this->ortho_far = 1;
   this->ortho_size = 1;
+
+  this->type = ProjectionType::ORTHOGRAPHIC;
 
   calculateView();
   calculateProjection();
@@ -72,3 +75,5 @@ const Mat4 &SceneViewCamera::getView() const {
 const Mat4 &SceneViewCamera::getProj() const {
   return this->proj;
 }
+
+} // namespace sk

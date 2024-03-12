@@ -2,6 +2,7 @@
 
 #include <stdio.h>
 
+namespace sk {
 /**
  * Logging
  * No Color Right Now :(
@@ -26,3 +27,5 @@ public:
 private:
   static FILE *core_log_file;
 };
+
+} // namespace sk

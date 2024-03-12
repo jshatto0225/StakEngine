@@ -2,13 +2,13 @@
 
 #include <string>
 #include <vector>
-#include <memory>
 
 #include "Types.h"
 #include "StakMath.h"
 #include "Font.h"
 #include "Camera.h"
 
+namespace sk {
 /**
  * Data types for GLSL shaders
  */
@@ -265,7 +265,7 @@ private:
 /**
  * Image formats
  */
-enum class ImageFormat { 
+enum class ImageFormat {
   R8,
   RGB8,
   RGBA8,
@@ -395,7 +395,7 @@ public:
 
   /**
    * Set api viewport
-   * 
+   *
    * NOTE: x and y are relative to the window. (0, 0) is
    * always the bottom left
    */
@@ -473,7 +473,7 @@ public:
 
 /**
  * Main Renderer Class
- * 
+ *
  * High level general renderer
  */
 class Renderer {
@@ -549,7 +549,7 @@ public:
    * Draw Text
    */
   static void DrawText(const std::string &text, const Ref<Font> &font, const Vec2 &pos);
-  
+
 private:
   /**
    * Start batch for batch rendering
@@ -631,3 +631,5 @@ private:
 
   static Renderer2DData data;
 };
+
+} // namespace sk

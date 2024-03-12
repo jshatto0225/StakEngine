@@ -6,15 +6,16 @@
 #include "Platform.h"
 #include "Renderer.h"
 
+namespace sk {
 Application::Application(const ApplcationSpec &spec) {
-  this->window = std::make_unique<Window>(WindowConfig({ 
-    spec.window_x, 
-    spec.window_y, 
-    spec.window_width, 
-    spec.window_height, 
-    spec.window_title.c_str()}));
+  this->window = std::make_unique<Window>(WindowConfig({
+    spec.window_x,
+    spec.window_y,
+    spec.window_width,
+    spec.window_height,
+    spec.window_title.c_str() }));
   this->window->setEventCallback(BIND_METHOD(Application::onEvent));
-  
+
   Renderer::Init();
 
   this->running = true;
@@ -43,7 +44,7 @@ void Application::onEvent(Event &e) {
 
     case WINDOW_RESIZED:
       Renderer::OnWindowResize(e.win_resize_event.width, e.win_resize_event.height);
-      //Log::CoreTrace("Viewport: 0, 0, %d, %d", e.win_resize_event.width, e.win_resize_event.height);
+      Log::CoreTrace("Viewport: 0, 0, %d, %d", e.win_resize_event.width, e.win_resize_event.height);
       break;
 
     default:
@@ -57,3 +58,5 @@ Application::~Application() {
 
   Renderer::Shutdown();
 }
+
+} // namespace sk

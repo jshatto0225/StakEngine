@@ -4,6 +4,7 @@
 
 #include "Types.h"
 
+namespace sk {
 struct ImageData {
   std::string path;
   i32 width;
@@ -28,3 +29,5 @@ private:
   u8 *bytes;
   ImageData data;
 };
+
+} // namespace sk

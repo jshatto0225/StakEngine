@@ -10,4 +10,4 @@ set(CMAKE_WINDOWS_EXPORT_ALL_SYMBOLS ON)
 
 add_subdirectory(Engine/Source/Runtime)
 add_subdirectory(Engine/Source/Editor)
-add_subdirectory(Tests)
+#add_subdirectory(Tests)

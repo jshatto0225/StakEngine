@@ -38,13 +38,14 @@ PFNGLGETPROGRAMINFOLOGPROC glGetProgramInfoLog;
 PFNGLGETUNIFORMLOCATIONPROC glGetUniformLocation;
 PFNGLUNIFORM1IPROC glUniform1i;
 PFNGLTEXSTORAGE2DPROC glTexStorage2D;
-PFNGLACTIVETEXTUREPROC glActiveTexture;
+//PFNGLACTIVETEXTUREPROC glActiveTexture;
 PFNGLBINDTEXTUREUNITPROC glBindTextureUnit;
 PFNGLCREATEBUFFERSPROC glCreateBuffers;
 PFNGLNAMEDBUFFERDATAPROC glNamedBufferData;
 PFNGLBINDBUFFERBASEPROC glBindBufferBase;
 PFNGLNAMEDBUFFERSUBDATAPROC glNamedBufferSubData;
 
+namespace sk {
 void RenderApi::Bind() {
   const unsigned char *version = glGetString(GL_VERSION);
   Log::CoreTrace("%s", version);
@@ -80,7 +81,7 @@ void RenderApi::Bind() {
   glGetUniformLocation = (PFNGLGETUNIFORMLOCATIONPROC)Platform::GetProcAddress("glGetUniformLocation");
   glUniform1i = (PFNGLUNIFORM1IPROC)Platform::GetProcAddress("glUniform1i");
   glTexStorage2D = (PFNGLTEXSTORAGE2DPROC)Platform::GetProcAddress("glTexStorage2D");
-  glActiveTexture = (PFNGLACTIVETEXTUREPROC)Platform::GetProcAddress("glActiveTexture");
+  //glActiveTexture = (PFNGLACTIVETEXTUREPROC)Platform::GetProcAddress("glActiveTexture");
   glCreateBuffers = (PFNGLCREATEBUFFERSPROC)Platform::GetProcAddress("glCreateBuffers");
   glNamedBufferData = (PFNGLNAMEDBUFFERDATAPROC)Platform::GetProcAddress("glNamedBufferData");
   glBindBufferBase = (PFNGLBINDBUFFERBASEPROC)Platform::GetProcAddress("glBindBufferBase");
@@ -129,7 +130,7 @@ static GLenum ImageFormatToOpenGLDataFormat(ImageFormat format) {
     return GL_RGBA;
   default:
     Log::CoreError("Invalid Image Format");
-      return GL_RGBA;
+    return GL_RGBA;
   }
 }
 
@@ -232,13 +233,13 @@ void RenderApi::DrawLines(Ref<VertexArray> vao, u32 count) {
 VertexBuffer::VertexBuffer(u32 size) {
   glGenBuffers(1, &this->renderer_id);
   glBindBuffer(GL_ARRAY_BUFFER, this->renderer_id);
-  glBufferData(GL_ARRAY_BUFFER, size, nullptr, GL_STATIC_DRAW);
+  glBufferData(GL_ARRAY_BUFFER, size, nullptr, GL_DYNAMIC_DRAW);
 }
 
 VertexBuffer::VertexBuffer(float *vertices, u32 size) {
   glGenBuffers(1, &this->renderer_id);
   glBindBuffer(GL_ARRAY_BUFFER, this->renderer_id);
-  glBufferData(GL_ARRAY_BUFFER, size, vertices, GL_STATIC_DRAW);
+  glBufferData(GL_ARRAY_BUFFER, size, vertices, GL_DYNAMIC_DRAW);
 }
 
 VertexBuffer::~VertexBuffer() {
@@ -669,3 +670,5 @@ UniformBuffer::~UniformBuffer() {
 void UniformBuffer::setData(const void *data, u32 size, u32 offset) {
   glNamedBufferSubData(m_renderer_id, offset, size, data);
 }
+
+} // namespace sk

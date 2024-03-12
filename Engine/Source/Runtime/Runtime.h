@@ -6,6 +6,7 @@
 #include "AssetLoading/Image.h"
 #include "AssetLoading/Font.h"
 
+#include "Core/Window.h"
 #include "Core/Types.h"
 #include "Core/ApplicationLayer.h"
 #include "Core/Event.h"

@@ -2,6 +2,7 @@
 
 #include <stdarg.h>
 
+namespace sk {
 FILE *Log::core_log_file;
 
 void Log::Init() {
@@ -16,11 +17,14 @@ void Log::Shutdown() {
 void Log::CoreTrace(const char *fmt, ...) {
   fprintf(stdout, "[StakRuntime] [TRACE]: ");
   fprintf(Log::core_log_file, "[StakRuntime] [TRACE]: ");
-  va_list args;
-  va_start(args, fmt);
-  vfprintf(stdout, fmt, args);
-  vfprintf(Log::core_log_file, fmt, args);
-  va_end(args);
+  va_list args1;
+  va_list args2;
+  va_start(args1, fmt);
+  va_start(args2, fmt);
+  vfprintf(stdout, fmt, args1);
+  vfprintf(Log::core_log_file, fmt, args2);
+  va_end(args1);
+  va_end(args2);
   fprintf(stdout, "\n");
   fprintf(Log::core_log_file, "\n");
 }
@@ -28,11 +32,14 @@ void Log::CoreTrace(const char *fmt, ...) {
 void Log::CoreInfo(const char *fmt, ...) {
   fprintf(stdout, "[StakRuntime] [INFO]: ");
   fprintf(Log::core_log_file, "[StakRuntime] [TRACE]: ");
-  va_list args;
-  va_start(args, fmt);
-  vfprintf(stdout, fmt, args);
-  vfprintf(Log::core_log_file, fmt, args);
-  va_end(args);
+  va_list args1;
+  va_list args2;
+  va_start(args1, fmt);
+  va_start(args2, fmt);
+  vfprintf(stdout, fmt, args1);
+  vfprintf(Log::core_log_file, fmt, args2);
+  va_end(args1);
+  va_end(args2);
   fprintf(stdout, "\n");
   fprintf(Log::core_log_file, "\n");
 }
@@ -40,11 +47,14 @@ void Log::CoreInfo(const char *fmt, ...) {
 void Log::CoreWarn(const char *fmt, ...) {
   fprintf(stderr, "[StakRuntime] [WARN]: ");
   fprintf(Log::core_log_file, "[StakRuntime] [WARN]: ");
-  va_list args;
-  va_start(args, fmt);
-  vfprintf(stderr, fmt, args);
-  vfprintf(Log::core_log_file, fmt, args);
-  va_end(args);
+  va_list args1;
+  va_list args2;
+  va_start(args1, fmt);
+  va_start(args2, fmt);
+  vfprintf(stderr, fmt, args1);
+  vfprintf(Log::core_log_file, fmt, args2);
+  va_end(args1);
+  va_end(args2);
   fprintf(stderr, "\n");
   fprintf(Log::core_log_file, "\n");
 }
@@ -52,11 +62,14 @@ void Log::CoreWarn(const char *fmt, ...) {
 void Log::CoreError(const char *fmt, ...) {
   fprintf(stderr, "[StakRuntime] [ERROR]: ");
   fprintf(Log::core_log_file, "[StakRuntime] [ERROR]: ");
-  va_list args;
-  va_start(args, fmt);
-  vfprintf(stderr, fmt, args);
-  vfprintf(Log::core_log_file, fmt, args);
-  va_end(args);
+  va_list args1;
+  va_list args2;
+  va_start(args1, fmt);
+  va_start(args2, fmt);
+  vfprintf(stderr, fmt, args1);
+  vfprintf(Log::core_log_file, fmt, args2);
+  va_end(args1);
+  va_end(args2);
   fprintf(stderr, "\n");
   fprintf(Log::core_log_file, "\n");
 }
@@ -64,11 +77,14 @@ void Log::CoreError(const char *fmt, ...) {
 void Log::CoreCritical(const char *fmt, ...) {
   fprintf(stderr, "[StakRuntime] [CRITICAL]: ");
   fprintf(Log::core_log_file, "[StakRuntime] [CRITICAL]: ");
-  va_list args;
-  va_start(args, fmt);
-  vfprintf(stderr, fmt, args);
-  vfprintf(Log::core_log_file, fmt, args);
-  va_end(args);
+  va_list args1;
+  va_list args2;
+  va_start(args1, fmt);
+  va_start(args2, fmt);
+  vfprintf(stderr, fmt, args1);
+  vfprintf(Log::core_log_file, fmt, args2);
+  va_end(args1);
+  va_end(args2);
   fprintf(stderr, "\n");
   fprintf(Log::core_log_file, "\n");
 }
@@ -117,3 +133,5 @@ void Log::Critical(const char *fmt, ...) {
   va_end(args);
   fprintf(stderr, "\n");
 }
+
+} // namespace sk

@@ -36,8 +36,10 @@ Scope<T> MakeScope(Args&&... args) {
 }
 
 // Aliases because c++ is ugly af
+namespace sk {
 struct Event;
 using EventFn = std::function<void(Event &)>;
+}
 
 #define BIND_METHOD(fn) [this](auto&&... args) -> decltype(auto) { \
   return this->fn(std::forward<decltype(args)>(args)...); \

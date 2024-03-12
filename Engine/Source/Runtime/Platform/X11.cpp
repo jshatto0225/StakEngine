@@ -3,30 +3,31 @@
 #include "Platform.h"
 #include "Window.h"
 #include "Renderer.h"
-#include "Event.h"
 
+namespace sk {
 bool Platform::initialized = false;
 X11Platform Platform::x11;
 
-void Platform::init() {
+void Platform::Init() {
   if (Platform::initialized) {
     return;
   }
   Platform::x11.display = XOpenDisplay(nullptr);
-  Platform::x11.wm_delete_window = XInternAtom(Platform::x11.display, "WM_DELETE_WINDOW", false);
+  Platform::x11.wm_delete_window = XInternAtom(Platform::x11.display, "WM_DELETE_WINDOW", False);
 }
 
-bool Platform::is_initialized() {
+bool Platform::IsInitialized() {
   return Platform::initialized;
 }
 
-Proc Platform::get_proc_address(const char *name) {
+Proc Platform::GetProcAddress(const char *name) {
   return (Proc)glXGetProcAddress((const unsigned char *)name);
 }
 
-Context::Context(Window *win) {
+Context::Context(const Window *win) {
   this->x11.context = glXCreateContext(Platform::x11.display, win->data.x11.visual_info, nullptr, GL_TRUE);
   glXMakeCurrent(Platform::x11.display, win->data.x11.window, this->x11.context);
+  RenderApi::Bind();
 }
 
 Context::~Context() {
@@ -34,21 +35,20 @@ Context::~Context() {
   glXDestroyContext(Platform::x11.display, this->x11.context);
 }
 
-void Context::make_current() {
+void Context::makeCurrent() {
   glXMakeCurrent(Platform::x11.display, this->window->data.x11.window, this->x11.context);
-  RenderApi::bind();
+  RenderApi::Bind();
 }
 
 Window::Window(const WindowConfig &config) {
-  if (!Platform::is_initialized()) {
-    Platform::init();
+  if (!Platform::IsInitialized()) {
+    Platform::Init();
   }
   this->data.x = config.x;
   this->data.y = config.y;
   this->data.width = config.width;
   this->data.height = config.height;
   this->data.title = config.title;
-  this->data.should_close = false;
   this->data.x11.root = DefaultRootWindow(Platform::x11.display);
 
   int attribs[] = {
@@ -72,39 +72,38 @@ Window::Window(const WindowConfig &config) {
                                               0,
                                               0xffffffff);
   XMapWindow(Platform::x11.display, this->data.x11.window);
-  this->context = new Context(this);
+  XSetWMProtocols(Platform::x11.display, this->data.x11.window, &Platform::x11.wm_delete_window, 1);
+  XSelectInput(Platform::x11.display, this->data.x11.window, StructureNotifyMask);
+  this->context = std::make_unique<Context>(this);
 }
 
 Window::~Window() {
-  delete this->context;
   XDestroyWindow(Platform::x11.display, this->data.x11.window);
   XFreeColormap(Platform::x11.display, this->data.x11.colormap);
 }
 
-void Window::set_event_callback(const std::function<void(Event &)> &func) {
+void Window::setEventCallback(const std::function<void(Event &)> &func) {
   this->data.event_function = func;
 }
 
-void Window::set_pos(i32 x, i32 y) {
+void Window::setPos(i32 x, i32 y) {
   XMoveWindow(Platform::x11.display, this->data.x11.window, x, y);
 }
 
-void Window::set_size(i32 width, i32 height) {
+void Window::setSize(i32 width, i32 height) {
   XResizeWindow(Platform::x11.display, this->data.x11.window, (u32)width, (u32)height);
 }
 
-void Window::get_pos(i32 *x, i32 *y) {
+Vec2 Window::getPos() {
   XWindowAttributes attr;
   XGetWindowAttributes(Platform::x11.display, this->data.x11.window, &attr);
-  *x = attr.x;
-  *y = attr.y;
+  return Vec2(attr.x, attr.y);
 }
 
-void Window::get_size(i32 *width, i32 *height) {
+Vec2 Window::getSize() {
   XWindowAttributes attr;
   XGetWindowAttributes(Platform::x11.display, this->data.x11.window, &attr);
-  *width = attr.height;
-  *height = attr.width;
+  return Vec2(attr.height, attr.width);
 }
 
 void Window::update() {
@@ -112,18 +111,39 @@ void Window::update() {
   XNextEvent(Platform::x11.display, &event);
   switch (event.type) {
   case ClientMessage:
-    if ((Atom)event.xclient.data.l[0] == Platform::x11.wm_delete_window) {
+    if (event.xclient.data.l[0] == Platform::x11.wm_delete_window) {
       Event e = {};
       e.type = WINDOW_CLOSE;
       e.win_close_event.window = this;
       this->data.event_function(e);
     }
     break;
+  case ConfigureNotify: {
+    if (event.xconfigure.width != this->data.width || event.xconfigure.height != this->data.height) {
+      Event e = {};
+      e.type = WINDOW_RESIZED;
+      e.win_resize_event.window = this;
+      e.win_resize_event.width = event.xconfigure.width;
+      e.win_resize_event.height = event.xconfigure.height;
+      this->data.event_function(e);
+    }
+    if (event.xconfigure.x != this->data.x || event.xconfigure.y != this->data.y) {
+      Event e = {};
+      e.type = WINDOW_MOVED;
+      e.win_move_event.window = this;
+      e.win_move_event.x = event.xconfigure.x;
+      e.win_move_event.y = event.xconfigure.y;
+      this->data.event_function(e);
+    }
+    break;
+  }
   default:
     break;
   }
 
   glXSwapBuffers(Platform::x11.display, this->data.x11.window);
 }
+
+} // namespace sk
 
 #endif

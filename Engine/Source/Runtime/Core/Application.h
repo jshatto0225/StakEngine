@@ -8,6 +8,7 @@
 #include "Event.h"
 #include "Window.h"
 
+namespace sk {
 /**
  * App Creation Spec
  */
@@ -51,3 +52,5 @@ private:
   std::vector<std::unique_ptr<ApplicationLayer>> layers;
   std::unique_ptr<Window> window;
 };
+
+} // namespace sk

@@ -1,5 +1,8 @@
 #pragma once
 
+#include <string>
+
+namespace sk {
 class Font {
 public:
   Font(const std::string &path);
@@ -8,3 +11,5 @@ public:
 private:
 
 };
+
+} // namespace sk

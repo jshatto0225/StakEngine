@@ -36,6 +36,7 @@ PFNWGLSWAPINTERVALEXTPROC wglSwapIntervalEXT;
 PFNWGLGETPIXELFORMATATTRIBIVARBPROC wglGetPixelFormatAttribivARB;
 PFNWGLCHOOSEPIXELFORMATARB wglChoosePixelFormatARB;
 
+namespace sk {
 Proc Platform::GetProcAddress(const char *name) {
   return (Proc)wglGetProcAddress(name);
 }
@@ -104,7 +105,7 @@ Context::Context(const Window *win) {
       WGL_CONTEXT_MAJOR_VERSION_ARB, 4,
       WGL_CONTEXT_MINOR_VERSION_ARB, 5,
       WGL_CONTEXT_PROFILE_MASK_ARB, WGL_CONTEXT_CORE_PROFILE_BIT_ARB,
-      WGL_CONTEXT_FLAGS_ARB, 
+      WGL_CONTEXT_FLAGS_ARB,
       WGL_CONTEXT_FORWARD_COMPATIBLE_BIT_ARB, 0
   };
 
@@ -143,5 +144,7 @@ void Context::makeCurrent() {
 void Context::swapBuffers() {
   SwapBuffers(this->wgl.device_context);
 }
+
+} // namespace sk
 
 #endif

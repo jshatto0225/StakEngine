@@ -6,6 +6,7 @@
 // Because of some wierd macro
 #undef DELETE
 
+namespace sk {
 /**
  * Platform agnostic key codes
  */
@@ -152,3 +153,4 @@ public:
   static Vec2 GetMousePos();
 };
 
+} // namespace sk

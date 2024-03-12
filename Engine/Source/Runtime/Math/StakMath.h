@@ -7,6 +7,7 @@
 
 #include "Types.h"
 
+namespace sk {
 /**
  * Temporary type aliasing while actual types get fixed and reimplemented
  */
@@ -59,3 +60,5 @@ Mat4 QuatToMat4(const Quat &q);
  * Assumes camera pointing along Z axis
  */
 Mat4 RotationMatrix2D(f32 rotation);
+
+} // namespace sk

@@ -5,6 +5,7 @@
 #include "Log.h"
 #include "StakMath.h"
 
+namespace sk {
 u32 ShaderDataTypeSize(ShaderDataType type) {
   switch (type) {
   case ShaderDataType::FLOAT:
@@ -335,7 +336,7 @@ void Renderer2D::Flush() {
 
 void Renderer2D::BeginScene(const SceneViewCamera &cam) {
   Renderer2D::data.cam_data.view_proj = cam.getViewProj();
-  Renderer2D::data.cam_uniform_buffer->setData(&Renderer2D::data.cam_data.view_proj, 
+  Renderer2D::data.cam_uniform_buffer->setData(&Renderer2D::data.cam_data.view_proj,
                                                sizeof(Renderer2D::Renderer2DData::CameraData));
   Renderer2D::StartBatch();
 }
@@ -355,3 +356,5 @@ void Renderer2D::NextBatch() {
 void Renderer2D::EndScene() {
   Renderer2D::Flush();
 }
+
+} // namespace sk

@@ -5,18 +5,18 @@
 /**
  * Custom editor layer
  */
-class EditorLayer : public ApplicationLayer {
+class EditorLayer : public sk::ApplicationLayer {
 public:
   EditorLayer(i32 window_width,
               i32 window_height);
   ~EditorLayer();
 
   void update() override;
-  void onEvent(Event &e) override;
+  void onEvent(sk::Event &e) override;
 
 private:
-  Ref<Texture2D> tex;
-  Ref<Texture2D> tex2;
-  Ref<Texture2D> tex3;
-  SceneViewCamera cam;
+  Ref<sk::Texture2D> tex;
+  Ref<sk::Texture2D> tex2;
+  Ref<sk::Texture2D> tex3;
+  sk::SceneViewCamera cam;
 };

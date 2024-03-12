@@ -2,6 +2,9 @@
 
 #include <string>
 
+#include "Types.h"
+
+namespace sk {
 class File {
 public:
   File(const std::string &path);
@@ -16,3 +19,5 @@ private:
   const char *path;
   u64 size;
 };
+
+} // namespace sk

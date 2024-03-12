@@ -2,6 +2,7 @@
 
 #include "Event.h"
 
+namespace sk {
 /**
  * Layers used to build an application
  */
@@ -20,3 +21,5 @@ public:
    */
   virtual void onEvent(Event &e) {}
 };
+
+} // namespace sk
