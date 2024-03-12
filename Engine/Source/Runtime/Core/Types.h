@@ -20,29 +20,22 @@ typedef uint16_t u16;
 typedef uint8_t u8;
 
 template<typename T>
-using Shared = std::shared_ptr<T>;
+using Ref = std::shared_ptr<T>;
 
 template<typename T, typename ... Args>
-Shared<T> MakeShared(Args&&... args) {
+Ref<T> MakeRef(Args&&... args) {
   return std::make_shared<T>(std::forward<Args>(args)...);
 }
 
 template<typename T>
-using Unique = std::unique_ptr<T>;
+using Scope = std::unique_ptr<T>;
 
 template<typename T, typename ... Args>
-Unique<T> MakeUnique(Args&&... args) {
+Scope<T> MakeScope(Args&&... args) {
   return std::make_unique<T>(std::forward<Args>(args)...);
 }
 
-template<typename T>
-using Weak = std::weak_ptr<T>;
-
-constexpr auto Placeholder1 = std::placeholders::_1;
-constexpr auto Placeholder2 = std::placeholders::_2;
-constexpr auto Placeholder3 = std::placeholders::_3;
-constexpr auto Placeholder4 = std::placeholders::_4;
-
+// Aliases because c++ is ugly af
 struct Event;
 using EventFn = std::function<void(Event &)>;
 

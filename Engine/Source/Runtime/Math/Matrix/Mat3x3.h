@@ -24,13 +24,17 @@ template <typename T> struct Mat<T, 3, 3> {
   static const u64 col_size = 3;
   static const u64 size = num_cols * col_size;
 
-  template <typename U> Mat(U val);
+  Mat();
 
-  template <typename A11, typename A12, typename A13, typename A21,
-            typename A22, typename A23, typename A31, typename A32,
-            typename A33>
-  Mat(A11 a11, A12 a12, A13 a13, A21 a21, A22 a22, A23 a23, A31 a31, A32 a32,
-      A33 a33);
+  template <typename U> 
+  Mat(U val);
+
+  template <typename A11, typename A12, typename A13, 
+            typename A21, typename A22, typename A23, 
+            typename A31, typename A32, typename A33>
+  Mat(A11 a11, A12 a12, A13 a13, 
+      A21 a21, A22 a22, A23 a23, 
+      A31 a31, A32 a32, A33 a33);
 
   template <typename U> Mat(const Mat<U, 3, 3> &other);
 

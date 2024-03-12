@@ -8,6 +8,9 @@
 #include "Platform.h"
 #include "Event.h"
 
+/**
+ * Config for window creation
+ */
 struct WindowConfig {
   i32 x;
   i32 y;
@@ -18,6 +21,9 @@ struct WindowConfig {
 
 class Window;
 
+/**
+ * Rendering Context
+ */
 class Context {
 public:
   Context(const Window *win);
@@ -31,6 +37,9 @@ private:
   PLATFORM_CONTEXT_STATE;
 };
 
+/**
+ * Data for a window
+ */
 struct WindowData {
   i32 x;
   i32 y;
@@ -44,6 +53,9 @@ struct WindowData {
   PLATFORM_WINDOW_STATE;
 };
 
+/**
+ * Window class
+ */
 class Window {
 public:
   Window(const WindowConfig &config);
@@ -58,6 +70,9 @@ public:
 
   void update();
 
+  /**
+   * Makes the this windows context current
+   */
   void makeCurrent();
 
 private:

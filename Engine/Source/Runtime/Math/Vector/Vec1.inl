@@ -5,6 +5,11 @@
 #include <stdexcept>
 
 template <typename T>
+inline Vec<T, 1>::Vec() {
+  x = 0;
+}
+
+template <typename T>
 template <typename U>
 inline Vec<T, 1>::Vec(const Vec<U, 1> &other) {
   x = static_cast<T>(other.x);

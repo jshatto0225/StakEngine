@@ -2,6 +2,26 @@
 
 #include <stdexcept>
 
+template<typename T>
+Mat<T, 4, 4>::Mat() {
+  data[0] = 0;
+  data[1] = 0;
+  data[2] = 0;
+  data[3] = 0;
+  data[4] = 0;
+  data[5] = 0;
+  data[6] = 0;
+  data[7] = 0;
+  data[8] = 0;
+  data[9] = 0;
+  data[10] = 0;
+  data[11] = 0;
+  data[12] = 0;
+  data[13] = 0;
+  data[14] = 0;
+  data[15] = 0;
+}
+
 template <typename T> template <typename U> Mat<T, 4, 4>::Mat(U val) {
   data[0] = static_cast<T>(val);
   data[1] = static_cast<T>(val);

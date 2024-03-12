@@ -2,7 +2,17 @@
 
 #include <stdexcept>
 
-template <typename T> template <typename U> Mat<T, 2, 2>::Mat(U val) {
+template<typename T>
+Mat<T, 2, 2>::Mat() {
+  data[0] = 0;
+  data[1] = 0;
+  data[2] = 0;
+  data[3] = 0;
+}
+
+template <typename T> 
+template <typename U> 
+Mat<T, 2, 2>::Mat(U val) {
   data[0] = static_cast<T>(val);
   data[1] = static_cast<T>(val);
   data[2] = static_cast<T>(val);

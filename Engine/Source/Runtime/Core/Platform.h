@@ -35,6 +35,9 @@
 
 typedef void (*Proc)();
 
+/**
+ * Global platform class
+ */
 class Platform {
 public:
   static void Init();
@@ -42,6 +45,9 @@ public:
   static bool IsInitialized();
   static void InitExtensions();
 
+  /**
+   * Get function address by name
+   */
   static Proc GetProcAddress(const char *name);
 
 private:

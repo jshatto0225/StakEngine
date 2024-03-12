@@ -14,7 +14,10 @@ template <typename T> struct Vec<T, 1> {
 
   template <typename U> Vec(const Vec<U, 1> &other);
 
-  template <typename U> Vec(U val);
+  Vec();
+
+  template <typename U> 
+  Vec(U val);
 
   T &operator()(u32 i);
   T operator()(u32 i) const;

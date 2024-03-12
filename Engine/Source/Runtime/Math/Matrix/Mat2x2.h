@@ -19,12 +19,16 @@ template <typename T> struct Mat<T, 2, 2> {
   static const u64 col_size = 2;
   static const u64 size = num_cols * col_size;
 
-  template <typename U> Mat(U val);
+  Mat();
+
+  template <typename U> 
+  Mat(U val);
 
   template <typename A11, typename A12, typename A21, typename A22>
   Mat(A11 a11, A12 a12, A21 a21, A22 a22);
 
-  template <typename U> Mat(const Mat<U, 2, 2> &other);
+  template <typename U> 
+  Mat(const Mat<U, 2, 2> &other);
 
   T &operator()(u64 r, u64 c);
   T operator()(u64 r, u64 c) const;

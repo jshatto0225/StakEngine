@@ -2,6 +2,10 @@
 
 #include <stdio.h>
 
+/**
+ * Logging
+ * No Color Right Now :(
+ */
 class Log {
 public:
   static void Init();

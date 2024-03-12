@@ -7,16 +7,19 @@
   -- For game GUIs
 
 -- Create a 2D Renderer in the runtime
+  -- Add text, lines, and circles
 -- Creata a 3D Renderer in the runtime
   -- Both will also be used in the editor for a preview window
   -- Could make a seperate renderer entirely for the editor to support more debug fatures
      but that would be much later down the line
 
 -- Camera System
+  -- Perspective proj
 
 -- Audio
 
 -- ECS
+  -- Maybe use entt for now
 
 -- Make test app without editor
 
@@ -25,3 +28,5 @@
 
 -- Load Images
   -- Support More Image Types
+
+-- Fix Math and remove glm dependancy

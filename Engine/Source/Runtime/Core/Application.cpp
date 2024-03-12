@@ -6,8 +6,13 @@
 #include "Platform.h"
 #include "Renderer.h"
 
-Application::Application() {
-  this->window = MakeUnique<Window>(WindowConfig({ 100, 100, 1280, 720, "Window" }));
+Application::Application(const ApplcationSpec &spec) {
+  this->window = std::make_unique<Window>(WindowConfig({ 
+    spec.window_x, 
+    spec.window_y, 
+    spec.window_width, 
+    spec.window_height, 
+    spec.window_title.c_str()}));
   this->window->setEventCallback(BIND_METHOD(Application::onEvent));
   
   Renderer::Init();
@@ -18,7 +23,7 @@ Application::Application() {
 
 void Application::run() {
   while (this->running) {
-    for (const Unique<ApplicationLayer> &layer : this->layers) {
+    for (const std::unique_ptr<ApplicationLayer> &layer : this->layers) {
       layer->update();
     }
     this->window->update();
@@ -27,7 +32,7 @@ void Application::run() {
 
 void Application::onEvent(Event &e) {
   if (this->running) {
-    for (const Unique<ApplicationLayer> &layer : this->layers) {
+    for (const std::unique_ptr<ApplicationLayer> &layer : this->layers) {
       layer->onEvent(e);
     }
     switch (e.type) {
@@ -38,7 +43,7 @@ void Application::onEvent(Event &e) {
 
     case WINDOW_RESIZED:
       Renderer::OnWindowResize(e.win_resize_event.width, e.win_resize_event.height);
-      Log::CoreTrace("Viewport: 0, 0, %d, %d", e.win_resize_event.width, e.win_resize_event.height);
+      //Log::CoreTrace("Viewport: 0, 0, %d, %d", e.win_resize_event.width, e.win_resize_event.height);
       break;
 
     default:

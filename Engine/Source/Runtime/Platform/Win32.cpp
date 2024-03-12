@@ -4,11 +4,10 @@
 
 #include "Platform.h"
 #include "Window.h"
-#include "Renderer.h"
 #include "Log.h"
 #include "Input.h"
-#include "StakMath.h"
 #include "Image.h"
+#include "File.h"
 
 LRESULT CALLBACK Win32MessageCallback(HWND window, u32 msg, WPARAM wparam, LPARAM lparam) {
   WindowData *data = (WindowData *)GetWindowLongPtrA(window, GWLP_USERDATA);
@@ -35,8 +34,8 @@ LRESULT CALLBACK Win32MessageCallback(HWND window, u32 msg, WPARAM wparam, LPARA
         Event e;
         e.type = WINDOW_RESIZED;
         e.win_resize_event.window = data->window;
-        e.win_resize_event.height = rect.right - rect.left;
-        e.win_resize_event.width = rect.bottom - rect.top;
+        e.win_resize_event.width = rect.right - rect.left;
+        e.win_resize_event.height = rect.bottom - rect.top;
         data->event_function(e);
         return 0;
       }
@@ -165,11 +164,11 @@ void Window::setSize(i32 width, i32 height) {
 }
 
 Vec2 Window::getPos() {
-  return Vec2(this->data.x, this->data.y);
+  return Vec2{ (f32)this->data.x, (f32)this->data.y };
 }
 
 Vec2 Window::getSize() {
-  return Vec2(this->data.width, this->data.height);
+  return Vec2{ (f32)this->data.width, (f32)this->data.height };
 }
 
 void  Window::makeCurrent() {
@@ -191,15 +190,15 @@ void Window::setEventCallback(const EventFn &func) {
 
 // TODO: Finish
 const std::map<Key, i32> KeyMap = {
-  {Key::BUTTON_1, 0x01},
-  {Key::BUTTON_2, 0x02},
-  {Key::BUTTON_3, 0x03},
-  {Key::SPACE, 0x20},
-  {Key::APOSTROPHE, 0x0},
-  {Key::COMMA, 0xBC},
-  {Key::MINUS, 0xBD},
-  {Key::PERIOD, 0xBE},
-  {Key::SLASH, 0xBF},
+  {Key::BUTTON_1, VK_LBUTTON},
+  {Key::BUTTON_2, VK_RBUTTON},
+  {Key::BUTTON_3, VK_MBUTTON},
+  {Key::SPACE, VK_SPACE},
+  {Key::APOSTROPHE, VK_OEM_7},
+  {Key::COMMA, VK_OEM_COMMA},
+  {Key::MINUS, VK_OEM_MINUS},
+  {Key::PERIOD, VK_OEM_PERIOD},
+  {Key::SLASH, VK_OEM_2},
   {Key::ZERO, 0x30},
   {Key::ONE, 0x31},
   {Key::TWO, 0x32},
@@ -210,8 +209,8 @@ const std::map<Key, i32> KeyMap = {
   {Key::SEVEN, 0x37},
   {Key::EIGHT, 0x38},
   {Key::NINE, 0x39},
-  {Key::SEMICOLON, 0xBA},
-  {Key::EQUAL, 0x0},
+  {Key::SEMICOLON, VK_OEM_1},
+  {Key::EQUAL, VK_OEM_PLUS},
   {Key::A, 0x41},
   {Key::B, 0x42},
   {Key::C, 0x43},
@@ -238,80 +237,79 @@ const std::map<Key, i32> KeyMap = {
   {Key::X, 0x58},
   {Key::Y, 0x59},
   {Key::Z, 0x5A},
-  {Key::LEFT_BRACKET, 0xBD},
-  {Key::BACKSLASH, 0xDC},
-  {Key::RIGHT_BRACKET, 0xDD},
-  {Key::GRAVE, 0x0},
-  {Key::ESCAPE, 0x0},
-  {Key::ENTER, 0x0},
-  {Key::TAB, 0x0},
-  {Key::BACKSPACE, 0x08},
-  {Key::INSTERT, 0x2D},
-  {Key::DELETE, 0x2E},
-  {Key::RIGHT, 0x27},
-  {Key::LEFT, 0x25},
-  {Key::DOWN, 0x28},
-  {Key::UP, 0x26},
-  {Key::PAGE_UP, 0x21},
-  {Key::PAGE_DOWN, 0x22},
-  {Key::HOME, 0x24},
-  {Key::END, 0x23},
-  {Key::CAPS_LOCK, 0x0},
-  {Key::SCROLL_LOCK, 0x91},
-  {Key::NUM_LOCK, 0x90},
-  {Key::PRINT_SCREEN, 0x2C},
-  {Key::PAUSE, 0x0},
-  {Key::F1, 0x70},
-  {Key::F2, 0x71},
-  {Key::F3, 0x72},
-  {Key::F4, 0x73},
-  {Key::F5, 0x74},
-  {Key::F6, 0x75},
-  {Key::F7, 0x76},
-  {Key::F8, 0x77},
-  {Key::F9, 0x78},
-  {Key::F10, 0x79},
-  {Key::F11, 0x7A},
-  {Key::F12, 0x7B},
-  {Key::F13, 0x7C},
-  {Key::F14, 0x7D},
-  {Key::F15, 0x7E},
-  {Key::F16, 0x7F},
-  {Key::F17, 0x80},
-  {Key::F18, 0x81},
-  {Key::F19, 0x82},
-  {Key::F20, 0x83},
-  {Key::F21, 0x84},
-  {Key::F22, 0x85},
-  {Key::F23, 0x86},
-  {Key::F24, 0x87},
-  {Key::F25, 0x88},
-  {Key::NUM_ZERO, 0x60},
-  {Key::NUM_ONE, 0x61},
-  {Key::NUM_TWO, 0x62},
-  {Key::NUM_THREE, 0x63},
-  {Key::NUM_FOUR, 0x64},
-  {Key::NUM_FIVE, 0x65},
-  {Key::NUM_SIX, 0x66},
-  {Key::NUM_SEVEN, 0x67},
-  {Key::NUM_EIGHT, 0x68},
-  {Key::NUM_NINE, 0x69},
-  {Key::NUM_DECIMAL, 0x6E},
-  {Key::NUM_DIVIDE, 0x66F},
-  {Key::NUM_MULTIPLY, 0x6A},
-  {Key::NUM_SUBTRACT, 0x6D},
-  {Key::NUM_ADD, 0x0},
-  {Key::NUM_ENTER, 0x0},
-  {Key::NUM_EQUAL, 0x0},
-  {Key::LEFT_SHIFT, 0xA0},
-  {Key::LEFT_CONTROL, 0xA2},
-  {Key::LEFT_ALT, 0x0},
-  {Key::LEFT_SUPER, 0x0},
-  {Key::RIGHT_SHIFT, 0xA1},
-  {Key::RIGHT_CONTROL, 0xA3},
-  {Key::RIGHT_ALT, 0x0},
-  {Key::RIGHT_SUPER, 0x0},
-  {Key::MENU, 0x0},
+  {Key::LEFT_BRACKET, VK_OEM_4},
+  {Key::BACKSLASH, VK_OEM_4},
+  {Key::RIGHT_BRACKET, VK_OEM_6},
+  {Key::GRAVE, VK_OEM_3},
+  {Key::ESCAPE, VK_ESCAPE},
+  {Key::ENTER, VK_RETURN},
+  {Key::TAB, VK_TAB},
+  {Key::BACKSPACE, VK_BACK},
+  {Key::INSTERT, VK_INSERT},
+  {Key::DELETE, VK_DELETE},
+  {Key::RIGHT, VK_RIGHT},
+  {Key::LEFT, VK_LEFT},
+  {Key::DOWN, VK_DOWN},
+  {Key::UP, VK_UP},
+  {Key::PAGE_UP, VK_PRIOR},
+  {Key::PAGE_DOWN, VK_NEXT},
+  {Key::HOME, VK_HOME},
+  {Key::END, VK_END},
+  {Key::CAPS_LOCK, VK_CAPITAL},
+  {Key::SCROLL_LOCK, VK_SCROLL},
+  {Key::NUM_LOCK, VK_NUMLOCK},
+  {Key::PRINT_SCREEN, VK_SNAPSHOT},
+  {Key::PAUSE, VK_PAUSE},
+  {Key::F1, VK_F1},
+  {Key::F2, VK_F2},
+  {Key::F3, VK_F3},
+  {Key::F4, VK_F4},
+  {Key::F5, VK_F5},
+  {Key::F6, VK_F6},
+  {Key::F7, VK_F7},
+  {Key::F8, VK_F8},
+  {Key::F9, VK_F9},
+  {Key::F10, VK_F10},
+  {Key::F11, VK_F11},
+  {Key::F12, VK_F12},
+  {Key::F13, VK_F13},
+  {Key::F14, VK_F14},
+  {Key::F15, VK_F15},
+  {Key::F16, VK_F16},
+  {Key::F17, VK_F17},
+  {Key::F18, VK_F18},
+  {Key::F19, VK_F19},
+  {Key::F20, VK_F20},
+  {Key::F21, VK_F21},
+  {Key::F22, VK_F22},
+  {Key::F23, VK_F23},
+  {Key::F24, VK_F24},
+  {Key::NUM_ZERO, VK_NUMPAD0},
+  {Key::NUM_ONE, VK_NUMPAD1},
+  {Key::NUM_TWO, VK_NUMPAD2},
+  {Key::NUM_THREE, VK_NUMPAD3},
+  {Key::NUM_FOUR, VK_NUMPAD4},
+  {Key::NUM_FIVE, VK_NUMPAD5},
+  {Key::NUM_SIX, VK_NUMPAD6},
+  {Key::NUM_SEVEN, VK_NUMPAD7},
+  {Key::NUM_EIGHT, VK_NUMPAD8},
+  {Key::NUM_NINE, VK_NUMPAD9},
+  {Key::NUM_DECIMAL, VK_DECIMAL},
+  {Key::NUM_DIVIDE, VK_DIVIDE},
+  {Key::NUM_MULTIPLY, VK_MULTIPLY},
+  {Key::NUM_SUBTRACT, VK_SUBTRACT},
+  {Key::NUM_ADD, VK_ADD},
+  {Key::NUM_ENTER, VK_RETURN},
+  {Key::NUM_EQUAL, VK_RETURN}, // NOTE: On Windows this key does not exist
+  {Key::LEFT_SHIFT, VK_LSHIFT},
+  {Key::LEFT_CONTROL, VK_LCONTROL},
+  {Key::LEFT_ALT, VK_LMENU},
+  {Key::LEFT_SUPER, VK_LWIN},
+  {Key::RIGHT_SHIFT, VK_RSHIFT},
+  {Key::RIGHT_CONTROL, VK_RCONTROL},
+  {Key::RIGHT_ALT, VK_RMENU},
+  {Key::RIGHT_SUPER, VK_RWIN},
+  {Key::MENU, VK_MENU},
 };
 
 bool Input::GetKeyDown(Key key) {
@@ -321,65 +319,120 @@ bool Input::GetKeyDown(Key key) {
 Vec2 Input::GetMousePos() {
   POINT pos = {};
   GetCursorPos(&pos);
-  return Vec2(pos.x, pos.y);
+  return Vec2{ (f32)pos.x, (f32)pos.y };
 }
 
-constexpr int BMP_HEADER_SIZE = 54;
-
-u8 *Image::LoadBMP(FILE *f, i32 *width, i32 *height, i32 *channels_in_image, i32 desired_channels) {
-  if (!f) {
-    Log::CoreError("Failed to load file");
-    return nullptr;
+File::File(const std::string &path) {
+  this->path = path.c_str();
+  this->data = nullptr;
+  HANDLE file_handle = CreateFileA(this->path, GENERIC_READ, FILE_SHARE_READ, 0, OPEN_EXISTING, 0, 0);
+  if (!file_handle) {
+    // Error
+    Log::CoreError("Failed to open file");
+    return;
   }
-
-  // Read BMP header
-  fseek(f, 0, SEEK_SET);
-  char header[BMP_HEADER_SIZE];
-  if (fread(header, 1, BMP_HEADER_SIZE, f) != BMP_HEADER_SIZE) {
-    Log::CoreError("Failed to read BMP header");
-    return nullptr;
+  LARGE_INTEGER file_size;
+  if (!GetFileSizeEx(file_handle, &file_size)) {
+    // Error
+    Log::CoreError("File size error");
+    CloseHandle(file_handle);
+    return;
   }
-
-  // Verify BMP magic number
-  if (header[0] != 'B' || header[1] != 'M') {
-    Log::CoreError("Invalid BMP format");
-    return nullptr;
+  this->size = file_size.QuadPart;
+  this->data = VirtualAlloc(nullptr, file_size.QuadPart, MEM_RESERVE | MEM_COMMIT, PAGE_READWRITE);
+  if (!this->data) {
+    // Error
+    Log::CoreError("Could not allocate password");
+    CloseHandle(file_handle);
+    return;
   }
-
-  // Extract width, height, and bit depth from BMP header
-  *width = *reinterpret_cast<int *>(&header[18]);
-  *height = *reinterpret_cast<int *>(&header[22]);
-  u16 bit_depth = *reinterpret_cast<u16 *>(&header[28]);
-
-  // Ensure bit depth is 32 bits (8 bits per channel)
-  if (bit_depth != 32) {
-    Log::CoreWarn("Bit Depth: %d", bit_depth);
-    return nullptr;
+  OVERLAPPED idk_what_this_does = {};
+  if (!ReadFileEx(file_handle, this->data, file_size.QuadPart, &idk_what_this_does, nullptr)) {
+    Log::CoreError("Could not read file");
+    VirtualFree(this->data, this->size, MEM_RESERVE);
+    CloseHandle(file_handle);
+    this->data = nullptr;
+    return;
   }
+  CloseHandle(file_handle);
+}
 
-  // Move to the beginning of image data
-  fseek(f, *reinterpret_cast<int *>(&header[10]), SEEK_SET);
+void *File::getData() {
+  return this->data;
+}
 
-  // Calculate pixel count and allocate memory for pixel data
-  u32 pixel_count = *width * *height;
-  u8 *pixels = new u8[pixel_count * desired_channels];
-  if (!pixels) {
-    Log::CoreError("Failed to allocate memory for pixel data");
-    return nullptr;
+u64 File::getSize() {
+  return this->size;
+}
+
+File::~File() {
+  if (this->data) {
+    VirtualFree(this->data, this->size, MEM_RESERVE);
   }
+}
 
-  // Read pixel data
-  u32 actual_count = fread(pixels, desired_channels, pixel_count, f);
-  if (actual_count != pixel_count) {
-    Log::CoreError("Failed to read pixel data");
-    delete[] pixels;
-    return nullptr;
+Image::Image(const std::string &path) {
+  this->data.path = path;
+  this->bytes = nullptr;
+
+  File f(this->data.path);
+  u8 *file_data = (u8 *)f.getData();
+  u64 file_size = f.getSize();
+  if (path.find(".bmp") != std::string::npos) {
+    LoadAsBMP(file_data, file_size);
+    return;
   }
+  Log::CoreError("Unsupported Image Format");
+}
 
-  // Set the number of channels
-  *channels_in_image = desired_channels;
+Image::~Image() {
+  if (!this->bytes) {
+    VirtualFree(this->bytes, this->data.size_in_bytes, MEM_RESERVE);
+  }
+}
 
-  return pixels;
+void Image::LoadAsBMP(u8 *file_data, u64 file_size) {
+  if (file_data[0] != 'B' || file_data[1] != 'M') {
+    Log::CoreError("Did not find BM");
+    return;
+  }
+  this->data.size_in_bytes = *((u32 *)(file_data + 2));
+  u32 offset = *((u32 *)(file_data + 10));
+  this->data.width = *((i32 *)(file_data + 18));
+  this->data.height = *((i32 *)(file_data + 22));
+  u16 bpp = *((u16 *)(file_data + 28));
+  switch (bpp) {
+  case 1:
+    this->data.channels = 1;
+    break;
+  case 8:
+    this->data.channels = 1;
+    break;
+  case 24:
+    this->data.channels = 24;
+    break;
+  case 32:
+    this->data.channels = 32;
+    break;
+  default:
+    Log::CoreError("Invalid BPP: %d", bpp);
+    this->data.channels = 0;
+    break;
+  }
+  this->bytes = (u8 *)VirtualAlloc(nullptr, this->data.size_in_bytes, MEM_RESERVE | MEM_COMMIT, PAGE_READWRITE);
+  if (!this->bytes) {
+    Log::CoreError("Allocation Failed");
+    return;
+  }
+  CopyMemory(this->bytes, file_data + offset, this->data.size_in_bytes);
+}
+
+u8 *Image::getBytes() {
+  return this->bytes;
+}
+
+const ImageData &Image::getData() {
+  return this->data;
 }
 
 #endif

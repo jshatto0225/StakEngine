@@ -1,4 +1,4 @@
-file(GLOB SOURCES Core/*.cpp Platform/*.cpp Renderer/*.cpp AssetLoading/*.cpp)
+file(GLOB SOURCES Core/*.cpp Platform/*.cpp Renderer/*.cpp AssetLoading/*.cpp Math/*.cpp)
 
 set(CMAKE_CXX_STANDARD_REQUIRED 20)
 
@@ -64,3 +64,7 @@ target_compile_definitions(StakRuntime PUBLIC $<$<CONFIG:Release>: SK_RELEASE=1>
 target_compile_definitions(StakRuntime PUBLIC "SOURCE_DIR=\"${CMAKE_SOURCE_DIR}/\"")
 target_compile_definitions(StakRuntime PUBLIC "ASSET_DIR=\"${CMAKE_SOURCE_DIR}/Engine/Assets/\"")
 target_compile_definitions(StakRuntime PUBLIC "SHADER_DIR=\"${CMAKE_SOURCE_DIR}/Engine/Assets/Shaders/\"")
+
+# External
+target_include_directories(StakRuntime PUBLIC External/glm)
+include_directories(External/glm)

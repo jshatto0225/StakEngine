@@ -5,6 +5,7 @@
       "name": "base",
       "hidden": true,
       "binaryDir": "${sourceDir}/Build/",
+      //"generator": "Ninja",
       "installDir": "${sourceDir}/Build/",
       "cacheVariables": {
         "CMAKE_CXX_STANDARD": "20"

@@ -1,5 +1,7 @@
 #include "OpenGL.h"
 
+#include <fstream>
+
 #include "Platform.h"
 #include "Renderer.h"
 #include "Window.h"
@@ -38,7 +40,10 @@ PFNGLUNIFORM1IPROC glUniform1i;
 PFNGLTEXSTORAGE2DPROC glTexStorage2D;
 PFNGLACTIVETEXTUREPROC glActiveTexture;
 PFNGLBINDTEXTUREUNITPROC glBindTextureUnit;
-
+PFNGLCREATEBUFFERSPROC glCreateBuffers;
+PFNGLNAMEDBUFFERDATAPROC glNamedBufferData;
+PFNGLBINDBUFFERBASEPROC glBindBufferBase;
+PFNGLNAMEDBUFFERSUBDATAPROC glNamedBufferSubData;
 
 void RenderApi::Bind() {
   const unsigned char *version = glGetString(GL_VERSION);
@@ -76,6 +81,10 @@ void RenderApi::Bind() {
   glUniform1i = (PFNGLUNIFORM1IPROC)Platform::GetProcAddress("glUniform1i");
   glTexStorage2D = (PFNGLTEXSTORAGE2DPROC)Platform::GetProcAddress("glTexStorage2D");
   glActiveTexture = (PFNGLACTIVETEXTUREPROC)Platform::GetProcAddress("glActiveTexture");
+  glCreateBuffers = (PFNGLCREATEBUFFERSPROC)Platform::GetProcAddress("glCreateBuffers");
+  glNamedBufferData = (PFNGLNAMEDBUFFERDATAPROC)Platform::GetProcAddress("glNamedBufferData");
+  glBindBufferBase = (PFNGLBINDBUFFERBASEPROC)Platform::GetProcAddress("glBindBufferBase");
+  glNamedBufferSubData = (PFNGLNAMEDBUFFERSUBDATAPROC)Platform::GetProcAddress("glNamedBufferSubData");
 }
 
 static GLenum ShaderDataTypeToOpenglType(ShaderDataType type) {
@@ -118,6 +127,9 @@ static GLenum ImageFormatToOpenGLDataFormat(ImageFormat format) {
     return GL_RGBA;
   case ImageFormat::RGBA32F:
     return GL_RGBA;
+  default:
+    Log::CoreError("Invalid Image Format");
+      return GL_RGBA;
   }
 }
 
@@ -131,6 +143,9 @@ static GLenum ImageFormatToOpenGLInternalFormat(ImageFormat format) {
     return GL_RGBA8;
   case ImageFormat::RGBA32F:
     return GL_RGBA32F;
+  default:
+    Log::CoreError("Invalid Image Format");
+    return GL_RGBA8;
   }
 }
 
@@ -203,14 +218,14 @@ void RenderApi::SetLineWidth(f32 width) {
 
 }
 
-void RenderApi::DrawIndexed(Shared<VertexArray> vao, u32 count) {
+void RenderApi::DrawIndexed(Ref<VertexArray> vao, u32 count) {
   if (count == 0) {
     count = vao->getIndexBuffer()->getCount();
   }
   glDrawElements(GL_TRIANGLES, count, GL_UNSIGNED_INT, nullptr);
 }
 
-void RenderApi::DrawLines(Shared<VertexArray> vao, u32 count) {
+void RenderApi::DrawLines(Ref<VertexArray> vao, u32 count) {
 
 }
 
@@ -290,7 +305,7 @@ VertexArray::~VertexArray() {
   glDeleteVertexArrays(1, &this->renderer_id);
 }
 
-void VertexArray::addVertexBuffer(Shared<VertexBuffer> vbo) {
+void VertexArray::addVertexBuffer(Ref<VertexBuffer> vbo) {
   this->bind();
   vbo->bind();
   const BufferLayout &layout = vbo->getLayout();
@@ -344,7 +359,7 @@ void VertexArray::addVertexBuffer(Shared<VertexBuffer> vbo) {
   }
 }
 
-void VertexArray::setIndexBuffer(Shared<IndexBuffer> ibo) {
+void VertexArray::setIndexBuffer(Ref<IndexBuffer> ibo) {
   this->bind();
   ibo->bind();
   this->index_buffer = ibo;
@@ -358,11 +373,11 @@ void VertexArray::unbind() const {
   glBindVertexArray(0);
 }
 
-const std::vector<Shared<VertexBuffer>> &VertexArray::getVertexBuffers() const {
+const std::vector<Ref<VertexBuffer>> &VertexArray::getVertexBuffers() const {
   return this->vertex_buffers;
 }
 
-const Shared<IndexBuffer> VertexArray::getIndexBuffer() const {
+const Ref<IndexBuffer> VertexArray::getIndexBuffer() const {
   return this->index_buffer;
 }
 
@@ -468,10 +483,6 @@ ShaderSource Shader::Parse(const std::string &path) {
   return src;
 }
 
-void Shader::setUniformi(const std::string &name, i32 value) {
-  glUniform1i(glGetUniformLocation(this->renderer_id, name.c_str()), value);
-}
-
 void Shader::bind() const {
   glUseProgram(this->renderer_id);
 }
@@ -529,22 +540,23 @@ Texture2D::Texture2D(const std::string &path) {
   this->path = path;
 
   // LOAD IMAGE
-  i32 width;
-  i32 height;
-  i32 channels;
-  u8 *data = Image::Load(path, &this->spec.width, &this->spec.height, &channels, 4);
-  switch (channels) {
+  Image tex(path);
+  switch (tex.getData().channels) {
   case 4:
     this->spec.format = ImageFormat::RGBA8;
     break;
   case 3:
     this->spec.format = ImageFormat::RGB8;
     break;
+  case 1:
+    this->spec.format = ImageFormat::R8;
+    break;
   default:
     break;
   }
-
-  Log::CoreTrace("%d, %d", this->spec.width, this->spec.height);
+  ImageData image_data = tex.getData();
+  this->spec.width = image_data.width;
+  this->spec.height = image_data.height;
 
   glGenTextures(1, &this->renderer_id);
   glBindTexture(GL_TEXTURE_2D, this->renderer_id);
@@ -569,8 +581,7 @@ Texture2D::Texture2D(const std::string &path) {
                   this->spec.height,
                   ImageFormatToOpenGLDataFormat(this->spec.format),
                   GL_UNSIGNED_BYTE,
-                  data);
-  Image::Free(data);
+                  tex.getBytes());
 }
 
 Texture2D::Texture2D(const TextureSpecification &textureSpecification) {
@@ -643,4 +654,18 @@ bool Texture2D::isLoaded() const {
 
 bool Texture2D::operator==(const Texture2D &other) const {
   return this->renderer_id == other.renderer_id;
+}
+
+UniformBuffer::UniformBuffer(u32 size, u32 binding) {
+  glCreateBuffers(1, &this->m_renderer_id);
+  glNamedBufferData(m_renderer_id, size, nullptr, GL_DYNAMIC_DRAW);
+  glBindBufferBase(GL_UNIFORM_BUFFER, binding, m_renderer_id);
+}
+
+UniformBuffer::~UniformBuffer() {
+  glDeleteBuffers(1, &m_renderer_id);
+}
+
+void UniformBuffer::setData(const void *data, u32 size, u32 offset) {
+  glNamedBufferSubData(m_renderer_id, offset, size, data);
 }

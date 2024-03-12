@@ -3,8 +3,12 @@
 #include "Types.h"
 #include "StakMath.h"
 
+// Because of some wierd macro
 #undef DELETE
 
+/**
+ * Platform agnostic key codes
+ */
 enum class Key {
   BUTTON_1,
   BUTTON_2,
@@ -138,6 +142,10 @@ enum class Key {
   MENU
 };
 
+/**
+ * Input Class
+ * Not really a class, acts more like a namespace
+ */
 class Input {
 public:
   static bool GetKeyDown(Key key);

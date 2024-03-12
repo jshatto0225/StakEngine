@@ -2,16 +2,21 @@
 
 #include <Runtime/Runtime.h>
 
+/**
+ * Custom editor layer
+ */
 class EditorLayer : public ApplicationLayer {
 public:
-  EditorLayer();
+  EditorLayer(i32 window_width,
+              i32 window_height);
   ~EditorLayer();
 
   void update() override;
   void onEvent(Event &e) override;
 
 private:
-  Shared<Texture2D> tex;
-  Shared<Texture2D> tex2;
-  Shared<Texture2D> tex3;
+  Ref<Texture2D> tex;
+  Ref<Texture2D> tex2;
+  Ref<Texture2D> tex3;
+  SceneViewCamera cam;
 };

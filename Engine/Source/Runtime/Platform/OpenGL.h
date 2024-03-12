@@ -7,6 +7,10 @@
 #include <GL/gl.h>
 #include <GL/glext.h>
 
+/**
+ * OpenGL Fucntions
+ * These need to be bound
+ */
 extern PFNGLGENBUFFERSPROC glGenBuffers;
 extern PFNGLBINDBUFFERPROC glBindBuffer;
 extern PFNGLBUFFERDATAPROC glBufferData;
@@ -39,3 +43,7 @@ extern PFNGLUNIFORM1IPROC glUniform1i;
 extern PFNGLTEXSTORAGE2DPROC glTexStorage2D;
 extern PFNGLACTIVETEXTUREPROC glActiveTexture;
 extern PFNGLBINDTEXTUREUNITPROC glBindTextureUnit;
+extern PFNGLCREATEBUFFERSPROC glCreateBuffers;
+extern PFNGLNAMEDBUFFERDATAPROC glNamedBufferData;
+extern PFNGLBINDBUFFERBASEPROC glBindBufferBase;
+extern PFNGLNAMEDBUFFERSUBDATAPROC glNamedBufferSubData;

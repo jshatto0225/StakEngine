@@ -4,12 +4,16 @@
 
 class Window;
 
+/**
+ * Events
+ */
 enum EventType {
   TEST_EVENT = -1,
   INVALID_EVENT = -1,
   WINDOW_RESIZED,
   WINDOW_MOVED,
   WINDOW_CLOSE,
+  WINDOW_CREATE,
 };
 
 struct WindowCloseEvent {

@@ -3,6 +3,14 @@
 #include <stdexcept>
 
 template <typename T>
+inline Vec<T, 4>::Vec() {
+  x = 0;
+  y = 0;
+  z = 0;
+  w = 0;
+}
+
+template <typename T>
 template <typename U>
 inline Vec<T, 4>::Vec(const Vec<U, 4> &other) {
   x = static_cast<T>(other.x);

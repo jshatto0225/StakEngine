@@ -27,9 +27,13 @@ template <typename T> struct Vec<T, 4> {
 
   static constexpr u64 length = 4;
 
-  template <typename U> Vec(const Vec<U, 4> &other);
+  Vec();
 
-  template <typename U> Vec(U val);
+  template <typename U> 
+  Vec(const Vec<U, 4> &other);
+
+  template <typename U> 
+  Vec(U val = 0);
 
   template <typename U1, typename U2, typename U3, typename U4>
   Vec(U1 val1, U2 val2, U3 val3, U4 val4);
