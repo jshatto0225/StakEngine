@@ -2,6 +2,9 @@
 
 #include <iostream>
 
+#define _USE_MATH_DEFINES
+#include <math.h>
+
 EditorLayer::EditorLayer(i32 window_width,
                          i32 window_height) {
   this->tex = MakeRef<Texture2D>(ASSET_DIR "Images/VerticalTest.bmp");
@@ -22,7 +25,7 @@ void EditorLayer::update() {
 
   Renderer2D::BeginScene(this->cam);
   {
-    Renderer2D::DrawQuad({ -0.25f, -0.25f }, { 0.25f, 0.25f }, tex3);
+    Renderer2D::DrawQuad({ -0.25f, -0.25f }, { 0.25f, 0.25f }, M_PI / 4, tex3);
     Renderer2D::DrawQuad({ 0.0f, 0.0f }, { 0.25f, 0.25f }, tex);
     Renderer2D::DrawQuad({ 0.25f, 0.25f }, { 0.25f, 0.25f }, tex2);
   }

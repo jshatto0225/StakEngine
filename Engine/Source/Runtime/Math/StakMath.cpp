@@ -3,6 +3,7 @@
 #include <glm/gtc/matrix_transform.hpp>
 #include <glm/gtx/quaternion.hpp>
 
+// TODO: finish
 Mat4 ViewMatrix(const Vec3 &pos, const Vec3 &up, const Vec3 &forward) {
   return Mat4(1.0f);
 }
@@ -29,4 +30,8 @@ Mat4 QuatToMat4(const Quat &q) {
 
 Mat4 ScaleMatrix(const Vec3 &scale) {
   return glm::scale(glm::mat4(1.0f), scale);
+}
+
+Mat4 RotationMatrix2D(f32 rotation) {
+  return glm::rotate(glm::mat4(1.0f), rotation, Vec3(0, 0, -1));
 }

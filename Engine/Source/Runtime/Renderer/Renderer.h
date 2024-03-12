@@ -526,6 +526,12 @@ public:
    */
   static void DrawQuad(const Vec2 &pos, const Vec2 &size, const Vec4 &color);
   static void DrawQuad(const Vec2 &pos, const Vec2 &size, const Ref<Texture2D> &tex);
+
+  /**
+   * Draw a quad that is rotated rotation radians
+   */
+  static void DrawQuad(const Vec2 &pos, const Vec2 &size, f32 rotation, const Vec4 &color);
+  static void DrawQuad(const Vec2 &pos, const Vec2 &size, f32 rotation, const Ref<Texture2D> &tex);
   static void DrawQuad(const Mat4 &transform, const Ref<Texture2D> &tex);
 
   /**

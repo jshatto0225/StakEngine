@@ -250,6 +250,14 @@ void Renderer2D::Shutdown() {
 }
 
 void Renderer2D::DrawQuad(const Vec2 &pos, const Vec2 &size, const Vec4 &color) {
+  Renderer2D::DrawQuad(pos, size, 0, color);
+}
+
+void Renderer2D::DrawQuad(const Vec2 &pos, const Vec2 &size, const Ref<Texture2D> &tex) {
+  Renderer2D::DrawQuad(pos, size, 0, tex);
+}
+
+void Renderer2D::DrawQuad(const Vec2 &pos, const Vec2 &size, f32 rotation, const Vec4 &color) {
   Ref<Texture2D> texture = MakeRef<Texture2D>(TextureSpecification());
   i32 r = std::min(std::max(color.r, 0.0f), 1.0f) * 255;
   i32 g = std::min(std::max(color.g, 0.0f), 1.0f) * 255;
@@ -257,11 +265,11 @@ void Renderer2D::DrawQuad(const Vec2 &pos, const Vec2 &size, const Vec4 &color) 
   i32 a = std::min(std::max(color.a, 0.0f), 1.0f) * 255;
   u32 c = (a << 24) | (b << 16) | (g << 8) | (r << 0);
   texture->setData((void *)&c, sizeof(c));
-  Renderer2D::DrawQuad(pos, size, texture);
+  Renderer2D::DrawQuad(pos, size, rotation, texture);
 }
 
-void Renderer2D::DrawQuad(const Vec2 &pos, const Vec2 &size, const Ref<Texture2D> &tex) {
-  Mat4 transform = TranstationMatrix(Vec3(pos, 0.0f)) * ScaleMatrix(Vec3(size, 1.0f));
+void Renderer2D::DrawQuad(const Vec2 &pos, const Vec2 &size, f32 rotation, const Ref<Texture2D> &tex) {
+  Mat4 transform = TranstationMatrix(Vec3(pos, 0.0f)) * RotationMatrix2D(rotation) * ScaleMatrix(Vec3(size, 1.0f));
   Renderer2D::DrawQuad(transform, tex);
 }
 
