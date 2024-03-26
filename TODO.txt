@@ -1,5 +1,3 @@
--- Also try to include all libs in repo since cmake is annoying (Windows was missing some gl headers)
-
 -- Create a GUI Renderer in the editor
   -- For the eitor itself
 
@@ -19,7 +17,6 @@
 -- Audio
 
 -- ECS
-  -- Maybe use entt for now
 
 -- Make test app without editor
 
@@ -29,4 +26,3 @@
 -- Load Images
   -- Support More Image Types
 
--- Fix Math and remove glm dependancy

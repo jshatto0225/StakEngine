@@ -11,9 +11,9 @@ void *EditorLayerInit() {
   Data->WindowWidth = 1280;
   Data->WindowHeight = 720;
 
-  Data->Tex1 = CreateTexture2D(ASSET_DIR "Images/VerticalTest.bmp");
-  Data->Tex2 = CreateTexture2D(ASSET_DIR "Images/WhiteImage.bmp");
-  Data->Tex3 = CreateTexture2D(ASSET_DIR "Images/BigTexture.bmp");
+  Data->Tex1 = CreateTexture2D(IMAGE_DIR "VerticalTest.bmp");
+  Data->Tex2 = CreateTexture2D(IMAGE_DIR "WhiteImage.bmp");
+  Data->Tex3 = CreateTexture2D(IMAGE_DIR "BigTexture.bmp");
 
   SetDefaultOrthoCameraSettings(&Data->Cam);
 
