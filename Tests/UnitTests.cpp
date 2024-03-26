@@ -6,6 +6,7 @@
 
 TEST_CASE("Test Vec1", "[Vec1]")
 {
+  glm::mat4
     Vec1 v = { 5 };
     Vec1 v2 = { 2 };
     REQUIRE(v.x == 5);
@@ -1197,126 +1198,18 @@ TEST_CASE("Test Mat4x4", "[Mat4x4]")
     REQUIRE((2 / m)(3, 3) == 0);
 } // End Test Mat4x4
 
-/*
 TEST_CASE("Test Window", "[Window]")
 {
-    sk_log_init();
+    Log::Init();
 
-    Window *window = sk_create_window("TempWindow", 0, 0, 800, 450);
-    REQUIRE(window->is_open());
-    REQUIRE(window->get_width() == 800);
-    REQUIRE(window->get_height() == 450);
-    REQUIRE(window->get_aspect() == 16.0f / 9.0f);
-    REQUIRE(window->get_x() == 0);
-    REQUIRE(window->get_y() == 0);
-    window->set_width(450);
-    REQUIRE(window->get_width() == 450);
-    REQUIRE(window->get_aspect() == 1);
-    window->set_height(800);
-    REQUIRE(window->get_height() == 800);
-    REQUIRE(window->get_aspect() == 9.0f / 16.0f);
-    REQUIRE(window->get_id() == 1);
-    window->set_x(200);
-    REQUIRE(window->get_x() == 200);
-    window->set_y(200);
-    REQUIRE(window->get_y() == 200);
-    window->close();
-    window->set_size_and_pos(500, 500, 100, 200);
-    REQUIRE(window->get_width() == 450);
-    REQUIRE(window->get_height() == 800);
-    REQUIRE(window->get_aspect() == 9.0f / 16.0f);
-    REQUIRE(window->get_x() == 200);
-    REQUIRE(window->get_y() == 200);
-    REQUIRE_FALSE(window->is_open());
+    Window window({ 0, 0, 800, 450, "TempWindow" });
+    Log::Trace("%d, %d", window.getSize().x, window.getSize().y);
+    REQUIRE(window.getSize() == Vec2(800, 450));
+    REQUIRE(window.getPos() == Vec2(0, 0));
+    window.setSize(450, 800);
+    REQUIRE(window.getSize() == Vec2(450, 800));
+    window.setPos(200, 200);
+    REQUIRE(window.getPos() == Vec2(200, 200));
 
-    sk_log_shutdown();
+    Log::Shutdown();
 } // End Test Window
-
-/*
-TEST_CASE("General Application Test", "[Application]")
-{
-    class ShutdownTestLayer : public ApplicationLayer
-    {
-    public:
-        void update() override
-        {
-            application_shutdown();
-        }
-    };
-
-    log_init();
-    REQUIRE_NOTHROW(application_add_layer(new_unique<ShutdownTestLayer>()));
-    REQUIRE_NOTHROW(application_shutdown());
-    REQUIRE_NOTHROW(application_run());
-    REQUIRE_NOTHROW(application_init());
-    REQUIRE_NOTHROW(application_run());
-    log_shutdown();
-} // End General Application Test
-
-TEST_CASE("Test Layers", "[ApplicationLayer]")
-{
-    static bool layer_started = false;
-    static bool layer_ended = false;
-    static bool layer_updated = false;
-
-    class AppTestLayer : public ApplicationLayer
-    {
-    public:
-        void start() override
-        {
-            layer_started = true;
-        }
-
-        void end() override
-        {
-            layer_ended = true;
-        }
-
-        void update() override
-        {
-            layer_updated = true;
-            application_shutdown();
-        }
-    };
-
-    log_init();
-    REQUIRE_NOTHROW(application_add_layer(new_unique<AppTestLayer>()));
-    REQUIRE_NOTHROW(application_init());
-    REQUIRE_NOTHROW(application_run());
-    REQUIRE(layer_started == true);
-    REQUIRE(layer_ended == true);
-    REQUIRE(layer_updated == true);
-    log_shutdown();
-} // End Test Layers
-
-TEST_CASE("Test Event", "[Application::OnEvent]")
-{
-    static bool event_recieved = false;
-
-    class EventTestLayer : public ApplicationLayer
-    {
-    public:
-        void update() override
-        {
-            Event e = { TEST_EVENT };
-            application_on_event(e);
-            application_shutdown();
-        }
-
-        void on_event(Event& e)
-        {
-            if (e.type == TEST_EVENT)
-            {
-                event_recieved = true;
-            }
-        }
-    };
-
-    log_init();
-    REQUIRE_NOTHROW(application_add_layer(new_unique<EventTestLayer>()));
-    REQUIRE_NOTHROW(application_init());
-    REQUIRE_NOTHROW(application_run());
-    REQUIRE(event_recieved == true);
-    log_shutdown();
-} // End Test Event
-*/
