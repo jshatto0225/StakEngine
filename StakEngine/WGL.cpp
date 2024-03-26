@@ -19,17 +19,11 @@ PFNWGLCREATECONTEXTATTRIBSARBPROC wglCreateContextAttribsARB;
 PFNWGLSWAPINTERVALEXTPROC wglSwapIntervalEXT;
 PFNWGLGETPIXELFORMATATTRIBIVARBPROC wglGetPixelFormatAttribivARB;
 PFNWGLCHOOSEPIXELFORMATARB wglChoosePixelFormatARB;
-
 WGLCREATECONTEXTPROC wglCreateContext;
-
 WGLDELETECONTEXTPROC wglDeleteContext;
-
 WGLGETCURRENTDCPROC wglGetCurrentDC;
-
 WGLGETPROCADDRESSPROC wglGetProcAddress;
-
 WGLGETCURRENTCONTEXTPROC wglGetCurrentContext;
-
 WGLMAKECURRENTPROC wglMakeCurrent;
 
 struct context {
@@ -127,13 +121,8 @@ context *CreateContext(const window *Window) {
                           &PixelFormat,
                           &NumFormats);
 
-  //Context->GLRenderingContext = wglCreateContextAttribsARB(Context->DeviceContext,
-  //0,
-  //                                                      Attributes);
-
   SetPixelFormat(Context->DeviceContext, PixelFormat, &PFD);
 
-  // TODO: ???
   Context->GLRenderingContext = wglCreateContextAttribsARB(Context->DeviceContext,
                                                            0,
                                                            Attributes);

@@ -230,9 +230,19 @@ window *CreateWindow(const window_config *Config) {
   Window->Height = Config->Height;
   Window->Title = Config->Title;
 
+  // Yeah IDK what windows is doing here
+  wchar_t *WideTitle;
+  i32 NumChars = MultiByteToWideChar(CP_ACP, 0, Window->Title, -1, NULL, 0);
+  WideTitle = (wchar_t *)malloc(sizeof(wchar_t) * NumChars);
+  if (!WideTitle) {
+    LogCoreError("Failed to allocate memroy for wide char conversion");
+    return NULL;
+  }
+  MultiByteToWideChar(CP_ACP, 0, Window->Title, -1, WideTitle, NumChars);
+
   Window->Handle = CreateWindowExA(0,
                                    WIN32_DEFAULT_WNDCLASS_NAME,
-                                   Window->Title,
+                                   (LPCSTR)WideTitle,
                                    WS_OVERLAPPEDWINDOW | WS_VISIBLE,
                                    Window->X,
                                    Window->Y,
@@ -244,6 +254,8 @@ window *CreateWindow(const window_config *Config) {
                                    NULL);
   SetWindowLongPtrA(Window->Handle, GWLP_USERDATA, (LONG_PTR)Window);
   Window->Context = CreateContext(Window);
+
+  free(WideTitle);
 
   return Window;
 }
