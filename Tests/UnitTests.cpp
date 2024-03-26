@@ -6,6 +6,7 @@
 
 TEST_CASE("Test Vec1", "[Vec1]")
 {
+  glm::mat4
     Vec1 v = { 5 };
     Vec1 v2 = { 2 };
     REQUIRE(v.x == 5);

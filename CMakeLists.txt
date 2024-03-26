@@ -8,6 +8,6 @@ set(EXPORT_COMPILE_COMMANDS ON)
 
 set(CMAKE_WINDOWS_EXPORT_ALL_SYMBOLS ON)
 
-add_subdirectory(Engine/Source/Runtime)
-add_subdirectory(Engine/Source/Editor)
+add_subdirectory(StakEngine)
+add_subdirectory(StakEditor)
 #add_subdirectory(Tests)
