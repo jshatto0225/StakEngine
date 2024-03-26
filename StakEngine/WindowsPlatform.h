@@ -64,9 +64,9 @@ extern DISPATCHMESSAGEAPROC Stak_DispatchMessageA;
 typedef BOOL(__stdcall *PEEKMESSAGEAPROC)(LPMSG, HWND, UINT, UINT, UINT);
 extern PEEKMESSAGEAPROC Stak_PeekMessageA;
 #define PeekMessageA Stak_PeekMessageA
-typedef LRESULT(__stdcall *DEFWINDOWPROCWPROC)(HWND, UINT, WPARAM, LPARAM);
-extern DEFWINDOWPROCWPROC Stak_DefWindowProcW;
-#define DefWindowProcW Stak_DefWindowProcW
+typedef LRESULT(__stdcall *DEFWINDOWPROCAPROC)(HWND, UINT, WPARAM, LPARAM);
+extern DEFWINDOWPROCAPROC Stak_DefWindowProcA;
+#define DefWindowProcA Stak_DefWindowProcA
 typedef BOOL(__stdcall *UNREGISTERCLASSAPROC)(LPCSTR, HINSTANCE);
 extern UNREGISTERCLASSAPROC Stak_UnregisterClassA;
 #define UnregisterClassA Stak_UnregisterClassA
