@@ -1,6 +1,6 @@
 #pragma once
 
-#include <StakEngine/StakEngine.h>
+#include "../StakEngine/StakEngine.h"
 
 struct editor_data {
   texture2d *Tex1;

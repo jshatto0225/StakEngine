@@ -13,64 +13,30 @@
 #include "WindowsPlatform.h"
 #include "Log.h"
 
-typedef HGLRC(WINAPI *WGLCREATECONTEXTPROC)(HDC);
-WGLCREATECONTEXTPROC Stak_wglCreateContext;
-#define wglCreateContext Stak_wglCreateContext
-
-typedef BOOL(WINAPI *WGLDELETECONTEXTPROC)(HGLRC);
-WGLDELETECONTEXTPROC Stak_wglDeleteContext;
-#define wglDeleteContext Stak_wglDeleteContext
-
-typedef HDC(WINAPI *WGLGETCURRENTDCPROC)();
-WGLGETCURRENTDCPROC Stak_wglGetCurrentDC;
-#define wglGetCurrentDC Stak_wglGetCurrentDC
-
-typedef PROC(WINAPI *WGLGETPROCADDRESSPROC)(LPCSTR);
-WGLGETPROCADDRESSPROC Stak_wglGetProcAddress;
-#define wglGetProcAddress Stak_wglGetProcAddress
-
-typedef HGLRC(WINAPI *WGLGETCURRENTCONTEXTPROC)();
-WGLGETCURRENTCONTEXTPROC Stak_wglGetCurrentContext;
-#define wglGetCurrentContext Stak_wglGetCurrentContext
-
-typedef BOOL(WINAPI *WGLMAKECURRENTPROC)(HDC, HGLRC);
-WGLMAKECURRENTPROC Stak_wglMakeCurrent;
-#define wglMakeCurrent Stak_wglMakeCurrent
-
-struct context {
-  const window *Window;
-  HDC DeviceContext;
-  HGLRC GLRenderingContext;
-};
-
-#define WGL_DRAW_TO_WINDOW_ARB 0x2001
-#define WGL_SUPPORT_OPENGL_ARB 0x2010
-#define WGL_DOUBLE_BUFFER_ARB 0x2011
-#define WGL_PIXEL_TYPE_ARB 0x2013
-#define WGL_TYPE_RGBA_ARB 0x202b
-#define WGL_COLOR_BITS_ARB 0x2014
-#define WGL_DEPTH_BITS_ARB 0x2022
-#define WGL_STENCIL_BITS_ARB 0x2023
-#define WGL_CONTEXT_MAJOR_VERSION_ARB 0x2091
-#define WGL_CONTEXT_MINOR_VERSION_ARB 0x2092
-#define WGL_CONTEXT_FLAGS_ARB 0x2094
-#define WGL_CONTEXT_FORWARD_COMPATIBLE_BIT_ARB 0x0002
-#define WGL_CONTEXT_PROFILE_MASK_ARB 0x9126
-#define WGL_CONTEXT_CORE_PROFILE_BIT_ARB 0x0001
-
-typedef const char *(WINAPI *PFNWGLGETEXTENSIONSSTRINGEXTPROC)(void);
-typedef const char *(WINAPI *PFNWGLGETEXTENSIONSSTRINGARBPROC)(HDC);
-typedef HGLRC(WINAPI *PFNWGLCREATECONTEXTATTRIBSARBPROC)(HDC, HGLRC, const i32 *);
-typedef BOOL(WINAPI *PFNWGLSWAPINTERVALEXTPROC)(i32);
-typedef BOOL(WINAPI *PFNWGLGETPIXELFORMATATTRIBIVARBPROC)(HDC, i32, i32, u32, const i32 *, i32 *);
-typedef BOOL(WINAPI *PFNWGLCHOOSEPIXELFORMATARB)(HDC, const i32 *, const f32 *, u32, i32 *, u32 *);
-
 PFNWGLGETEXTENSIONSSTRINGEXTPROC wglGetExtensionsStringEXT;
 PFNWGLGETEXTENSIONSSTRINGARBPROC wglGetExtensionsStringARB;
 PFNWGLCREATECONTEXTATTRIBSARBPROC wglCreateContextAttribsARB;
 PFNWGLSWAPINTERVALEXTPROC wglSwapIntervalEXT;
 PFNWGLGETPIXELFORMATATTRIBIVARBPROC wglGetPixelFormatAttribivARB;
 PFNWGLCHOOSEPIXELFORMATARB wglChoosePixelFormatARB;
+
+WGLCREATECONTEXTPROC wglCreateContext;
+
+WGLDELETECONTEXTPROC wglDeleteContext;
+
+WGLGETCURRENTDCPROC wglGetCurrentDC;
+
+WGLGETPROCADDRESSPROC wglGetProcAddress;
+
+WGLGETCURRENTCONTEXTPROC wglGetCurrentContext;
+
+WGLMAKECURRENTPROC wglMakeCurrent;
+
+struct context {
+  const window *Window;
+  HDC DeviceContext;
+  HGLRC GLRenderingContext;
+};
 
 void *PlatformGetProcAddress(const char *name) {
   return (void *)wglGetProcAddress(name);

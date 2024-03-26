@@ -9,9 +9,9 @@ struct NameComponent {
 };
 
 struct TransformComponent {
-  Vec3 position;
-  Vec3 size;
-  Vec3 rotation;
+  vec3 position;
+  vec3 size;
+  vec3 rotation;
 };
 
 enum class CameraProjection {

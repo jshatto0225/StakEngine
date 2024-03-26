@@ -440,9 +440,9 @@ vertex_buffer_array *CreateVertexBufferArray(u64 Capacity) {
 void AddVertexBufferToArray(vertex_buffer_array *Array, const vertex_buffer *VertexBuffer) {
   if (Array->Size == Array->Capacity) {
     Array->Capacity *= 2;
-    Array->Buffers = (const vertex_buffer **)realloc((void *)Array->Buffers, sizeof(vertex_buffer *) * Array->Capacity);
+    const vertex_buffer ** Res = (const vertex_buffer **)realloc((void *)Array->Buffers, sizeof(vertex_buffer *) * Array->Capacity);
 
-    if (!Array->Buffers) {
+    if (!Res) {
       LogCoreError("Failed to reallocate vertex buffer array");
       return;
     }
@@ -665,7 +665,8 @@ void DestroyShader(shader **Shader) {
 
 shader_source ParseShaderSource(const char *Path) {
   shader_source Src = {};
-  FILE *File = fopen(Path, "r");
+  FILE *File;
+  fopen_s(&File, Path, "r");
   if (File == NULL) {
     LogCoreError("Failed to open shader file");
     return Src;

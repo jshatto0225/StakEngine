@@ -1,5 +1,5 @@
-#include <StakEngine/StakEngine.h>
-#include <StakEngine/EntryPoint.h>
+#include "../StakEngine/StakEngine.h"
+#include "../StakEngine/EntryPoint.h"
 
 #include "EditorLayer.h"
 

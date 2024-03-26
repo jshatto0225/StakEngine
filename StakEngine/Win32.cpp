@@ -2,13 +2,6 @@
 
 #if defined(SK_WINDOWS)
 
-#include <windows.h>
-
-BOOL(*Win32DestroyWindow)(HWND) = DestroyWindow;
-#undef CreateWindow
-#undef DestroyWindow
-#undef CreateFile
-
 #include "Window.h"
 #include "Log.h"
 #include "Asserts.h"
@@ -16,6 +9,31 @@ BOOL(*Win32DestroyWindow)(HWND) = DestroyWindow;
 #include "Image.h"
 #include "File.h"
 #include "WindowsPlatform.h"
+
+TRANSLATEMESSAGEPROC TranslateMessage;
+DISPATCHMESSAGEAPROC DispatchMessageA;
+PEEKMESSAGEAPROC PeekMessageA;
+DEFWINDOWPROCWPROC DefWindowProcW;
+UNREGISTERCLASSAPROC UnregisterClassA;
+REGISTERCLASSEXAPROC RegisterClassExA;
+CREATEWINDOWEXAPROC CreateWindowExA;
+DESTROYWINDOWPROC Win32DestroyWindow;
+SETWINDOWPOSPROC Win32SetWindowPos;
+GETASYNCKEYSTATEPROC GetAsyncKeyState;
+SETTIMERPROC SetTimer;
+KILLTIMERPROC KillTimer;
+BEGINPAINTPROC BeginPaint;
+ENDPAINTPROC EndPaint;
+REDRAWWINDOWPROC RedrawWindow;
+GETCLIENTRECTPROC GetClientRect;
+GETWINDOWLONGPTRAPROC GetWindowLongPtrA;
+SETWINDOWLONGPTRAPROC SetWindowLongPtrA;
+LOADCURSORWPROC LoadCursorW;
+LOADICONWPROC LoadIconW;
+CHOOSEPIXELFORMATPROC ChoosePixelFormat;
+SETPIXELFORMATPROC SetPixelFormat;
+SWAPBUFFERSPROC SwapBuffers;
+GETDCPROC GetDC;
 
 platform Platform;
 
@@ -98,7 +116,47 @@ LRESULT CALLBACK Win32MessageCallback(HWND Window, u32 Msg, WPARAM WParam, LPARA
     }
     }
   }
-  return DefWindowProc(Window, Msg, WParam, LParam);
+  return DefWindowProcW(Window, Msg, WParam, LParam);
+}
+
+void LoadWin32Libs() {
+  Platform.User32 = LoadLibraryA("User32.dll");
+  Platform.Gdi32 = LoadLibraryA("Gdi32.dll");
+
+  if (!Platform.User32) {
+    LogCoreError("Failed to load User32");
+    return;
+  }
+  if (!Platform.Gdi32) {
+    LogCoreError("Failed to load Gdi32");
+    return;
+  }
+
+  TranslateMessage = (TRANSLATEMESSAGEPROC)GetProcAddress(Platform.User32, "TranslateMessage");
+  DispatchMessageA = (DISPATCHMESSAGEAPROC)GetProcAddress(Platform.User32, "DispatchMessageA");
+  PeekMessageA = (PEEKMESSAGEAPROC)GetProcAddress(Platform.User32, "PeekMessageA");
+  DefWindowProcW = (DEFWINDOWPROCWPROC)GetProcAddress(Platform.User32, "DefWindowProcW");
+  UnregisterClassA = (UNREGISTERCLASSAPROC)GetProcAddress(Platform.User32, "UnregisterClassA");
+  RegisterClassExA = (REGISTERCLASSEXAPROC)GetProcAddress(Platform.User32, "RegisterClassExA");
+  CreateWindowExA = (CREATEWINDOWEXAPROC)GetProcAddress(Platform.User32, "CreateWindowExA");
+  Win32DestroyWindow = (DESTROYWINDOWPROC)GetProcAddress(Platform.User32, "DestroyWindow");
+  Win32SetWindowPos = (SETWINDOWPOSPROC)GetProcAddress(Platform.User32, "SetWindowPos");
+  GetAsyncKeyState = (GETASYNCKEYSTATEPROC)GetProcAddress(Platform.User32, "GetAsyncKeyState");
+  SetTimer = (SETTIMERPROC)GetProcAddress(Platform.User32, "SetTimer");
+  KillTimer = (KILLTIMERPROC)GetProcAddress(Platform.User32, "KillTimer");
+  BeginPaint = (BEGINPAINTPROC)GetProcAddress(Platform.User32, "BeginPaint");
+  EndPaint = (ENDPAINTPROC)GetProcAddress(Platform.User32, "EndPaint");
+  RedrawWindow = (REDRAWWINDOWPROC)GetProcAddress(Platform.User32, "RedrawWindow");
+  GetClientRect = (GETCLIENTRECTPROC)GetProcAddress(Platform.User32, "GetClientRect");
+  GetWindowLongPtrA = (GETWINDOWLONGPTRAPROC)GetProcAddress(Platform.User32, "GetWindowLongPtrA");
+  SetWindowLongPtrA = (SETWINDOWLONGPTRAPROC)GetProcAddress(Platform.User32, "SetWindowLongPtrA");
+  LoadCursorW = (LOADCURSORWPROC)GetProcAddress(Platform.User32, "LoadCursorW");
+  LoadIconW = (LOADICONWPROC)GetProcAddress(Platform.User32, "LoadIconW");
+  GetDC = (GETDCPROC)GetProcAddress(Platform.User32, "GetDC");
+
+  ChoosePixelFormat = (CHOOSEPIXELFORMATPROC)GetProcAddress(Platform.Gdi32, "ChoosePixelFormat");
+  SetPixelFormat = (SETPIXELFORMATPROC)GetProcAddress(Platform.Gdi32, "SetPixelFormat");
+  SwapBuffers = (SWAPBUFFERSPROC)GetProcAddress(Platform.Gdi32, "SwapBuffers");
 }
 
 void PlatformInit() {
@@ -106,7 +164,9 @@ void PlatformInit() {
     return;
   }
 
-  Platform.Instance = GetModuleHandle(NULL);
+  LoadWin32Libs();
+
+  Platform.Instance = GetModuleHandleW(NULL);
 
   WNDCLASSEXA WindowClass = {};
   WindowClass.cbSize = sizeof(WNDCLASSEXA);
@@ -205,13 +265,13 @@ void DestroyWindow(window **Window) {
 }
 
 void SetWindowPos(window *Window, i32 X, i32 Y) {
-  SetWindowPos(Window->Handle, NULL, X, Y, Window->Width, Window->Height, 0);
+  Win32SetWindowPos(Window->Handle, NULL, X, Y, Window->Width, Window->Height, 0);
   Window->X = X;
   Window->Y = Y;
 }
 
 void SetWindowSize(window *Window, i32 Width, i32 Height) {
-  SetWindowPos(Window->Handle, NULL, Window->X, Window->Y, Width, Height, 0);
+  Win32SetWindowPos(Window->Handle, NULL, Window->X, Window->Y, Width, Height, 0);
   Window->Width = Width;
   Window->Height = Height;
 }

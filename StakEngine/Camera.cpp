@@ -10,10 +10,10 @@ void SetCameraViewportSize(scene_view_camera *Camera, i32 Width, i32 Height) {
 void RecalculateCameraProjection(scene_view_camera *Camera) {
   switch (Camera->Type) {
   case PROJ_TYPE_ORTHOGRAPHIC: {
-    f32 Left = -Camera->OrthoSize * 0.5 * Camera->AspectRatio;
-    f32 Right = Camera->OrthoSize * 0.5 * Camera->AspectRatio;
-    f32 Bottom = -Camera->OrthoSize * 0.5;
-    f32 Top = Camera->OrthoSize * 0.5;
+    f32 Left = -Camera->OrthoSize * 0.5f * Camera->AspectRatio;
+    f32 Right = Camera->OrthoSize * 0.5f * Camera->AspectRatio;
+    f32 Bottom = -Camera->OrthoSize * 0.5f;
+    f32 Top = Camera->OrthoSize * 0.5f;
     Camera->Projection = OrthographicProjection(Left,
                                                 Right,
                                                 Bottom,

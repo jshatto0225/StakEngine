@@ -5,8 +5,7 @@
 FILE *CoreLogFile;
 
 void LogInit() {
-  // Goofy aah string concat
-  CoreLogFile = fopen(SOURCE_DIR "StakRuntime.log", "w");
+  fopen_s(&CoreLogFile, "StakRuntime.log", "w");
 }
 
 void LogShutdown() {

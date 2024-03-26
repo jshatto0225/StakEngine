@@ -1,15 +1,9 @@
 #pragma once
 
-#include <Runtime/Runtime.h>
+#include "../StakEngine/StakEngine.h"
 
-class UIRenderer {
-public:
-  static bool CheckBox(const std::string &label);
-  static std::string TextBox();
-  //static void Image(const std::shared_ptr<Texture> &image);
-  static bool TextButton(const std::string &text, const std::shared_ptr<Font> &font);
-  static bool ImageButton(const std::shared_ptr<Texture> &image);
-  static void Text(const std::string &text, const std::shared_ptr<Font> &font);
-
-private:
-};
+bool UIRendererCheckBox(const char *label);
+const char *UIRendererTextBox();
+bool UIRendererTextButton(const char *text, const font *Font);
+bool UIRendererImageButton(const texture2d *image);
+void UIRendererText(const char *text, const font *Font);

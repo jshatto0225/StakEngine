@@ -8,3 +8,5 @@ Build/*
 *.cmake
 Makefile
 compile_commands.json
+.vcxproj
+.sln

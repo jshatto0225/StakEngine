@@ -1,5 +1,6 @@
 #include "Renderer.h"
 
+#include "Platform.h"
 #include "Log.h"
 #include "StakMath.h"
 

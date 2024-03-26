@@ -1,5 +1,6 @@
 #pragma once
 
+#include "Platform.h"
 #include "Renderer.h"
 #include "Camera.h"
 #include "Image.h"
