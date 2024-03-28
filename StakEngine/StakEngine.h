@@ -2,6 +2,7 @@
 
 #include "Platform.h"
 #include "Renderer.h"
+#include "Renderer2D.h"
 #include "Camera.h"
 #include "Image.h"
 #include "Font.h"

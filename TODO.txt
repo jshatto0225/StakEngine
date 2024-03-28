@@ -5,7 +5,8 @@
   -- For game GUIs
 
 -- Create a 2D Renderer in the runtime
-  -- Add text, lines, and circles
+  -- text
+  -- lines
 -- Creata a 3D Renderer in the runtime
   -- Both will also be used in the editor for a preview window
   -- Could make a seperate renderer entirely for the editor to support more debug fatures

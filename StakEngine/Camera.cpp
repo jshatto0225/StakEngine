@@ -3,13 +3,18 @@
 #include "Log.h"
 #include "StakMath.h"
 
-void SetCameraViewportSize(scene_view_camera *Camera, i32 Width, i32 Height) {
+void
+SetCameraViewportSize(scene_view_camera *Camera, i32 Width, i32 Height)
+{
   Camera->AspectRatio = (f32)Width / (f32)Height;
 }
 
-void RecalculateCameraProjection(scene_view_camera *Camera) {
+void
+RecalculateCameraProjection(scene_view_camera *Camera)
+{
   switch (Camera->Type) {
-  case PROJ_TYPE_ORTHOGRAPHIC: {
+  case PROJ_TYPE_ORTHOGRAPHIC:
+  {
     f32 Left = -Camera->OrthoSize * 0.5f * Camera->AspectRatio;
     f32 Right = Camera->OrthoSize * 0.5f * Camera->AspectRatio;
     f32 Bottom = -Camera->OrthoSize * 0.5f;
@@ -28,7 +33,9 @@ void RecalculateCameraProjection(scene_view_camera *Camera) {
   }
 }
 
-void RecalculateCameraView(scene_view_camera *Camera) {
+void
+RecalculateCameraView(scene_view_camera *Camera)
+{
   quat Quaternion = DirectionVecToQuat(&Camera->Orientation);
   mat4 Rotation = QuatToMat4(&Quaternion);
   vec3 NegativePos = { -Camera->Pos.x, -Camera->Pos.y, -Camera->Pos.z };
@@ -37,11 +44,15 @@ void RecalculateCameraView(scene_view_camera *Camera) {
   Camera->View = Inverse(&Transform);
 }
 
-void RecalculateCameraViewProj(scene_view_camera *Camera) {
+void
+RecalculateCameraViewProj(scene_view_camera *Camera)
+{
   Camera->ViewProj = Matmul(&Camera->Projection, &Camera->View);
 }
 
-void SetDefaultOrthoCameraSettings(scene_view_camera *Camera) {
+void
+SetDefaultOrthoCameraSettings(scene_view_camera *Camera)
+{
   *Camera = {};
   Camera->Pos = { 0, 0, 0 };
   Camera->Orientation = { 0, 0, 0 };

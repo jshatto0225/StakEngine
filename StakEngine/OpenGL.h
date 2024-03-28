@@ -368,6 +368,11 @@ typedef f64 GLclampd;
 #include "External/GL/glext.h"
 
 extern PFNGLGENBUFFERSPROC glGenBuffers;
+extern PFNGLCREATEFRAMEBUFFERSPROC glCreateFramebuffers;
+extern PFNGLDELETEFRAMEBUFFERSPROC glDeleteFramebuffers;
+extern PFNGLBINDFRAMEBUFFERPROC glBindFramebuffer;
+extern PFNGLFRAMEBUFFERTEXTURE2DPROC glFramebufferTexture2D;
+extern PFNGLCHECKFRAMEBUFFERSTATUSPROC glCheckFramebufferStatus;
 extern PFNGLBINDBUFFERPROC glBindBuffer;
 extern PFNGLBUFFERDATAPROC glBufferData;
 extern PFNGLDELETEBUFFERSPROC glDeleteBuffers;
@@ -447,3 +452,6 @@ extern GLTEXSUBIMAGE2DPROC Stak_glTexSubImage2D;
 typedef void (GLAPIENTRY GLVIEWPORTPROC)(GLint, GLint, GLsizei, GLsizei);
 extern GLVIEWPORTPROC Stak_glViewport;
 #define glViewport Stak_glViewport
+typedef void (GLAPIENTRY GLTEXIMAGE2DPROC)(GLenum, GLint, GLint, GLsizei, GLsizei, GLint, GLenum, GLenum, const void *);
+extern GLTEXIMAGE2DPROC Stak_glTexImage2D;
+#define glTexImage2D Stak_glTexImage2D

@@ -2,23 +2,20 @@
 
 #if defined(SK_WGL)
 
-#include <windows.h>
+#include "WindowsPlatform.h"
 #include <gl/GL.h>
-
-#undef CreateWindow
-#undef DestroyWindow
+#include "External/GL/wglext.h"
 
 #include "Window.h"
 #include "Renderer.h"
-#include "WindowsPlatform.h"
 #include "Log.h"
 
-PFNWGLGETEXTENSIONSSTRINGEXTPROC wglGetExtensionsStringEXT;
-PFNWGLGETEXTENSIONSSTRINGARBPROC wglGetExtensionsStringARB;
-PFNWGLCREATECONTEXTATTRIBSARBPROC wglCreateContextAttribsARB;
-PFNWGLSWAPINTERVALEXTPROC wglSwapIntervalEXT;
-PFNWGLGETPIXELFORMATATTRIBIVARBPROC wglGetPixelFormatAttribivARB;
-PFNWGLCHOOSEPIXELFORMATARB wglChoosePixelFormatARB;
+WGLGETEXTENSIONSSTRINGEXTPROC wglGetExtensionsStringEXT;
+WGLGETEXTENSIONSSTRINGARBPROC wglGetExtensionsStringARB;
+WGLCREATECONTEXTATTRIBSARBPROC wglCreateContextAttribsARB;
+WGLSWAPINTERVALEXTPROC wglSwapIntervalEXT;
+WGLGETPIXELFORMATATTRIBIVARBPROC wglGetPixelFormatAttribivARB;
+WGLCHOOSEPIXELFORMATARB wglChoosePixelFormatARB;
 WGLCREATECONTEXTPROC wglCreateContext;
 WGLDELETECONTEXTPROC wglDeleteContext;
 WGLGETCURRENTDCPROC wglGetCurrentDC;
@@ -26,17 +23,22 @@ WGLGETPROCADDRESSPROC wglGetProcAddress;
 WGLGETCURRENTCONTEXTPROC wglGetCurrentContext;
 WGLMAKECURRENTPROC wglMakeCurrent;
 
-struct context {
+struct context
+{
   const window *Window;
   HDC DeviceContext;
   HGLRC GLRenderingContext;
 };
 
-void *PlatformGetProcAddress(const char *name) {
+void *
+PlatformGetProcAddress(const char *name)
+{
   return (void *)wglGetProcAddress(name);
 }
 
-void PlatformInitExtensions() {
+void
+PlatformInitExtensions()
+{
   LoadRenderApiLibrary();
 
   PIXELFORMATDESCRIPTOR PFD;
@@ -57,20 +59,23 @@ void PlatformInitExtensions() {
   DummyHGLRC = wglCreateContext(DummyHDC);
   wglMakeCurrent(DummyHDC, DummyHGLRC);
 
-  wglGetExtensionsStringEXT = (PFNWGLGETEXTENSIONSSTRINGEXTPROC)wglGetProcAddress("wglGetExtensionsStringEXT");
-  wglGetExtensionsStringARB = (PFNWGLGETEXTENSIONSSTRINGARBPROC)wglGetProcAddress("wglGetExtensionsStringARB");
-  wglCreateContextAttribsARB = (PFNWGLCREATECONTEXTATTRIBSARBPROC)wglGetProcAddress("wglCreateContextAttribsARB");
-  wglSwapIntervalEXT = (PFNWGLSWAPINTERVALEXTPROC)wglGetProcAddress("wglSwapIntervalEXT");
-  wglGetPixelFormatAttribivARB = (PFNWGLGETPIXELFORMATATTRIBIVARBPROC)wglGetProcAddress("wglGetPixelFormatAttribivARB");
-  wglChoosePixelFormatARB = (PFNWGLCHOOSEPIXELFORMATARB)wglGetProcAddress("wglChoosePixelFormatARB");
+  wglGetExtensionsStringEXT = (WGLGETEXTENSIONSSTRINGEXTPROC)wglGetProcAddress("wglGetExtensionsStringEXT");
+  wglGetExtensionsStringARB = (WGLGETEXTENSIONSSTRINGARBPROC)wglGetProcAddress("wglGetExtensionsStringARB");
+  wglCreateContextAttribsARB = (WGLCREATECONTEXTATTRIBSARBPROC)wglGetProcAddress("wglCreateContextAttribsARB");
+  wglSwapIntervalEXT = (WGLSWAPINTERVALEXTPROC)wglGetProcAddress("wglSwapIntervalEXT");
+  wglGetPixelFormatAttribivARB = (WGLGETPIXELFORMATATTRIBIVARBPROC)wglGetProcAddress("wglGetPixelFormatAttribivARB");
+  wglChoosePixelFormatARB = (WGLCHOOSEPIXELFORMATARB)wglGetProcAddress("wglChoosePixelFormatARB");
 
   wglMakeCurrent(CurrentHDC, CurrentHGLRC);
 }
 
-context *CreateContext(const window *Window) {
+context *
+CreateContext(const window *Window)
+{
   context *Context = (context *)malloc(sizeof(context));
 
-  if (!Context) {
+  if (!Context)
+  {
     LogCoreError("Failed to allocate memory for context");
     return NULL;
   }
@@ -78,7 +83,8 @@ context *CreateContext(const window *Window) {
   Context->Window = Window;
   Context->DeviceContext = GetDC(Window->Handle);
 
-  PIXELFORMATDESCRIPTOR PFD = {
+  PIXELFORMATDESCRIPTOR PFD =
+  {
     sizeof(PIXELFORMATDESCRIPTOR),
     1,
     PFD_DRAW_TO_WINDOW | PFD_SUPPORT_OPENGL | PFD_DOUBLEBUFFER,
@@ -93,7 +99,8 @@ context *CreateContext(const window *Window) {
     0, 0, 0
   };
 
-  const int PixelFormatAttribList[] = {
+  const int PixelFormatAttribList[] =
+  {
     WGL_DRAW_TO_WINDOW_ARB, GL_TRUE,
     WGL_SUPPORT_OPENGL_ARB, GL_TRUE,
     WGL_DOUBLE_BUFFER_ARB, GL_TRUE,
@@ -103,7 +110,8 @@ context *CreateContext(const window *Window) {
     WGL_STENCIL_BITS_ARB, 8,
     0 // End of attributes list
   };
-  int Attributes[] = {
+  int Attributes[] =
+  {
     WGL_CONTEXT_MAJOR_VERSION_ARB, 4,
     WGL_CONTEXT_MINOR_VERSION_ARB, 5,
     WGL_CONTEXT_PROFILE_MASK_ARB, WGL_CONTEXT_CORE_PROFILE_BIT_ARB,
@@ -133,9 +141,12 @@ context *CreateContext(const window *Window) {
   return Context;
 }
 
-void DestroyContext(context **Context) {
+void
+DestroyContext(context **Context)
+{
   if (*Context) {
-    if (wglGetCurrentContext() == (*Context)->GLRenderingContext) {
+    if (wglGetCurrentContext() == (*Context)->GLRenderingContext)
+    {
       wglMakeCurrent(NULL, NULL);
     }
     wglDeleteContext((*Context)->GLRenderingContext);
@@ -146,18 +157,25 @@ void DestroyContext(context **Context) {
   }
 }
 
-void MakeContextCurrent(const context *Context) {
+void
+MakeContextCurrent(const context *Context)
+{
   wglMakeCurrent(Context->DeviceContext, Context->GLRenderingContext);
   RenderCommandBind();
 }
 
-void SwapContextBuffers(const context *Context) {
+void
+SwapContextBuffers(const context *Context)
+{
   SwapBuffers(Context->DeviceContext);
 }
 
-void LoadRenderApiLibrary() {
+void
+LoadRenderApiLibrary()
+{
   Platform.RendererApi = LoadLibraryA("OpenGL32.dll");
-  if (!Platform.RendererApi) {
+  if (!Platform.RendererApi)
+  {
     LogCoreError("Failed to load OpenGL");
   }
 
@@ -169,7 +187,9 @@ void LoadRenderApiLibrary() {
   wglMakeCurrent = (WGLMAKECURRENTPROC)GetRendererApiProc("wglMakeCurrent");
 }
 
-void *GetRendererApiProc(const char *Name) {
+void *
+GetRendererApiProc(const char *Name)
+{
   return GetProcAddress(Platform.RendererApi, Name);
 }
 

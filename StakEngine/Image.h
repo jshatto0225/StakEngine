@@ -2,7 +2,8 @@
 
 #include "Types.h"
 
-struct image_data {
+struct image_data
+{
   const char *Path;
   i32 Width;
   i32 Height;
@@ -11,7 +12,8 @@ struct image_data {
   u64 SizeInBytes;
 };
 
-struct image {
+struct image
+{
   bool FlipOnLoad;
   u8 *Bytes;
   image_data Data;

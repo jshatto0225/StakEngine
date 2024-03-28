@@ -1,6 +1,7 @@
 #include "EditorLayer.h"
 
-void *EditorLayerInit() {
+void *
+EditorLayerInit() {
   editor_data *Data = (editor_data *)malloc(sizeof(editor_data));
 
   if (!Data) {
@@ -16,7 +17,6 @@ void *EditorLayerInit() {
   Data->Tex3 = CreateTexture2D(IMAGE_DIR "BigTexture.bmp");
 
   SetDefaultOrthoCameraSettings(&Data->Cam);
-
   SetCameraViewportSize(&Data->Cam, Data->WindowWidth, Data->WindowHeight);
   RecalculateCameraView(&Data->Cam);
   RecalculateCameraProjection(&Data->Cam);
@@ -26,43 +26,79 @@ void *EditorLayerInit() {
   Data->Vec1 = { -0.25f, -0.25f };
   Data->Vec2 = {  0.25f,  0.25f };
   Data->Vec3 = {  0.00f,  0.00f };
+  Data->SceneSize = { 3.0f, 3.0f };
+  Data->SceneBG = { 0.2f, 0.9f, 0.6f, 1.0f };
+  Data->Color = { 1, 1, 0, 1 };
+  Data->ScenePos = { 0.0f, 0.0f };
+
+  framebuffer_spec Spec = {};
+  Spec.Width = 800;
+  Spec.Height = 450;
+  Spec.Samples = 0;
+  Spec.SwapChainTarget = 0;
+  Data->Framebuffer = CreateFramebuffer(&Spec);
 
   return (void *)Data;
 }
 
-void EditorLayerShutdown(void **Data) {
+void
+EditorLayerShutdown(void **Data) {
   editor_data **EData = (editor_data **)Data;
   if (*EData) {
     DestroyTexture2D(&(*EData)->Tex1);
     DestroyTexture2D(&(*EData)->Tex2);
     DestroyTexture2D(&(*EData)->Tex3);
-  
+
     free(*EData);
 
     EData = NULL;
   }
 }
 
-void EditorLayerUpdate(void *Data) {
+void
+EditorLayerUpdate(void *Data) {
   editor_data *EData = (editor_data *)Data;
   EData->QuadRotation += 1.0f;
+  if (GetKeyDown(K_W)) {
+    LogTrace("Forward");
+    EData->Cam.Pos.y += 0.005f;
+  }
+  if (GetKeyDown(K_A)) {
+    LogTrace("Left");
+    EData->Cam.Pos.x -= 0.005f;
+  }
+  if (GetKeyDown(K_S)) {
+    LogTrace("Backwards");
+    EData->Cam.Pos.y -= 0.005f;
+  }
+  if (GetKeyDown(K_D)) {
+    LogTrace("Right");
+    EData->Cam.Pos.x += 0.005f;
+  }
+
+  RecalculateCameraView(&EData->Cam);
+  RecalculateCameraProjection(&EData->Cam);
+  RecalculateCameraViewProj(&EData->Cam);
 }
 
-void EditorLayerRenderSystem(editor_data *EData) {
+void
+EditorLayerRenderSystem(editor_data *Data) {
   RenderCommandSetClearColor(1, 0, 1, 1);
   RenderCommandClear();
 
-  Renderer2DBeginScene(&EData->Cam);
+  Renderer2DBeginScene(&Data->Cam);
   {
-    Renderer2DDrawQuad(&EData->Vec1, &EData->Vec2, EData->QuadRotation * (PI / 180.0f), EData->Tex3, false);
-    Renderer2DDrawQuad(&EData->Vec3, &EData->Vec2, EData->Tex1, false);
-    Renderer2DDrawQuad(&EData->Vec2, &EData->Vec2, EData->Tex2, false);
+    Renderer2DDrawCircle(&Data->Vec1, &Data->Vec2, Data->QuadRotation * (PI / 180.0f), &Data->Tex3, false);
+    Renderer2DDrawQuad(&Data->Vec3, &Data->Vec2, &Data->Color);
+    Renderer2DDrawQuad(&Data->Vec2, &Data->Vec2, &Data->Tex1, false);
   }
   Renderer2DEndScene();
+
   RenderCommandSwapBuffers();
 }
 
-void EditorLayerOnEvent(void *Parent, void *Data, const event *Event) {
+void
+EditorLayerOnEvent(void *Data, const event *Event) {
   editor_data *EData = (editor_data *)Data;
 
   if (Event->Type == WINDOW_RESIZED) {

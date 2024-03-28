@@ -3,7 +3,8 @@
 #include "Types.h"
 #include "StakMath.h"
 
-enum key {
+enum key
+{
   K_BUTTON_1 = 0,
   K_BUTTON_2,
   K_BUTTON_3,

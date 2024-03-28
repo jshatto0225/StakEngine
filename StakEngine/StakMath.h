@@ -6,18 +6,25 @@
 
 #define PI 3.14159265358979323846f
 
-struct vec1 {
-  union { f32 x; f32 r; };
+struct vec1
+{
+  union
+  {
+    f32 x; f32 r;
+  };
 
   f32 &operator[](i32);
   f32 operator[](i32) const;
 };
 
-struct vec2 {
-  union {
+struct vec2
+{
+  union
+  {
     f32 x, r;
   };
-  union {
+  union
+  {
     f32 y, g;
   };
 
@@ -25,14 +32,18 @@ struct vec2 {
   f32 operator[](i32) const;
 };
 
-struct vec3 {
-  union {
+struct vec3
+{
+  union
+  {
     f32 x, r;
   };
-  union {
+  union
+  {
     f32 y, g;
   };
-  union {
+  union
+  {
     f32 z, b;
   };
 
@@ -40,17 +51,22 @@ struct vec3 {
   f32 operator[](i32) const;
 };
 
-struct vec4 {
-  union {
+struct vec4
+{
+  union
+  {
     f32 x, r;
   };
-  union {
+  union
+  {
     f32 y, g;
   };
-  union {
+  union
+  {
     f32 z, b;
   };
-  union {
+  union
+  {
     f32 w, a;
   };
 
@@ -58,28 +74,32 @@ struct vec4 {
   f32 operator[](i32) const;
 };
 
-struct mat2 {
+struct mat2
+{
   vec2 cols[2];
 
   vec2 &operator[](i32);
   const vec2 &operator[](i32) const;
 };
 
-struct mat3 {
+struct mat3
+{
   vec3 cols[3];
 
   vec3 &operator[](i32);
   const vec3 &operator[](i32) const;
 };
 
-struct mat4 {
+struct mat4
+{
   vec4 cols[4];
 
   vec4 &operator[](i32);
   const vec4 &operator[](i32) const;
 };
 
-struct quat {
+struct quat
+{
   f32 x, y, z, w;
 };
 

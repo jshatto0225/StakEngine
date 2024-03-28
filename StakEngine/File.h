@@ -1,8 +1,9 @@
-#pragma 
+#pragma once
 
 #include "Types.h"
 
-struct file {
+struct file
+{
   void *Data;
   const char *FilePath;
   u64 Size;

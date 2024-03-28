@@ -28,12 +28,13 @@ REDRAWWINDOWPROC RedrawWindow;
 GETCLIENTRECTPROC GetClientRect;
 GETWINDOWLONGPTRAPROC GetWindowLongPtrA;
 SETWINDOWLONGPTRAPROC SetWindowLongPtrA;
-LOADCURSORWPROC LoadCursorW;
-LOADICONWPROC LoadIconW;
+LOADCURSORAPROC LoadCursorA;
+LOADICONAPROC LoadIconA;
 CHOOSEPIXELFORMATPROC ChoosePixelFormat;
 SETPIXELFORMATPROC SetPixelFormat;
 SWAPBUFFERSPROC SwapBuffers;
 GETDCPROC GetDC;
+GETCURSORPOSPROC GetCursorPos;
 
 platform Platform;
 
@@ -42,74 +43,89 @@ constexpr const char *WIN32_DEFAULT_WNDCLASS_NAME = "SK_DEFAULT_WNDCLASS";
 const UINT TIMER_INTERVAL = 10;
 UINT_PTR TimerId;
 
-LRESULT CALLBACK Win32MessageCallback(HWND Window, u32 Msg, WPARAM WParam, LPARAM LParam) {
+LRESULT CALLBACK
+Win32MessageCallback(HWND Window, UINT Msg, WPARAM WParam, LPARAM LParam)
+{
   window *Win = (window *)GetWindowLongPtrA(Window, GWLP_USERDATA);
-  if (Win) {
-    switch (Msg) {
-    case WM_ENTERSIZEMOVE: {
+  if (Win)
+  {
+    switch (Msg)
+    {
+    case WM_ENTERSIZEMOVE:
+    {
       TimerId = SetTimer(Window, 1, TIMER_INTERVAL, NULL);
       return 0;
     };
-    case WM_TIMER: {
+    case WM_TIMER:
+    {
       RedrawWindow(Window, NULL, NULL, RDW_INVALIDATE);
       return 0;
     }
-    case WM_EXITSIZEMOVE: {
+    case WM_EXITSIZEMOVE:
+    {
       KillTimer(Window, TimerId);
       return 0;
     }
-    case WM_CLOSE: {
-      if (Win->EventFn) {
+    case WM_CLOSE:
+    {
+      if (Win->EventFunc)
+      {
         event Event = {};
         Event.Type = WINDOW_CLOSE;
         Event.WinCloseEvent.Window = Win;
-        Win->EventFn(Win->Parent, &Event);
+        Win->EventFunc(Win->Parent, &Event);
       }
       return 0;
     }
-    case WM_SIZE: {
+    case WM_SIZE:
+    {
       RECT Rect = {};
       GetClientRect(Window, &Rect);
 
       Win->Width = Rect.right - Rect.left;
       Win->Height = Rect.bottom - Rect.top;
 
-      if (Win->EventFn) {
+      if (Win->EventFunc)
+      {
         event Event;
         Event.Type = WINDOW_RESIZED;
         Event.WinResizeEvent.Window = Win;
         Event.WinResizeEvent.Width = Rect.right - Rect.left;
         Event.WinResizeEvent.Height = Rect.bottom - Rect.top;
-        Win->EventFn(Win->Parent, &Event);
+        Win->EventFunc(Win->Parent, &Event);
       }
       RedrawWindow(Window, NULL, NULL, RDW_INVALIDATE);
       return 0;
     }
-    case WM_MOVE: {
+    case WM_MOVE:
+    {
       RECT Rect = {};
       GetClientRect(Window, &Rect);
       Win->X = Rect.left;
       Win->Y = Rect.top;
 
-      if (Win->EventFn) {
+      if (Win->EventFunc)
+      {
         event Event;
         Event.Type = WINDOW_MOVED;
         Event.WinMoveEvent.Window = Win;
         Event.WinMoveEvent.X = Rect.left;
         Event.WinMoveEvent.Y = Rect.top;
-        Win->EventFn(Win->Parent, &Event);
+        Win->EventFunc(Win->Parent, &Event);
       }
       RedrawWindow(Window, NULL, NULL, RDW_INVALIDATE);
       return 0;
     }
-    case WM_PAINT: {
+    case WM_PAINT:
+    {
       PAINTSTRUCT PaintStruct;
       HDC DeviceContext = BeginPaint(Window, &PaintStruct);
-      if (Win->EventFn) {
+      if (Win->EventFunc)
+      {
         event Event;
         Event.Type = WINDOW_PAINT;
         Event.WinPaintEvent.Window = Win;
-        Win->EventFn(Win->Parent, &Event);
+        Win->EventFunc(Win->Parent, &Event);
       }
       EndPaint(Window, &PaintStruct);
       return 0;
@@ -119,15 +135,19 @@ LRESULT CALLBACK Win32MessageCallback(HWND Window, u32 Msg, WPARAM WParam, LPARA
   return DefWindowProcA(Window, Msg, WParam, LParam);
 }
 
-void LoadWin32Libs() {
+void
+LoadWin32Libs()
+{
   Platform.User32 = LoadLibraryA("User32.dll");
   Platform.Gdi32 = LoadLibraryA("Gdi32.dll");
 
-  if (!Platform.User32) {
+  if (!Platform.User32)
+  {
     LogCoreError("Failed to load User32");
     return;
   }
-  if (!Platform.Gdi32) {
+  if (!Platform.Gdi32)
+  {
     LogCoreError("Failed to load Gdi32");
     return;
   }
@@ -150,17 +170,21 @@ void LoadWin32Libs() {
   GetClientRect = (GETCLIENTRECTPROC)GetProcAddress(Platform.User32, "GetClientRect");
   GetWindowLongPtrA = (GETWINDOWLONGPTRAPROC)GetProcAddress(Platform.User32, "GetWindowLongPtrA");
   SetWindowLongPtrA = (SETWINDOWLONGPTRAPROC)GetProcAddress(Platform.User32, "SetWindowLongPtrA");
-  LoadCursorW = (LOADCURSORWPROC)GetProcAddress(Platform.User32, "LoadCursorW");
-  LoadIconW = (LOADICONWPROC)GetProcAddress(Platform.User32, "LoadIconW");
+  LoadCursorA = (LOADCURSORAPROC)GetProcAddress(Platform.User32, "LoadCursorW");
+  LoadIconA = (LOADICONAPROC)GetProcAddress(Platform.User32, "LoadIconW");
   GetDC = (GETDCPROC)GetProcAddress(Platform.User32, "GetDC");
+  GetCursorPos = (GETCURSORPOSPROC)GetProcAddress(Platform.User32, "GetCursorPos");
 
   ChoosePixelFormat = (CHOOSEPIXELFORMATPROC)GetProcAddress(Platform.Gdi32, "ChoosePixelFormat");
   SetPixelFormat = (SETPIXELFORMATPROC)GetProcAddress(Platform.Gdi32, "SetPixelFormat");
   SwapBuffers = (SWAPBUFFERSPROC)GetProcAddress(Platform.Gdi32, "SwapBuffers");
 }
 
-void PlatformInit() {
-  if (Platform.Initialized) {
+void
+PlatformInit()
+{
+  if (Platform.Initialized)
+  {
     return;
   }
 
@@ -172,8 +196,8 @@ void PlatformInit() {
   WindowClass.cbSize = sizeof(WNDCLASSEXA);
   WindowClass.lpszClassName = WIN32_DEFAULT_WNDCLASS_NAME;
   WindowClass.hInstance = Platform.Instance;
-  WindowClass.hIcon = LoadIcon(NULL, IDI_WINLOGO);
-  WindowClass.hCursor = LoadCursor(NULL, IDC_ARROW);
+  WindowClass.hIcon = LoadIconA(NULL, IDI_WINLOGO);
+  WindowClass.hCursor = LoadCursorA(NULL, IDC_ARROW);
   WindowClass.lpfnWndProc = Win32MessageCallback;
   WindowClass.cbClsExtra = sizeof(window *);
   Platform.DefaultWindowClass = RegisterClassExA(&WindowClass);
@@ -196,33 +220,42 @@ void PlatformInit() {
   Platform.Initialized = true;
 }
 
-void PlatformShutdown() {
-  if (!Platform.Initialized) {
+void
+PlatformShutdown()
+{
+  if (!Platform.Initialized)
+  {
     return;
   }
   Platform.Initialized = false;
   UnregisterClassA(WIN32_DEFAULT_WNDCLASS_NAME, Platform.Instance);
 }
 
-bool PlatformIsInitialized() {
+bool
+PlatformIsInitialized()
+{
   return Platform.Initialized;
 }
 
 u64 WindowCount = 0;
 
-window *CreateWindow(const window_config *Config) {
-  if (WindowCount == 0) {
+window *
+CreateWindow(const window_config *Config)
+{
+  if (WindowCount == 0)
+  {
     PlatformInit();
   }
   WindowCount++;
 
   window *Window = (window *)malloc(sizeof(window));
 
-  if (!Window) {
+  if (!Window)
+  {
     LogCoreError("Failed to allocate memory for window");
     return NULL;
   }
-  
+
   Window->Parent = Config->Parent;
   Window->X = Config->X;
   Window->Y = Config->Y;
@@ -248,13 +281,17 @@ window *CreateWindow(const window_config *Config) {
   return Window;
 }
 
-void DestroyWindow(window **Window) {
-  if (*Window) {
+void
+DestroyWindow(window **Window)
+{
+  if (*Window)
+  {
     DestroyContext(&(*Window)->Context);
-    
+
     Win32DestroyWindow((*Window)->Handle);
     WindowCount--;
-    if (WindowCount == 0) {
+    if (WindowCount == 0)
+    {
       PlatformShutdown();
     }
 
@@ -264,48 +301,66 @@ void DestroyWindow(window **Window) {
   }
 }
 
-void SetWindowPos(window *Window, i32 X, i32 Y) {
+void
+SetWindowPos(window *Window, i32 X, i32 Y)
+{
   Win32SetWindowPos(Window->Handle, NULL, X, Y, Window->Width, Window->Height, 0);
   Window->X = X;
   Window->Y = Y;
 }
 
-void SetWindowSize(window *Window, i32 Width, i32 Height) {
+void
+SetWindowSize(window *Window, i32 Width, i32 Height)
+{
   Win32SetWindowPos(Window->Handle, NULL, Window->X, Window->Y, Width, Height, 0);
   Window->Width = Width;
   Window->Height = Height;
 }
 
-window_pos_data GetWindowPos(window *Window) {
+window_pos_data
+GetWindowPos(window *Window)
+{
   return { Window->X, Window->Y };
 }
 
-window_size_data GetWindowSize(window *Window) {
+window_size_data
+GetWindowSize(window *Window)
+{
   return { Window->Width, Window->Height };
 }
 
-void MakeWindowCurrent(const window *Window) {
+void
+MakeWindowCurrent(const window *Window)
+{
   MakeContextCurrent(Window->Context);
 }
 
-void UpdateWindow(const window *Window) {
+void
+UpdateWindow(const window *Window)
+{
   RedrawWindow(Window->Handle, NULL, NULL, RDW_INVALIDATE);
   MSG Msg = {};
-  while (PeekMessageA(&Msg, NULL, 0, 0, PM_REMOVE)) {
+  while (PeekMessageA(&Msg, NULL, 0, 0, PM_REMOVE))
+  {
     TranslateMessage(&Msg);
     DispatchMessageA(&Msg);
   }
 }
 
-void SwapWindowBuffers(window *Window) {
+void
+SwapWindowBuffers(window *Window)
+{
   SwapContextBuffers(Window->Context);
 }
 
-void SetWindowEventFn(window *Window, void(*EventFn)(void *, const event *)) {
-  Window->EventFn = EventFn;
+void
+SetWindowEventFn(window *Window, EventFn Func)
+{
+  Window->EventFunc = Func;
 }
 
-const i32 KeyMap[K_LAST + 1] = {
+const i32 KeyMap[K_LAST + 1] =
+{
   VK_LBUTTON,
   VK_RBUTTON,
   VK_MBUTTON,
@@ -416,7 +471,7 @@ const i32 KeyMap[K_LAST + 1] = {
   VK_SUBTRACT,
   VK_ADD,
   VK_RETURN,
-  VK_RETURN, // NOTE: On Windows this key does not exist
+  VK_RETURN, // NOTE: On Windows the key at this position does not exist
   VK_LSHIFT,
   VK_LCONTROL,
   VK_LMENU,
@@ -428,28 +483,37 @@ const i32 KeyMap[K_LAST + 1] = {
   VK_MENU
 };
 
-bool GetKeyDown(key Key) {
+bool
+GetKeyDown(key Key)
+{
   return GetAsyncKeyState(KeyMap[Key]);
 }
 
-vec2 GetMousePos() {
+vec2
+GetMousePos()
+{
   POINT Pos = {};
   GetCursorPos(&Pos);
   return vec2{ (f32)Pos.x, (f32)Pos.y };
 }
 
-void LPOverlappedCompletionRoutine(DWORD dwErrorCode, DWORD dwNumberOfBytesTransfered, LPOVERLAPPED lpOverlapped) {
+void
+LPOverlappedCompletionRoutine(DWORD dwErrorCode, DWORD dwNumberOfBytesTransfered, LPOVERLAPPED lpOverlapped)
+{
   // TODO: IDEK
 }
 
-file *CreateFile(const char *Path) {
+file *
+CreateFile(const char *Path)
+{
   file *File = (file *)malloc(sizeof(file));
 
-  if (!File) {
+  if (!File)
+  {
     LogCoreError("Failed to allocate memory for file");
     return NULL;
   }
-  
+
   File->FilePath = Path;
   File->Data = NULL;
   HANDLE FileHandle = CreateFileA(File->FilePath,
@@ -459,13 +523,15 @@ file *CreateFile(const char *Path) {
                                   OPEN_EXISTING,
                                   0,
                                   0);
-  if (!FileHandle) {
+  if (!FileHandle)
+  {
     // Error
     LogCoreError("Failed to open file");
     return NULL;
   }
   LARGE_INTEGER FileSize;
-  if (!GetFileSizeEx(FileHandle, &FileSize)) {
+  if (!GetFileSizeEx(FileHandle, &FileSize))
+  {
     // Error
     LogCoreError("File size error");
     CloseHandle(FileHandle);
@@ -473,14 +539,16 @@ file *CreateFile(const char *Path) {
   }
   File->Size = FileSize.QuadPart;
   File->Data = VirtualAlloc(NULL, FileSize.QuadPart, MEM_RESERVE | MEM_COMMIT, PAGE_READWRITE);
-  if (!File->Data) {
+  if (!File->Data)
+  {
     // Error
     LogCoreError("Could not allocate password");
     CloseHandle(FileHandle);
     return NULL;
   }
   OVERLAPPED IdkWhatThisDoes = {};
-  if (!ReadFileEx(FileHandle, File->Data, FileSize.QuadPart, &IdkWhatThisDoes, LPOverlappedCompletionRoutine)) {
+  if (!ReadFileEx(FileHandle, File->Data, (DWORD)FileSize.QuadPart, &IdkWhatThisDoes, LPOverlappedCompletionRoutine))
+  {
     LogCoreError("Could not read file");
     VirtualFree(File->Data, File->Size, MEM_RESERVE);
     CloseHandle(FileHandle);
@@ -492,7 +560,9 @@ file *CreateFile(const char *Path) {
   return File;
 }
 
-void DestroyFile(file **File) {
+void
+DestroyFile(file **File)
+{
   if (*File) {
     VirtualFree((*File)->Data, (*File)->Size, MEM_RESERVE);
 
@@ -502,8 +572,10 @@ void DestroyFile(file **File) {
   }
 }
 
-bool IsBMPFile(const char *Path) {
-  int Len = strlen(Path);
+bool
+IsBMPFile(const char *Path)
+{
+  i32 Len = (i32)strlen(Path);
   if (Len < 4) // If string length is less than 4, it can't end with ".bmp"
     return 0;
 
@@ -511,10 +583,13 @@ bool IsBMPFile(const char *Path) {
   return strcmp(Path + Len - 4, ".bmp") == 0;
 }
 
-image *CreateImage(const char *Path) {
+image *
+CreateImage(const char *Path)
+{
   image *Image = (image *)malloc(sizeof(image));
 
-  if (!Image) {
+  if (!Image)
+  {
     LogCoreError("Failed to allocate memory for image");
     return NULL;
   }
@@ -525,7 +600,8 @@ image *CreateImage(const char *Path) {
   file *File = CreateFile(Image->Data.Path);
   u8 *FileData = (u8 *)File->Data;
   u64 FileSize = File->Size;
-  if (IsBMPFile(Path)) {
+  if (IsBMPFile(Path))
+  {
     LoadImageAsBMP(Image, FileData, FileSize);
     DestroyFile(&File);
     return Image;
@@ -534,8 +610,11 @@ image *CreateImage(const char *Path) {
   return NULL;
 }
 
-void DestroyImage(image **Image) {
-  if (*Image) {
+void
+DestroyImage(image **Image)
+{
+  if (*Image)
+  {
     VirtualFree((*Image)->Bytes, (*Image)->Data.SizeInBytes, MEM_RESERVE);
 
     free(*Image);
@@ -544,8 +623,11 @@ void DestroyImage(image **Image) {
   }
 }
 
-void LoadImageAsBMP(image *Image, u8 *FileData, u64 FileSize) {
-  if (FileData[0] != 'B' || FileData[1] != 'M') {
+void
+LoadImageAsBMP(image *Image, u8 *FileData, u64 FileSize)
+{
+  if (FileData[0] != 'B' || FileData[1] != 'M')
+  {
     LogCoreError("Did not find BM");
     return;
   }
@@ -554,7 +636,8 @@ void LoadImageAsBMP(image *Image, u8 *FileData, u64 FileSize) {
   Image->Data.Width = *((i32 *)(FileData + 18));
   Image->Data.Height = *((i32 *)(FileData + 22));
   u16 BPP = *((u16 *)(FileData + 28));
-  switch (BPP) {
+  switch (BPP)
+  {
   case 1:
     Image->Data.Channels = 1;
     break;
@@ -576,7 +659,8 @@ void LoadImageAsBMP(image *Image, u8 *FileData, u64 FileSize) {
                                     Image->Data.SizeInBytes,
                                     MEM_RESERVE | MEM_COMMIT,
                                     PAGE_READWRITE);
-  if (!Image->Bytes) {
+  if (!Image->Bytes)
+  {
     LogCoreError("Allocation Failed");
     return;
   }

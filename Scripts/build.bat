@@ -1,51 +1,26 @@
 @echo off
 
-if not exist "build" (
-  mkdir build
-  echo Directory created: build
+if not exist "Build" (
+  mkdir Build
+  echo Directory created: Build
 )
 
 echo Starting Build
 
-set GLMPath=..\Engine\Source\Runtime\External\glm\
-set RuntimePath=..\Engine\Source\Runtime
-set RuntimeCorePath=%RuntimePath%\Core
-set RuntimeAssetLoadingPath=%RuntimePath%\AssetLoading
-set RuntimeMathPath=%RuntimePath%\Math
-set RuntimePlatformPath=%RuntimePath%\Platform
-set RuntimeRendererPath=%RuntimePath%\Renderer
-set RuntimeScenePath=%RuntimePath%\Scene
+set EnginePath=..\StakEngine
+set EngineFiles=%EnginePath%\Application.cpp %EnginePath%\Log.cpp %EnginePath%\StakMath.cpp %EnginePath%\OpenGL.cpp %EnginePath%\WGL.cpp %EnginePath%\Win32.cpp %EnginePath%\Renderer.cpp %EnginePath%\Camera.cpp %EnginePath%\Renderer2D.cpp
+set EngineFlags=/Zi /c
 
-set RuntimeCore=%RuntimeCorePath%\Application.cpp %RuntimeCorePath%\Log.cpp
-set RuntimeMath=%RuntimeMathPath%\StakMath.cpp
-set RuntimePlatform= %RuntimePlatformPath%\OpenGL.cpp %RuntimePlatformPath%\WGL.cpp %RuntimePlatformPath%\Win32.cpp
-set RuntimeRenderer=%RuntimeRendererPath%\Renderer.cpp %RuntimeRendererPath%\Camera.cpp
-set RuntimeScene=%RuntimeScenePath%\Registry.cpp
+set EngineLib=Application.obj Camera.obj Log.obj OpenGL.obj Renderer.obj StakMath.obj WGL.obj Win32.obj Renderer2D.obj
 
-set RuntimeSource=%RuntimeCore% %RuntimeMath% %RuntimePlatform% %RuntimeRenderer% %RuntimeScene%
-set AllInclude=/I%GLMPath% /I%RuntimeCorePath% /I%RuntimeAssetLoadingPath% /I%RuntimeMathPath% /I%RuntimePlatformPath% /I%RuntimeRendererPath% /I%RuntimeScenePath%
-set RuntimeFlags=/Zi /c /EHsc
+set EditorPath=..\StakEditor
 
-set dir=%~dp0
-set SourceDir^=\"%dir:\=/%../Engine/Source/\"
-set ShaderDir^=\"%dir:\=/%../Engine/Assets/Shaders/\"
-set AssetDir^=\"%dir:\=/%../Engine/Assets/\"
-set AllMacros=/DSOURCE_DIR=%SourceDir% /DSHADER_DIR=%ShaderDir% /DASSET_DIR=%AssetDir% /DSK_WINDOWS /DSK_WGL /DSK_DEBUG
-
-set RuntimeLibSource=Application.obj Camera.obj Log.obj OpenGL.obj Registry.obj Renderer.obj StakMath.obj WGL.obj Win32.obj
-
-set EditorPath=..\Engine\Source\Editor
-set EditorCorePath=%EditorPath%\Core
-set EditorRendererPath=%EditorPath%\Renderer
-
-set EditorSource=%EditorCorePath%\Editor.cpp %EditorCorePath%\EditorLayer.cpp
-set EditorInclude=/I..\Engine\Source
+set EditorSource=%EditorPath%\Editor.cpp %EditorPath%\EditorLayer.cpp
 set EditorFlags=/Zi /EHsc
 
 pushd build
-echo %SourceDir%
-cl %RuntimeFlags% %RuntimeSource% %AllInclude% %AllMacros%
-lib %RuntimeLibSource% user32.lib opengl32.lib Gdi32.lib Kernel32.lib /OUT:StakRuntime.lib
-cl %AllMacros% %EditorSource% %EditorInclude% %AllInclude%  %EditorFlags% StakRuntime.lib /FeStakEditor.exe
+cl %EngineFlags% %EngineFiles%
+lib %EngineLib% /OUT:StakRuntime.lib
+cl %EditorSource% %EditorFlags% StakRuntime.lib /FeStakEditor.exe
 
 popd

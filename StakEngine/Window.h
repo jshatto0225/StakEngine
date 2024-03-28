@@ -4,7 +4,8 @@
 #include "StakMath.h"
 #include "Event.h"
 
-struct window_config {
+struct window_config
+{
   i32 X;
   i32 Y;
   i32 Width;
@@ -13,12 +14,14 @@ struct window_config {
   void *Parent;
 };
 
-struct window_size_data {
+struct window_size_data
+{
   i32 Width;
   i32 Height;
 };
 
-struct window_pos_data {
+struct window_pos_data
+{
   i32 X;
   i32 Y;
 };
@@ -38,6 +41,6 @@ void SetWindowPos(window *window, i32 X, i32 Y);
 void SetWindowSize(window *Window, i32 Width, i32 Height);
 window_pos_data GetWindowPos(const window *Window);
 window_size_data GetWindowSize(const window *Window);
-void SetWindowEventFn(window *Window, void(*EventFn)(void *, const event *));
+void SetWindowEventFn(window *Window, EventFn Func);
 void UpdateWindow(const window *window);
 void MakeWindowCurrent(const window *Window);

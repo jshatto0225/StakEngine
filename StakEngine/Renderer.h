@@ -6,7 +6,8 @@
 #include "Camera.h"
 #include "Window.h"
 
-enum shader_data_type {
+enum shader_data_type
+{
   SDT_FLOAT,
   SDT_FLOAT2,
   SDT_FLOAT3,
@@ -20,7 +21,8 @@ enum shader_data_type {
   SDT_BOOL
 };
 
-struct buffer_element {
+struct buffer_element
+{
   const char *Name;
   shader_data_type Type;
   u32 Size;
@@ -28,35 +30,48 @@ struct buffer_element {
   bool Normalized;
 };
 
-struct buffer_layout {
+struct buffer_layout
+{
   u64 Size;
   u32 Stride;
   buffer_element *Elements;
 };
 
-struct shader_source {
+struct shader_source
+{
   char *VertexShader;
   char *FragmentShader;
 };
 
-enum shader_type {
+enum shader_type
+{
   SHADER_TYPE_NONE,
   SHADER_TYPE_FRAGMENT,
   SHADER_TYPE_VERTEX
 };
 
-enum image_format {
+enum image_format
+{
   IMAGE_FORMAT_R8,
   IMAGE_FORMAT_RGB8,
   IMAGE_FORMAT_RGBA8,
   IMAGE_FORMAT_RGBA32F
 };
 
-struct texture_specification {
+struct texture_specification
+{
   i32 Width;
   i32 Height;
   image_format Format;
   bool GenerateMips;
+};
+
+struct framebuffer_spec
+{
+  u32 Width;
+  u32 Height;
+  u32 Samples;
+  bool SwapChainTarget;
 };
 
 struct vertex_buffer;
@@ -67,6 +82,7 @@ struct texture;
 struct texture2d;
 struct uniform_buffer;
 struct vertex_buffer_array;
+struct framebuffer;
 
 u32 ShaderDataTypeSize(shader_data_type Type);
 
@@ -95,6 +111,12 @@ void DestroyIndexBuffer(index_buffer **InexBuffer);
 void BindIndexBuffer(const index_buffer *IndexBuffer);
 void UnbindIndexBuffer(const index_buffer *IndexBuffer);
 u32 GetIndexBufferIndexCount(const index_buffer *IndexBuffer);
+
+framebuffer *CreateFramebuffer(const framebuffer_spec *Spec);
+void DestroyFramebuffer(framebuffer **Framebuffer);
+void ResizeFramebuffer(framebuffer *Framebuffer, const framebuffer_spec *Spec);
+void BindFramebuffer(const framebuffer *Framebuffer);
+void UnbindFramebuffer(const framebuffer *Framebuffer);
 
 vertex_array *CreateVertexArray();
 void DestroyVertexArray(vertex_array **VertexArray);
@@ -164,20 +186,3 @@ void RendererOnWindowResize(i32 Width, i32 Height);
 void RendererBeginScene();
 void RendererEndScene();
 void RendererSubmit(shader *Shader, vertex_array *VertexArray);
-
-void Renderer2DInit();
-void Renderer2DBeginScene(const scene_view_camera *Cam);
-void Renderer2DEndScene();
-void Renderer2DShutdown();
-void Renderer2DDrawQuad(const vec2 *Pos, const vec2 *Size, const vec4 *Color);
-void Renderer2DDrawQuad(const vec2 *Pos,
-                        const vec2 *Size,
-                        texture2d *Tex,
-                        bool TransferTextureOwnership);
-void Renderer2DDrawQuad(const vec2 *Pos, const vec2 *Size, f32 Rotation, const vec4 *Color);
-void Renderer2DDrawQuad(const vec2 *Pos,
-                        const vec2 *Size,
-                        f32 Rotation,
-                        texture2d *Tex,
-                        bool TransferTextureOwnership);
-void Renderer2DDrawQuad(const mat4 *Transform, texture2d *Tex, bool TransferTextureOwnership);

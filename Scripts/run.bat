@@ -1,3 +1,3 @@
 @echo off
 
-.\Build\Engine\Source\Editor\StakEditor.exe
+.\Build\StakEditor.exe

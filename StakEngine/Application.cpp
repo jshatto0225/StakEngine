@@ -5,16 +5,15 @@
 #include "Renderer.h"
 #include "Window.h"
 
-void AddLayerToStack(layer_stack *Stack,
-                     void *(*Init)(),
-                     void(*Shutdown)(void **),
-                     void(*Update)(void *),
-                     void(*OnEvent)(void *, void *, const event *)) {
-  if (Stack->Size == Stack->MAX_LAYERS) {
+void
+AddLayerToStack(layer_stack *Stack, layer_init Init, layer_shutdown Shutdown, layer_update Update, layer_on_event OnEvent)
+{
+  if (Stack->Size == MAX_LAYERS)
+  {
     LogCoreError("Max number of layers reached");
     return;
   }
-  
+
   Stack->Layers[Stack->Size].Init = Init;
   Stack->Layers[Stack->Size].Shutdown = Shutdown;
   Stack->Layers[Stack->Size].Update = Update;
@@ -22,15 +21,19 @@ void AddLayerToStack(layer_stack *Stack,
   Stack->Size++;
 }
 
-application *ApplicationInit(const application_spec *Spec) {
+application *
+ApplicationInit(const application_spec *Spec)
+{
   application *App = (application *)malloc(sizeof(application));
 
-  if (!App) {
+  if (!App)
+  {
     LogCoreError("Failed to allocate space for application");
     return NULL;
   }
 
-  window_config Cfg = {
+  window_config Cfg =
+  {
     Spec->WindowX,
     Spec->WindowY,
     Spec->WindowWidth,
@@ -47,15 +50,18 @@ application *ApplicationInit(const application_spec *Spec) {
 
   App->Running = true;
   LogCoreInfo("Application Initialized");
-  
-  for (u32 i = 0; i < App->Layers.Size; i++) {
+
+  for (u32 i = 0; i < App->Layers.Size; i++)
+  {
     App->Layers.LayerData[i] = App->Layers.Layers[i].Init();
   }
 
   return App;
 }
 
-void ApplicationRun(application *App) {
+void
+ApplicationRun(application *App)
+{
   while (App->Running) {
     for (u32 i = 0; i < App->Layers.Size; i++) {
       App->Layers.Layers[i].Update(App->Layers.LayerData[i]);
@@ -64,13 +70,18 @@ void ApplicationRun(application *App) {
   }
 }
 
-void ApplicationOnEvent(void *Parent, const event *Event) {
+void
+ApplicationOnEvent(void *Parent, const event *Event)
+{
   application *App = (application *)Parent;
-  if (App->Running) {
-    for (u32 i = 0; i < App->Layers.Size; i++) {
-      App->Layers.Layers[i].OnEvent(Parent, App->Layers.LayerData[i], Event);
+  if (App->Running)
+  {
+    for (u32 i = 0; i < App->Layers.Size; i++)
+    {
+      App->Layers.Layers[i].OnEvent(App->Layers.LayerData[i], Event);
     }
-    switch (Event->Type) {
+    switch (Event->Type)
+    {
     case WINDOW_CLOSE:
       LogCoreTrace("Window Closed");
       App->Running = false;
@@ -88,20 +99,25 @@ void ApplicationOnEvent(void *Parent, const event *Event) {
   }
 }
 
-void ApplicationShutdown(application **App) {
-  if (*App) {
+void
+ApplicationShutdown(application **App)
+{
+  if (*App)
+  {
     LogCoreTrace("Application Shutdown");
 
-    if ((*App)->Layers.Layers != NULL) {
-      for (u32 i = 0; i < (*App)->Layers.Size; i++) {
+    if ((*App)->Layers.Layers != NULL)
+    {
+      for (u32 i = 0; i < (*App)->Layers.Size; i++)
+      {
         (*App)->Layers.Layers[i].Shutdown(&(*App)->Layers.LayerData[i]);
       }
     }
-  
+
     RendererShutdown();
 
     DestroyWindow(&(*App)->Window);
-  
+
     free(*App);
     *App = NULL;
   }

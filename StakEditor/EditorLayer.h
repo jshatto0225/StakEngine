@@ -2,10 +2,8 @@
 
 #include "../StakEngine/StakEngine.h"
 
-struct editor_data {
-  texture2d *Tex1;
-  texture2d *Tex2;
-  texture2d *Tex3;
+struct editor_data
+{
   scene_view_camera Cam;
   i32 WindowWidth;
   i32 WindowHeight;
@@ -14,9 +12,18 @@ struct editor_data {
   vec2 Vec1;
   vec2 Vec2;
   vec2 Vec3;
+  texture2d *Tex1;
+  texture2d *Tex2;
+  texture2d *Tex3;
+  vec4 Color;
+  vec2 ScenePos;
+  vec2 SceneSize;
+  vec4 SceneBG;
+
+  framebuffer *Framebuffer;
 };
 
 void *EditorLayerInit();
 void EditorLayerShutdown(void **);
 void EditorLayerUpdate(void *);
-void EditorLayerOnEvent(void *, void *, const event *);
+void EditorLayerOnEvent(void *, const event *);

@@ -27,5 +27,13 @@ flat in float TexSlot;
 layout (binding = 0) uniform sampler2D aTextures[32];
 
 void main() {
-  FragColor = texture(aTextures[int(TexSlot)], TexCoord);
+  vec2 Center = vec2(0.5, 0.5);
+  float Dist = distance(TexCoord, Center);
+
+  if (Dist <= 0.5f) {
+    FragColor = texture(aTextures[int(TexSlot)], TexCoord);
+  }
+  else {
+    discard;
+  }
 }

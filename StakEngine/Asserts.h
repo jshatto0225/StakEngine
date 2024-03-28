@@ -8,8 +8,10 @@
 
 #ifdef SK_DEBUG
 #define ASSERT(x, message) \
-do { \
-  if (!(x)) { \
+do \
+{ \
+  if (!(x)) \
+  { \
     fprintf(stderr, "Assertion Failed: %s, File: %s, Line: %d", message, __FILE__, __LINE__); \
     DEBUG_BREAK(); \
   } \
