@@ -10,48 +10,6 @@
 #include "Event.h"
 #include "Window.h"
 
-#define HDC HDC
-#define HGLRC HGLRC
-#define BOOL BOOL
-#define LPCSTR LPCSTR
-#define MSG MSG
-#define LPMSG LPMSG
-#define HWND HWND
-#define UINT UINT
-#define WPARAM WPARAM
-#define LPARAM LPARAM
-#define HINSTANCE HINSTANCE
-#define WNDCLASSEXA WNDCLASSEXA
-#define DWORD DWORD
-#define HMENU HMENU
-#define LPVOID LPVOID
-#define UINT_PTR UINT_PTR
-#define TIMERPROC TIMERPROC
-#define LPPAINTSTRUCT LPPAINTSTRUCT
-#define PAINTSTRUCT PAINTSTRUCT
-#define RECT RECT
-#define HRGN HRGN
-#define LPRECT LPRECT
-#define LONG_PTR LONG_PTR
-#define PIXELFORMATDESCRIPTOR PIXELFORMATDESCRIPTOR
-#define HCURSOR HCURSOR
-#define ATOM ATOM
-#define LRESULT LRESULT
-#define SHORT SHORT
-#define HICON HICON
-#define PROC PROC
-#define GetProcAddress GetProcAddress
-#define LoadLibraryA LoadLibraryA
-#define LPOVERLAPPED LPOVERLAPPED
-#define HANDLE HANDLE
-#define LARGE_INTEGER LARGE_INTEGER
-#define CreateFileA CreateFileA
-#define GetFileSizeEx GetFileSizeEx
-#define CloseHandle CloseHandle
-#define VirtualAlloc VirtualAlloc
-#define VirtualFree VirtualFree
-#define ReadFileEx ReadFileEx
-
 typedef const char *(WINAPI *WGLGETEXTENSIONSSTRINGEXTPROC)(void);
 extern WGLGETEXTENSIONSSTRINGEXTPROC Stak_wglGetExtensionsStringEXT;
 #define wglGetExtensionsStringEXT Stak_wglGetExtensionsStringEXT
@@ -143,12 +101,12 @@ extern GETWINDOWLONGPTRAPROC Stak_GetWindowLongPtrA;
 typedef LONG_PTR(WINAPI *SETWINDOWLONGPTRAPROC)(HWND, int, LONG_PTR);
 extern SETWINDOWLONGPTRAPROC Stak_SetWindowLongPtrA;
 #define SetWindowLongPtrA Stak_SetWindowLongPtrA
-typedef HCURSOR(WINAPI *LOADCURSORAPROC)(HINSTANCE, LPCSTR);
-extern LOADCURSORAPROC Stak_LoadCursorA;
-#define LoadCursorA Stak_LoadCursorA
-typedef HICON(WINAPI *LOADICONAPROC)(HINSTANCE, LPCSTR);
-extern LOADICONAPROC Stak_LoadIconA;
-#define LoadIconA Stak_LoadIconA
+typedef HCURSOR(WINAPI *LOADCURSORWPROC)(HINSTANCE, LPCWSTR);
+extern LOADCURSORWPROC Stak_LoadCursorW;
+#define LoadCursorW Stak_LoadCursorW
+typedef HICON(WINAPI *LOADICONWPROC)(HINSTANCE, LPCWSTR);
+extern LOADICONWPROC Stak_LoadIconW;
+#define LoadIconW Stak_LoadIconW
 typedef int(WINAPI *CHOOSEPIXELFORMATPROC)(HDC, const PIXELFORMATDESCRIPTOR *);
 extern CHOOSEPIXELFORMATPROC Stak_ChoosePixelFormat;
 #define ChoosePixelFormat Stak_ChoosePixelFormat

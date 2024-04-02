@@ -31,13 +31,6 @@ EditorLayerInit() {
   Data->Color = { 1, 1, 0, 1 };
   Data->ScenePos = { 0.0f, 0.0f };
 
-  framebuffer_spec Spec = {};
-  Spec.Width = 800;
-  Spec.Height = 450;
-  Spec.Samples = 0;
-  Spec.SwapChainTarget = 0;
-  Data->Framebuffer = CreateFramebuffer(&Spec);
-
   return (void *)Data;
 }
 

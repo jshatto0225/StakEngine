@@ -1,6 +1,6 @@
 .vs
 .vscode
-Build/*
+Build
 .cache
 .*
 *.4coder
@@ -8,7 +8,14 @@ Build/*
 *.cmake
 Makefile
 compile_commands.json
-.vcxproj
-.sln
+*.vcxproj
+*.sln
 tags
 tags.vim
+*.sln
+*.suo
+*.sdf
+*.filters
+bin
+bin-int
+*.user

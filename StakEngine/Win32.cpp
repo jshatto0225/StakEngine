@@ -28,8 +28,8 @@ REDRAWWINDOWPROC RedrawWindow;
 GETCLIENTRECTPROC GetClientRect;
 GETWINDOWLONGPTRAPROC GetWindowLongPtrA;
 SETWINDOWLONGPTRAPROC SetWindowLongPtrA;
-LOADCURSORAPROC LoadCursorA;
-LOADICONAPROC LoadIconA;
+LOADCURSORWPROC LoadCursorW;
+LOADICONWPROC LoadIconW;
 CHOOSEPIXELFORMATPROC ChoosePixelFormat;
 SETPIXELFORMATPROC SetPixelFormat;
 SWAPBUFFERSPROC SwapBuffers;
@@ -170,8 +170,8 @@ LoadWin32Libs()
   GetClientRect = (GETCLIENTRECTPROC)GetProcAddress(Platform.User32, "GetClientRect");
   GetWindowLongPtrA = (GETWINDOWLONGPTRAPROC)GetProcAddress(Platform.User32, "GetWindowLongPtrA");
   SetWindowLongPtrA = (SETWINDOWLONGPTRAPROC)GetProcAddress(Platform.User32, "SetWindowLongPtrA");
-  LoadCursorA = (LOADCURSORAPROC)GetProcAddress(Platform.User32, "LoadCursorW");
-  LoadIconA = (LOADICONAPROC)GetProcAddress(Platform.User32, "LoadIconW");
+  LoadCursorW = (LOADCURSORWPROC)GetProcAddress(Platform.User32, "LoadCursorW");
+  LoadIconW = (LOADICONWPROC)GetProcAddress(Platform.User32, "LoadIconW");
   GetDC = (GETDCPROC)GetProcAddress(Platform.User32, "GetDC");
   GetCursorPos = (GETCURSORPOSPROC)GetProcAddress(Platform.User32, "GetCursorPos");
 
@@ -196,8 +196,8 @@ PlatformInit()
   WindowClass.cbSize = sizeof(WNDCLASSEXA);
   WindowClass.lpszClassName = WIN32_DEFAULT_WNDCLASS_NAME;
   WindowClass.hInstance = Platform.Instance;
-  WindowClass.hIcon = LoadIconA(NULL, IDI_WINLOGO);
-  WindowClass.hCursor = LoadCursorA(NULL, IDC_ARROW);
+  WindowClass.hIcon = LoadIconW(NULL, IDI_WINLOGO);
+  WindowClass.hCursor = LoadCursorW(NULL, IDC_ARROW);
   WindowClass.lpfnWndProc = Win32MessageCallback;
   WindowClass.cbClsExtra = sizeof(window *);
   Platform.DefaultWindowClass = RegisterClassExA(&WindowClass);
