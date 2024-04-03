@@ -18,13 +18,10 @@
   #error Platform not supported
 #endif
 
-// Set Dirs For Release Env
-// The Relseas Environment simulates the project structure at release
-// For now is is a folder called StakEngineReleaseEnv
-// Might move assets to documents or some other location bt for now they are grouped with the executable
-#define ASSET_DIR "C:/Users/jungl/dev/StakEngine/Assets/"
-#define SHADER_DIR "C:/Users/jungl/dev/StakEngine/Assets/Shaders/"
-#define IMAGE_DIR "C:/Users/jungl/dev/StakEngine/Assets/Images/"
+// NOTE: these will not work if the working dir is not the main proj dir
+#define ASSET_DIR  "./Assets/"
+#define SHADER_DIR "./Assets/Shaders/"
+#define IMAGE_DIR  "./Assets/Images/"
 
 typedef void (*proc)();
 

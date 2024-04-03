@@ -19,3 +19,4 @@ tags.vim
 bin
 bin-int
 *.user
+Makefile
