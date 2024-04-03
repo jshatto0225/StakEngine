@@ -1,10 +1,13 @@
 #pragma once
 
-#define WIN32_LEAN_AND_MEAN
-#include <Windows.h>
+#include "Platform.h"
 
+#ifdef SK_WINDOWS
+
+#include <Windows.h>
 #undef CreateWindow
 #undef DestroyWindow
+#undef CreateFile
 
 #include "Types.h"
 #include "Event.h"
@@ -124,6 +127,10 @@ typedef HDC(WINAPI *GETDCPROC)(HWND);
 extern GETDCPROC Stak_GetDC;
 #define GetDC Stak_GetDC
 
+constexpr const char *WIN32_DEFAULT_WNDCLASS_NAME = "SK_DEFAULT_WNDCLASS";
+
+LRESULT CALLBACK Win32MessageCallback(HWND, UINT, WPARAM, LPARAM);
+
 struct platform
 {
   HINSTANCE Instance;
@@ -135,17 +142,6 @@ struct platform
   HINSTANCE Gdi32;
 };
 
-struct window
-{
-  HWND Handle;
-  i32 X;
-  i32 Y;
-  i32 Width;
-  i32 Height;
-  const char *Title;
-  EventFn EventFunc;
-  context *Context;
-  void *Parent;
-};
-
 extern platform Platform;
+
+#endif

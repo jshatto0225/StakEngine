@@ -13,6 +13,11 @@ project "StakEngine"
 		"**.cpp",
 	}
 
+  defines 
+  { 
+    "PROJECT_DIR=\"" .. PROJECT_DIR .. "\"" 
+  }
+
 	filter "system:windows"
 		systemversion "latest"
 

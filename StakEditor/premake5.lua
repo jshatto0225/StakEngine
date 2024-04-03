@@ -13,6 +13,11 @@ project "StakEditor"
 		"**.cpp",
 	}
 
+  defines 
+  { 
+    "PROJECT_DIR=\"" .. PROJECT_DIR .. "\"" 
+  }
+
   links {
     "StakEngine"
   }
