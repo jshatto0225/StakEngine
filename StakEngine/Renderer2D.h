@@ -3,6 +3,7 @@
 #include "Types.h"
 #include "StakMath.h"
 #include "Renderer.h"
+#include "Texture.h"
 
 void Renderer2DInit();
 void Renderer2DBeginScene(const scene_view_camera *Cam);

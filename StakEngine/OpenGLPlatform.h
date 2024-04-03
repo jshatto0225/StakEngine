@@ -2,6 +2,8 @@
 
 #include "Platform.h"
 
+#ifdef SK_OPENGL
+
 #ifdef SK_WINDOWS
 #include <windows.h>
 #undef CreateWindow
@@ -11,8 +13,9 @@
 
 #include <GL/gl.h>
 
+#include "ShaderDataTypes.h"
 #include "Types.h"
-
+#include "Image.h"
 #include "External/GL/glext.h"
 
 extern PFNGLGENBUFFERSPROC Stak_glGenBuffers;
@@ -22,7 +25,7 @@ extern PFNGLCREATEFRAMEBUFFERSPROC Stak_glCreateFramebuffers;
 extern PFNGLDELETEFRAMEBUFFERSPROC Stak_glDeleteFramebuffers;
 #define glDeleteFramebuffers Stak_glDeleteFramebuffers
 extern PFNGLBINDFRAMEBUFFERPROC Stak_glBindFramebuffer;
-#define glBindFramebuffers Stak_glBindFramebuffers
+#define glBindFramebuffer Stak_glBindFramebuffer
 extern PFNGLFRAMEBUFFERTEXTURE2DPROC Stak_glFramebufferTexture2D;
 #define glFramebufferTexture2D Stak_glFramebufferTexture2D
 extern PFNGLCHECKFRAMEBUFFERSTATUSPROC Stak_glCheckFramebufferStatus;
@@ -119,7 +122,7 @@ extern GLDRAWELEMENTSPROC Stak_glDrawElements;
 #define glDrawElements Stak_glDrawElements
 typedef void (GLAPIENTRYP GLENABLEPROC)(GLenum);
 extern GLENABLEPROC Stak_glEnable;
-#define glEnable Stak_glEnableProc
+#define glEnable Stak_glEnable
 typedef void (GLAPIENTRYP GLGENTRXTURESPROC)(GLsizei, GLuint *);
 extern GLGENTRXTURESPROC Stak_glGenTextures;
 #define glGenTextures Stak_glGenTextures
@@ -143,3 +146,9 @@ extern GLVIEWPORTPROC Stak_glViewport;
 typedef void (GLAPIENTRYP GLTEXIMAGE2DPROC)(GLenum, GLint, GLint, GLsizei, GLsizei, GLint, GLenum, GLenum, const void *);
 extern GLTEXIMAGE2DPROC Stak_glTexImage2D;
 #define glTexImage2D Stak_glTexImage2D
+
+GLenum ShaderDataTypeToOpenGLType(shader_data_type Type);
+GLenum ImageFormatToOpenGLDataFormat(image_format Format);
+GLenum ImageFormatToOpenGLInternalFormat(image_format Format);
+
+#endif

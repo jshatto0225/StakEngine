@@ -142,6 +142,19 @@ struct platform
   HINSTANCE Gdi32;
 };
 
+struct window
+{
+  HWND Handle;
+  i32 X;
+  i32 Y;
+  i32 Width;
+  i32 Height;
+  const char *Title;
+  EventFn EventFunc;
+  context *Context;
+  void *Parent;
+};
+
 extern platform Platform;
 
 #endif

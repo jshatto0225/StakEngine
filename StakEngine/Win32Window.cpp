@@ -11,19 +11,6 @@
  * Private Interface *
  *********************/
 
-struct window
-{
-  HWND Handle;
-  i32 X;
-  i32 Y;
-  i32 Width;
-  i32 Height;
-  const char *Title;
-  EventFn EventFunc;
-  context *Context;
-  void *Parent;
-};
-
 const UINT TIMER_INTERVAL = 10;
 UINT_PTR TimerId;
 

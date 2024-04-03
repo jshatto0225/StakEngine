@@ -2,6 +2,14 @@
 
 #include "Types.h"
 
+enum image_format
+{
+  IMAGE_FORMAT_R8,
+  IMAGE_FORMAT_RGB8,
+  IMAGE_FORMAT_RGBA8,
+  IMAGE_FORMAT_RGBA32F
+};
+
 struct image_data
 {
   const char *Path;

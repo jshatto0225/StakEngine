@@ -19,8 +19,6 @@ struct editor_data
   vec2 ScenePos;
   vec2 SceneSize;
   vec4 SceneBG;
-
-  framebuffer *Framebuffer;
 };
 
 void *EditorLayerInit();

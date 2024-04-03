@@ -2,6 +2,8 @@
 
 #include "Platform.h"
 #include "Log.h"
+#include "UniformBuffer.h"
+#include "RenderCommand.h"
 
 struct quad_vertex
 {
