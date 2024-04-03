@@ -2,12 +2,14 @@
 
 #include <stdarg.h>
 
+#include "Platform.h"
+
 FILE *CoreLogFile;
 
 void
 LogInit()
 {
-  fopen_s(&CoreLogFile, "StakRuntime.log", "w");
+  fopen_s(&CoreLogFile, ROOT_DIR "StakRuntime.log", "w");
 }
 
 void

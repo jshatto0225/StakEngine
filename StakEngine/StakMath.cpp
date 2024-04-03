@@ -248,13 +248,13 @@ DirectionVecToQuat(const vec3 *Vec)
 {
   quat Result = {};
 
-  f32 CosX = cos(Vec->x * 0.5);
-  f32 CosY = cos(Vec->y * 0.5);
-  f32 CosZ = cos(Vec->z * 0.5);
+  f32 CosX = (f32)cos(Vec->x * 0.5);
+  f32 CosY = (f32)cos(Vec->y * 0.5);
+  f32 CosZ = (f32)cos(Vec->z * 0.5);
 
-  f32 SinX = sin(Vec->x * 0.5);
-  f32 SinY = sin(Vec->y * 0.5);
-  f32 SinZ = sin(Vec->z * 0.5);
+  f32 SinX = (f32)sin(Vec->x * 0.5);
+  f32 SinY = (f32)sin(Vec->y * 0.5);
+  f32 SinZ = (f32)sin(Vec->z * 0.5);
 
   Result.w = CosX * CosY * CosZ + SinX * SinY * SinZ;
   Result.x = SinX * CosY * CosZ - CosX * SinY * SinZ;
@@ -365,8 +365,8 @@ mat4
 RotationMatrix2D(f32 Rotation)
 {
   f32 Angle = Rotation;
-  f32 Cos = cos(Angle);
-  f32 Sin = sin(Angle);
+  f32 Cos = (f32)cos(Angle);
+  f32 Sin = (f32)sin(Angle);
 
   mat4 Rotate = {};
 
