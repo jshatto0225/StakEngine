@@ -2,6 +2,8 @@
 
 #ifdef SK_OPENGL
 
+#include <string.h>
+
 #include "Shader.h"
 #include "Log.h"
 
@@ -77,7 +79,7 @@ ParseShaderSource(const char *Path)
 {
   shader_source Src = {};
   FILE *File;
-  fopen_s(&File, Path, "r");
+  File = fopen(Path, "r");
   if (File == NULL)
   {
     LogCoreError("Failed to open shader file");
@@ -117,9 +119,11 @@ ParseShaderSource(const char *Path)
       }
       i32 Len = (i32)strlen(Line);
       char *Result = (char *)realloc(VertexShader, VertexShaderLength + Len + 1);
-      if (!Result) {
+      if (!Result)
+      {
         LogCoreError("Failed to realloc vertex shader source");
-        if (VertexShader) {
+        if (VertexShader)
+        {
           free(VertexShader);
         }
         free(VertexShader);
@@ -140,9 +144,11 @@ ParseShaderSource(const char *Path)
       }
       i32 Len = (i32)strlen(Line);
       char *Result = (char *)realloc(FragmentShader, FragmentShaderLength + Len + 1);
-      if (!Result) {
+      if (!Result)
+      {
         LogCoreError("Failed to realloc fragment shader source");
-        if (FragmentShader) {
+        if (FragmentShader)
+        {
           free(FragmentShader);
         }
         return {};

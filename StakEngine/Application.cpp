@@ -1,7 +1,6 @@
 #include "Application.h"
 
 #include "Log.h"
-#include "Platform.h"
 #include "Renderer.h"
 #include "Window.h"
 
@@ -62,8 +61,10 @@ ApplicationInit(const application_spec *Spec)
 void
 ApplicationRun(application *App)
 {
-  while (App->Running) {
-    for (u32 i = 0; i < App->Layers.Size; i++) {
+  while (App->Running)
+  {
+    for (u32 i = 0; i < App->Layers.Size; i++)
+    {
       App->Layers.Layers[i].Update(App->Layers.LayerData[i]);
     }
     UpdateWindow(App->Window);
@@ -106,12 +107,9 @@ ApplicationShutdown(application **App)
   {
     LogCoreTrace("Application Shutdown");
 
-    if ((*App)->Layers.Layers != NULL)
+    for (u32 i = 0; i < (*App)->Layers.Size; i++)
     {
-      for (u32 i = 0; i < (*App)->Layers.Size; i++)
-      {
-        (*App)->Layers.Layers[i].Shutdown(&(*App)->Layers.LayerData[i]);
-      }
+      (*App)->Layers.Layers[i].Shutdown(&(*App)->Layers.LayerData[i]);
     }
 
     RendererShutdown();

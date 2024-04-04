@@ -9,7 +9,7 @@ FILE *CoreLogFile;
 void
 LogInit()
 {
-  fopen_s(&CoreLogFile, ROOT_DIR "StakRuntime.log", "w");
+  CoreLogFile = fopen(ROOT_DIR "StakRuntime.log", "w");
 }
 
 void

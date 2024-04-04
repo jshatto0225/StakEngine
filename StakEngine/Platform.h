@@ -14,6 +14,15 @@
   #else
     #error Renderer not supported
   #endif
+#elif defined(__linux__)
+  #define SK_LINUX
+
+  // TODO:
+  #define SK_X11
+
+  #if defined(SK_OPENGL) and defined(SK_X11)
+    #define SK_GLX
+  #endif
 #else
   #error Platform not supported
 #endif
