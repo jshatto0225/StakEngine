@@ -12,12 +12,6 @@ WGLCREATECONTEXTATTRIBSARBPROC wglCreateContextAttribsARB;
 WGLSWAPINTERVALEXTPROC wglSwapIntervalEXT;
 WGLGETPIXELFORMATATTRIBIVARBPROC wglGetPixelFormatAttribivARB;
 WGLCHOOSEPIXELFORMATARB wglChoosePixelFormatARB;
-WGLCREATECONTEXTPROC wglCreateContext;
-WGLDELETECONTEXTPROC wglDeleteContext;
-WGLGETCURRENTDCPROC wglGetCurrentDC;
-WGLGETPROCADDRESSPROC wglGetProcAddress;
-WGLGETCURRENTCONTEXTPROC wglGetCurrentContext;
-WGLMAKECURRENTPROC wglMakeCurrent;
 
 void *
 PlatformGetProcAddress(const char *name)
@@ -28,8 +22,6 @@ PlatformGetProcAddress(const char *name)
 void
 PlatformInitExtensions()
 {
-  LoadRenderApiLibrary();
-
   PIXELFORMATDESCRIPTOR PFD;
   HGLRC DummyHGLRC;
   HGLRC CurrentHGLRC = wglGetCurrentContext();
@@ -56,29 +48,6 @@ PlatformInitExtensions()
   wglChoosePixelFormatARB = (WGLCHOOSEPIXELFORMATARB)wglGetProcAddress("wglChoosePixelFormatARB");
 
   wglMakeCurrent(CurrentHDC, CurrentHGLRC);
-}
-
-void
-LoadRenderApiLibrary()
-{
-  Platform.RendererApi = LoadLibraryA("OpenGL32.dll");
-  if (!Platform.RendererApi)
-  {
-    LogCoreError("Failed to load OpenGL");
-  }
-
-  wglCreateContext = (WGLCREATECONTEXTPROC)GetRendererApiProc("wglCreateContext");
-  wglDeleteContext = (WGLDELETECONTEXTPROC)GetRendererApiProc("wglDeleteContext");
-  wglGetCurrentDC = (WGLGETCURRENTDCPROC)GetRendererApiProc("wglGetCurrentDC");
-  wglGetProcAddress = (WGLGETPROCADDRESSPROC)GetRendererApiProc("wglGetProcAddress");
-  wglGetCurrentContext = (WGLGETCURRENTCONTEXTPROC)GetRendererApiProc("wglGetCurrentContext");
-  wglMakeCurrent = (WGLMAKECURRENTPROC)GetRendererApiProc("wglMakeCurrent");
-}
-
-void *
-GetRendererApiProc(const char *Name)
-{
-  return GetProcAddress(Platform.RendererApi, Name);
 }
 
 #endif

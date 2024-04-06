@@ -74,21 +74,6 @@ RenderApiShutdown()
 void
 RenderApiBind()
 {
-  // Core Functions
-  glGetString = (GLGETSTRINGPROC)GetRendererApiProc("glGetString");
-  glBindTexture = (GLBINDTEXTUREPROC)GetRendererApiProc("glBindTexture");
-  glBlendFunc = (GLBLENDFUNCPROC)GetRendererApiProc("glBlendFunc");
-  glClear = (GLCLEARPROC)GetRendererApiProc("glClear");
-  glClearColor = (GLCLEARCOLORPROC)GetRendererApiProc("glClearColor");
-  glDeleteTextures = (GLDELETETEXTURESPROC)GetRendererApiProc("glDeleteTextures");
-  glDrawElements = (GLDRAWELEMENTSPROC)GetRendererApiProc("glDrawElements");
-  glEnable = (GLENABLEPROC)GetRendererApiProc("glEnable");
-  glGenTextures = (GLGENTRXTURESPROC)GetRendererApiProc("glGenTextures");
-  glTexParameteri = (GLTEXPARAMETERIPROC)GetRendererApiProc("glTexParameteri");
-  glTexSubImage2D = (GLTEXSUBIMAGE2DPROC)GetRendererApiProc("glTexSubImage2D");
-  glViewport = (GLVIEWPORTPROC)GetRendererApiProc("glViewport");
-  glTexImage2D = (GLTEXIMAGE2DPROC)GetRendererApiProc("glTexImage2D");
-
   const unsigned char *Version = glGetString(GL_VERSION);
   LogCoreTrace("OpenGL Version %s", Version);
 

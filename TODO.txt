@@ -6,8 +6,11 @@
 
 -- Create a 2D Renderer in the runtime
   -- text
+    -- Might need to use stb_truetype because fonts are hard
   -- lines
--- Creata a 3D Renderer in the runtime
+    -- Mostly for debugging
+    
+-- Creat a 3D Renderer in the runtime
   -- Both will also be used in the editor for a preview window
   -- Could make a seperate renderer entirely for the editor to support more debug fatures
      but that would be much later down the line
@@ -27,3 +30,4 @@
 -- Load Images
   -- Support More Image Types
 
+-- Post processing

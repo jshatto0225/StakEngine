@@ -99,54 +99,6 @@ extern PFNGLBINDBUFFERBASEPROC Stak_glBindBufferBase;
 extern PFNGLNAMEDBUFFERSUBDATAPROC Stak_glNamedBufferSubData;
 #define glNamedBufferSubData Stak_glNamedBufferSubData
 
-typedef const GLubyte *(GLAPIENTRYP GLGETSTRINGPROC)(GLenum);
-extern GLGETSTRINGPROC Stak_glGetString;
-#define glGetString Stak_glGetString
-typedef void (GLAPIENTRYP GLBINDTEXTUREPROC)(GLenum, GLuint);
-extern GLBINDTEXTUREPROC Stak_glBindTexture;
-#define glBindTexture Stak_glBindTexture
-typedef void (GLAPIENTRYP GLBLENDFUNCPROC)(GLenum, GLenum);
-extern GLBLENDFUNCPROC Stak_glBlendFunc;
-#define glBlendFunc Stak_glBlendFunc
-typedef void (GLAPIENTRYP GLCLEARPROC)(GLbitfield);
-extern GLCLEARPROC Stak_glClear;
-#define glClear Stak_glClear
-typedef void (GLAPIENTRYP GLCLEARCOLORPROC)(GLfloat, GLfloat, GLfloat, GLfloat);
-extern GLCLEARCOLORPROC Stak_glClearColor;
-#define glClearColor Stak_glClearColor
-typedef void (GLAPIENTRYP GLDELETETEXTURESPROC)(GLsizei, const GLuint *);
-extern GLDELETETEXTURESPROC Stak_glDeleteTextures;
-#define glDeleteTextures Stak_glDeleteTextures
-typedef void (GLAPIENTRYP GLDRAWELEMENTSPROC)(GLenum, GLsizei, GLenum, const void *);
-extern GLDRAWELEMENTSPROC Stak_glDrawElements;
-#define glDrawElements Stak_glDrawElements
-typedef void (GLAPIENTRYP GLENABLEPROC)(GLenum);
-extern GLENABLEPROC Stak_glEnable;
-#define glEnable Stak_glEnable
-typedef void (GLAPIENTRYP GLGENTRXTURESPROC)(GLsizei, GLuint *);
-extern GLGENTRXTURESPROC Stak_glGenTextures;
-#define glGenTextures Stak_glGenTextures
-typedef void (GLAPIENTRYP GLTEXPARAMETERIPROC)(GLenum, GLenum, GLint);
-extern GLTEXPARAMETERIPROC Stak_glTexParameteri;
-#define glTexParameteri Stak_glTexParameteri
-typedef void (GLAPIENTRYP GLTEXSUBIMAGE2DPROC)(GLenum target,
-                                              GLint level,
-                                              GLint xoffset,
-                                              GLint yoffset,
-                                              GLsizei width,
-                                              GLsizei height,
-                                              GLenum format,
-                                              GLenum type,
-                                              const void *pixels);
-extern GLTEXSUBIMAGE2DPROC Stak_glTexSubImage2D;
-#define glTexSubImage2D Stak_glTexSubImage2D
-typedef void (GLAPIENTRYP GLVIEWPORTPROC)(GLint, GLint, GLsizei, GLsizei);
-extern GLVIEWPORTPROC Stak_glViewport;
-#define glViewport Stak_glViewport
-typedef void (GLAPIENTRYP GLTEXIMAGE2DPROC)(GLenum, GLint, GLint, GLsizei, GLsizei, GLint, GLenum, GLenum, const void *);
-extern GLTEXIMAGE2DPROC Stak_glTexImage2D;
-#define glTexImage2D Stak_glTexImage2D
-
 GLenum ShaderDataTypeToOpenGLType(shader_data_type Type);
 GLenum ImageFormatToOpenGLDataFormat(image_format Format);
 GLenum ImageFormatToOpenGLInternalFormat(image_format Format);

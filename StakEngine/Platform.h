@@ -28,7 +28,7 @@
 #endif
 
 #ifndef PROJECT_DIR
-#error Project direcory not defined
+#define PROJECT_DIR
 #endif
 
 // NOTE: these will not work if the working dir is not the main proj dir
