@@ -1,8 +1,6 @@
 -- Create a GUI Renderer in the editor
-  -- For the eitor itself
 
 -- Create a GUI Renderer in the runtime
-  -- For game GUIs
 
 -- Create a 2D Renderer in the runtime
   -- text
