@@ -4,27 +4,27 @@
 
 enum image_format
 {
-  IMAGE_FORMAT_R8,
-  IMAGE_FORMAT_RGB8,
-  IMAGE_FORMAT_RGBA8,
-  IMAGE_FORMAT_RGBA32F
+    IMAGE_FORMAT_R8,
+    IMAGE_FORMAT_RGB8,
+    IMAGE_FORMAT_RGBA8,
+    IMAGE_FORMAT_RGBA32F
 };
 
 struct image_data
 {
-  const char *Path;
-  i32 Width;
-  i32 Height;
-  i32 Channels;
-  bool FlipOnLoad;
-  u64 SizeInBytes;
+    const char *Path;
+    i32 Width;
+    i32 Height;
+    i32 Channels;
+    bool FlipOnLoad;
+    u64 SizeInBytes;
 };
 
 struct image
 {
-  bool FlipOnLoad;
-  u8 *Bytes;
-  image_data Data;
+    bool FlipOnLoad;
+    u8 *Bytes;
+    image_data Data;
 };
 
 image *CreateImage(const char *Path);

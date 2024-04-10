@@ -4,9 +4,9 @@
 
 struct file
 {
-  void *Data;
-  const char *FilePath;
-  u64 Size;
+    void *Data;
+    const char *FilePath;
+    u64 Size;
 };
 
 file *CreateFile(const char *Path);

@@ -7,11 +7,11 @@
 #include <Windows.h>
 
 typedef BOOL(WINAPI *DESTROYWINDOWPROC)(HWND);
-constexpr DESTROYWINDOWPROC Win32DestroyWindow = DestroyWindow;
+const DESTROYWINDOWPROC Win32DestroyWindow = DestroyWindow;
 #undef DestroyWindow
 
 typedef BOOL(WINAPI *SETWINDOWPOSPROC)(HWND, HWND, int, int, int, int, UINT);
-constexpr SETWINDOWPOSPROC Win32SetWindowPos = SetWindowPos;
+const SETWINDOWPOSPROC Win32SetWindowPos = SetWindowPos;
 #undef SetWindowPos
 
 // NOTE: Use CreateWidowExA
@@ -48,26 +48,26 @@ LRESULT CALLBACK Win32MessageCallback(HWND, UINT, WPARAM, LPARAM);
 
 struct platform
 {
-  HINSTANCE Instance;
-  ATOM DefaultWindowClass;
-  HWND DummyWindow;
-  bool Initialized;
-  HINSTANCE RendererApi;
-  HINSTANCE User32;
-  HINSTANCE Gdi32;
+    HINSTANCE Instance;
+    ATOM DefaultWindowClass;
+    HWND DummyWindow;
+    bool Initialized;
+    HINSTANCE RendererApi;
+    HINSTANCE User32;
+    HINSTANCE Gdi32;
 };
 
 struct window
 {
-  HWND Handle;
-  i32 X;
-  i32 Y;
-  i32 Width;
-  i32 Height;
-  const char *Title;
-  EventFn EventFunc;
-  context *Context;
-  void *Parent;
+    HWND Handle;
+    i32 X;
+    i32 Y;
+    i32 Width;
+    i32 Height;
+    const char *Title;
+    EventFn EventFunc;
+    context *Context;
+    void *Parent;
 };
 
 extern platform Platform;

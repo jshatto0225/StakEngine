@@ -4,15 +4,15 @@
 
 enum shader_type
 {
-  SHADER_TYPE_NONE,
-  SHADER_TYPE_FRAGMENT,
-  SHADER_TYPE_VERTEX
+    SHADER_TYPE_NONE,
+    SHADER_TYPE_FRAGMENT,
+    SHADER_TYPE_VERTEX
 };
 
 struct shader_source
 {
-  char *VertexShader;
-  char *FragmentShader;
+    char *VertexShader;
+    char *FragmentShader;
 };
 
 struct shader;

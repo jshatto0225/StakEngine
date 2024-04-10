@@ -4,10 +4,10 @@
 
 struct framebuffer_spec
 {
-  u32 Width;
-  u32 Height;
-  u32 Samples;
-  bool SwapChainTarget;
+    u32 Width;
+    u32 Height;
+    u32 Samples;
+    bool SwapChainTarget;
 };
 
 struct framebuffer;

@@ -5,19 +5,19 @@
 
 struct application_spec
 {
-  const char *WindowTitle;
-  i32 WindowX;
-  i32 WindowY;
-  i32 WindowWidth;
-  i32 WindowHeight;
-  layer_stack Layers;
+    const char *WindowTitle;
+    i32 WindowX;
+    i32 WindowY;
+    i32 WindowWidth;
+    i32 WindowHeight;
+    layer_stack Layers;
 };
 
 struct application {
-  application_spec Spec;
-  window *Window;
-  bool Running;
-  layer_stack Layers;
+    application_spec Spec;
+    window *Window;
+    bool Running;
+    layer_stack Layers;
 };
 
 application *ApplicationInit(const application_spec *Spec);

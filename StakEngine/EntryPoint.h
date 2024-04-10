@@ -10,15 +10,15 @@ extern application_spec GetAppSpec();
 inline i32
 StakMain()
 {
-  LogInit();
+    LogInit();
 
-  application_spec Spec = GetAppSpec();
-  application *App = ApplicationInit(&Spec);
-  ApplicationRun(App);
-  ApplicationShutdown(&App);
+    application_spec Spec = GetAppSpec();
+    application *App = ApplicationInit(&Spec);
+    ApplicationRun(App);
+    ApplicationShutdown(&App);
 
-  LogShutdown();
-  return 0;
+    LogShutdown();
+    return 0;
 }
 
 #ifndef SK_NO_MAIN
@@ -27,7 +27,7 @@ StakMain()
 int
 main(int argc, char **argv)
 {
-  return StakMain();
+    return StakMain();
 }
 #elif defined(SK_DIST)
 #ifdef SK_WINDOWS
@@ -35,7 +35,7 @@ main(int argc, char **argv)
 i32 WINAPI
 WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR commandLine, i32 showCommand)
 {
-  return StakMain();
+    return StakMain();
 }
 #endif
 #endif

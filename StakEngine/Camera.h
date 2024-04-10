@@ -4,22 +4,22 @@
 
 enum projection_type
 {
-  PROJ_TYPE_ORTHOGRAPHIC,
-  PROJ_TYPE_PERSPECTIVE
+    PROJ_TYPE_ORTHOGRAPHIC,
+    PROJ_TYPE_PERSPECTIVE
 };
 
 struct scene_view_camera
 {
-  mat4 View;
-  mat4 Projection;
-  mat4 ViewProj;
-  projection_type Type;
-  vec3 Pos;
-  vec3 Orientation;
-  f32 AspectRatio;
-  f32 OrthoNearPlane;
-  f32 OrthoFarPlane;
-  f32 OrthoSize;
+    mat4 View;
+    mat4 Projection;
+    mat4 ViewProj;
+    projection_type Type;
+    vec3 Pos;
+    vec3 Orientation;
+    f32 AspectRatio;
+    f32 OrthoNearPlane;
+    f32 OrthoFarPlane;
+    f32 OrthoSize;
 };
 
 void SetCameraViewportSize(scene_view_camera *Camera, i32 Width, i32 Height);

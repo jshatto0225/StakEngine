@@ -5,10 +5,10 @@
 
 struct texture_specification
 {
-  i32 Width;
-  i32 Height;
-  image_format Format;
-  bool GenerateMips;
+    i32 Width;
+    i32 Height;
+    image_format Format;
+    bool GenerateMips;
 };
 
 struct texture;

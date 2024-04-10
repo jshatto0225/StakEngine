@@ -7,24 +7,24 @@
 #define SK_OPENGL
 
 #if defined(_WIN32)
-  #define SK_WINDOWS
-  #define _CRT_SECURE_NO_WARNINGS
-  #ifdef SK_OPENGL
-    #define SK_WGL
-  #else
-    #error Renderer not supported
-  #endif
+    #define SK_WINDOWS
+    #define _CRT_SECURE_NO_WARNINGS
+    #ifdef SK_OPENGL
+        #define SK_WGL
+    #else
+        #error Renderer not supported
+    #endif
 #elif defined(__linux__)
-  #define SK_LINUX
+    #define SK_LINUX
 
-  // TODO:
-  #define SK_X11
+    // TODO:
+    #define SK_X11
 
-  #if defined(SK_OPENGL) and defined(SK_X11)
-    #define SK_GLX
-  #endif
+    #if defined(SK_OPENGL) and defined(SK_X11)
+        #define SK_GLX
+    #endif
 #else
-  #error Platform not supported
+    #error Platform not supported
 #endif
 
 #ifndef PROJECT_DIR

@@ -5,18 +5,18 @@
 
 struct buffer_element
 {
-  const char *Name;
-  shader_data_type Type;
-  u32 Size;
-  u64 Offset;
-  bool Normalized;
+    const char *Name;
+    shader_data_type Type;
+    u32 Size;
+    u64 Offset;
+    bool Normalized;
 };
 
 struct buffer_layout
 {
-  u64 Size;
-  u32 Stride;
-  buffer_element *Elements;
+    u64 Size;
+    u32 Stride;
+    buffer_element *Elements;
 };
 
 u32 GetBufferElementComponentCount(const buffer_element *BufferElement);

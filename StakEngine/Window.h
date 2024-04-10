@@ -6,24 +6,24 @@
 
 struct window_config
 {
-  i32 X;
-  i32 Y;
-  i32 Width;
-  i32 Height;
-  const char *Title;
-  void *Parent;
+    i32 X;
+    i32 Y;
+    i32 Width;
+    i32 Height;
+    const char *Title;
+    void *Parent;
 };
 
 struct window_size_data
 {
-  i32 Width;
-  i32 Height;
+    i32 Width;
+    i32 Height;
 };
 
 struct window_pos_data
 {
-  i32 X;
-  i32 Y;
+    i32 X;
+    i32 Y;
 };
 
 struct window;

@@ -6,9 +6,9 @@ struct vertex_buffer;
 
 struct vertex_buffer_array
 {
-  u64 Size;
-  u64 Capacity;
-  const vertex_buffer **Buffers;
+    u64 Size;
+    u64 Capacity;
+    const vertex_buffer **Buffers;
 };
 
 vertex_buffer *CreateVertexBuffer(u32 Size);
