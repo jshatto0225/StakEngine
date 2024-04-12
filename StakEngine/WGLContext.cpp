@@ -6,9 +6,9 @@
 #include "Log.h"
 #include "Window.h"
 
-/*********************
- * Private Interface *
- *********************/
+///////////////////////
+// Private Interface //
+///////////////////////
 
 struct context
 {
@@ -17,9 +17,9 @@ struct context
     HGLRC GLRenderingContext;
 };
 
-/********************
- * Public Interface *
- ********************/
+//////////////////////
+// Public Interface //
+//////////////////////
 
 context *
 CreateContext(const window *Window)

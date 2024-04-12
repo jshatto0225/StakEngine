@@ -8,6 +8,10 @@
   -- lines
     -- Mostly for debugging
 
+-- switch to vulkan
+
+-- Linux support
+
 -- Creat a 3D Renderer in the runtime
   -- Both will also be used in the editor for a preview window
 

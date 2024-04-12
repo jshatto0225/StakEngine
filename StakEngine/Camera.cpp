@@ -3,6 +3,10 @@
 #include "Log.h"
 #include "StakMath.h"
 
+//////////////////////
+// Public Interface //
+//////////////////////
+
 void
 SetCameraViewportSize(scene_view_camera *Camera, i32 Width, i32 Height)
 {

@@ -16,9 +16,6 @@ struct editor_data
     texture2d *Tex2;
     texture2d *Tex3;
     vec4 Color;
-    vec2 ScenePos;
-    vec2 SceneSize;
-    vec4 SceneBG;
 };
 
 void *EditorLayerInit();

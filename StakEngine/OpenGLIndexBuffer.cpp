@@ -5,9 +5,9 @@
 #include "IndexBuffer.h"
 #include "Log.h"
 
-/*********************
- * Private Interface *
- *********************/
+///////////////////////
+// Private Interface //
+///////////////////////
 
 struct index_buffer
 {
@@ -15,9 +15,9 @@ struct index_buffer
     u32 Count;
 };
 
-/********************
- * Public Interface *
- ********************/
+//////////////////////
+// Public Interface //
+//////////////////////
 
 index_buffer *
 CreateIndexBuffer()

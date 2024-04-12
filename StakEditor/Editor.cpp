@@ -1,4 +1,3 @@
-#include "../StakEngine/StakEngine.h"
 #include "../StakEngine/EntryPoint.h"
 
 #include "EditorLayer.h"
@@ -11,10 +10,6 @@ application_spec GetAppSpec() {
     Spec.WindowY = 0;
     Spec.WindowTitle = "Stak Editor";
 
-    AddLayerToStack(&Spec.Layers,
-                    EditorLayerInit,
-                    EditorLayerShutdown,
-                    EditorLayerUpdate,
-                    EditorLayerOnEvent);
+    AddLayerToStack(&Spec.Layers, EditorLayerInit, EditorLayerShutdown, EditorLayerUpdate, EditorLayerOnEvent);
     return Spec;
 }

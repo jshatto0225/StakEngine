@@ -26,14 +26,12 @@ EditorLayerInit() {
     Data->Vec1 = { -0.25f, -0.25f };
     Data->Vec2 = {  0.25f,  0.25f };
     Data->Vec3 = {  0.00f,  0.00f };
-    Data->SceneSize = { 3.0f, 3.0f };
-    Data->SceneBG = { 0.2f, 0.9f, 0.6f, 1.0f };
     Data->Color = { 1, 1, 0, 1 };
-    Data->ScenePos = { 0.0f, 0.0f };
 
     return (void *)Data;
 }
 
+// TODO: Do something about this
 void
 EditorLayerShutdown(void **Data) {
     editor_data **EData = (editor_data **)Data;
@@ -41,9 +39,9 @@ EditorLayerShutdown(void **Data) {
         DestroyTexture2D(&(*EData)->Tex1);
         DestroyTexture2D(&(*EData)->Tex2);
         DestroyTexture2D(&(*EData)->Tex3);
-        
+
         free(*EData);
-        
+
         EData = NULL;
     }
 }
@@ -68,7 +66,7 @@ EditorLayerUpdate(void *Data) {
         LogTrace("Right");
         EData->Cam.Pos.x += 0.005f;
     }
-    
+
     RecalculateCameraView(&EData->Cam);
     RecalculateCameraProjection(&EData->Cam);
     RecalculateCameraViewProj(&EData->Cam);
@@ -78,7 +76,7 @@ void
 EditorLayerRenderSystem(editor_data *Data) {
     RenderCommandSetClearColor(1, 0, 1, 1);
     RenderCommandClear();
-    
+
     Renderer2DBeginScene(&Data->Cam);
     {
         Renderer2DDrawCircle(&Data->Vec1, &Data->Vec2, Data->QuadRotation * (PI / 180.0f), &Data->Tex3, false);
@@ -86,18 +84,16 @@ EditorLayerRenderSystem(editor_data *Data) {
         Renderer2DDrawQuad(&Data->Vec2, &Data->Vec2, &Data->Tex1, false);
     }
     Renderer2DEndScene();
-    
+
     RenderCommandSwapBuffers();
 }
 
 void
 EditorLayerOnEvent(void *Data, const event *Event) {
     editor_data *EData = (editor_data *)Data;
-    
+
     if (Event->Type == WINDOW_RESIZED) {
-        SetCameraViewportSize(&EData->Cam,
-                              Event->WinResizeEvent.Width,
-                              Event->WinResizeEvent.Height);
+        SetCameraViewportSize(&EData->Cam, Event->WinResizeEvent.Width, Event->WinResizeEvent.Height);
         RecalculateCameraProjection(&EData->Cam);
         RecalculateCameraViewProj(&EData->Cam);
         return;

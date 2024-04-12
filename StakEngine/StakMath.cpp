@@ -1,5 +1,9 @@
 #include "StakMath.h"
 
+//////////////////////
+// Public Interface //
+//////////////////////
+
 f32 &
 vec1::operator[](i32 i)
 {

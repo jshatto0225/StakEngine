@@ -1,5 +1,9 @@
 #include "ShaderDataTypes.h"
 
+//////////////////////
+// Public Interface //
+//////////////////////
+
 u32
 ShaderDataTypeSize(shader_data_type Type)
 {

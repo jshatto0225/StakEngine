@@ -4,6 +4,10 @@
 #include "Renderer.h"
 #include "Window.h"
 
+//////////////////////
+// Public Interface //
+//////////////////////
+
 void
 AddLayerToStack(layer_stack *Stack, layer_init Init, layer_shutdown Shutdown, layer_update Update, layer_on_event OnEvent)
 {
@@ -32,14 +36,14 @@ ApplicationInit(const application_spec *Spec)
     }
 
     window_config Cfg =
-        {
-            Spec->WindowX,
-            Spec->WindowY,
-            Spec->WindowWidth,
-            Spec->WindowHeight,
-            Spec->WindowTitle,
-            App
-        };
+    {
+        Spec->WindowX,
+        Spec->WindowY,
+        Spec->WindowWidth,
+        Spec->WindowHeight,
+        Spec->WindowTitle,
+        App
+    };
     App->Window = CreateWindow(&Cfg);
     SetWindowEventFn(App->Window, ApplicationOnEvent);
 
@@ -83,18 +87,18 @@ ApplicationOnEvent(void *Parent, const event *Event)
         }
         switch (Event->Type)
         {
-        case WINDOW_CLOSE:
+            case WINDOW_CLOSE:
             LogCoreTrace("Window Closed");
             App->Running = false;
             break;
 
-        case WINDOW_RESIZED:
+            case WINDOW_RESIZED:
             RendererOnWindowResize(Event->WinResizeEvent.Width, Event->WinResizeEvent.Height);
             LogCoreTrace("Viewport: 0, 0, %d, %d",
                          Event->WinResizeEvent.Width,
                          Event->WinResizeEvent.Height);
             break;
-        default:
+            default:
             break;
         }
     }

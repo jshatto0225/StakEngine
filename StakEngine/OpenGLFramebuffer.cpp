@@ -5,9 +5,9 @@
 #include "Framebuffer.h"
 #include "Log.h"
 
-/*********************
- * Private Interface *
- *********************/
+///////////////////////
+// Private Interface //
+///////////////////////
 
 struct framebuffer
 {
@@ -18,9 +18,9 @@ struct framebuffer
     u32 DepthAttachment;
 };
 
- /********************
-  * Public Interface *
-  ********************/
+//////////////////////
+// Public Interface //
+//////////////////////
 
 framebuffer *
 CreateFramebuffer(const framebuffer_spec *Spec)

@@ -7,9 +7,9 @@
 #include "Platform.h"
 #include "Log.h"
 
-/*********************
- * Private Interface *
- *********************/
+///////////////////////
+// Private Interface //
+///////////////////////
 
 const UINT TIMER_INTERVAL = 10;
 UINT_PTR TimerId;
@@ -52,10 +52,10 @@ Win32MessageCallback(HWND Window, UINT Msg, WPARAM WParam, LPARAM LParam)
         {
             RECT Rect = {};
             GetClientRect(Window, &Rect);
-            
+
             Win->Width = Rect.right - Rect.left;
             Win->Height = Rect.bottom - Rect.top;
-            
+
             if (Win->EventFunc)
             {
                 event Event;
@@ -74,7 +74,7 @@ Win32MessageCallback(HWND Window, UINT Msg, WPARAM WParam, LPARAM LParam)
             GetClientRect(Window, &Rect);
             Win->X = Rect.left;
             Win->Y = Rect.top;
-            
+
             if (Win->EventFunc)
             {
                 event Event;
@@ -106,9 +106,9 @@ Win32MessageCallback(HWND Window, UINT Msg, WPARAM WParam, LPARAM LParam)
     return DefWindowProcA(Window, Msg, WParam, LParam);
 }
 
-/********************
- * Public Interface *
- ********************/
+//////////////////////
+// Public Interface //
+//////////////////////
 
 u64 WindowCount = 0;
 
@@ -120,22 +120,22 @@ CreateWindow(const window_config *Config)
         PlatformInit();
     }
     WindowCount++;
-    
+
     window *Window = (window *)malloc(sizeof(window));
-    
+
     if (!Window)
     {
         LogCoreError("Failed to allocate memory for window");
         return NULL;
     }
-    
+
     Window->Parent = Config->Parent;
     Window->X = Config->X;
     Window->Y = Config->Y;
     Window->Width = Config->Width;
     Window->Height = Config->Height;
     Window->Title = Config->Title;
-    
+
     Window->Handle = CreateWindowExA(0,
                                      WIN32_DEFAULT_WNDCLASS_NAME,
                                      Window->Title,
@@ -150,7 +150,7 @@ CreateWindow(const window_config *Config)
                                      NULL);
     SetWindowLongPtrA(Window->Handle, GWLP_USERDATA, (LONG_PTR)Window);
     Window->Context = CreateContext(Window);
-    
+
     return Window;
 }
 
@@ -160,16 +160,16 @@ DestroyWindow(window **Window)
     if (*Window)
     {
         DestroyContext(&(*Window)->Context);
-        
+
         Win32DestroyWindow((*Window)->Handle);
         WindowCount--;
         if (WindowCount == 0)
         {
             PlatformShutdown();
         }
-        
+
         free(*Window);
-        
+
         *Window = NULL;
     }
 }

@@ -4,13 +4,17 @@
 #define SK_DEBUG
 
 // Set Renderer API
-#define SK_OPENGL
+//#define SK_OPENGL
+
+#define SK_VULKAN
 
 #if defined(_WIN32)
     #define SK_WINDOWS
     #define _CRT_SECURE_NO_WARNINGS
     #ifdef SK_OPENGL
         #define SK_WGL
+    #elif defined(SK_VULKAN)
+        // Vulkan Defines
     #else
         #error Renderer not supported
     #endif

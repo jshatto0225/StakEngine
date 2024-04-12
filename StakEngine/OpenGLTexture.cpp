@@ -5,9 +5,9 @@
 #include "Texture.h"
 #include "Log.h"
 
-/*********************
- * Private Interface *
- *********************/
+///////////////////////
+// Private Interface //
+///////////////////////
 
 struct texture
 {
@@ -23,9 +23,9 @@ struct texture2d
     const char *Path;
 };
 
-/********************
- * Public Interface *
- ********************/
+//////////////////////
+// Public Interface //
+//////////////////////
 
 texture *
 CreateTexture(const texture_specification *TextureSpecification)
@@ -49,9 +49,9 @@ DestroyTexture(texture **Texture)
     if (*Texture != NULL)
     {
         glDeleteTextures(1, &(*Texture)->RendererId);
-        
+
         free(*Texture);
-        
+
         *Texture = NULL;
     }
 }
@@ -108,10 +108,10 @@ CreateTexture2D(const char *Path)
         LogCoreError("Failed to allocate memory for texture 2d");
         return NULL;
     }
-    
+
     Tex->Loaded = true;
     Tex->Path = Path;
-    
+
     // LOAD IMAGE
     image *Image;
     Image = CreateImage(Path);
@@ -132,7 +132,7 @@ CreateTexture2D(const char *Path)
     image_data ImageData = Image->Data;
     Tex->Spec.Width = ImageData.Width;
     Tex->Spec.Height = ImageData.Height;
-    
+
     glGenTextures(1, &Tex->RendererId);
     glBindTexture(GL_TEXTURE_2D, Tex->RendererId);
     glTexStorage2D(GL_TEXTURE_2D,
@@ -140,14 +140,14 @@ CreateTexture2D(const char *Path)
                    ImageFormatToOpenGLInternalFormat(Tex->Spec.Format),
                    Tex->Spec.Width,
                    Tex->Spec.Height);
-    
+
     // set the texture wrapping parameters
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT);	// set texture wrapping to GL_REPEAT (default wrapping method)
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT);
     // set texture filtering parameters
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST /* GL_LINEAR */);
-    
+
     glTexSubImage2D(GL_TEXTURE_2D,
                     0,
                     0,
@@ -157,7 +157,7 @@ CreateTexture2D(const char *Path)
                     ImageFormatToOpenGLDataFormat(Tex->Spec.Format),
                     GL_UNSIGNED_BYTE,
                     Image->Bytes);
-    
+
     return Tex;
 }
 
@@ -165,13 +165,13 @@ texture2d *
 CreateTexture2D(const texture_specification *TextureSpecification)
 {
     texture2d *Tex = (texture2d *)malloc(sizeof(texture2d));
-    
+
     if (!Tex)
     {
         LogCoreError("Failed to allocate memory for texture 2d");
         return NULL;
     }
-    
+
     Tex->Spec = *TextureSpecification;
     glGenTextures(1, &Tex->RendererId);
     glBindTexture(GL_TEXTURE_2D, Tex->RendererId);
@@ -180,16 +180,16 @@ CreateTexture2D(const texture_specification *TextureSpecification)
                    ImageFormatToOpenGLInternalFormat(Tex->Spec.Format),
                    Tex->Spec.Width,
                    Tex->Spec.Height);
-    
+
     // set the texture wrapping parameters
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT);	// set texture wrapping to GL_REPEAT (default wrapping method)
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT);
     // set texture filtering parameters
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST /* GL_LINEAR */);
-    
+
     Tex->Loaded = false;
-    
+
     return Tex;
 }
 
@@ -199,9 +199,9 @@ DestroyTexture2D(texture2d **Tex)
     if (*Tex != NULL)
     {
         glDeleteTextures(1, &(*Tex)->RendererId);
-        
+
         free(*Tex);
-        
+
         *Tex = NULL;
     }
 }

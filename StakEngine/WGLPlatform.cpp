@@ -2,9 +2,9 @@
 
 #ifdef SK_WGL
 
-#include "Window.h"
-#include "Renderer.h"
-#include "Log.h"
+///////////////////////
+// Private Interface //
+///////////////////////
 
 WGLGETEXTENSIONSSTRINGEXTPROC wglGetExtensionsStringEXT;
 WGLGETEXTENSIONSSTRINGARBPROC wglGetExtensionsStringARB;
@@ -12,6 +12,10 @@ WGLCREATECONTEXTATTRIBSARBPROC wglCreateContextAttribsARB;
 WGLSWAPINTERVALEXTPROC wglSwapIntervalEXT;
 WGLGETPIXELFORMATATTRIBIVARBPROC wglGetPixelFormatAttribivARB;
 WGLCHOOSEPIXELFORMATARB wglChoosePixelFormatARB;
+
+//////////////////////
+// Public Interface //
+//////////////////////
 
 void *
 PlatformGetProcAddress(const char *name)
@@ -27,26 +31,26 @@ PlatformInitExtensions()
     HGLRC CurrentHGLRC = wglGetCurrentContext();
     HDC CurrentHDC = wglGetCurrentDC();
     HDC DummyHDC;
-    
+
     DummyHDC = GetDC(Platform.DummyWindow);
     PFD.nSize = sizeof(PFD);
     PFD.nVersion = 1;
     PFD.dwFlags = PFD_DRAW_TO_WINDOW | PFD_SUPPORT_OPENGL | PFD_DOUBLEBUFFER;
     PFD.iPixelType = PFD_TYPE_RGBA;
     PFD.cColorBits = 24;
-    
+
     i32 Choose = ChoosePixelFormat(DummyHDC, &PFD);
     SetPixelFormat(DummyHDC, Choose, &PFD);
     DummyHGLRC = wglCreateContext(DummyHDC);
     wglMakeCurrent(DummyHDC, DummyHGLRC);
-    
+
     wglGetExtensionsStringEXT = (WGLGETEXTENSIONSSTRINGEXTPROC)wglGetProcAddress("wglGetExtensionsStringEXT");
     wglGetExtensionsStringARB = (WGLGETEXTENSIONSSTRINGARBPROC)wglGetProcAddress("wglGetExtensionsStringARB");
     wglCreateContextAttribsARB = (WGLCREATECONTEXTATTRIBSARBPROC)wglGetProcAddress("wglCreateContextAttribsARB");
     wglSwapIntervalEXT = (WGLSWAPINTERVALEXTPROC)wglGetProcAddress("wglSwapIntervalEXT");
     wglGetPixelFormatAttribivARB = (WGLGETPIXELFORMATATTRIBIVARBPROC)wglGetProcAddress("wglGetPixelFormatAttribivARB");
     wglChoosePixelFormatARB = (WGLCHOOSEPIXELFORMATARB)wglGetProcAddress("wglChoosePixelFormatARB");
-    
+
     wglMakeCurrent(CurrentHDC, CurrentHGLRC);
 }
 

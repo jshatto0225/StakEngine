@@ -5,12 +5,12 @@
 #include "RenderApi.h"
 #include "Log.h"
 
-/*********************
- * Private Interface *
- *********************/
+///////////////////////
+// Private Interface //
+///////////////////////
 
-bool RenderApiInitialized = false;
-window *RenderApiWindow = NULL;
+static bool RenderApiInitialized = false;
+static window *RenderApiWindow = NULL;
 
 static void APIENTRY
 OpenGLMessageCallback(u32 Source, u32 Type, u32 Id, u32 Severity, i32 Length, const char *Message, const void *UserParam)
@@ -32,9 +32,9 @@ OpenGLMessageCallback(u32 Source, u32 Type, u32 Id, u32 Severity, i32 Length, co
     }
 }
 
-/********************
- * Public Interface *
- ********************/
+//////////////////////
+// Public Interface //
+//////////////////////
 
 void
 RenderApiInit(window *Window)
@@ -49,13 +49,9 @@ RenderApiInit(window *Window)
     glEnable(GL_DEBUG_OUTPUT);
     glEnable(GL_DEBUG_OUTPUT_SYNCHRONOUS);
     glDebugMessageCallback(OpenGLMessageCallback, NULL);
-    glDebugMessageControl(GL_DONT_CARE, GL_DONT_CARE,
-                          GL_DEBUG_SEVERITY_NOTIFICATION,
-                          0,
-                          NULL,
-                          GL_FALSE);
+    glDebugMessageControl(GL_DONT_CARE, GL_DONT_CARE, GL_DEBUG_SEVERITY_NOTIFICATION, 0, NULL, GL_FALSE);
 #endif
-    
+
     glEnable(GL_BLEND);
     glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
     glEnable(GL_DEPTH_TEST);

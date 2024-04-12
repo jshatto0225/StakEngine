@@ -2,6 +2,10 @@
 
 #include "Log.h"
 
+//////////////////////
+// Public Interface //
+//////////////////////
+
 u32
 GetBufferElementComponentCount(const buffer_element *BufferElement)
 {
