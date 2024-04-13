@@ -18,7 +18,7 @@ struct editor_data
     vec4 Color;
 };
 
-void *EditorLayerInit();
-void EditorLayerShutdown(void **);
-void EditorLayerUpdate(void *);
-void EditorLayerOnEvent(void *, const event *);
+void EditorLayerInit();
+void EditorLayerShutdown();
+void EditorLayerUpdate();
+void EditorLayerOnEvent(const event *);

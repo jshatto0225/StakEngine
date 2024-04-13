@@ -51,4 +51,4 @@ struct event
     window_paint_event WinPaintEvent;
 };
 
-typedef void(*EventFn)(void *, const event *);
+typedef void(*EventFn)(const event *);

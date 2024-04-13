@@ -44,7 +44,7 @@ Win32MessageCallback(HWND Window, UINT Msg, WPARAM WParam, LPARAM LParam)
                 event Event = {};
                 Event.Type = WINDOW_CLOSE;
                 Event.WinCloseEvent.Window = Win;
-                Win->EventFunc(Win->Parent, &Event);
+                Win->EventFunc(&Event);
             }
             return 0;
         }
@@ -63,7 +63,7 @@ Win32MessageCallback(HWND Window, UINT Msg, WPARAM WParam, LPARAM LParam)
                 Event.WinResizeEvent.Window = Win;
                 Event.WinResizeEvent.Width = Rect.right - Rect.left;
                 Event.WinResizeEvent.Height = Rect.bottom - Rect.top;
-                Win->EventFunc(Win->Parent, &Event);
+                Win->EventFunc(&Event);
             }
             RedrawWindow(Window, NULL, NULL, RDW_INVALIDATE);
             return 0;
@@ -82,7 +82,7 @@ Win32MessageCallback(HWND Window, UINT Msg, WPARAM WParam, LPARAM LParam)
                 Event.WinMoveEvent.Window = Win;
                 Event.WinMoveEvent.X = Rect.left;
                 Event.WinMoveEvent.Y = Rect.top;
-                Win->EventFunc(Win->Parent, &Event);
+                Win->EventFunc(&Event);
             }
             RedrawWindow(Window, NULL, NULL, RDW_INVALIDATE);
             return 0;
@@ -96,7 +96,7 @@ Win32MessageCallback(HWND Window, UINT Msg, WPARAM WParam, LPARAM LParam)
                 event Event;
                 Event.Type = WINDOW_PAINT;
                 Event.WinPaintEvent.Window = Win;
-                Win->EventFunc(Win->Parent, &Event);
+                Win->EventFunc(&Event);
             }
             EndPaint(Window, &PaintStruct);
             return 0;
@@ -129,7 +129,6 @@ CreateWindow(const window_config *Config)
         return NULL;
     }
 
-    Window->Parent = Config->Parent;
     Window->X = Config->X;
     Window->Y = Config->Y;
     Window->Width = Config->Width;

@@ -13,11 +13,12 @@ StakMain()
     LogInit();
 
     application_spec Spec = GetAppSpec();
-    application *App = ApplicationInit(&Spec);
-    ApplicationRun(App);
-    ApplicationShutdown(&App);
+    ApplicationInit(&Spec);
+    ApplicationRun();
+    ApplicationShutdown();
 
     LogShutdown();
+
     return 0;
 }
 

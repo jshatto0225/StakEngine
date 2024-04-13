@@ -10,18 +10,10 @@ struct application_spec
     i32 WindowY;
     i32 WindowWidth;
     i32 WindowHeight;
-    layer_stack Layers;
 };
 
-struct application {
-    application_spec Spec;
-    window *Window;
-    bool Running;
-    layer_stack Layers;
-};
-
-application *ApplicationInit(const application_spec *Spec);
-void ApplicationShutdown(application **App);
-void ApplicationRun(application *App);
-void ApplicationOnEvent(void *Parent, const event *Event);
-void AddLayerToStack(layer_stack *Stack, layer_init Init, layer_shutdown Shutdown, layer_update Update, layer_on_event OnEvent);
+void ApplicationInit(const application_spec *Spec);
+void ApplicationShutdown();
+void ApplicationRun();
+void ApplicationOnEvent(const event *Event);
+void AddLayerToStack(layer_init Init, layer_shutdown Shutdown, layer_update Update, layer_on_event OnEvent);

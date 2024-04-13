@@ -10,6 +10,6 @@ application_spec GetAppSpec() {
     Spec.WindowY = 0;
     Spec.WindowTitle = "Stak Editor";
 
-    AddLayerToStack(&Spec.Layers, EditorLayerInit, EditorLayerShutdown, EditorLayerUpdate, EditorLayerOnEvent);
+    AddLayerToStack(EditorLayerInit, EditorLayerShutdown, EditorLayerUpdate, EditorLayerOnEvent);
     return Spec;
 }

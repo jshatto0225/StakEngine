@@ -11,7 +11,6 @@ struct window_config
     i32 Width;
     i32 Height;
     const char *Title;
-    void *Parent;
 };
 
 struct window_size_data

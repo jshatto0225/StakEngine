@@ -2,10 +2,10 @@
 
 #include "Event.h"
 
-typedef void *(*layer_init)();
-typedef void (*layer_shutdown)(void **);
-typedef void (*layer_update)(void *);
-typedef void (*layer_on_event)(void *, const event *);
+typedef void (*layer_init)();
+typedef void (*layer_shutdown)();
+typedef void (*layer_update)();
+typedef void (*layer_on_event)(const event *);
 
 struct application_layer
 {

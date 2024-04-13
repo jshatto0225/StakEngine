@@ -4,92 +4,91 @@
 #include "Renderer.h"
 #include "Window.h"
 
+///////////////////////
+// Private Interface //
+///////////////////////
+
+struct application {
+  application_spec Spec;
+  window *Window;
+  bool Running;
+  layer_stack LayerStack;
+};
+
+application App;
+
 //////////////////////
 // Public Interface //
 //////////////////////
 
 void
-AddLayerToStack(layer_stack *Stack, layer_init Init, layer_shutdown Shutdown, layer_update Update, layer_on_event OnEvent)
+AddLayerToStack(layer_init Init, layer_shutdown Shutdown, layer_update Update, layer_on_event OnEvent)
 {
-    if (Stack->Size == MAX_LAYERS)
+    if (App.LayerStack.Size == MAX_LAYERS)
     {
         LogCoreError("Max number of layers reached");
         return;
     }
 
-    Stack->Layers[Stack->Size].Init = Init;
-    Stack->Layers[Stack->Size].Shutdown = Shutdown;
-    Stack->Layers[Stack->Size].Update = Update;
-    Stack->Layers[Stack->Size].OnEvent = OnEvent;
-    Stack->Size++;
+    App.LayerStack.Layers[App.LayerStack.Size].Init = Init;
+    App.LayerStack.Layers[App.LayerStack.Size].Shutdown = Shutdown;
+    App.LayerStack.Layers[App.LayerStack.Size].Update = Update;
+    App.LayerStack.Layers[App.LayerStack.Size].OnEvent = OnEvent;
+    App.LayerStack.Size++;
 }
 
-application *
+void
 ApplicationInit(const application_spec *Spec)
 {
-    application *App = (application *)malloc(sizeof(application));
-
-    if (!App)
-    {
-        LogCoreError("Failed to allocate space for application");
-        return NULL;
-    }
-
     window_config Cfg =
     {
         Spec->WindowX,
         Spec->WindowY,
         Spec->WindowWidth,
         Spec->WindowHeight,
-        Spec->WindowTitle,
-        App
+        Spec->WindowTitle
     };
-    App->Window = CreateWindow(&Cfg);
-    SetWindowEventFn(App->Window, ApplicationOnEvent);
+    App.Window = CreateWindow(&Cfg);
+    SetWindowEventFn(App.Window, ApplicationOnEvent);
 
-    RendererInit(App->Window);
+    RendererInit(App.Window);
 
-    App->Layers = Spec->Layers;
-
-    App->Running = true;
+    App.Running = true;
     LogCoreInfo("Application Initialized");
 
-    for (u32 i = 0; i < App->Layers.Size; i++)
+    for (u32 i = 0; i < App.LayerStack.Size; i++)
     {
-        App->Layers.LayerData[i] = App->Layers.Layers[i].Init();
+        App.LayerStack.Layers[i].Init();
     }
-
-    return App;
 }
 
 void
-ApplicationRun(application *App)
+ApplicationRun()
 {
-    while (App->Running)
+    while (App.Running)
     {
-        for (u32 i = 0; i < App->Layers.Size; i++)
+        for (u32 i = 0; i < App.LayerStack.Size; i++)
         {
-            App->Layers.Layers[i].Update(App->Layers.LayerData[i]);
+            App.LayerStack.Layers[i].Update();
         }
-        UpdateWindow(App->Window);
+        UpdateWindow(App.Window);
     }
 }
 
 void
-ApplicationOnEvent(void *Parent, const event *Event)
+ApplicationOnEvent(const event *Event)
 {
-    application *App = (application *)Parent;
-    if (App->Running)
+    if (App.Running)
     {
-        for (u32 i = 0; i < App->Layers.Size; i++)
+        for (u32 i = 0; i < App.LayerStack.Size; i++)
         {
-            App->Layers.Layers[i].OnEvent(App->Layers.LayerData[i], Event);
+            App.LayerStack.Layers[i].OnEvent(Event);
         }
         switch (Event->Type)
         {
             case WINDOW_CLOSE:
             LogCoreTrace("Window Closed");
-            App->Running = false;
+            App.Running = false;
             break;
 
             case WINDOW_RESIZED:
@@ -105,22 +104,16 @@ ApplicationOnEvent(void *Parent, const event *Event)
 }
 
 void
-ApplicationShutdown(application **App)
+ApplicationShutdown()
 {
-    if (*App)
+    LogCoreTrace("Application Shutdown");
+
+    for (u32 i = 0; i < App.LayerStack.Size; i++)
     {
-        LogCoreTrace("Application Shutdown");
-
-        for (u32 i = 0; i < (*App)->Layers.Size; i++)
-        {
-            (*App)->Layers.Layers[i].Shutdown(&(*App)->Layers.LayerData[i]);
-        }
-
-        RendererShutdown();
-
-        DestroyWindow(&(*App)->Window);
-
-        free(*App);
-        *App = NULL;
+        App.LayerStack.Layers[i].Shutdown();
     }
+
+    RendererShutdown();
+
+    DestroyWindow(&App.Window);
 }
