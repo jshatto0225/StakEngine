@@ -4,9 +4,9 @@
 #define SK_DEBUG
 
 // Set Renderer API
-//#define SK_OPENGL
+#define SK_OPENGL
 
-#define SK_VULKAN
+//#define SK_VULKAN
 
 #if defined(_WIN32)
     #define SK_WINDOWS

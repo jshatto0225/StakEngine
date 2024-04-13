@@ -21,17 +21,6 @@ project "StakEngine"
     links
     {
         "opengl32",
-        "vulkan-1"
-    }
-
-    libdirs
-    {
-        "External/Vulkan/Lib"
-    }
-
-    includedirs
-    {
-        "External/Vulkan/Include"
     }
 
     filter "system:windows"
