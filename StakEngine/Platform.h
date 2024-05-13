@@ -4,9 +4,9 @@
 #define SK_DEBUG
 
 // Set Renderer API
-#define SK_OPENGL
+//#define SK_OPENGL
 
-//#define SK_VULKAN
+#define SK_VULKAN
 
 #if defined(_WIN32)
     #define SK_WINDOWS
@@ -29,10 +29,6 @@
     #endif
 #else
     #error Platform not supported
-#endif
-
-#ifndef PROJECT_DIR
-#define PROJECT_DIR
 #endif
 
 // NOTE: these will not work if the working dir is not the main proj dir

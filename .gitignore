@@ -2,7 +2,6 @@
 .vscode
 Build
 .cache
-.*
 *.4coder
 *.log
 *.cmake

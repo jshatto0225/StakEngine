@@ -8,11 +8,12 @@
 // Private Interface //
 ///////////////////////
 
-struct application {
-  application_spec Spec;
-  window *Window;
-  bool Running;
-  layer_stack LayerStack;
+struct application
+{
+    application_spec Spec;
+    window *Window;
+    bool Running;
+    layer_stack LayerStack;
 };
 
 application App;
@@ -86,18 +87,18 @@ ApplicationOnEvent(const event *Event)
         }
         switch (Event->Type)
         {
-            case WINDOW_CLOSE:
+        case WINDOW_CLOSE:
             LogCoreTrace("Window Closed");
             App.Running = false;
             break;
 
-            case WINDOW_RESIZED:
+        case WINDOW_RESIZED:
             RendererOnWindowResize(Event->WinResizeEvent.Width, Event->WinResizeEvent.Height);
             LogCoreTrace("Viewport: 0, 0, %d, %d",
                          Event->WinResizeEvent.Width,
                          Event->WinResizeEvent.Height);
             break;
-            default:
+        default:
             break;
         }
     }

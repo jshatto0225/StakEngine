@@ -25,10 +25,22 @@ project "StakEngine"
 
     filter "system:windows"
         systemversion "latest"
+
+        libdirs
+        {
+            "./External/Vulkan/Lib/"
+        }
+
         links
         {
             "user32",
-            "gdi32"
+            "gdi32",
+            "vulkan-1"
+        }
+
+        includedirs
+        {
+            "External/Vulkan/Include/"
         }
 
     filter "configurations:Debug"

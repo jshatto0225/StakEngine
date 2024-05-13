@@ -128,14 +128,14 @@ AddVertexBufferToArray(vertex_buffer_array *Array, const vertex_buffer *VertexBu
 {
     if (Array->Size == Array->Capacity)
     {
-      Array->Capacity *= 2;
-      const vertex_buffer **Res = (const vertex_buffer **)realloc((void *)Array->Buffers, sizeof(vertex_buffer *) * Array->Capacity);
+        Array->Capacity *= 2;
+        const vertex_buffer **Res = (const vertex_buffer **)realloc((void *)Array->Buffers, sizeof(vertex_buffer *) * Array->Capacity);
       
-      if (!Res)
-      {
-          LogCoreError("Failed to reallocate vertex buffer array");
-          return;
-      }
+        if (!Res)
+        {
+            LogCoreError("Failed to reallocate vertex buffer array");
+            return;
+        }
     }
     
     Array->Buffers[Array->Size] = VertexBuffer;
