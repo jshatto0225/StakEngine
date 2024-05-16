@@ -134,6 +134,8 @@ static VkFormat SwapChainImageFormat;
 static VkExtent2D SwapChainExtent;
 static std::vector<VkImageView> SwapChainImageViews;
 static VkPipelineLayout PipelineLayout;
+static VkRenderPass RenderPass;
+static VkPipeline GraphicsPipeline;
 
 VkExtent2D
 ChooseSwapExtent(const VkSurfaceCapabilitiesKHR &Capabilities)
@@ -703,6 +705,11 @@ CreateGraphicsPipeline()
         FragmentShaderStageInfo
     };
 
+    VkPipelineVertexInputStateCreateInfo VertexInputInfo{};
+    VertexInputInfo.sType = VK_STRUCTURE_TYPE_PIPELINE_VERTEX_INPUT_STATE_CREATE_INFO;
+    VertexInputInfo.vertexBindingDescriptionCount = 0;
+    VertexInputInfo.vertexAttributeDescriptionCount = 0;
+
     VkPipelineInputAssemblyStateCreateInfo InputAssembly = {};
     InputAssembly.sType = VK_STRUCTURE_TYPE_PIPELINE_INPUT_ASSEMBLY_STATE_CREATE_INFO;
     InputAssembly.topology = VK_PRIMITIVE_TOPOLOGY_TRIANGLE_LIST;
@@ -762,8 +769,73 @@ CreateGraphicsPipeline()
         throw std::runtime_error("Failed to create pipeline layout");
     }
 
+    VkGraphicsPipelineCreateInfo PipelineInfo = {};
+    PipelineInfo.sType = VK_STRUCTURE_TYPE_GRAPHICS_PIPELINE_CREATE_INFO;
+    PipelineInfo.stageCount = 2;
+    PipelineInfo.pStages = ShaderStages;
+
+    PipelineInfo.pVertexInputState = &VertexInputInfo;
+    PipelineInfo.pInputAssemblyState = &InputAssembly;
+    PipelineInfo.pViewportState = &ViewportState;
+    PipelineInfo.pRasterizationState = &Rasterizer;
+    PipelineInfo.pMultisampleState = &Multisampling;
+    PipelineInfo.pDepthStencilState = NULL;
+    PipelineInfo.pColorBlendState = &ColorBlending;
+    PipelineInfo.pDynamicState = &DynamicState;
+
+    PipelineInfo.layout = PipelineLayout;
+
+    PipelineInfo.renderPass = RenderPass;
+    PipelineInfo.subpass = 0;
+
+    PipelineInfo.basePipelineHandle = VK_NULL_HANDLE;
+    PipelineInfo.basePipelineIndex = -1;
+
+    if (vkCreateGraphicsPipelines(Device, VK_NULL_HANDLE, 1, &PipelineInfo, NULL, &GraphicsPipeline) != VK_SUCCESS)
+    {
+        throw std::runtime_error("Failed to create graphics pipeline");
+    }
+
     vkDestroyShaderModule(Device, FragmentShaderModule, NULL);
     vkDestroyShaderModule(Device, VertexShaderModule, NULL);
+}
+
+void CreateRenderPass()
+{
+    VkAttachmentDescription ColorAttachment = {};
+    ColorAttachment.format = SwapChainImageFormat;
+    ColorAttachment.samples = VK_SAMPLE_COUNT_1_BIT;
+
+    ColorAttachment.loadOp = VK_ATTACHMENT_LOAD_OP_CLEAR;
+    ColorAttachment.storeOp = VK_ATTACHMENT_STORE_OP_STORE;
+
+    ColorAttachment.stencilLoadOp = VK_ATTACHMENT_LOAD_OP_DONT_CARE;
+    ColorAttachment.stencilStoreOp = VK_ATTACHMENT_STORE_OP_DONT_CARE;
+
+    ColorAttachment.initialLayout = VK_IMAGE_LAYOUT_UNDEFINED;
+    ColorAttachment.finalLayout = VK_IMAGE_LAYOUT_PRESENT_SRC_KHR;
+
+    VkAttachmentReference ColorAttachmentRef = {};
+    ColorAttachmentRef.attachment = 0;
+    ColorAttachmentRef.layout = VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL;
+
+    VkSubpassDescription Subpass = {};
+    Subpass.pipelineBindPoint = VK_PIPELINE_BIND_POINT_GRAPHICS;
+
+    Subpass.colorAttachmentCount = 1;
+    Subpass.pColorAttachments = &ColorAttachmentRef;
+
+    VkRenderPassCreateInfo RenderPassInfo = {};
+    RenderPassInfo.sType = VK_STRUCTURE_TYPE_RENDER_PASS_CREATE_INFO;
+    RenderPassInfo.attachmentCount = 1;
+    RenderPassInfo.pAttachments = &ColorAttachment;
+    RenderPassInfo.subpassCount = 1;
+    RenderPassInfo.pSubpasses = &Subpass;
+
+    if (vkCreateRenderPass(Device, &RenderPassInfo, NULL, &RenderPass) != VK_SUCCESS)
+    {
+        throw std::runtime_error("Failed to create render pass");
+    }
 }
 
 //////////////////////
@@ -809,6 +881,7 @@ RenderApiInit(window *Window)
         LogCoreError("Failed to create image views");
     }
 
+    CreateRenderPass();
     CreateGraphicsPipeline();
 
     LogCoreTrace("Vulkan Initialized");
@@ -817,7 +890,9 @@ RenderApiInit(window *Window)
 void
 RenderApiShutdown()
 {
+    vkDestroyPipeline(Device, GraphicsPipeline, NULL);
     vkDestroyPipelineLayout(Device, PipelineLayout, NULL);
+    vkDestroyRenderPass(Device, RenderPass, NULL);
 
     for (auto ImageView : SwapChainImageViews)
     {
