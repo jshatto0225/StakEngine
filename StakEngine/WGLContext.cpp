@@ -74,18 +74,11 @@ CreateContext(const window *Window)
     int PixelFormat = 0;
     u32 NumFormats = 0;
     
-    wglChoosePixelFormatARB(Context->DeviceContext,
-                            PixelFormatAttribList,
-                            NULL,
-                            1,
-                            &PixelFormat,
-                            &NumFormats);
+    wglChoosePixelFormatARB(Context->DeviceContext, PixelFormatAttribList, NULL, 1, &PixelFormat, &NumFormats);
     
     SetPixelFormat(Context->DeviceContext, PixelFormat, &PFD);
     
-    Context->GLRenderingContext = wglCreateContextAttribsARB(Context->DeviceContext,
-                                                             0,
-                                                             Attributes);
+    Context->GLRenderingContext = wglCreateContextAttribsARB(Context->DeviceContext, 0, Attributes);
     wglMakeCurrent(Context->DeviceContext, Context->GLRenderingContext);
     
     RenderCommandBind();

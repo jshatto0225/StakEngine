@@ -135,18 +135,7 @@ CreateWindow(const window_config *Config)
     Window->Height = Config->Height;
     Window->Title = Config->Title;
 
-    Window->Handle = CreateWindowExA(0,
-                                     WIN32_DEFAULT_WNDCLASS_NAME,
-                                     Window->Title,
-                                     WS_OVERLAPPEDWINDOW | WS_VISIBLE,
-                                     Window->X,
-                                     Window->Y,
-                                     Window->Width,
-                                     Window->Height,
-                                     NULL,
-                                     NULL,
-                                     Platform.Instance,
-                                     NULL);
+    Window->Handle = CreateWindowExA(0, WIN32_DEFAULT_WNDCLASS_NAME, Window->Title, WS_OVERLAPPEDWINDOW | WS_VISIBLE, Window->X, Window->Y, Window->Width, Window->Height, NULL, NULL, Platform.Instance, NULL);
     SetWindowLongPtrA(Window->Handle, GWLP_USERDATA, (LONG_PTR)Window);
     Window->Context = CreateContext(Window);
 

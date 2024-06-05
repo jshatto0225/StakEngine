@@ -94,10 +94,7 @@ LoadImageAsBMP(image *Image, u8 *FileData, u64 FileSize)
         Image->Data.Channels = 0;
         break;
     }
-    Image->Bytes = (u8 *)VirtualAlloc(NULL,
-                                      Image->Data.SizeInBytes,
-                                      MEM_RESERVE | MEM_COMMIT,
-                                      PAGE_READWRITE);
+    Image->Bytes = (u8 *)VirtualAlloc(NULL, Image->Data.SizeInBytes, MEM_RESERVE | MEM_COMMIT, PAGE_READWRITE);
     if (!Image->Bytes)
     {
         LogCoreError("Allocation Failed");

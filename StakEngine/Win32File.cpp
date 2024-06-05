@@ -33,13 +33,7 @@ CreateFile(const char *Path)
     
     File->FilePath = Path;
     File->Data = NULL;
-    HANDLE FileHandle = CreateFileA(File->FilePath,
-                                    GENERIC_READ,
-                                    FILE_SHARE_READ,
-                                    0,
-                                    OPEN_EXISTING,
-                                    0,
-                                    0);
+    HANDLE FileHandle = CreateFileA(File->FilePath, GENERIC_READ, FILE_SHARE_READ, 0, OPEN_EXISTING, 0, 0);
     if (!FileHandle)
     {
         // Error
@@ -80,7 +74,8 @@ CreateFile(const char *Path)
 void
 DestroyFile(file **File)
 {
-    if (*File) {
+    if (*File)
+    {
         VirtualFree((*File)->Data, (*File)->Size, MEM_RESERVE);
         
         free(*File);

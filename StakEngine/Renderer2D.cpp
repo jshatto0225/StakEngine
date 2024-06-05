@@ -372,6 +372,7 @@ Renderer2DDrawCircle(const mat4 *Transform, texture2d **Tex, bool TransferTextur
     }
 
     // Store Texture in Renderer2DData
+    // TODO: Check case of different pointers but CompareTexture2D return true
     if (TransferTextureOwnership)
     {
         i32 RendererSlot = -1;
@@ -479,6 +480,7 @@ Renderer2DDrawQuad(const mat4 *Transform, texture2d **Tex, bool TransferTextureO
     }
 
     // Store Texture in Renderer2DData
+    // TODO: Check case of different pointers but CompareTexture2D return true
     if (TransferTextureOwnership)
     {
         i32 RendererSlot = -1;

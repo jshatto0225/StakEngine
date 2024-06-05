@@ -81,24 +81,14 @@ AddVertexBufferToVertexArray(vertex_array *VertexArray, const vertex_buffer *Ver
         case SDT_FLOAT4:
         {
             glEnableVertexAttribArray(VertexArray->VertexBufferIndex);
-            glVertexAttribPointer(VertexArray->VertexBufferIndex,
-                                  GetBufferElementComponentCount(&Element),
-                                  ShaderDataTypeToOpenGLType(Element.Type),
-                                  Element.Normalized ? GL_TRUE : GL_FALSE,
-                                  Layout->Stride,
-                                  (const void *)Element.Offset);
+            glVertexAttribPointer(VertexArray->VertexBufferIndex, GetBufferElementComponentCount(&Element), ShaderDataTypeToOpenGLType(Element.Type), Element.Normalized ? GL_TRUE : GL_FALSE, Layout->Stride, (const void *)Element.Offset);
             VertexArray->VertexBufferIndex++;
             break;
         }
         case SDT_BOOL:
         {
             glEnableVertexAttribArray(VertexArray->VertexBufferIndex);
-            glVertexAttribPointer(VertexArray->VertexBufferIndex,
-                                  GetBufferElementComponentCount(&Element),
-                                  ShaderDataTypeToOpenGLType(Element.Type),
-                                  Element.Normalized ? GL_TRUE : GL_FALSE,
-                                  Layout->Stride,
-                                  (const void *)Element.Offset);
+            glVertexAttribPointer(VertexArray->VertexBufferIndex, GetBufferElementComponentCount(&Element), ShaderDataTypeToOpenGLType(Element.Type), Element.Normalized ? GL_TRUE : GL_FALSE, Layout->Stride, (const void *)Element.Offset);
             VertexArray->VertexBufferIndex++;
             break;
         }
@@ -108,12 +98,7 @@ AddVertexBufferToVertexArray(vertex_array *VertexArray, const vertex_buffer *Ver
             u8 Count = GetBufferElementComponentCount(&Element);
             for (u8 i = 0; i < Count; i++) {
                 glEnableVertexAttribArray(VertexArray->VertexBufferIndex);
-                glVertexAttribPointer(VertexArray->VertexBufferIndex,
-                                      Count,
-                                      ShaderDataTypeSize(Element.Type),
-                                      Element.Normalized ? GL_TRUE : GL_FALSE,
-                                      Layout->Stride,
-                                      (const void *)(Element.Offset + sizeof(f32) * Count * i));
+                glVertexAttribPointer(VertexArray->VertexBufferIndex, Count, ShaderDataTypeSize(Element.Type), Element.Normalized ? GL_TRUE : GL_FALSE, Layout->Stride, (const void *)(Element.Offset + sizeof(f32) * Count * i));
                 glVertexAttribDivisor(VertexArray->VertexBufferIndex, 1);
                 VertexArray->VertexBufferIndex++;
             }

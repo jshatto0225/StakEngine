@@ -398,7 +398,8 @@ FindQueueFamilies(VkPhysicalDevice Device)
         VkBool32 PresentSupport = false;
         vkGetPhysicalDeviceSurfaceSupportKHR(Device, i, Surface, &PresentSupport);
 
-        if (PresentSupport) {
+        if (PresentSupport)
+        {
             Indices.PresentFamily = i;
         }
 
@@ -680,8 +681,8 @@ CreateShaderModule(const std::vector<char> &Code)
 void
 CreateGraphicsPipeline()
 {
-    std::vector<char> VertexShaderCode = ReadFile(SHADER_DIR "QuadShader.vert.spv");
-    std::vector<char> FragmentShaderCode = ReadFile(SHADER_DIR "QuadShader.frag.spv");
+    std::vector<char> VertexShaderCode = ReadFile(SHADER_DIR "BasicShader.vert.spv");
+    std::vector<char> FragmentShaderCode = ReadFile(SHADER_DIR "BasicShader.frag.spv");
 
     VkShaderModule VertexShaderModule = CreateShaderModule(VertexShaderCode);
     VkShaderModule FragmentShaderModule = CreateShaderModule(FragmentShaderCode);
@@ -800,7 +801,8 @@ CreateGraphicsPipeline()
     vkDestroyShaderModule(Device, VertexShaderModule, NULL);
 }
 
-void CreateRenderPass()
+void 
+CreateRenderPass()
 {
     VkAttachmentDescription ColorAttachment = {};
     ColorAttachment.format = SwapChainImageFormat;

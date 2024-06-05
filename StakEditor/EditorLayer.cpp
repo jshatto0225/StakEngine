@@ -3,7 +3,8 @@
 editor_data Data;
 
 void
-EditorLayerInit() {
+EditorLayerInit()
+{
     Data.WindowWidth = 1280;
     Data.WindowHeight = 720;
 
@@ -26,14 +27,16 @@ EditorLayerInit() {
 
 // TODO: Do something about this
 void
-EditorLayerShutdown() {
+EditorLayerShutdown()
+{
     //DestroyTexture2D(&Data.Tex1);
     //DestroyTexture2D(&Data.Tex2);
     //DestroyTexture2D(&Data.Tex3);
 }
 
 void
-EditorLayerUpdate() {
+EditorLayerUpdate()
+{
     Data.QuadRotation += 1.0f;
     if (GetKeyDown(K_W)) {
         LogTrace("Forward");
@@ -58,7 +61,8 @@ EditorLayerUpdate() {
 }
 
 void
-EditorLayerRenderSystem() {
+EditorLayerRenderSystem()
+{
     //RenderCommandSetClearColor(1, 0, 1, 1);
     //RenderCommandClear();
 
@@ -74,14 +78,17 @@ EditorLayerRenderSystem() {
 }
 
 void
-EditorLayerOnEvent(const event *Event) {
-    if (Event->Type == WINDOW_RESIZED) {
+EditorLayerOnEvent(const event *Event)
+{
+    if (Event->Type == WINDOW_RESIZED)
+    {
         SetCameraViewportSize(&Data.Cam, Event->WinResizeEvent.Width, Event->WinResizeEvent.Height);
         RecalculateCameraProjection(&Data.Cam);
         RecalculateCameraViewProj(&Data.Cam);
         return;
     }
-    if (Event->Type == WINDOW_PAINT) {
+    if (Event->Type == WINDOW_PAINT)
+    {
         EditorLayerRenderSystem();
     }
 }

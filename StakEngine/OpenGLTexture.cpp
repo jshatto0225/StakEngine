@@ -135,11 +135,7 @@ CreateTexture2D(const char *Path)
 
     glGenTextures(1, &Tex->RendererId);
     glBindTexture(GL_TEXTURE_2D, Tex->RendererId);
-    glTexStorage2D(GL_TEXTURE_2D,
-                   1,
-                   ImageFormatToOpenGLInternalFormat(Tex->Spec.Format),
-                   Tex->Spec.Width,
-                   Tex->Spec.Height);
+    glTexStorage2D(GL_TEXTURE_2D, 1, ImageFormatToOpenGLInternalFormat(Tex->Spec.Format), Tex->Spec.Width, Tex->Spec.Height);
 
     // set the texture wrapping parameters
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT);	// set texture wrapping to GL_REPEAT (default wrapping method)
@@ -148,15 +144,7 @@ CreateTexture2D(const char *Path)
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST /* GL_LINEAR */);
 
-    glTexSubImage2D(GL_TEXTURE_2D,
-                    0,
-                    0,
-                    0,
-                    Tex->Spec.Width,
-                    Tex->Spec.Height,
-                    ImageFormatToOpenGLDataFormat(Tex->Spec.Format),
-                    GL_UNSIGNED_BYTE,
-                    Image->Bytes);
+    glTexSubImage2D(GL_TEXTURE_2D, 0, 0, 0, Tex->Spec.Width, Tex->Spec.Height, ImageFormatToOpenGLDataFormat(Tex->Spec.Format), GL_UNSIGNED_BYTE, Image->Bytes);
 
     return Tex;
 }
@@ -175,11 +163,7 @@ CreateTexture2D(const texture_specification *TextureSpecification)
     Tex->Spec = *TextureSpecification;
     glGenTextures(1, &Tex->RendererId);
     glBindTexture(GL_TEXTURE_2D, Tex->RendererId);
-    glTexStorage2D(GL_TEXTURE_2D,
-                   1,
-                   ImageFormatToOpenGLInternalFormat(Tex->Spec.Format),
-                   Tex->Spec.Width,
-                   Tex->Spec.Height);
+    glTexStorage2D(GL_TEXTURE_2D, 1, ImageFormatToOpenGLInternalFormat(Tex->Spec.Format), Tex->Spec.Width, Tex->Spec.Height);
 
     // set the texture wrapping parameters
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT);	// set texture wrapping to GL_REPEAT (default wrapping method)
@@ -240,15 +224,7 @@ void
 SetTexture2DData(texture2d *Tex, void *Data, u32 Size)
 {
     glBindTexture(GL_TEXTURE_2D, Tex->RendererId);
-    glTexSubImage2D(GL_TEXTURE_2D,
-                    0,
-                    0,
-                    0,
-                    Tex->Spec.Width,
-                    Tex->Spec.Height,
-                    ImageFormatToOpenGLDataFormat(Tex->Spec.Format),
-                    GL_UNSIGNED_BYTE,
-                    Data);
+    glTexSubImage2D(GL_TEXTURE_2D, 0, 0, 0, Tex->Spec.Width, Tex->Spec.Height, ImageFormatToOpenGLDataFormat(Tex->Spec.Format), GL_UNSIGNED_BYTE, Data);
     Tex->Loaded = true;
 }
 
