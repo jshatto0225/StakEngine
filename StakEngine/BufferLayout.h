@@ -21,10 +21,6 @@ struct buffer_layout
 
 u32 GetBufferElementComponentCount(const buffer_element *BufferElement);
 buffer_layout *CreateBufferLayout(u64 Size);
-void AddElementToLayout(buffer_layout *Layout,
-                        u64 Position,
-                        shader_data_type Type,
-                        const char *Name,
-                        bool Normalized);
+void AddElementToLayout(buffer_layout *Layout, u64 Position, shader_data_type Type, const char *Name, bool Normailized);
 void CalculateOffsetsAndStride(buffer_layout *Layout);
 void DestroyBufferLayout(buffer_layout **BufferLayout);

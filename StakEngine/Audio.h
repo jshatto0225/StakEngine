@@ -1,6 +1,7 @@
 #pragma once
 
-struct sound {
+struct sound 
+{
     // Sound Data
 };
 
