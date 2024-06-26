@@ -119,6 +119,29 @@ struct swap_chain_support_details
     std::vector<VkPresentModeKHR> PresentModes;
 };
 
+struct renderer_api
+{
+	window *Window;
+	VkInstance Instance;
+	VkDebugUtilsMessengerEXT DebugMessenger;
+	VkPhysicalDevice PhysicalDevice;
+	VkDevice Device;
+	VkQueue GraphicsQueue;
+	VkQueue PresentQueue;
+	VkSurfaceKHR Surface;
+	VkSwapchainKHR SwapChain;
+	std::vector<VkImage> SwapChainImages;
+	VkFormat SwapChainImageFormat;
+	VkExtent2D SwapChainExtent;
+	std::vector<VkImageView> SwapChainImageViews;
+	VkPipelineLayout PipelineLayout;
+	VkRenderPass RenderPass;
+	VkPipeline GraphicsPipeline;
+};
+
+static renderer_api RendererApi;
+
+/*
 static window *RenderApiWindow;
 
 static VkInstance Instance;
@@ -136,6 +159,7 @@ static std::vector<VkImageView> SwapChainImageViews;
 static VkPipelineLayout PipelineLayout;
 static VkRenderPass RenderPass;
 static VkPipeline GraphicsPipeline;
+*/
 
 VkExtent2D
 ChooseSwapExtent(const VkSurfaceCapabilitiesKHR &Capabilities)
@@ -146,8 +170,8 @@ ChooseSwapExtent(const VkSurfaceCapabilitiesKHR &Capabilities)
     }
     else
     {
-        i32 Width = RenderApiWindow->Width;
-        i32 Height = RenderApiWindow->Height;
+        i32 Width = RendererApi.Window->Width;
+        i32 Height = RendererApi.Window->Height;
 
         VkExtent2D Extent = { (u32)Width, (u32)Height };
 
@@ -191,24 +215,24 @@ QuerySwapChainSupport(VkPhysicalDevice Device)
 {
     swap_chain_support_details Details;
 
-    vkGetPhysicalDeviceSurfaceCapabilitiesKHR(Device, Surface, &Details.Capabilities);
+    vkGetPhysicalDeviceSurfaceCapabilitiesKHR(Device, RendererApi.Surface, &Details.Capabilities);
 
     u32 FormatCount;
-    vkGetPhysicalDeviceSurfaceFormatsKHR(Device, Surface, &FormatCount, NULL);
+    vkGetPhysicalDeviceSurfaceFormatsKHR(Device, RendererApi.Surface, &FormatCount, NULL);
 
     if (FormatCount != 0)
     {
         Details.Formats.resize(FormatCount);
-        vkGetPhysicalDeviceSurfaceFormatsKHR(Device, Surface, &FormatCount, Details.Formats.data());
+        vkGetPhysicalDeviceSurfaceFormatsKHR(Device, RendererApi.Surface, &FormatCount, Details.Formats.data());
     }
 
     u32 PresentModeCount;
-    vkGetPhysicalDeviceSurfacePresentModesKHR(Device, Surface, &PresentModeCount, Details.PresentModes.data());
+    vkGetPhysicalDeviceSurfacePresentModesKHR(Device, RendererApi.Surface, &PresentModeCount, Details.PresentModes.data());
 
     if (PresentModeCount != 0)
     {
         Details.PresentModes.resize(PresentModeCount);
-        vkGetPhysicalDeviceSurfacePresentModesKHR(Device, Surface, &PresentModeCount, Details.PresentModes.data());
+        vkGetPhysicalDeviceSurfacePresentModesKHR(Device, RendererApi.Surface, &PresentModeCount, Details.PresentModes.data());
     }
 
     return Details;
@@ -323,7 +347,7 @@ CreateInstance()
         CreateInfo.pNext = NULL;
     }
 
-    if (vkCreateInstance(&CreateInfo, NULL, &Instance) != VK_SUCCESS)
+    if (vkCreateInstance(&CreateInfo, NULL, &RendererApi.Instance) != VK_SUCCESS)
     {
         return false;
     }
@@ -359,7 +383,7 @@ SetupDebugMessenger()
     CreateInfo.messageType = VK_DEBUG_UTILS_MESSAGE_TYPE_GENERAL_BIT_EXT | VK_DEBUG_UTILS_MESSAGE_TYPE_VALIDATION_BIT_EXT | VK_DEBUG_UTILS_MESSAGE_TYPE_PERFORMANCE_BIT_EXT;
     CreateInfo.pfnUserCallback = DebugCallback;
 
-    if (CreateDebugUtilsMessengerEXT(Instance, &CreateInfo, NULL, &DebugMessenger) != VK_SUCCESS)
+    if (CreateDebugUtilsMessengerEXT(RendererApi.Instance, &CreateInfo, NULL, &RendererApi.DebugMessenger) != VK_SUCCESS)
     {
         return false;
     }
@@ -396,7 +420,7 @@ FindQueueFamilies(VkPhysicalDevice Device)
         }
 
         VkBool32 PresentSupport = false;
-        vkGetPhysicalDeviceSurfaceSupportKHR(Device, i, Surface, &PresentSupport);
+        vkGetPhysicalDeviceSurfaceSupportKHR(Device, i, RendererApi.Surface, &PresentSupport);
 
         if (PresentSupport)
         {
@@ -453,18 +477,18 @@ bool
 PickPhysicalDevice()
 {
     u32 DeviceCount = 0;
-    vkEnumeratePhysicalDevices(Instance, &DeviceCount, NULL);
+    vkEnumeratePhysicalDevices(RendererApi.Instance, &DeviceCount, NULL);
     if (DeviceCount == 0)
     {
         return false;
     }
     std::vector<VkPhysicalDevice> Devices(DeviceCount);
-    vkEnumeratePhysicalDevices(Instance, &DeviceCount, Devices.data());
+    vkEnumeratePhysicalDevices(RendererApi.Instance, &DeviceCount, Devices.data());
     for (const VkPhysicalDevice &Device : Devices)
     {
         if (IsDeviceSuitable(Device))
         {
-            PhysicalDevice = Device;
+            RendererApi.PhysicalDevice = Device;
             return true;
         }
     }
@@ -474,7 +498,7 @@ PickPhysicalDevice()
 bool
 CreateLogicalDevice()
 {
-    queue_family_indices Indices = FindQueueFamilies(PhysicalDevice);
+    queue_family_indices Indices = FindQueueFamilies(RendererApi.PhysicalDevice);
 
     std::vector<VkDeviceQueueCreateInfo> QueueCreateInfos = {};
     std::set<u32> UniqueQueueFamilies = { Indices.GraphicsFamily.value(), Indices.PresentFamily.value() };
@@ -515,13 +539,13 @@ CreateLogicalDevice()
         CreateInfo.enabledLayerCount = 0;
     }
 
-    if (vkCreateDevice(PhysicalDevice, &CreateInfo, nullptr, &Device) != VK_SUCCESS)
+    if (vkCreateDevice(RendererApi.PhysicalDevice, &CreateInfo, nullptr, &RendererApi.Device) != VK_SUCCESS)
     {
         return false;
     }
 
-    vkGetDeviceQueue(Device, Indices.GraphicsFamily.value(), 0, &GraphicsQueue);
-    vkGetDeviceQueue(Device, Indices.GraphicsFamily.value(), 0, &PresentQueue);
+    vkGetDeviceQueue(RendererApi.Device, Indices.GraphicsFamily.value(), 0, &RendererApi.GraphicsQueue);
+    vkGetDeviceQueue(RendererApi.Device, Indices.GraphicsFamily.value(), 0, &RendererApi.PresentQueue);
 
     return true;
 }
@@ -532,10 +556,10 @@ CreateSurface()
 #ifdef SK_WINDOWS
     VkWin32SurfaceCreateInfoKHR CreateInfo = {};
     CreateInfo.sType = VK_STRUCTURE_TYPE_WIN32_SURFACE_CREATE_INFO_KHR;
-    CreateInfo.hwnd = RenderApiWindow->Handle;
+    CreateInfo.hwnd = RendererApi.Window->Handle;
     CreateInfo.hinstance = Platform.Instance;
 
-    if (vkCreateWin32SurfaceKHR(Instance, &CreateInfo, NULL, &Surface) != VK_SUCCESS)
+    if (vkCreateWin32SurfaceKHR(RendererApi.Instance, &CreateInfo, NULL, &RendererApi.Surface) != VK_SUCCESS)
     {
         return false;
     }
@@ -547,7 +571,7 @@ CreateSurface()
 bool
 CreateSwapChain()
 {
-    swap_chain_support_details SwapChainSupport = QuerySwapChainSupport(PhysicalDevice);
+    swap_chain_support_details SwapChainSupport = QuerySwapChainSupport(RendererApi.PhysicalDevice);
 
     VkSurfaceFormatKHR SurfaceFormat = ChooseSwapSurfaceFormat(SwapChainSupport.Formats);
     VkPresentModeKHR PresentMode = ChooseSwapPresentMode(SwapChainSupport.PresentModes);
@@ -562,7 +586,7 @@ CreateSwapChain()
 
     VkSwapchainCreateInfoKHR CreateInfo = {};
     CreateInfo.sType = VK_STRUCTURE_TYPE_SWAPCHAIN_CREATE_INFO_KHR;
-    CreateInfo.surface = Surface;
+    CreateInfo.surface = RendererApi.Surface;
     CreateInfo.minImageCount = ImageCount;
     CreateInfo.imageFormat = SurfaceFormat.format;
     CreateInfo.imageColorSpace = SurfaceFormat.colorSpace;
@@ -571,7 +595,7 @@ CreateSwapChain()
     // VK_IMAGE_USAGE_TRANSFER_DST_BIT for post processing
     CreateInfo.imageUsage = VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT;
 
-    queue_family_indices Indices = FindQueueFamilies(PhysicalDevice);
+    queue_family_indices Indices = FindQueueFamilies(RendererApi.PhysicalDevice);
     u32 QueueFamilyIndices[] = { Indices.GraphicsFamily.value(), Indices.PresentFamily.value() };
 
     if (Indices.GraphicsFamily != Indices.PresentFamily)
@@ -593,17 +617,17 @@ CreateSwapChain()
     CreateInfo.clipped = VK_TRUE;
     CreateInfo.oldSwapchain = VK_NULL_HANDLE;
 
-    if (vkCreateSwapchainKHR(Device, &CreateInfo, NULL, &SwapChain) != VK_SUCCESS)
+    if (vkCreateSwapchainKHR(RendererApi.Device, &CreateInfo, NULL, &RendererApi.SwapChain) != VK_SUCCESS)
     {
         return false;
     }
 
-    vkGetSwapchainImagesKHR(Device, SwapChain, &ImageCount, NULL);
-    SwapChainImages.resize(ImageCount);
-    vkGetSwapchainImagesKHR(Device, SwapChain, &ImageCount, SwapChainImages.data());
+    vkGetSwapchainImagesKHR(RendererApi.Device, RendererApi.SwapChain, &ImageCount, NULL);
+    RendererApi.SwapChainImages.resize(ImageCount);
+    vkGetSwapchainImagesKHR(RendererApi.Device, RendererApi.SwapChain, &ImageCount, RendererApi.SwapChainImages.data());
 
-    SwapChainImageFormat = SurfaceFormat.format;
-    SwapChainExtent = Extent;
+    RendererApi.SwapChainImageFormat = SurfaceFormat.format;
+    RendererApi.SwapChainExtent = Extent;
 
     return true;
 }
@@ -611,15 +635,15 @@ CreateSwapChain()
 bool
 CreateImageViews()
 {
-    SwapChainImageViews.resize(SwapChainImages.size());
+    RendererApi.SwapChainImageViews.resize(RendererApi.SwapChainImages.size());
 
-    for (u64 i = 0; i < SwapChainImages.size(); i++)
+    for (u64 i = 0; i < RendererApi.SwapChainImages.size(); i++)
     {
         VkImageViewCreateInfo CreateInfo = {};
         CreateInfo.sType = VK_STRUCTURE_TYPE_IMAGE_VIEW_CREATE_INFO;
-        CreateInfo.image = SwapChainImages[i];
+        CreateInfo.image = RendererApi.SwapChainImages[i];
         CreateInfo.viewType = VK_IMAGE_VIEW_TYPE_2D;
-        CreateInfo.format = SwapChainImageFormat;
+        CreateInfo.format = RendererApi.SwapChainImageFormat;
         CreateInfo.components.r = VK_COMPONENT_SWIZZLE_IDENTITY;
         CreateInfo.components.g = VK_COMPONENT_SWIZZLE_IDENTITY;
         CreateInfo.components.b = VK_COMPONENT_SWIZZLE_IDENTITY;
@@ -630,7 +654,7 @@ CreateImageViews()
         CreateInfo.subresourceRange.baseArrayLayer = 0;
         CreateInfo.subresourceRange.layerCount = 1;
 
-        if (vkCreateImageView(Device, &CreateInfo, NULL, &SwapChainImageViews[i]) != VK_SUCCESS)
+        if (vkCreateImageView(RendererApi.Device, &CreateInfo, NULL, &RendererApi.SwapChainImageViews[i]) != VK_SUCCESS)
         {
             return false;
         }
@@ -670,7 +694,7 @@ CreateShaderModule(const std::vector<char> &Code)
     CreateInfo.pCode = (const u32 *)Code.data();
 
     VkShaderModule ShaderModule;
-    if (vkCreateShaderModule(Device, &CreateInfo, NULL, &ShaderModule) != VK_SUCCESS)
+    if (vkCreateShaderModule(RendererApi.Device, &CreateInfo, NULL, &ShaderModule) != VK_SUCCESS)
     {
         throw std::runtime_error("Failed to create shader module");
     }
@@ -765,7 +789,7 @@ CreateGraphicsPipeline()
     PipelineLayoutInfo.setLayoutCount = 0;
     PipelineLayoutInfo.pushConstantRangeCount = 0;
 
-    if (vkCreatePipelineLayout(Device, &PipelineLayoutInfo, NULL, &PipelineLayout) != VK_SUCCESS)
+    if (vkCreatePipelineLayout(RendererApi.Device, &PipelineLayoutInfo, NULL, &RendererApi.PipelineLayout) != VK_SUCCESS)
     {
         throw std::runtime_error("Failed to create pipeline layout");
     }
@@ -784,28 +808,28 @@ CreateGraphicsPipeline()
     PipelineInfo.pColorBlendState = &ColorBlending;
     PipelineInfo.pDynamicState = &DynamicState;
 
-    PipelineInfo.layout = PipelineLayout;
+    PipelineInfo.layout = RendererApi.PipelineLayout;
 
-    PipelineInfo.renderPass = RenderPass;
+    PipelineInfo.renderPass = RendererApi.RenderPass;
     PipelineInfo.subpass = 0;
 
     PipelineInfo.basePipelineHandle = VK_NULL_HANDLE;
     PipelineInfo.basePipelineIndex = -1;
 
-    if (vkCreateGraphicsPipelines(Device, VK_NULL_HANDLE, 1, &PipelineInfo, NULL, &GraphicsPipeline) != VK_SUCCESS)
+    if (vkCreateGraphicsPipelines(RendererApi.Device, VK_NULL_HANDLE, 1, &PipelineInfo, NULL, &RendererApi.GraphicsPipeline) != VK_SUCCESS)
     {
         throw std::runtime_error("Failed to create graphics pipeline");
     }
 
-    vkDestroyShaderModule(Device, FragmentShaderModule, NULL);
-    vkDestroyShaderModule(Device, VertexShaderModule, NULL);
+    vkDestroyShaderModule(RendererApi.Device, FragmentShaderModule, NULL);
+    vkDestroyShaderModule(RendererApi.Device, VertexShaderModule, NULL);
 }
 
 void 
 CreateRenderPass()
 {
     VkAttachmentDescription ColorAttachment = {};
-    ColorAttachment.format = SwapChainImageFormat;
+    ColorAttachment.format = RendererApi.SwapChainImageFormat;
     ColorAttachment.samples = VK_SAMPLE_COUNT_1_BIT;
 
     ColorAttachment.loadOp = VK_ATTACHMENT_LOAD_OP_CLEAR;
@@ -834,7 +858,7 @@ CreateRenderPass()
     RenderPassInfo.subpassCount = 1;
     RenderPassInfo.pSubpasses = &Subpass;
 
-    if (vkCreateRenderPass(Device, &RenderPassInfo, NULL, &RenderPass) != VK_SUCCESS)
+    if (vkCreateRenderPass(RendererApi.Device, &RenderPassInfo, NULL, &RendererApi.RenderPass) != VK_SUCCESS)
     {
         throw std::runtime_error("Failed to create render pass");
     }
@@ -847,7 +871,7 @@ CreateRenderPass()
 void
 RenderApiInit(window *Window)
 {
-    RenderApiWindow = Window;
+    RendererApi.Window = Window;
     if (!CreateInstance())
     {
         LogCoreError("Failed to create vulkan instance");
@@ -892,27 +916,27 @@ RenderApiInit(window *Window)
 void
 RenderApiShutdown()
 {
-    vkDestroyPipeline(Device, GraphicsPipeline, NULL);
-    vkDestroyPipelineLayout(Device, PipelineLayout, NULL);
-    vkDestroyRenderPass(Device, RenderPass, NULL);
+    vkDestroyPipeline(RendererApi.Device, RendererApi.GraphicsPipeline, NULL);
+    vkDestroyPipelineLayout(RendererApi.Device, RendererApi.PipelineLayout, NULL);
+    vkDestroyRenderPass(RendererApi.Device, RendererApi.RenderPass, NULL);
 
-    for (auto ImageView : SwapChainImageViews)
+    for (auto ImageView : RendererApi.SwapChainImageViews)
     {
-        vkDestroyImageView(Device, ImageView, NULL);
+        vkDestroyImageView(RendererApi.Device, ImageView, NULL);
     }
 
-    vkDestroySwapchainKHR(Device, SwapChain, NULL);
+    vkDestroySwapchainKHR(RendererApi.Device, RendererApi.SwapChain, NULL);
 
-    vkDestroyDevice(Device, NULL);
+    vkDestroyDevice(RendererApi.Device, NULL);
 
     if (EnableValidationLayers)
     {
-        DestroyDebugUtilsMessengerEXT(Instance, DebugMessenger, NULL);
+        DestroyDebugUtilsMessengerEXT(RendererApi.Instance, RendererApi.DebugMessenger, NULL);
     }
 
-    vkDestroySurfaceKHR(Instance, Surface, NULL);
+    vkDestroySurfaceKHR(RendererApi.Instance, RendererApi.Surface, NULL);
 
-    vkDestroyInstance(Instance, NULL);
+    vkDestroyInstance(RendererApi.Instance, NULL);
 }
 
 void
