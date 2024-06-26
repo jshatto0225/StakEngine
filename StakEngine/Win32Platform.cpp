@@ -34,8 +34,8 @@ PlatformInit()
     WindowClass.cbSize = sizeof(WNDCLASSEXA);
     WindowClass.lpszClassName = WIN32_DEFAULT_WNDCLASS_NAME;
     WindowClass.hInstance = Platform.Instance;
-    WindowClass.hIcon = LoadIconW(NULL, IDI_WINLOGO);
-    WindowClass.hCursor = LoadCursorW(NULL, IDC_ARROW);
+    WindowClass.hIcon = LoadIconW(NULL, (LPCWSTR)IDI_WINLOGO);
+    WindowClass.hCursor = LoadCursorW(NULL, (LPCWSTR)IDC_ARROW);
     WindowClass.lpfnWndProc = Win32MessageCallback;
     WindowClass.cbClsExtra = sizeof(window *);
     Platform.DefaultWindowClass = RegisterClassExA(&WindowClass);
