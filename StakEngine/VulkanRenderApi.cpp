@@ -679,9 +679,7 @@ ReadFile(const std::string &FileName)
     std::vector<char> Buffer(FileSize);
     File.seekg(0);
     File.read(Buffer.data(), FileSize);
-
     File.close();
-
     return Buffer;
 }
 
@@ -876,40 +874,32 @@ RenderApiInit(window *Window)
     {
         LogCoreError("Failed to create vulkan instance");
     }
-
     if (!SetupDebugMessenger())
     {
         LogCoreError("Failed to setup vulkan debug messenger");
     }
-
     if (!CreateSurface())
     {
         LogCoreError("Failed to create window surface");
     }
-
     if (!PickPhysicalDevice())
     {
         LogCoreError("Failed to pick physical rendering device");
     }
-
     if (!CreateLogicalDevice())
     {
         LogCoreError("Failed to create logical device");
     }
-
     if (!CreateSwapChain())
     {
         LogCoreError("Failed to create swap chain");
     }
-
     if (!CreateImageViews())
     {
         LogCoreError("Failed to create image views");
     }
-
     CreateRenderPass();
     CreateGraphicsPipeline();
-
     LogCoreTrace("Vulkan Initialized");
 }
 
