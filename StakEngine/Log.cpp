@@ -4,15 +4,15 @@
 
 #include "Platform.h"
 
-///////////////////////
-// Private Interface //
-///////////////////////
+/*********************
+ * Private Interface *
+ *********************/
 
 static FILE *CoreLogFile;
 
-//////////////////////
-// Public Interface //
-//////////////////////
+/********************
+ * Public Interface *
+ ********************/
 
 void
 LogInit()

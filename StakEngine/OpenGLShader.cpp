@@ -12,9 +12,9 @@ struct shader
     u32 RendererId;
 };
 
-///////////////////////
-// Private Interface //
-///////////////////////
+/*********************
+ * Private Interface *
+ *********************/
 
 void
 CompileShader(shader *Shader, const char *VertexShader, const char *FragmentShader)
@@ -169,9 +169,9 @@ ParseShaderSource(const char *Path)
     return Src;
 }
 
-//////////////////////
-// Public Interface //
-//////////////////////
+/********************
+ * Public Interface *
+ ********************/
 
 shader *
 CreateShader(const char *VertexShader, const char *FragmentShader)

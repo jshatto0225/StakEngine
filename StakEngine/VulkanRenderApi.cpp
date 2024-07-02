@@ -17,9 +17,9 @@
 #include <fstream>
 #include <iostream>
 
-///////////////////////
-// Private Interface //
-///////////////////////
+/*********************
+ * Private Interface *
+ *********************/
 
 // TODO
 context *
@@ -862,9 +862,9 @@ CreateRenderPass()
     }
 }
 
-//////////////////////
-// Public Interface //
-//////////////////////
+/********************
+ * Public Interface *
+ ********************/
 
 void
 RenderApiInit(window *Window)

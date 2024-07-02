@@ -2,9 +2,9 @@
 
 #ifdef SK_WGL
 
-///////////////////////
-// Private Interface //
-///////////////////////
+/*********************
+ * Private Interface *
+ *********************/
 
 WGLGETEXTENSIONSSTRINGEXTPROC wglGetExtensionsStringEXT;
 WGLGETEXTENSIONSSTRINGARBPROC wglGetExtensionsStringARB;
@@ -13,9 +13,9 @@ WGLSWAPINTERVALEXTPROC wglSwapIntervalEXT;
 WGLGETPIXELFORMATATTRIBIVARBPROC wglGetPixelFormatAttribivARB;
 WGLCHOOSEPIXELFORMATARB wglChoosePixelFormatARB;
 
-//////////////////////
-// Public Interface //
-//////////////////////
+/********************
+ * Public Interface *
+ ********************/
 
 void *
 PlatformGetProcAddress(const char *name)

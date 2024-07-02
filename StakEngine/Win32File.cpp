@@ -6,9 +6,9 @@
 
 #include "Log.h"
 
-///////////////////////
-// Private Interface //
-///////////////////////
+/*********************
+ * Private Interface *
+ *********************/
 
 void
 LPOverlappedCompletionRoutine(DWORD dwErrorCode, DWORD dwNumberOfBytesTransfered, LPOVERLAPPED lpOverlapped)
@@ -16,9 +16,9 @@ LPOverlappedCompletionRoutine(DWORD dwErrorCode, DWORD dwNumberOfBytesTransfered
     // TODO: IDEK
 }
 
-//////////////////////
-// Public Interface //
-//////////////////////
+/********************
+ * Public Interface *
+ ********************/
 
 file *
 CreateFile(const char *Path)

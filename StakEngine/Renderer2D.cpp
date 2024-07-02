@@ -7,9 +7,9 @@
 
 #include "stdlib.h"
 
-///////////////////////
-// Private Interface //
-///////////////////////
+/*********************
+ * Private Interface *
+ *********************/
 
 struct quad_vertex
 {
@@ -91,9 +91,9 @@ struct renderer2d_data
 
 static renderer2d_data Data;
 
-//////////////////////
-// Public Interface //
-//////////////////////
+/********************
+ * Public Interface *
+ ********************/
 
 void
 Renderer2DFlush()

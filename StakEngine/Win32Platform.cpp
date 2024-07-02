@@ -10,15 +10,15 @@
 #include "File.h"
 #include "Win32Platform.h"
 
-///////////////////////
-// Private Interface //
-///////////////////////
+/*********************
+ * Private Interface *
+ *********************/
 
 platform Platform;
 
-//////////////////////
-// Public Interface //
-//////////////////////
+/********************
+ * Public Interface *
+ ********************/
 
 void
 PlatformInit()

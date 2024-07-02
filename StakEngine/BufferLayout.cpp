@@ -4,9 +4,9 @@
 
 #include "stdlib.h"
 
-//////////////////////
-// Public Interface //
-//////////////////////
+/********************
+ * Public Interface *
+ ********************/
 
 u32
 GetBufferElementComponentCount(const buffer_element *BufferElement)

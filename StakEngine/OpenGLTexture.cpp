@@ -5,9 +5,9 @@
 #include "Texture.h"
 #include "Log.h"
 
-///////////////////////
-// Private Interface //
-///////////////////////
+/*********************
+ * Private Interface *
+ *********************/
 
 struct texture
 {
@@ -23,9 +23,9 @@ struct texture2d
     const char *Path;
 };
 
-//////////////////////
-// Public Interface //
-//////////////////////
+/********************
+ * Public Interface *
+ ********************/
 
 texture *
 CreateTexture(const texture_specification *TextureSpecification)

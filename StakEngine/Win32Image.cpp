@@ -7,9 +7,9 @@
 #include "Log.h"
 #include "File.h"
 
-//////////////////////
-// Public Interface //
-//////////////////////
+/********************
+ * Public Interface *
+ ********************/
 
 bool
 IsBMPFile(const char *Path)

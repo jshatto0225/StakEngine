@@ -4,9 +4,9 @@
 #include "Renderer.h"
 #include "Window.h"
 
-///////////////////////
-// Private Interface //
-///////////////////////
+/*********************
+ * Private Interface *
+ *********************/
 
 struct application
 {
@@ -18,9 +18,9 @@ struct application
 
 application App;
 
-//////////////////////
-// Public Interface //
-//////////////////////
+/********************
+ * Public Interface *
+ ********************/
 
 void
 AddLayerToStack(layer_init Init, layer_shutdown Shutdown, layer_update Update, layer_on_event OnEvent)

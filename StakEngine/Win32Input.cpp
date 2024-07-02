@@ -5,9 +5,9 @@
 #include "Input.h"
 
 
-///////////////////////
-// Private Interface //
-///////////////////////
+/*********************
+ * Private Interface *
+ *********************/
 
 const i32 KeyMap[K_LAST + 1] =
 {
@@ -133,9 +133,9 @@ const i32 KeyMap[K_LAST + 1] =
     VK_MENU
 };
 
-//////////////////////
-// Public Interface //
-//////////////////////
+/********************
+ * Public Interface *
+ ********************/
 
 bool
 GetKeyDown(key Key)

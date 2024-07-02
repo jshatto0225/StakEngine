@@ -8,9 +8,9 @@
 #include "Log.h"
 #include "Image.h"
 
-//////////////////////
-// Public Interface //
-//////////////////////
+/********************
+ * Public Interface *
+ ********************/
 
 PFNGLGENBUFFERSPROC glGenBuffers;
 PFNGLBINDBUFFERPROC glBindBuffer;

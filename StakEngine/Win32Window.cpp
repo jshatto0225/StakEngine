@@ -7,9 +7,9 @@
 #include "Platform.h"
 #include "Log.h"
 
-///////////////////////
-// Private Interface //
-///////////////////////
+/*********************
+ * Private Interface *
+ *********************/
 
 const UINT TIMER_INTERVAL = 10;
 UINT_PTR TimerId;
@@ -106,9 +106,9 @@ Win32MessageCallback(HWND Window, UINT Msg, WPARAM WParam, LPARAM LParam)
     return DefWindowProcA(Window, Msg, WParam, LParam);
 }
 
-//////////////////////
-// Public Interface //
-//////////////////////
+/********************
+ * Public Interface *
+ ********************/
 
 u64 WindowCount = 0;
 

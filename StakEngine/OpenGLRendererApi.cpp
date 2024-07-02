@@ -5,9 +5,9 @@
 #include "RenderApi.h"
 #include "Log.h"
 
-///////////////////////
-// Private Interface //
-///////////////////////
+/*********************
+ * Private Interface *
+ *********************/
 
 static bool RenderApiInitialized = false;
 static window *RenderApiWindow = NULL;
@@ -32,9 +32,9 @@ OpenGLMessageCallback(u32 Source, u32 Type, u32 Id, u32 Severity, i32 Length, co
     }
 }
 
-//////////////////////
-// Public Interface //
-//////////////////////
+/********************
+ * Public Interface *
+ ********************/
 
 void
 RenderApiInit(window *Window)
