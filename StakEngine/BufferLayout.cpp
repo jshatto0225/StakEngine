@@ -2,6 +2,8 @@
 
 #include "Log.h"
 
+#include "stdlib.h"
+
 //////////////////////
 // Public Interface //
 //////////////////////
@@ -41,9 +43,7 @@ GetBufferElementComponentCount(const buffer_element *BufferElement)
 buffer_layout *
 CreateBufferLayout(u64 Size)
 {
-    buffer_layout *BufferLayout = (buffer_layout *)malloc(sizeof(buffer_layout) +
-                                                          Size *
-                                                          sizeof(buffer_element));
+    buffer_layout *BufferLayout = (buffer_layout *)malloc(sizeof(buffer_layout) + Size * sizeof(buffer_element));
 
     if (!BufferLayout)
     {

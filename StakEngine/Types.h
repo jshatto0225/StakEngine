@@ -1,8 +1,6 @@
 #pragma once
 
 #include <stdint.h>
-#include <math.h>
-#include <stdlib.h>
 
 typedef double f64;
 typedef float f32;

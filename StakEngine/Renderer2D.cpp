@@ -5,6 +5,8 @@
 #include "UniformBuffer.h"
 #include "RenderCommand.h"
 
+#include "stdlib.h"
+
 ///////////////////////
 // Private Interface //
 ///////////////////////
