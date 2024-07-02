@@ -141,26 +141,6 @@ struct renderer_api
 
 static renderer_api RendererApi;
 
-/*
-static window *RenderApiWindow;
-
-static VkInstance Instance;
-static VkDebugUtilsMessengerEXT DebugMessenger;
-static VkPhysicalDevice PhysicalDevice;
-static VkDevice Device;
-static VkQueue GraphicsQueue;
-static VkQueue PresentQueue;
-static VkSurfaceKHR Surface;
-static VkSwapchainKHR SwapChain;
-static std::vector<VkImage> SwapChainImages;
-static VkFormat SwapChainImageFormat;
-static VkExtent2D SwapChainExtent;
-static std::vector<VkImageView> SwapChainImageViews;
-static VkPipelineLayout PipelineLayout;
-static VkRenderPass RenderPass;
-static VkPipeline GraphicsPipeline;
-*/
-
 VkExtent2D
 ChooseSwapExtent(const VkSurfaceCapabilitiesKHR &Capabilities)
 {
@@ -671,7 +651,7 @@ ReadFile(const std::string &FileName)
 
     if (!File.is_open())
     {
-        LogCoreError("Failed to open file: %s", FileName);
+        LogCoreError("Failed to open file: %s", FileName.c_str());
         throw std::runtime_error("Failed to open file");
     }
 
