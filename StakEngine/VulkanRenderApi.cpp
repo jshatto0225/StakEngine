@@ -91,7 +91,7 @@ CreateFramebuffers()
 
         if (vkCreateFramebuffer(RendererApi.Device, &FramebufferInfo, NULL, &RendererApi.SwapChainFrameBuffers[i]))
         {
-            throw std::runtime_error("Failed to create framebuffer");
+            LogCoreError("Failed to create frame buffer");
         }
     }
 }
@@ -237,7 +237,7 @@ CheckValidationLayerSupport()
     return true;
 }
 
-bool
+void
 CreateInstance()
 {
     VkApplicationInfo AppInfo = {};
@@ -258,7 +258,7 @@ CreateInstance()
 
     if (EnableValidationLayers && !CheckValidationLayerSupport())
     {
-        return false;
+        LogCoreError("Validation layers not supported");
     }
 
     VkDebugUtilsMessengerCreateInfoEXT DebugMessengerCreateInfo = {};
@@ -284,10 +284,8 @@ CreateInstance()
 
     if (vkCreateInstance(&CreateInfo, NULL, &RendererApi.Instance) != VK_SUCCESS)
     {
-        return false;
+        LogCoreError("Failed to create instance");
     }
-
-    return true;
 }
 
 VkResult
@@ -304,12 +302,12 @@ CreateDebugUtilsMessengerEXT(VkInstance Instance, const VkDebugUtilsMessengerCre
     }
 }
 
-bool
+void
 SetupDebugMessenger()
 {
     if (!EnableValidationLayers)
     {
-        return true;
+        return;
     }
 
     VkDebugUtilsMessengerCreateInfoEXT CreateInfo = {};
@@ -320,10 +318,8 @@ SetupDebugMessenger()
 
     if (CreateDebugUtilsMessengerEXT(RendererApi.Instance, &CreateInfo, NULL, &RendererApi.DebugMessenger) != VK_SUCCESS)
     {
-        return false;
+        LogCoreError("Failed to create debug messenger");
     }
-
-    return true;
 }
 
 void
@@ -385,7 +381,7 @@ CreateCommandPool()
 
     if (vkCreateCommandPool(RendererApi.Device, &PoolInfo, NULL, &RendererApi.CommandPool) != VK_SUCCESS)
     {
-        throw std::runtime_error("Failed to create command pool");
+        LogCoreError("Failed to create command pool");
     }
 }
 
@@ -402,7 +398,7 @@ CreateCommandBuffer()
 
     if (vkAllocateCommandBuffers(RendererApi.Device, &AllocInfo, RendererApi.CommandBuffers.data()) != VK_SUCCESS)
     {
-        throw std::runtime_error("Failed to allocate command buffer");
+        LogCoreError("Failed to allocate command buffers");
     }
 }
 
@@ -414,7 +410,8 @@ RecordCommandBuffer(VkCommandBuffer CommandBuffer, u32 ImageIndex)
 
     if (vkBeginCommandBuffer(RendererApi.CommandBuffers[RendererApi.CurrentFrame], &BeginInfo) != VK_SUCCESS)
     {
-        throw std::runtime_error("Failed to start command buffer");
+        LogCoreError("Failed to begin command buffer");
+        return;
     }
 
     VkRenderPassBeginInfo RenderPassInfo = {};
@@ -448,7 +445,7 @@ RecordCommandBuffer(VkCommandBuffer CommandBuffer, u32 ImageIndex)
     vkCmdEndRenderPass(RendererApi.CommandBuffers[RendererApi.CurrentFrame]);
     if (vkEndCommandBuffer(RendererApi.CommandBuffers[RendererApi.CurrentFrame]) != VK_SUCCESS)
     {
-        throw std::runtime_error("Failed to record command buffer");
+        LogCoreError("Failed to end command buffer");
     }
 }
 
@@ -487,14 +484,15 @@ IsDeviceSuitable(VkPhysicalDevice Device)
     return QueueFamilyIndicesAreComplete(&Indices) && ExtensionsSupported && SwapChainAdequate;
 }
 
-bool
+void
 PickPhysicalDevice()
 {
     u32 DeviceCount = 0;
     vkEnumeratePhysicalDevices(RendererApi.Instance, &DeviceCount, NULL);
     if (DeviceCount == 0)
     {
-        return false;
+        LogCoreError("No physical devices found");
+        return;
     }
     std::vector<VkPhysicalDevice> Devices(DeviceCount);
     vkEnumeratePhysicalDevices(RendererApi.Instance, &DeviceCount, Devices.data());
@@ -503,13 +501,14 @@ PickPhysicalDevice()
         if (IsDeviceSuitable(Device))
         {
             RendererApi.PhysicalDevice = Device;
-            return true;
+            return;
         }
     }
-    return false;
+
+    LogCoreError("Failed to pick phydical device");
 }
 
-bool
+void
 CreateLogicalDevice()
 {
     queue_family_indices Indices = FindQueueFamilies(RendererApi.PhysicalDevice);
@@ -555,16 +554,14 @@ CreateLogicalDevice()
 
     if (vkCreateDevice(RendererApi.PhysicalDevice, &CreateInfo, nullptr, &RendererApi.Device) != VK_SUCCESS)
     {
-        return false;
+        LogCoreError("Failed to create logical device");
     }
 
     vkGetDeviceQueue(RendererApi.Device, Indices.GraphicsFamily.value(), 0, &RendererApi.GraphicsQueue);
     vkGetDeviceQueue(RendererApi.Device, Indices.GraphicsFamily.value(), 0, &RendererApi.PresentQueue);
-
-    return true;
 }
 
-bool
+void
 CreateSurface()
 {
 #ifdef SK_WINDOWS
@@ -575,14 +572,12 @@ CreateSurface()
 
     if (vkCreateWin32SurfaceKHR(RendererApi.Instance, &CreateInfo, NULL, &RendererApi.Surface) != VK_SUCCESS)
     {
-        return false;
+        LogCoreError("Failed to create win32 surface");
     }
 #endif
-
-    return true;
 }
 
-bool
+void
 CreateSwapChain()
 {
     swap_chain_support_details SwapChainSupport = QuerySwapChainSupport(RendererApi.PhysicalDevice);
@@ -633,7 +628,7 @@ CreateSwapChain()
 
     if (vkCreateSwapchainKHR(RendererApi.Device, &CreateInfo, NULL, &RendererApi.SwapChain) != VK_SUCCESS)
     {
-        return false;
+        LogCoreError("Failed to create swapchain");
     }
 
     vkGetSwapchainImagesKHR(RendererApi.Device, RendererApi.SwapChain, &ImageCount, NULL);
@@ -642,11 +637,9 @@ CreateSwapChain()
 
     RendererApi.SwapChainImageFormat = SurfaceFormat.format;
     RendererApi.SwapChainExtent = Extent;
-
-    return true;
 }
 
-bool
+void
 CreateImageViews()
 {
     RendererApi.SwapChainImageViews.resize(RendererApi.SwapChainImages.size());
@@ -670,11 +663,9 @@ CreateImageViews()
 
         if (vkCreateImageView(RendererApi.Device, &CreateInfo, NULL, &RendererApi.SwapChainImageViews[i]) != VK_SUCCESS)
         {
-            return false;
+            LogCoreError("Failed to create image view");
         }
     }
-
-    return true;
 }
 
 // TODO: Temporary
@@ -708,7 +699,7 @@ CreateShaderModule(const std::vector<char> &Code)
     VkShaderModule ShaderModule;
     if (vkCreateShaderModule(RendererApi.Device, &CreateInfo, NULL, &ShaderModule) != VK_SUCCESS)
     {
-        throw std::runtime_error("Failed to create shader module");
+        LogCoreError("Failed to create shader module");
     }
 
     return ShaderModule;
@@ -803,7 +794,8 @@ CreateGraphicsPipeline()
 
     if (vkCreatePipelineLayout(RendererApi.Device, &PipelineLayoutInfo, NULL, &RendererApi.PipelineLayout) != VK_SUCCESS)
     {
-        throw std::runtime_error("Failed to create pipeline layout");
+        LogCoreError("Failed to create pipeline layout");
+        return;
     }
 
     VkGraphicsPipelineCreateInfo PipelineInfo = {};
@@ -830,14 +822,15 @@ CreateGraphicsPipeline()
 
     if (vkCreateGraphicsPipelines(RendererApi.Device, VK_NULL_HANDLE, 1, &PipelineInfo, NULL, &RendererApi.GraphicsPipeline) != VK_SUCCESS)
     {
-        throw std::runtime_error("Failed to create graphics pipeline");
+        LogCoreError("Failed to create graphics pipeline");
+        return;
     }
 
     vkDestroyShaderModule(RendererApi.Device, FragmentShaderModule, NULL);
     vkDestroyShaderModule(RendererApi.Device, VertexShaderModule, NULL);
 }
 
-void 
+void
 CreateRenderPass()
 {
     VkAttachmentDescription ColorAttachment = {};
@@ -885,7 +878,7 @@ CreateRenderPass()
 
     if (vkCreateRenderPass(RendererApi.Device, &RenderPassInfo, NULL, &RendererApi.RenderPass) != VK_SUCCESS)
     {
-        throw std::runtime_error("Failed to create render pass");
+        LogCoreError("Failed to create render pass");
     }
 }
 
@@ -909,7 +902,8 @@ CreateSyncObjects()
                 vkCreateSemaphore(RendererApi.Device, &SemaphoreInfo, NULL, &RendererApi.RenderFinishedSemaphores[i]) != VK_SUCCESS || 
                 vkCreateFence(RendererApi.Device, &FenceInfo, NULL, &RendererApi.InFlightFences[i]) != VK_SUCCESS)
         {
-            throw std::runtime_error("Failed to create semaphores");
+            LogCoreError("Failed to create semaphore");
+            return;
         }
     }
 }
@@ -974,7 +968,8 @@ DrawFrame()
     }
     else if (Result != VK_SUCCESS && Result != VK_SUBOPTIMAL_KHR)
     {
-        throw std::runtime_error("Failed to acquire swap chain image");
+        LogCoreError("Failed to acquite next frame");
+        return;
     }
 
     vkResetFences(RendererApi.Device, 1, &RendererApi.InFlightFences[RendererApi.CurrentFrame]);
@@ -1000,7 +995,8 @@ DrawFrame()
     
     if (vkQueueSubmit(RendererApi.GraphicsQueue, 1, &SubmitInfo, RendererApi.InFlightFences[RendererApi.CurrentFrame]) != VK_SUCCESS)
     {
-        throw std::runtime_error("Failed to submit draw command");
+        LogCoreError("Failed to submit to graphics queue");
+        return;
     }
 
     VkPresentInfoKHR PresentInfo = {};
@@ -1023,7 +1019,8 @@ DrawFrame()
     }
     else if (Result != VK_SUCCESS)
     {
-        throw std::runtime_error("Failed to present swap chain image");
+        LogCoreError("Failed to present frame");
+        return;
     }
 
     RendererApi.CurrentFrame = (RendererApi.CurrentFrame + 1) % MAX_FRAMES_IN_FLIGHT;
@@ -1033,41 +1030,19 @@ void
 RenderApiInit(window *Window)
 {
     RendererApi.Window = Window;
-    if (!CreateInstance())
-    {
-        LogCoreError("Failed to create vulkan instance");
-    }
-    if (!SetupDebugMessenger())
-    {
-        LogCoreError("Failed to setup vulkan debug messenger");
-    }
-    if (!CreateSurface())
-    {
-        LogCoreError("Failed to create window surface");
-    }
-    if (!PickPhysicalDevice())
-    {
-        LogCoreError("Failed to pick physical rendering device");
-    }
-    if (!CreateLogicalDevice())
-    {
-        LogCoreError("Failed to create logical device");
-    }
-    if (!CreateSwapChain())
-    {
-        LogCoreError("Failed to create swap chain");
-    }
-    if (!CreateImageViews())
-    {
-        LogCoreError("Failed to create image views");
-    }
+    CreateInstance();
+    SetupDebugMessenger();
+    CreateSurface();
+    PickPhysicalDevice();
+    CreateLogicalDevice();
+    CreateSwapChain();
+    CreateImageViews();
     CreateRenderPass();
     CreateGraphicsPipeline();
     CreateFramebuffers();
     CreateCommandPool();
     CreateCommandBuffer();
     CreateSyncObjects();
-    LogCoreTrace("Vulkan Initialized");
 }
 
 void
