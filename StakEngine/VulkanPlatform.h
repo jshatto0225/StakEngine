@@ -30,6 +30,8 @@ const std::vector<const char *> DeviceExtensions =
 
 const u32 DeviceExtensionCount = 1;
 
+const i32 MAX_FRAMES_IN_FLIGHT = 2;
+
 #ifdef SK_DEBUG
 const bool EnableValidationLayers = true;
 #else

@@ -1,4 +1,11 @@
+#include "External/Vulkan/Include/vulkan/vulkan_core.h"
+#include "Renderer.h"
 #include "VulkanPlatform.h"
+#include <cstdint>
+#include <cwchar>
+#include <objidlbase.h>
+#include <stdexcept>
+#include <wingdi.h>
 
 #ifdef SK_VULKAN
 
@@ -137,9 +144,44 @@ struct renderer_api
 	VkPipelineLayout PipelineLayout;
 	VkRenderPass RenderPass;
 	VkPipeline GraphicsPipeline;
+    std::vector<VkFramebuffer> SwapChainFrameBuffers;
+    VkCommandPool CommandPool;
+    std::vector<VkCommandBuffer> CommandBuffers;
+    std::vector<VkSemaphore> ImageAvailableSemaphores;
+    std::vector<VkSemaphore> RenderFinishedSemaphores;
+    std::vector<VkFence> InFlightFences;
+    u32 CurrentFrame = 0;
+    bool FramebufferResized = false;
 };
 
 static renderer_api RendererApi;
+
+void
+CreateFramebuffers()
+{
+    RendererApi.SwapChainFrameBuffers.resize(RendererApi.SwapChainImageViews.size());
+
+    for (u64 i = 0; i < RendererApi.SwapChainImageViews.size(); i++)
+    {
+        VkImageView Attachments[] = {
+            RendererApi.SwapChainImageViews[i]
+        };
+
+        VkFramebufferCreateInfo FramebufferInfo = {};
+        FramebufferInfo.sType = VK_STRUCTURE_TYPE_FRAMEBUFFER_CREATE_INFO;
+        FramebufferInfo.renderPass = RendererApi.RenderPass;
+        FramebufferInfo.attachmentCount = 1;
+        FramebufferInfo.pAttachments = Attachments;
+        FramebufferInfo.width = RendererApi.SwapChainExtent.width;
+        FramebufferInfo.height = RendererApi.SwapChainExtent.height;
+        FramebufferInfo.layers = 1;
+
+        if (vkCreateFramebuffer(RendererApi.Device, &FramebufferInfo, NULL, &RendererApi.SwapChainFrameBuffers[i]))
+        {
+            throw std::runtime_error("Failed to create framebuffer");
+        }
+    }
+}
 
 VkExtent2D
 ChooseSwapExtent(const VkSurfaceCapabilitiesKHR &Capabilities)
@@ -418,6 +460,85 @@ FindQueueFamilies(VkPhysicalDevice Device)
     return Indices;
 }
 
+void
+CreateCommandPool()
+{
+    queue_family_indices QueueFamilyIndices = FindQueueFamilies(RendererApi.PhysicalDevice);
+
+    VkCommandPoolCreateInfo PoolInfo = {};
+    PoolInfo.sType = VK_STRUCTURE_TYPE_COMMAND_POOL_CREATE_INFO;
+    PoolInfo.flags = VK_COMMAND_POOL_CREATE_RESET_COMMAND_BUFFER_BIT;
+    PoolInfo.queueFamilyIndex = QueueFamilyIndices.GraphicsFamily.value();
+
+    if (vkCreateCommandPool(RendererApi.Device, &PoolInfo, NULL, &RendererApi.CommandPool) != VK_SUCCESS)
+    {
+        throw std::runtime_error("Failed to create command pool");
+    }
+}
+
+void
+CreateCommandBuffer()
+{
+    RendererApi.CommandBuffers.resize(MAX_FRAMES_IN_FLIGHT);
+
+    VkCommandBufferAllocateInfo AllocInfo = {};
+    AllocInfo.sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_ALLOCATE_INFO;
+    AllocInfo.commandPool = RendererApi.CommandPool;
+    AllocInfo.level = VK_COMMAND_BUFFER_LEVEL_PRIMARY;
+    AllocInfo.commandBufferCount = (u32)RendererApi.CommandBuffers.size();
+
+    if (vkAllocateCommandBuffers(RendererApi.Device, &AllocInfo, RendererApi.CommandBuffers.data()) != VK_SUCCESS)
+    {
+        throw std::runtime_error("Failed to allocate command buffer");
+    }
+}
+
+void
+RecordCommandBuffer(VkCommandBuffer CommandBuffer, u32 ImageIndex)
+{
+    VkCommandBufferBeginInfo BeginInfo = {};
+    BeginInfo.sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_BEGIN_INFO;
+
+    if (vkBeginCommandBuffer(RendererApi.CommandBuffers[RendererApi.CurrentFrame], &BeginInfo) != VK_SUCCESS)
+    {
+        throw std::runtime_error("Failed to start command buffer");
+    }
+
+    VkRenderPassBeginInfo RenderPassInfo = {};
+    RenderPassInfo.sType = VK_STRUCTURE_TYPE_RENDER_PASS_BEGIN_INFO;
+    RenderPassInfo.renderPass = RendererApi.RenderPass;
+    RenderPassInfo.framebuffer = RendererApi.SwapChainFrameBuffers[ImageIndex];
+    RenderPassInfo.renderArea.offset = { 0, 0 };
+    RenderPassInfo.renderArea.extent = RendererApi.SwapChainExtent;
+    VkClearValue ClearColor = {{{ 0.0f, 0.0f, 0.0f, 1.0f }}};
+    RenderPassInfo.clearValueCount = 1;
+    RenderPassInfo.pClearValues = &ClearColor;
+    vkCmdBeginRenderPass(RendererApi.CommandBuffers[RendererApi.CurrentFrame], &RenderPassInfo, VK_SUBPASS_CONTENTS_INLINE);
+    vkCmdBindPipeline(RendererApi.CommandBuffers[RendererApi.CurrentFrame], VK_PIPELINE_BIND_POINT_GRAPHICS, RendererApi.GraphicsPipeline);
+
+    VkViewport Viewport = {};
+    Viewport.x = 0.0f;
+    Viewport.y = 0.0f;
+    Viewport.width = (f32)RendererApi.SwapChainExtent.width;
+    Viewport.height = (f32)RendererApi.SwapChainExtent.height;
+    Viewport.maxDepth = 1.0f;
+    Viewport.minDepth = 0.0f;
+    vkCmdSetViewport(RendererApi.CommandBuffers[RendererApi.CurrentFrame], 0, 1, &Viewport);
+
+    VkRect2D Scissor = {};
+    Scissor.offset = { 0, 0 };
+    Scissor.extent = RendererApi.SwapChainExtent;
+    vkCmdSetScissor(RendererApi.CommandBuffers[RendererApi.CurrentFrame], 0, 1, &Scissor);
+
+    vkCmdDraw(RendererApi.CommandBuffers[RendererApi.CurrentFrame], 3, 1, 0, 0);
+
+    vkCmdEndRenderPass(RendererApi.CommandBuffers[RendererApi.CurrentFrame]);
+    if (vkEndCommandBuffer(RendererApi.CommandBuffers[RendererApi.CurrentFrame]) != VK_SUCCESS)
+    {
+        throw std::runtime_error("Failed to record command buffer");
+    }
+}
+
 bool
 CheckDeviceExtensionSupport(VkPhysicalDevice Device)
 {
@@ -430,7 +551,7 @@ CheckDeviceExtensionSupport(VkPhysicalDevice Device)
     std::set<std::string> RequiredExtensions(DeviceExtensions.begin(), DeviceExtensions.end());
 
     for (const auto &Extension : AvailableExtensions)
-    {
+    { 
         RequiredExtensions.erase(Extension.extensionName);
     }
 
@@ -836,15 +957,164 @@ CreateRenderPass()
     RenderPassInfo.subpassCount = 1;
     RenderPassInfo.pSubpasses = &Subpass;
 
+    VkSubpassDependency Dependency = {};
+    Dependency.srcSubpass = VK_SUBPASS_EXTERNAL;
+    Dependency.dstSubpass = 0;
+
+    Dependency.srcStageMask = VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT;
+    Dependency.srcAccessMask = 0;
+    
+    Dependency.dstStageMask = VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT;
+    Dependency.dstAccessMask = VK_ACCESS_COLOR_ATTACHMENT_WRITE_BIT;
+
+    RenderPassInfo.dependencyCount = 1;
+    RenderPassInfo.pDependencies = &Dependency;
+
     if (vkCreateRenderPass(RendererApi.Device, &RenderPassInfo, NULL, &RendererApi.RenderPass) != VK_SUCCESS)
     {
         throw std::runtime_error("Failed to create render pass");
     }
 }
 
+void
+CreateSyncObjects()
+{
+    RendererApi.ImageAvailableSemaphores.resize(MAX_FRAMES_IN_FLIGHT);
+    RendererApi.RenderFinishedSemaphores.resize(MAX_FRAMES_IN_FLIGHT);
+    RendererApi.InFlightFences.resize(MAX_FRAMES_IN_FLIGHT);
+
+    VkSemaphoreCreateInfo SemaphoreInfo = {};
+    SemaphoreInfo.sType = VK_STRUCTURE_TYPE_SEMAPHORE_CREATE_INFO;
+
+    VkFenceCreateInfo FenceInfo = {};
+    FenceInfo.sType = VK_STRUCTURE_TYPE_FENCE_CREATE_INFO;
+    FenceInfo.flags = VK_FENCE_CREATE_SIGNALED_BIT;
+
+    for (u64 i = 0; i < MAX_FRAMES_IN_FLIGHT; i++)
+    {
+        if (vkCreateSemaphore(RendererApi.Device, &SemaphoreInfo, NULL, &RendererApi.ImageAvailableSemaphores[i]) != VK_SUCCESS || 
+                vkCreateSemaphore(RendererApi.Device, &SemaphoreInfo, NULL, &RendererApi.RenderFinishedSemaphores[i]) != VK_SUCCESS || 
+                vkCreateFence(RendererApi.Device, &FenceInfo, NULL, &RendererApi.InFlightFences[i]) != VK_SUCCESS)
+        {
+            throw std::runtime_error("Failed to create semaphores");
+        }
+    }
+}
+
+void
+CleanupSwapChain()
+{
+    for (u64 i = 0; i < RendererApi.SwapChainFrameBuffers.size(); i++)
+    {
+        vkDestroyFramebuffer(RendererApi.Device, RendererApi.SwapChainFrameBuffers[i], NULL);
+    }
+
+    for (u64 i = 0; i < RendererApi.SwapChainImageViews.size(); i++)
+    {
+        vkDestroyImageView(RendererApi.Device, RendererApi.SwapChainImageViews[i], NULL);
+    }
+
+    vkDestroySwapchainKHR(RendererApi.Device, RendererApi.SwapChain, NULL);
+}
+
+void
+RecreateSwapChain()
+{
+    window_size_data Size = GetWindowSize(RendererApi.Window);
+    while (Size.Width == 0 || Size.Height == 0)
+    {
+        Size = GetWindowSize(RendererApi.Window);
+        UpdateWindow(RendererApi.Window);
+    }
+
+    vkDeviceWaitIdle(RendererApi.Device);
+
+    CleanupSwapChain();
+
+    CreateSwapChain();
+    CreateImageViews();
+    CreateFramebuffers();
+}
+
 /********************
  * Public Interface *
  ********************/
+
+void
+WaitForDevice()
+{
+    vkDeviceWaitIdle(RendererApi.Device);
+}
+
+void
+DrawFrame()
+{
+    vkWaitForFences(RendererApi.Device, 1, &RendererApi.InFlightFences[RendererApi.CurrentFrame], VK_TRUE, UINT64_MAX);
+
+    u32 ImageIndex;
+    VkResult Result = vkAcquireNextImageKHR(RendererApi.Device, RendererApi.SwapChain, UINT64_MAX, RendererApi.ImageAvailableSemaphores[RendererApi.CurrentFrame], VK_NULL_HANDLE, &ImageIndex);
+
+    if (Result == VK_ERROR_OUT_OF_DATE_KHR)
+    {
+        RecreateSwapChain();
+        return;
+    }
+    else if (Result != VK_SUCCESS && Result != VK_SUBOPTIMAL_KHR)
+    {
+        throw std::runtime_error("Failed to acquire swap chain image");
+    }
+
+    vkResetFences(RendererApi.Device, 1, &RendererApi.InFlightFences[RendererApi.CurrentFrame]);
+
+    vkResetCommandBuffer(RendererApi.CommandBuffers[RendererApi.CurrentFrame], 0);
+    RecordCommandBuffer(RendererApi.CommandBuffers[RendererApi.CurrentFrame], ImageIndex);
+
+    VkSubmitInfo SubmitInfo = {};
+    SubmitInfo.sType = VK_STRUCTURE_TYPE_SUBMIT_INFO;
+
+    VkSemaphore WaitSemaphores[] = { RendererApi.ImageAvailableSemaphores[RendererApi.CurrentFrame] };
+    VkPipelineStageFlags WaitStages[] = { VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT };
+    SubmitInfo.waitSemaphoreCount = 1;
+    SubmitInfo.pWaitSemaphores = WaitSemaphores;
+    SubmitInfo.pWaitDstStageMask = WaitStages;
+
+    SubmitInfo.commandBufferCount = 1;
+    SubmitInfo.pCommandBuffers = &RendererApi.CommandBuffers[RendererApi.CurrentFrame];
+
+    VkSemaphore SignalSemaphores[] = { RendererApi.RenderFinishedSemaphores[RendererApi.CurrentFrame] };
+    SubmitInfo.signalSemaphoreCount = 1;
+    SubmitInfo.pSignalSemaphores = SignalSemaphores;
+    
+    if (vkQueueSubmit(RendererApi.GraphicsQueue, 1, &SubmitInfo, RendererApi.InFlightFences[RendererApi.CurrentFrame]) != VK_SUCCESS)
+    {
+        throw std::runtime_error("Failed to submit draw command");
+    }
+
+    VkPresentInfoKHR PresentInfo = {};
+    PresentInfo.sType = VK_STRUCTURE_TYPE_PRESENT_INFO_KHR;
+
+    PresentInfo.waitSemaphoreCount = 1;
+    PresentInfo.pWaitSemaphores = SignalSemaphores;
+
+    VkSwapchainKHR SwapChains[] = { RendererApi.SwapChain };
+    PresentInfo.swapchainCount = 1;
+    PresentInfo.pSwapchains = SwapChains;
+    PresentInfo.pImageIndices = &ImageIndex;
+
+    Result = vkQueuePresentKHR(RendererApi.PresentQueue, &PresentInfo);
+
+    if (Result == VK_ERROR_OUT_OF_DATE_KHR || Result == VK_SUBOPTIMAL_KHR || RendererApi.FramebufferResized)
+    {
+        RendererApi.FramebufferResized = false;
+        RecreateSwapChain();
+    }
+    else if (Result != VK_SUCCESS)
+    {
+        throw std::runtime_error("Failed to present swap chain image");
+    }
+
+    RendererApi.CurrentFrame = (RendererApi.CurrentFrame + 1) % MAX_FRAMES_IN_FLIGHT;
+}
 
 void
 RenderApiInit(window *Window)
@@ -880,22 +1150,31 @@ RenderApiInit(window *Window)
     }
     CreateRenderPass();
     CreateGraphicsPipeline();
+    CreateFramebuffers();
+    CreateCommandPool();
+    CreateCommandBuffer();
+    CreateSyncObjects();
     LogCoreTrace("Vulkan Initialized");
 }
 
 void
 RenderApiShutdown()
 {
+    CleanupSwapChain();
+
     vkDestroyPipeline(RendererApi.Device, RendererApi.GraphicsPipeline, NULL);
     vkDestroyPipelineLayout(RendererApi.Device, RendererApi.PipelineLayout, NULL);
+
     vkDestroyRenderPass(RendererApi.Device, RendererApi.RenderPass, NULL);
 
-    for (auto ImageView : RendererApi.SwapChainImageViews)
+    for (u64 i = 0; i < MAX_FRAMES_IN_FLIGHT; i++)
     {
-        vkDestroyImageView(RendererApi.Device, ImageView, NULL);
+        vkDestroySemaphore(RendererApi.Device, RendererApi.ImageAvailableSemaphores[i], NULL);
+        vkDestroySemaphore(RendererApi.Device, RendererApi.RenderFinishedSemaphores[i], NULL);
+        vkDestroyFence(RendererApi.Device, RendererApi.InFlightFences[i], NULL);
     }
 
-    vkDestroySwapchainKHR(RendererApi.Device, RendererApi.SwapChain, NULL);
+    vkDestroyCommandPool(RendererApi.Device, RendererApi.CommandPool, NULL);
 
     vkDestroyDevice(RendererApi.Device, NULL);
 
@@ -905,7 +1184,6 @@ RenderApiShutdown()
     }
 
     vkDestroySurfaceKHR(RendererApi.Instance, RendererApi.Surface, NULL);
-
     vkDestroyInstance(RendererApi.Instance, NULL);
 }
 
@@ -922,6 +1200,7 @@ RenderApiSetClearColor(f32 Red, f32 Green, f32 Blue, f32 Alpha)
 void
 RenderApiSetViewport(i32 X, i32 Y, i32 Width, i32 Height)
 {
+    RendererApi.FramebufferResized = true;
 }
 
 void

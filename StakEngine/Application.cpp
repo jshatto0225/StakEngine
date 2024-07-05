@@ -73,7 +73,11 @@ ApplicationRun()
             App.LayerStack.Layers[i].Update();
         }
         UpdateWindow(App.Window);
+
+        DrawFrame();
     }
+
+    WaitForDevice();
 }
 
 void

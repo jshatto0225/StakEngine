@@ -14,3 +14,7 @@ void RendererOnWindowResize(i32 Width, i32 Height);
 void RendererBeginScene();
 void RendererEndScene();
 void RendererSubmit(shader *Shader, vertex_array *VertexArray);
+
+// From Vulkan Tutorial
+void DrawFrame();
+void WaitForDevice();

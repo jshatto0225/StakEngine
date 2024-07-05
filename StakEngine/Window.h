@@ -41,5 +41,5 @@ void SetWindowSize(window *Window, i32 Width, i32 Height);
 window_pos_data GetWindowPos(const window *Window);
 window_size_data GetWindowSize(const window *Window);
 void SetWindowEventFn(window *Window, EventFn Func);
-void UpdateWindow(const window *window);
+void UpdateWindow(window *window);
 void MakeWindowCurrent(const window *Window);

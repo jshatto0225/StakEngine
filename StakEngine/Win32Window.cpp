@@ -1,4 +1,5 @@
 #include "Win32Platform.h"
+#include <winuser.h>
 
 #ifdef SK_WINDOWS
 
@@ -179,13 +180,13 @@ SetWindowSize(window *Window, i32 Width, i32 Height)
 }
 
 window_pos_data
-GetWindowPos(window *Window)
+GetWindowPos(const window *Window)
 {
     return { Window->X, Window->Y };
 }
 
 window_size_data
-GetWindowSize(window *Window)
+GetWindowSize(const window *Window)
 {
     return { Window->Width, Window->Height };
 }
@@ -197,7 +198,7 @@ MakeWindowCurrent(const window *Window)
 }
 
 void
-UpdateWindow(const window *Window)
+UpdateWindow(window *Window)
 {
     RedrawWindow(Window->Handle, NULL, NULL, RDW_INVALIDATE);
     MSG Msg = {};
