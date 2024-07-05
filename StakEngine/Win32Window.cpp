@@ -138,7 +138,7 @@ CreateWindow(const window_config *Config)
 
     Window->Handle = CreateWindowExA(0, WIN32_DEFAULT_WNDCLASS_NAME, Window->Title, WS_OVERLAPPEDWINDOW | WS_VISIBLE, Window->X, Window->Y, Window->Width, Window->Height, NULL, NULL, Platform.Instance, NULL);
     SetWindowLongPtrA(Window->Handle, GWLP_USERDATA, (LONG_PTR)Window);
-    Window->Context = CreateContext(Window);
+    //Window->Context = CreateContext(Window);
 
     return Window;
 }
@@ -148,7 +148,7 @@ DestroyWindow(window **Window)
 {
     if (*Window)
     {
-        DestroyContext(&(*Window)->Context);
+        //DestroyContext(&(*Window)->Context);
 
         Win32DestroyWindow((*Window)->Handle);
         WindowCount--;
@@ -194,7 +194,7 @@ GetWindowSize(const window *Window)
 void
 MakeWindowCurrent(const window *Window)
 {
-    MakeContextCurrent(Window->Context);
+    //MakeContextCurrent(Window->Context);
 }
 
 void
@@ -212,7 +212,7 @@ UpdateWindow(window *Window)
 void
 SwapWindowBuffers(window *Window)
 {
-    SwapContextBuffers(Window->Context);
+    //SwapContextBuffers(Window->Context);
 }
 
 void

@@ -42,7 +42,7 @@ PlatformInit()
     
     Platform.DummyWindow = CreateWindowExA(0, WIN32_DEFAULT_WNDCLASS_NAME, "Dummy Window", 0, 0, 0, 0, 0, NULL, NULL, Platform.Instance, NULL);
     
-    PlatformInitExtensions();
+    //PlatformInitExtensions();
 
     SetProcessDpiAwarenessContext(DPI_AWARENESS_CONTEXT_PER_MONITOR_AWARE_V2);
     

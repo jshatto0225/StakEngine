@@ -7,9 +7,13 @@
 
 #include "stdlib.h"
 
+// This shit aint gonna work anymore
+
 /*********************
  * Private Interface *
  *********************/
+
+/**
 
 struct quad_vertex
 {
@@ -91,10 +95,13 @@ struct renderer2d_data
 
 static renderer2d_data Data;
 
+*/
+
 /********************
  * Public Interface *
  ********************/
 
+/*
 void
 Renderer2DFlush()
 {
@@ -540,3 +547,4 @@ Renderer2DEndScene()
 {
     Renderer2DFlush();
 }
+*/

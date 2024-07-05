@@ -12,8 +12,6 @@
 #include "RenderApi.h"
 #include "Log.h"
 #include "Window.h"
-#include "Texture.h"
-#include "UniformBuffer.h"
 
 #include <vector>
 #include <optional>
@@ -27,91 +25,6 @@
 /*********************
  * Private Interface *
  *********************/
-
-// TODO
-context *
-CreateContext(const window *Window) { return NULL; }
-
-void
-DestroyContext(context **Context) {}
-
-void
-MakeContextCurrent(const context *Context) {}
-
-void
-BindShader(const shader *Shader) {}
-
-u32
-GetIndexBufferIndexCount(const index_buffer *IndexBuffer) { return 0; }
-
-void
-BindVertexArray(const vertex_array *VertexArray) {}
-
-const index_buffer *
-GetVertexArrayIndexBuffer(const vertex_array *VertexArray) { return NULL; }
-
-void
-PlatformInitExtensions() {}
-
-shader *
-CreateShader(const char *FilePath) { return NULL; }
-
-void
-SwapContextBuffers(const context *Context) {}
-
-void
-DestroyShader(shader **Shader) {}
-
-vertex_buffer *
-CreateVertexBuffer(u32 DontRemember) { return NULL; }
-
-void
-DestroyVertexBuffer(vertex_buffer **VertexBuffer) {}
-
-void
-SetVertexBufferData(vertex_buffer *VertexBuffer, const void *Data, u32 Size) {}
-
-void
-SetVertexBufferLayout(vertex_buffer *VertexBuffer, buffer_layout **BufferLayout) {}
-
-index_buffer *
-CreateIndexBuffer(u32 *Indices, u32 Count) { return NULL; }
-
-vertex_array *
-CreateVertexArray() { return NULL; }
-
-void
-DestroyVertexArray(vertex_array **VertexArray) {}
-
-void
-AddVertexBufferToVertexArray(vertex_array *VertexArray, const vertex_buffer *VertexBuffer) {}
-
-void
-SetVertexArrayIndexBuffer(vertex_array *VertexArray, index_buffer **IndexBuffer) {}
-
-texture2d *
-CreateTexture2D(const texture_specification *Spec) { return NULL; }
-
-void
-DestroyTexture2D(texture2d **Tex) {}
-
-void
-SetTexture2DData(texture2d *Tex, void *Data, u32 Size) {}
-
-void
-BindTexture2D(const texture2d *Tex, u32 Slot) {}
-
-bool
-CompareTexture2D(const texture2d *Tex1, const texture2d *Tex2) { return false; }
-
-uniform_buffer *
-CreateUniformBuffer(u32 Something, u32 Something2) { return NULL; }
-
-void
-DestroyUniformBuffer(uniform_buffer **Buffer) {}
-
-void
-SetUniformBufferData(uniform_buffer *Buffer, const void *Data, u32 Something1, u32 Something2) {}
 
 struct queue_family_indices
 {

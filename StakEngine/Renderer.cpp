@@ -14,13 +14,13 @@ void
 RendererInit(window *Window)
 {
     RenderCommandInit(Window);
-    Renderer2DInit();
+    //Renderer2DInit();
 }
 
 void
 RendererShutdown()
 {
-    Renderer2DShutdown();
+    //Renderer2DShutdown();
     RenderCommandShutdown();
 }
 
@@ -33,20 +33,14 @@ RendererOnWindowResize(i32 Width, i32 Height)
 void
 RendererBeginScene()
 {
-
 }
 
 void
 RendererEndScene()
 {
-
 }
 
 void
 RendererSubmit(shader *Shader, vertex_array *VertexArray)
 {
-    BindShader(Shader);
-    BindVertexArray(VertexArray);
-    const index_buffer *IndexBuffer = GetVertexArrayIndexBuffer(VertexArray);
-    RenderCommandDrawIndexed(VertexArray, GetIndexBufferIndexCount(IndexBuffer));
 }
