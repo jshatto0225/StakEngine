@@ -1,17 +1,14 @@
-#include "External/Vulkan/Include/vulkan/vulkan_core.h"
-#include "Renderer.h"
 #include "VulkanPlatform.h"
-#include <cstdint>
-#include <cwchar>
-#include <objidlbase.h>
-#include <stdexcept>
-#include <wingdi.h>
 
 #ifdef SK_VULKAN
 
+#include "External/Vulkan/Include/vulkan/vulkan_core.h"
+
+#include "Renderer.h"
 #include "RenderApi.h"
 #include "Log.h"
 #include "Window.h"
+#include "Asserts.h"
 
 #include <vector>
 #include <optional>
@@ -39,24 +36,24 @@ struct swap_chain_support_details
     std::vector<VkPresentModeKHR> PresentModes;
 };
 
-struct renderer_api
+struct vulkan_api
 {
-	window *Window;
-	VkInstance Instance;
-	VkDebugUtilsMessengerEXT DebugMessenger;
-	VkPhysicalDevice PhysicalDevice;
-	VkDevice Device;
-	VkQueue GraphicsQueue;
-	VkQueue PresentQueue;
-	VkSurfaceKHR Surface;
-	VkSwapchainKHR SwapChain;
-	std::vector<VkImage> SwapChainImages;
-	VkFormat SwapChainImageFormat;
-	VkExtent2D SwapChainExtent;
-	std::vector<VkImageView> SwapChainImageViews;
-	VkPipelineLayout PipelineLayout;
-	VkRenderPass RenderPass;
-	VkPipeline GraphicsPipeline;
+    window *Window;
+    VkInstance Instance;
+    VkDebugUtilsMessengerEXT DebugMessenger;
+    VkPhysicalDevice PhysicalDevice;
+    VkDevice Device;
+    VkQueue GraphicsQueue;
+    VkQueue PresentQueue;
+    VkSurfaceKHR Surface;
+    VkSwapchainKHR SwapChain;
+    std::vector<VkImage> SwapChainImages;
+    VkFormat SwapChainImageFormat;
+    VkExtent2D SwapChainExtent;
+    std::vector<VkImageView> SwapChainImageViews;
+    VkPipelineLayout PipelineLayout;
+    VkRenderPass RenderPass;
+    VkPipeline GraphicsPipeline;
     std::vector<VkFramebuffer> SwapChainFrameBuffers;
     VkCommandPool CommandPool;
     std::vector<VkCommandBuffer> CommandBuffers;
@@ -67,32 +64,29 @@ struct renderer_api
     bool FramebufferResized = false;
 };
 
-static renderer_api RendererApi;
+static vulkan_api VulkanApi;
 
 void
 CreateFramebuffers()
 {
-    RendererApi.SwapChainFrameBuffers.resize(RendererApi.SwapChainImageViews.size());
+    VulkanApi.SwapChainFrameBuffers.resize(VulkanApi.SwapChainImageViews.size());
 
-    for (u64 i = 0; i < RendererApi.SwapChainImageViews.size(); i++)
+    for (u64 i = 0; i < VulkanApi.SwapChainImageViews.size(); i++)
     {
         VkImageView Attachments[] = {
-            RendererApi.SwapChainImageViews[i]
+            VulkanApi.SwapChainImageViews[i]
         };
 
         VkFramebufferCreateInfo FramebufferInfo = {};
         FramebufferInfo.sType = VK_STRUCTURE_TYPE_FRAMEBUFFER_CREATE_INFO;
-        FramebufferInfo.renderPass = RendererApi.RenderPass;
+        FramebufferInfo.renderPass = VulkanApi.RenderPass;
         FramebufferInfo.attachmentCount = 1;
         FramebufferInfo.pAttachments = Attachments;
-        FramebufferInfo.width = RendererApi.SwapChainExtent.width;
-        FramebufferInfo.height = RendererApi.SwapChainExtent.height;
+        FramebufferInfo.width = VulkanApi.SwapChainExtent.width;
+        FramebufferInfo.height = VulkanApi.SwapChainExtent.height;
         FramebufferInfo.layers = 1;
 
-        if (vkCreateFramebuffer(RendererApi.Device, &FramebufferInfo, NULL, &RendererApi.SwapChainFrameBuffers[i]))
-        {
-            LogCoreError("Failed to create frame buffer");
-        }
+        ASSERT(vkCreateFramebuffer(VulkanApi.Device, &FramebufferInfo, NULL, &VulkanApi.SwapChainFrameBuffers[i]) == VK_SUCCESS);
     }
 }
 
@@ -105,8 +99,8 @@ ChooseSwapExtent(const VkSurfaceCapabilitiesKHR &Capabilities)
     }
     else
     {
-        i32 Width = RendererApi.Window->Width;
-        i32 Height = RendererApi.Window->Height;
+        i32 Width = VulkanApi.Window->Width;
+        i32 Height = VulkanApi.Window->Height;
 
         VkExtent2D Extent = { (u32)Width, (u32)Height };
 
@@ -150,24 +144,24 @@ QuerySwapChainSupport(VkPhysicalDevice Device)
 {
     swap_chain_support_details Details;
 
-    vkGetPhysicalDeviceSurfaceCapabilitiesKHR(Device, RendererApi.Surface, &Details.Capabilities);
+    vkGetPhysicalDeviceSurfaceCapabilitiesKHR(Device, VulkanApi.Surface, &Details.Capabilities);
 
     u32 FormatCount;
-    vkGetPhysicalDeviceSurfaceFormatsKHR(Device, RendererApi.Surface, &FormatCount, NULL);
+    vkGetPhysicalDeviceSurfaceFormatsKHR(Device, VulkanApi.Surface, &FormatCount, NULL);
 
     if (FormatCount != 0)
     {
         Details.Formats.resize(FormatCount);
-        vkGetPhysicalDeviceSurfaceFormatsKHR(Device, RendererApi.Surface, &FormatCount, Details.Formats.data());
+        vkGetPhysicalDeviceSurfaceFormatsKHR(Device, VulkanApi.Surface, &FormatCount, Details.Formats.data());
     }
 
     u32 PresentModeCount;
-    vkGetPhysicalDeviceSurfacePresentModesKHR(Device, RendererApi.Surface, &PresentModeCount, Details.PresentModes.data());
+    vkGetPhysicalDeviceSurfacePresentModesKHR(Device, VulkanApi.Surface, &PresentModeCount, Details.PresentModes.data());
 
     if (PresentModeCount != 0)
     {
         Details.PresentModes.resize(PresentModeCount);
-        vkGetPhysicalDeviceSurfacePresentModesKHR(Device, RendererApi.Surface, &PresentModeCount, Details.PresentModes.data());
+        vkGetPhysicalDeviceSurfacePresentModesKHR(Device, VulkanApi.Surface, &PresentModeCount, Details.PresentModes.data());
     }
 
     return Details;
@@ -202,7 +196,6 @@ VKAPI_ATTR VkBool32 VKAPI_CALL
 DebugCallback(VkDebugUtilsMessageSeverityFlagBitsEXT MessageSeverity, VkDebugUtilsMessageTypeFlagsEXT MessageType, const VkDebugUtilsMessengerCallbackDataEXT *CallbackData, void *UserData)
 {
     LogCoreTrace("Validation Layer: %s", CallbackData->pMessage);
-
     return VK_FALSE;
 }
 
@@ -256,10 +249,7 @@ CreateInstance()
     CreateInfo.enabledExtensionCount = (u32)Extensions.size();
     CreateInfo.ppEnabledExtensionNames = Extensions.data();
 
-    if (EnableValidationLayers && !CheckValidationLayerSupport())
-    {
-        LogCoreError("Validation layers not supported");
-    }
+    ASSERT(EnableValidationLayers && CheckValidationLayerSupport());
 
     VkDebugUtilsMessengerCreateInfoEXT DebugMessengerCreateInfo = {};
 
@@ -282,10 +272,7 @@ CreateInstance()
         CreateInfo.pNext = NULL;
     }
 
-    if (vkCreateInstance(&CreateInfo, NULL, &RendererApi.Instance) != VK_SUCCESS)
-    {
-        LogCoreError("Failed to create instance");
-    }
+    ASSERT(vkCreateInstance(&CreateInfo, NULL, &VulkanApi.Instance) == VK_SUCCESS);
 }
 
 VkResult
@@ -316,10 +303,7 @@ SetupDebugMessenger()
     CreateInfo.messageType = VK_DEBUG_UTILS_MESSAGE_TYPE_GENERAL_BIT_EXT | VK_DEBUG_UTILS_MESSAGE_TYPE_VALIDATION_BIT_EXT | VK_DEBUG_UTILS_MESSAGE_TYPE_PERFORMANCE_BIT_EXT;
     CreateInfo.pfnUserCallback = DebugCallback;
 
-    if (CreateDebugUtilsMessengerEXT(RendererApi.Instance, &CreateInfo, NULL, &RendererApi.DebugMessenger) != VK_SUCCESS)
-    {
-        LogCoreError("Failed to create debug messenger");
-    }
+    ASSERT(CreateDebugUtilsMessengerEXT(VulkanApi.Instance, &CreateInfo, NULL, &VulkanApi.DebugMessenger) == VK_SUCCESS);
 }
 
 void
@@ -351,7 +335,7 @@ FindQueueFamilies(VkPhysicalDevice Device)
         }
 
         VkBool32 PresentSupport = false;
-        vkGetPhysicalDeviceSurfaceSupportKHR(Device, i, RendererApi.Surface, &PresentSupport);
+        vkGetPhysicalDeviceSurfaceSupportKHR(Device, i, VulkanApi.Surface, &PresentSupport);
 
         if (PresentSupport)
         {
@@ -372,34 +356,28 @@ FindQueueFamilies(VkPhysicalDevice Device)
 void
 CreateCommandPool()
 {
-    queue_family_indices QueueFamilyIndices = FindQueueFamilies(RendererApi.PhysicalDevice);
+    queue_family_indices QueueFamilyIndices = FindQueueFamilies(VulkanApi.PhysicalDevice);
 
     VkCommandPoolCreateInfo PoolInfo = {};
     PoolInfo.sType = VK_STRUCTURE_TYPE_COMMAND_POOL_CREATE_INFO;
     PoolInfo.flags = VK_COMMAND_POOL_CREATE_RESET_COMMAND_BUFFER_BIT;
     PoolInfo.queueFamilyIndex = QueueFamilyIndices.GraphicsFamily.value();
 
-    if (vkCreateCommandPool(RendererApi.Device, &PoolInfo, NULL, &RendererApi.CommandPool) != VK_SUCCESS)
-    {
-        LogCoreError("Failed to create command pool");
-    }
+    ASSERT(vkCreateCommandPool(VulkanApi.Device, &PoolInfo, NULL, &VulkanApi.CommandPool) == VK_SUCCESS);
 }
 
 void
 CreateCommandBuffer()
 {
-    RendererApi.CommandBuffers.resize(MAX_FRAMES_IN_FLIGHT);
+    VulkanApi.CommandBuffers.resize(MAX_FRAMES_IN_FLIGHT);
 
     VkCommandBufferAllocateInfo AllocInfo = {};
     AllocInfo.sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_ALLOCATE_INFO;
-    AllocInfo.commandPool = RendererApi.CommandPool;
+    AllocInfo.commandPool = VulkanApi.CommandPool;
     AllocInfo.level = VK_COMMAND_BUFFER_LEVEL_PRIMARY;
-    AllocInfo.commandBufferCount = (u32)RendererApi.CommandBuffers.size();
+    AllocInfo.commandBufferCount = (u32)VulkanApi.CommandBuffers.size();
 
-    if (vkAllocateCommandBuffers(RendererApi.Device, &AllocInfo, RendererApi.CommandBuffers.data()) != VK_SUCCESS)
-    {
-        LogCoreError("Failed to allocate command buffers");
-    }
+    ASSERT(vkAllocateCommandBuffers(VulkanApi.Device, &AllocInfo, VulkanApi.CommandBuffers.data()) == VK_SUCCESS);
 }
 
 void
@@ -408,45 +386,38 @@ RecordCommandBuffer(VkCommandBuffer CommandBuffer, u32 ImageIndex)
     VkCommandBufferBeginInfo BeginInfo = {};
     BeginInfo.sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_BEGIN_INFO;
 
-    if (vkBeginCommandBuffer(RendererApi.CommandBuffers[RendererApi.CurrentFrame], &BeginInfo) != VK_SUCCESS)
-    {
-        LogCoreError("Failed to begin command buffer");
-        return;
-    }
+    ASSERT(vkBeginCommandBuffer(VulkanApi.CommandBuffers[VulkanApi.CurrentFrame], &BeginInfo) == VK_SUCCESS);
 
     VkRenderPassBeginInfo RenderPassInfo = {};
     RenderPassInfo.sType = VK_STRUCTURE_TYPE_RENDER_PASS_BEGIN_INFO;
-    RenderPassInfo.renderPass = RendererApi.RenderPass;
-    RenderPassInfo.framebuffer = RendererApi.SwapChainFrameBuffers[ImageIndex];
+    RenderPassInfo.renderPass = VulkanApi.RenderPass;
+    RenderPassInfo.framebuffer = VulkanApi.SwapChainFrameBuffers[ImageIndex];
     RenderPassInfo.renderArea.offset = { 0, 0 };
-    RenderPassInfo.renderArea.extent = RendererApi.SwapChainExtent;
+    RenderPassInfo.renderArea.extent = VulkanApi.SwapChainExtent;
     VkClearValue ClearColor = {{{ 0.0f, 0.0f, 0.0f, 1.0f }}};
     RenderPassInfo.clearValueCount = 1;
     RenderPassInfo.pClearValues = &ClearColor;
-    vkCmdBeginRenderPass(RendererApi.CommandBuffers[RendererApi.CurrentFrame], &RenderPassInfo, VK_SUBPASS_CONTENTS_INLINE);
-    vkCmdBindPipeline(RendererApi.CommandBuffers[RendererApi.CurrentFrame], VK_PIPELINE_BIND_POINT_GRAPHICS, RendererApi.GraphicsPipeline);
+    vkCmdBeginRenderPass(VulkanApi.CommandBuffers[VulkanApi.CurrentFrame], &RenderPassInfo, VK_SUBPASS_CONTENTS_INLINE);
+    vkCmdBindPipeline(VulkanApi.CommandBuffers[VulkanApi.CurrentFrame], VK_PIPELINE_BIND_POINT_GRAPHICS, VulkanApi.GraphicsPipeline);
 
     VkViewport Viewport = {};
     Viewport.x = 0.0f;
     Viewport.y = 0.0f;
-    Viewport.width = (f32)RendererApi.SwapChainExtent.width;
-    Viewport.height = (f32)RendererApi.SwapChainExtent.height;
+    Viewport.width = (f32)VulkanApi.SwapChainExtent.width;
+    Viewport.height = (f32)VulkanApi.SwapChainExtent.height;
     Viewport.maxDepth = 1.0f;
     Viewport.minDepth = 0.0f;
-    vkCmdSetViewport(RendererApi.CommandBuffers[RendererApi.CurrentFrame], 0, 1, &Viewport);
+    vkCmdSetViewport(VulkanApi.CommandBuffers[VulkanApi.CurrentFrame], 0, 1, &Viewport);
 
     VkRect2D Scissor = {};
     Scissor.offset = { 0, 0 };
-    Scissor.extent = RendererApi.SwapChainExtent;
-    vkCmdSetScissor(RendererApi.CommandBuffers[RendererApi.CurrentFrame], 0, 1, &Scissor);
+    Scissor.extent = VulkanApi.SwapChainExtent;
+    vkCmdSetScissor(VulkanApi.CommandBuffers[VulkanApi.CurrentFrame], 0, 1, &Scissor);
 
-    vkCmdDraw(RendererApi.CommandBuffers[RendererApi.CurrentFrame], 3, 1, 0, 0);
+    vkCmdDraw(VulkanApi.CommandBuffers[VulkanApi.CurrentFrame], 3, 1, 0, 0);
 
-    vkCmdEndRenderPass(RendererApi.CommandBuffers[RendererApi.CurrentFrame]);
-    if (vkEndCommandBuffer(RendererApi.CommandBuffers[RendererApi.CurrentFrame]) != VK_SUCCESS)
-    {
-        LogCoreError("Failed to end command buffer");
-    }
+    vkCmdEndRenderPass(VulkanApi.CommandBuffers[VulkanApi.CurrentFrame]);
+    ASSERT(vkEndCommandBuffer(VulkanApi.CommandBuffers[VulkanApi.CurrentFrame]) == VK_SUCCESS);
 }
 
 bool
@@ -461,7 +432,7 @@ CheckDeviceExtensionSupport(VkPhysicalDevice Device)
     std::set<std::string> RequiredExtensions(DeviceExtensions.begin(), DeviceExtensions.end());
 
     for (const auto &Extension : AvailableExtensions)
-    { 
+    {
         RequiredExtensions.erase(Extension.extensionName);
     }
 
@@ -488,30 +459,26 @@ void
 PickPhysicalDevice()
 {
     u32 DeviceCount = 0;
-    vkEnumeratePhysicalDevices(RendererApi.Instance, &DeviceCount, NULL);
-    if (DeviceCount == 0)
-    {
-        LogCoreError("No physical devices found");
-        return;
-    }
+    vkEnumeratePhysicalDevices(VulkanApi.Instance, &DeviceCount, NULL);
+    ASSERT(DeviceCount != 0);
     std::vector<VkPhysicalDevice> Devices(DeviceCount);
-    vkEnumeratePhysicalDevices(RendererApi.Instance, &DeviceCount, Devices.data());
+    vkEnumeratePhysicalDevices(VulkanApi.Instance, &DeviceCount, Devices.data());
     for (const VkPhysicalDevice &Device : Devices)
     {
         if (IsDeviceSuitable(Device))
         {
-            RendererApi.PhysicalDevice = Device;
+            VulkanApi.PhysicalDevice = Device;
             return;
         }
     }
 
-    LogCoreError("Failed to pick phydical device");
+    ASSERT(false);
 }
 
 void
 CreateLogicalDevice()
 {
-    queue_family_indices Indices = FindQueueFamilies(RendererApi.PhysicalDevice);
+    queue_family_indices Indices = FindQueueFamilies(VulkanApi.PhysicalDevice);
 
     std::vector<VkDeviceQueueCreateInfo> QueueCreateInfos = {};
     std::set<u32> UniqueQueueFamilies = { Indices.GraphicsFamily.value(), Indices.PresentFamily.value() };
@@ -552,13 +519,10 @@ CreateLogicalDevice()
         CreateInfo.enabledLayerCount = 0;
     }
 
-    if (vkCreateDevice(RendererApi.PhysicalDevice, &CreateInfo, nullptr, &RendererApi.Device) != VK_SUCCESS)
-    {
-        LogCoreError("Failed to create logical device");
-    }
+    ASSERT(vkCreateDevice(VulkanApi.PhysicalDevice, &CreateInfo, nullptr, &VulkanApi.Device) == VK_SUCCESS);
 
-    vkGetDeviceQueue(RendererApi.Device, Indices.GraphicsFamily.value(), 0, &RendererApi.GraphicsQueue);
-    vkGetDeviceQueue(RendererApi.Device, Indices.GraphicsFamily.value(), 0, &RendererApi.PresentQueue);
+    vkGetDeviceQueue(VulkanApi.Device, Indices.GraphicsFamily.value(), 0, &VulkanApi.GraphicsQueue);
+    vkGetDeviceQueue(VulkanApi.Device, Indices.GraphicsFamily.value(), 0, &VulkanApi.PresentQueue);
 }
 
 void
@@ -567,20 +531,17 @@ CreateSurface()
 #ifdef SK_WINDOWS
     VkWin32SurfaceCreateInfoKHR CreateInfo = {};
     CreateInfo.sType = VK_STRUCTURE_TYPE_WIN32_SURFACE_CREATE_INFO_KHR;
-    CreateInfo.hwnd = RendererApi.Window->Handle;
+    CreateInfo.hwnd = VulkanApi.Window->Handle;
     CreateInfo.hinstance = Platform.Instance;
 
-    if (vkCreateWin32SurfaceKHR(RendererApi.Instance, &CreateInfo, NULL, &RendererApi.Surface) != VK_SUCCESS)
-    {
-        LogCoreError("Failed to create win32 surface");
-    }
+    ASSERT(vkCreateWin32SurfaceKHR(VulkanApi.Instance, &CreateInfo, NULL, &VulkanApi.Surface) == VK_SUCCESS);
 #endif
 }
 
 void
 CreateSwapChain()
 {
-    swap_chain_support_details SwapChainSupport = QuerySwapChainSupport(RendererApi.PhysicalDevice);
+    swap_chain_support_details SwapChainSupport = QuerySwapChainSupport(VulkanApi.PhysicalDevice);
 
     VkSurfaceFormatKHR SurfaceFormat = ChooseSwapSurfaceFormat(SwapChainSupport.Formats);
     VkPresentModeKHR PresentMode = ChooseSwapPresentMode(SwapChainSupport.PresentModes);
@@ -595,7 +556,7 @@ CreateSwapChain()
 
     VkSwapchainCreateInfoKHR CreateInfo = {};
     CreateInfo.sType = VK_STRUCTURE_TYPE_SWAPCHAIN_CREATE_INFO_KHR;
-    CreateInfo.surface = RendererApi.Surface;
+    CreateInfo.surface = VulkanApi.Surface;
     CreateInfo.minImageCount = ImageCount;
     CreateInfo.imageFormat = SurfaceFormat.format;
     CreateInfo.imageColorSpace = SurfaceFormat.colorSpace;
@@ -604,7 +565,7 @@ CreateSwapChain()
     // VK_IMAGE_USAGE_TRANSFER_DST_BIT for post processing
     CreateInfo.imageUsage = VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT;
 
-    queue_family_indices Indices = FindQueueFamilies(RendererApi.PhysicalDevice);
+    queue_family_indices Indices = FindQueueFamilies(VulkanApi.PhysicalDevice);
     u32 QueueFamilyIndices[] = { Indices.GraphicsFamily.value(), Indices.PresentFamily.value() };
 
     if (Indices.GraphicsFamily != Indices.PresentFamily)
@@ -626,31 +587,28 @@ CreateSwapChain()
     CreateInfo.clipped = VK_TRUE;
     CreateInfo.oldSwapchain = VK_NULL_HANDLE;
 
-    if (vkCreateSwapchainKHR(RendererApi.Device, &CreateInfo, NULL, &RendererApi.SwapChain) != VK_SUCCESS)
-    {
-        LogCoreError("Failed to create swapchain");
-    }
+    ASSERT(vkCreateSwapchainKHR(VulkanApi.Device, &CreateInfo, NULL, &VulkanApi.SwapChain) == VK_SUCCESS);
 
-    vkGetSwapchainImagesKHR(RendererApi.Device, RendererApi.SwapChain, &ImageCount, NULL);
-    RendererApi.SwapChainImages.resize(ImageCount);
-    vkGetSwapchainImagesKHR(RendererApi.Device, RendererApi.SwapChain, &ImageCount, RendererApi.SwapChainImages.data());
+    vkGetSwapchainImagesKHR(VulkanApi.Device, VulkanApi.SwapChain, &ImageCount, NULL);
+    VulkanApi.SwapChainImages.resize(ImageCount);
+    vkGetSwapchainImagesKHR(VulkanApi.Device, VulkanApi.SwapChain, &ImageCount, VulkanApi.SwapChainImages.data());
 
-    RendererApi.SwapChainImageFormat = SurfaceFormat.format;
-    RendererApi.SwapChainExtent = Extent;
+    VulkanApi.SwapChainImageFormat = SurfaceFormat.format;
+    VulkanApi.SwapChainExtent = Extent;
 }
 
 void
 CreateImageViews()
 {
-    RendererApi.SwapChainImageViews.resize(RendererApi.SwapChainImages.size());
+    VulkanApi.SwapChainImageViews.resize(VulkanApi.SwapChainImages.size());
 
-    for (u64 i = 0; i < RendererApi.SwapChainImages.size(); i++)
+    for (u64 i = 0; i < VulkanApi.SwapChainImages.size(); i++)
     {
         VkImageViewCreateInfo CreateInfo = {};
         CreateInfo.sType = VK_STRUCTURE_TYPE_IMAGE_VIEW_CREATE_INFO;
-        CreateInfo.image = RendererApi.SwapChainImages[i];
+        CreateInfo.image = VulkanApi.SwapChainImages[i];
         CreateInfo.viewType = VK_IMAGE_VIEW_TYPE_2D;
-        CreateInfo.format = RendererApi.SwapChainImageFormat;
+        CreateInfo.format = VulkanApi.SwapChainImageFormat;
         CreateInfo.components.r = VK_COMPONENT_SWIZZLE_IDENTITY;
         CreateInfo.components.g = VK_COMPONENT_SWIZZLE_IDENTITY;
         CreateInfo.components.b = VK_COMPONENT_SWIZZLE_IDENTITY;
@@ -661,10 +619,7 @@ CreateImageViews()
         CreateInfo.subresourceRange.baseArrayLayer = 0;
         CreateInfo.subresourceRange.layerCount = 1;
 
-        if (vkCreateImageView(RendererApi.Device, &CreateInfo, NULL, &RendererApi.SwapChainImageViews[i]) != VK_SUCCESS)
-        {
-            LogCoreError("Failed to create image view");
-        }
+        ASSERT(vkCreateImageView(VulkanApi.Device, &CreateInfo, NULL, &VulkanApi.SwapChainImageViews[i]) == VK_SUCCESS);
     }
 }
 
@@ -674,11 +629,7 @@ ReadFile(const std::string &FileName)
 {
     std::ifstream File(FileName, std::ios::ate | std::ios::binary);
 
-    if (!File.is_open())
-    {
-        LogCoreError("Failed to open file: %s", FileName.c_str());
-        throw std::runtime_error("Failed to open file");
-    }
+    ASSERT(File.is_open());
 
     u64 FileSize = (u64)File.tellg();
     std::vector<char> Buffer(FileSize);
@@ -697,10 +648,7 @@ CreateShaderModule(const std::vector<char> &Code)
     CreateInfo.pCode = (const u32 *)Code.data();
 
     VkShaderModule ShaderModule;
-    if (vkCreateShaderModule(RendererApi.Device, &CreateInfo, NULL, &ShaderModule) != VK_SUCCESS)
-    {
-        LogCoreError("Failed to create shader module");
-    }
+    ASSERT(vkCreateShaderModule(VulkanApi.Device, &CreateInfo, NULL, &ShaderModule) == VK_SUCCESS);
 
     return ShaderModule;
 }
@@ -792,11 +740,7 @@ CreateGraphicsPipeline()
     PipelineLayoutInfo.setLayoutCount = 0;
     PipelineLayoutInfo.pushConstantRangeCount = 0;
 
-    if (vkCreatePipelineLayout(RendererApi.Device, &PipelineLayoutInfo, NULL, &RendererApi.PipelineLayout) != VK_SUCCESS)
-    {
-        LogCoreError("Failed to create pipeline layout");
-        return;
-    }
+    ASSERT(vkCreatePipelineLayout(VulkanApi.Device, &PipelineLayoutInfo, NULL, &VulkanApi.PipelineLayout) == VK_SUCCESS);
 
     VkGraphicsPipelineCreateInfo PipelineInfo = {};
     PipelineInfo.sType = VK_STRUCTURE_TYPE_GRAPHICS_PIPELINE_CREATE_INFO;
@@ -812,29 +756,25 @@ CreateGraphicsPipeline()
     PipelineInfo.pColorBlendState = &ColorBlending;
     PipelineInfo.pDynamicState = &DynamicState;
 
-    PipelineInfo.layout = RendererApi.PipelineLayout;
+    PipelineInfo.layout = VulkanApi.PipelineLayout;
 
-    PipelineInfo.renderPass = RendererApi.RenderPass;
+    PipelineInfo.renderPass = VulkanApi.RenderPass;
     PipelineInfo.subpass = 0;
 
     PipelineInfo.basePipelineHandle = VK_NULL_HANDLE;
     PipelineInfo.basePipelineIndex = -1;
 
-    if (vkCreateGraphicsPipelines(RendererApi.Device, VK_NULL_HANDLE, 1, &PipelineInfo, NULL, &RendererApi.GraphicsPipeline) != VK_SUCCESS)
-    {
-        LogCoreError("Failed to create graphics pipeline");
-        return;
-    }
+    ASSERT(vkCreateGraphicsPipelines(VulkanApi.Device, VK_NULL_HANDLE, 1, &PipelineInfo, NULL, &VulkanApi.GraphicsPipeline) == VK_SUCCESS);
 
-    vkDestroyShaderModule(RendererApi.Device, FragmentShaderModule, NULL);
-    vkDestroyShaderModule(RendererApi.Device, VertexShaderModule, NULL);
+    vkDestroyShaderModule(VulkanApi.Device, FragmentShaderModule, NULL);
+    vkDestroyShaderModule(VulkanApi.Device, VertexShaderModule, NULL);
 }
 
 void
 CreateRenderPass()
 {
     VkAttachmentDescription ColorAttachment = {};
-    ColorAttachment.format = RendererApi.SwapChainImageFormat;
+    ColorAttachment.format = VulkanApi.SwapChainImageFormat;
     ColorAttachment.samples = VK_SAMPLE_COUNT_1_BIT;
 
     ColorAttachment.loadOp = VK_ATTACHMENT_LOAD_OP_CLEAR;
@@ -869,25 +809,22 @@ CreateRenderPass()
 
     Dependency.srcStageMask = VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT;
     Dependency.srcAccessMask = 0;
-    
+
     Dependency.dstStageMask = VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT;
     Dependency.dstAccessMask = VK_ACCESS_COLOR_ATTACHMENT_WRITE_BIT;
 
     RenderPassInfo.dependencyCount = 1;
     RenderPassInfo.pDependencies = &Dependency;
 
-    if (vkCreateRenderPass(RendererApi.Device, &RenderPassInfo, NULL, &RendererApi.RenderPass) != VK_SUCCESS)
-    {
-        LogCoreError("Failed to create render pass");
-    }
+    ASSERT(vkCreateRenderPass(VulkanApi.Device, &RenderPassInfo, NULL, &VulkanApi.RenderPass) == VK_SUCCESS);
 }
 
 void
 CreateSyncObjects()
 {
-    RendererApi.ImageAvailableSemaphores.resize(MAX_FRAMES_IN_FLIGHT);
-    RendererApi.RenderFinishedSemaphores.resize(MAX_FRAMES_IN_FLIGHT);
-    RendererApi.InFlightFences.resize(MAX_FRAMES_IN_FLIGHT);
+    VulkanApi.ImageAvailableSemaphores.resize(MAX_FRAMES_IN_FLIGHT);
+    VulkanApi.RenderFinishedSemaphores.resize(MAX_FRAMES_IN_FLIGHT);
+    VulkanApi.InFlightFences.resize(MAX_FRAMES_IN_FLIGHT);
 
     VkSemaphoreCreateInfo SemaphoreInfo = {};
     SemaphoreInfo.sType = VK_STRUCTURE_TYPE_SEMAPHORE_CREATE_INFO;
@@ -898,43 +835,37 @@ CreateSyncObjects()
 
     for (u64 i = 0; i < MAX_FRAMES_IN_FLIGHT; i++)
     {
-        if (vkCreateSemaphore(RendererApi.Device, &SemaphoreInfo, NULL, &RendererApi.ImageAvailableSemaphores[i]) != VK_SUCCESS || 
-                vkCreateSemaphore(RendererApi.Device, &SemaphoreInfo, NULL, &RendererApi.RenderFinishedSemaphores[i]) != VK_SUCCESS || 
-                vkCreateFence(RendererApi.Device, &FenceInfo, NULL, &RendererApi.InFlightFences[i]) != VK_SUCCESS)
-        {
-            LogCoreError("Failed to create semaphore");
-            return;
-        }
+        ASSERT(vkCreateSemaphore(VulkanApi.Device, &SemaphoreInfo, NULL, &VulkanApi.ImageAvailableSemaphores[i]) == VK_SUCCESS && vkCreateSemaphore(VulkanApi.Device, &SemaphoreInfo, NULL, &VulkanApi.RenderFinishedSemaphores[i]) == VK_SUCCESS && vkCreateFence(VulkanApi.Device, &FenceInfo, NULL, &VulkanApi.InFlightFences[i]) == VK_SUCCESS);
     }
 }
 
 void
 CleanupSwapChain()
 {
-    for (u64 i = 0; i < RendererApi.SwapChainFrameBuffers.size(); i++)
+    for (u64 i = 0; i < VulkanApi.SwapChainFrameBuffers.size(); i++)
     {
-        vkDestroyFramebuffer(RendererApi.Device, RendererApi.SwapChainFrameBuffers[i], NULL);
+        vkDestroyFramebuffer(VulkanApi.Device, VulkanApi.SwapChainFrameBuffers[i], NULL);
     }
 
-    for (u64 i = 0; i < RendererApi.SwapChainImageViews.size(); i++)
+    for (u64 i = 0; i < VulkanApi.SwapChainImageViews.size(); i++)
     {
-        vkDestroyImageView(RendererApi.Device, RendererApi.SwapChainImageViews[i], NULL);
+        vkDestroyImageView(VulkanApi.Device, VulkanApi.SwapChainImageViews[i], NULL);
     }
 
-    vkDestroySwapchainKHR(RendererApi.Device, RendererApi.SwapChain, NULL);
+    vkDestroySwapchainKHR(VulkanApi.Device, VulkanApi.SwapChain, NULL);
 }
 
 void
 RecreateSwapChain()
 {
-    window_size_data Size = GetWindowSize(RendererApi.Window);
+    window_size_data Size = GetWindowSize(VulkanApi.Window);
     while (Size.Width == 0 || Size.Height == 0)
     {
-        Size = GetWindowSize(RendererApi.Window);
-        UpdateWindow(RendererApi.Window);
+        Size = GetWindowSize(VulkanApi.Window);
+        UpdateWindow(VulkanApi.Window);
     }
 
-    vkDeviceWaitIdle(RendererApi.Device);
+    vkDeviceWaitIdle(VulkanApi.Device);
 
     CleanupSwapChain();
 
@@ -950,54 +881,46 @@ RecreateSwapChain()
 void
 WaitForDevice()
 {
-    vkDeviceWaitIdle(RendererApi.Device);
+    vkDeviceWaitIdle(VulkanApi.Device);
 }
 
 void
 DrawFrame()
 {
-    vkWaitForFences(RendererApi.Device, 1, &RendererApi.InFlightFences[RendererApi.CurrentFrame], VK_TRUE, UINT64_MAX);
+    vkWaitForFences(VulkanApi.Device, 1, &VulkanApi.InFlightFences[VulkanApi.CurrentFrame], VK_TRUE, UINT64_MAX);
 
     u32 ImageIndex;
-    VkResult Result = vkAcquireNextImageKHR(RendererApi.Device, RendererApi.SwapChain, UINT64_MAX, RendererApi.ImageAvailableSemaphores[RendererApi.CurrentFrame], VK_NULL_HANDLE, &ImageIndex);
+    VkResult Result = vkAcquireNextImageKHR(VulkanApi.Device, VulkanApi.SwapChain, UINT64_MAX, VulkanApi.ImageAvailableSemaphores[VulkanApi.CurrentFrame], VK_NULL_HANDLE, &ImageIndex);
 
     if (Result == VK_ERROR_OUT_OF_DATE_KHR)
     {
         RecreateSwapChain();
         return;
     }
-    else if (Result != VK_SUCCESS && Result != VK_SUBOPTIMAL_KHR)
-    {
-        LogCoreError("Failed to acquite next frame");
-        return;
-    }
+    ASSERT(Result == VK_SUCCESS || Result == VK_SUBOPTIMAL_KHR);
 
-    vkResetFences(RendererApi.Device, 1, &RendererApi.InFlightFences[RendererApi.CurrentFrame]);
+    vkResetFences(VulkanApi.Device, 1, &VulkanApi.InFlightFences[VulkanApi.CurrentFrame]);
 
-    vkResetCommandBuffer(RendererApi.CommandBuffers[RendererApi.CurrentFrame], 0);
-    RecordCommandBuffer(RendererApi.CommandBuffers[RendererApi.CurrentFrame], ImageIndex);
+    vkResetCommandBuffer(VulkanApi.CommandBuffers[VulkanApi.CurrentFrame], 0);
+    RecordCommandBuffer(VulkanApi.CommandBuffers[VulkanApi.CurrentFrame], ImageIndex);
 
     VkSubmitInfo SubmitInfo = {};
     SubmitInfo.sType = VK_STRUCTURE_TYPE_SUBMIT_INFO;
 
-    VkSemaphore WaitSemaphores[] = { RendererApi.ImageAvailableSemaphores[RendererApi.CurrentFrame] };
+    VkSemaphore WaitSemaphores[] = { VulkanApi.ImageAvailableSemaphores[VulkanApi.CurrentFrame] };
     VkPipelineStageFlags WaitStages[] = { VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT };
     SubmitInfo.waitSemaphoreCount = 1;
     SubmitInfo.pWaitSemaphores = WaitSemaphores;
     SubmitInfo.pWaitDstStageMask = WaitStages;
 
     SubmitInfo.commandBufferCount = 1;
-    SubmitInfo.pCommandBuffers = &RendererApi.CommandBuffers[RendererApi.CurrentFrame];
+    SubmitInfo.pCommandBuffers = &VulkanApi.CommandBuffers[VulkanApi.CurrentFrame];
 
-    VkSemaphore SignalSemaphores[] = { RendererApi.RenderFinishedSemaphores[RendererApi.CurrentFrame] };
+    VkSemaphore SignalSemaphores[] = { VulkanApi.RenderFinishedSemaphores[VulkanApi.CurrentFrame] };
     SubmitInfo.signalSemaphoreCount = 1;
     SubmitInfo.pSignalSemaphores = SignalSemaphores;
-    
-    if (vkQueueSubmit(RendererApi.GraphicsQueue, 1, &SubmitInfo, RendererApi.InFlightFences[RendererApi.CurrentFrame]) != VK_SUCCESS)
-    {
-        LogCoreError("Failed to submit to graphics queue");
-        return;
-    }
+
+    ASSERT(vkQueueSubmit(VulkanApi.GraphicsQueue, 1, &SubmitInfo, VulkanApi.InFlightFences[VulkanApi.CurrentFrame]) == VK_SUCCESS);
 
     VkPresentInfoKHR PresentInfo = {};
     PresentInfo.sType = VK_STRUCTURE_TYPE_PRESENT_INFO_KHR;
@@ -1005,31 +928,27 @@ DrawFrame()
     PresentInfo.waitSemaphoreCount = 1;
     PresentInfo.pWaitSemaphores = SignalSemaphores;
 
-    VkSwapchainKHR SwapChains[] = { RendererApi.SwapChain };
+    VkSwapchainKHR SwapChains[] = { VulkanApi.SwapChain };
     PresentInfo.swapchainCount = 1;
     PresentInfo.pSwapchains = SwapChains;
     PresentInfo.pImageIndices = &ImageIndex;
 
-    Result = vkQueuePresentKHR(RendererApi.PresentQueue, &PresentInfo);
+    Result = vkQueuePresentKHR(VulkanApi.PresentQueue, &PresentInfo);
 
-    if (Result == VK_ERROR_OUT_OF_DATE_KHR || Result == VK_SUBOPTIMAL_KHR || RendererApi.FramebufferResized)
+    if (Result == VK_ERROR_OUT_OF_DATE_KHR || Result == VK_SUBOPTIMAL_KHR || VulkanApi.FramebufferResized)
     {
-        RendererApi.FramebufferResized = false;
+        VulkanApi.FramebufferResized = false;
         RecreateSwapChain();
     }
-    else if (Result != VK_SUCCESS)
-    {
-        LogCoreError("Failed to present frame");
-        return;
-    }
+    ASSERT(Result == VK_SUCCESS);
 
-    RendererApi.CurrentFrame = (RendererApi.CurrentFrame + 1) % MAX_FRAMES_IN_FLIGHT;
+    VulkanApi.CurrentFrame = (VulkanApi.CurrentFrame + 1) % MAX_FRAMES_IN_FLIGHT;
 }
 
 void
 RenderApiInit(window *Window)
 {
-    RendererApi.Window = Window;
+    VulkanApi.Window = Window;
     CreateInstance();
     SetupDebugMessenger();
     CreateSurface();
@@ -1050,29 +969,29 @@ RenderApiShutdown()
 {
     CleanupSwapChain();
 
-    vkDestroyPipeline(RendererApi.Device, RendererApi.GraphicsPipeline, NULL);
-    vkDestroyPipelineLayout(RendererApi.Device, RendererApi.PipelineLayout, NULL);
+    vkDestroyPipeline(VulkanApi.Device, VulkanApi.GraphicsPipeline, NULL);
+    vkDestroyPipelineLayout(VulkanApi.Device, VulkanApi.PipelineLayout, NULL);
 
-    vkDestroyRenderPass(RendererApi.Device, RendererApi.RenderPass, NULL);
+    vkDestroyRenderPass(VulkanApi.Device, VulkanApi.RenderPass, NULL);
 
     for (u64 i = 0; i < MAX_FRAMES_IN_FLIGHT; i++)
     {
-        vkDestroySemaphore(RendererApi.Device, RendererApi.ImageAvailableSemaphores[i], NULL);
-        vkDestroySemaphore(RendererApi.Device, RendererApi.RenderFinishedSemaphores[i], NULL);
-        vkDestroyFence(RendererApi.Device, RendererApi.InFlightFences[i], NULL);
+        vkDestroySemaphore(VulkanApi.Device, VulkanApi.ImageAvailableSemaphores[i], NULL);
+        vkDestroySemaphore(VulkanApi.Device, VulkanApi.RenderFinishedSemaphores[i], NULL);
+        vkDestroyFence(VulkanApi.Device, VulkanApi.InFlightFences[i], NULL);
     }
 
-    vkDestroyCommandPool(RendererApi.Device, RendererApi.CommandPool, NULL);
+    vkDestroyCommandPool(VulkanApi.Device, VulkanApi.CommandPool, NULL);
 
-    vkDestroyDevice(RendererApi.Device, NULL);
+    vkDestroyDevice(VulkanApi.Device, NULL);
 
     if (EnableValidationLayers)
     {
-        DestroyDebugUtilsMessengerEXT(RendererApi.Instance, RendererApi.DebugMessenger, NULL);
+        DestroyDebugUtilsMessengerEXT(VulkanApi.Instance, VulkanApi.DebugMessenger, NULL);
     }
 
-    vkDestroySurfaceKHR(RendererApi.Instance, RendererApi.Surface, NULL);
-    vkDestroyInstance(RendererApi.Instance, NULL);
+    vkDestroySurfaceKHR(VulkanApi.Instance, VulkanApi.Surface, NULL);
+    vkDestroyInstance(VulkanApi.Instance, NULL);
 }
 
 void
@@ -1088,7 +1007,7 @@ RenderApiSetClearColor(f32 Red, f32 Green, f32 Blue, f32 Alpha)
 void
 RenderApiSetViewport(i32 X, i32 Y, i32 Width, i32 Height)
 {
-    RendererApi.FramebufferResized = true;
+    VulkanApi.FramebufferResized = true;
 }
 
 void

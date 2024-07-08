@@ -16,14 +16,14 @@
 
 #include "Types.h"
 
-const char *ValidationLayers[] = 
+const char *ValidationLayers[] =
 {
     "VK_LAYER_KHRONOS_validation"
 };
 
 const u32 NumValidationLayers = 1;
 
-const std::vector<const char *> DeviceExtensions = 
+const std::vector<const char *> DeviceExtensions =
 {
     VK_KHR_SWAPCHAIN_EXTENSION_NAME
 };
