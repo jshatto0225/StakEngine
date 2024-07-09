@@ -4,6 +4,7 @@
 
 #include "File.h"
 
+#include "Asserts.h"
 #include "Log.h"
 
 /*********************
@@ -24,40 +25,23 @@ file *
 CreateFile(const char *Path)
 {
     file *File = (file *)malloc(sizeof(file));
+    ASSERT(File);
 
-    if (!File)
-    {
-        LogCoreError("Failed to allocate memory for file");
-        return NULL;
-    }
-    
     File->FilePath = Path;
     File->Data = NULL;
     HANDLE FileHandle = CreateFileA(File->FilePath, GENERIC_READ, FILE_SHARE_READ, 0, OPEN_EXISTING, 0, 0);
-    if (!FileHandle)
-    {
-        // Error
-        LogCoreError("Failed to open file");
-        return NULL;
-    }
+    ASSERT(FileHandle);
+
     LARGE_INTEGER FileSize;
-    if (!GetFileSizeEx(FileHandle, &FileSize))
-    {
-        // Error
-        LogCoreError("File size error");
-        CloseHandle(FileHandle);
-        return NULL;
-    }
+    ASSERT(GetFileSizeEx(FileHandle, &FileSize));
+
     File->Size = FileSize.QuadPart;
     File->Data = VirtualAlloc(NULL, FileSize.QuadPart, MEM_RESERVE | MEM_COMMIT, PAGE_READWRITE);
-    if (!File->Data)
-    {
-        // Error
-        LogCoreError("Could not allocate password");
-        CloseHandle(FileHandle);
-        return NULL;
-    }
+    ASSERT(File->Data);
+
+    // TODO: Figure out what this does
     OVERLAPPED IdkWhatThisDoes = {};
+    // NOTE: Can fail if file is locked by another program
     if (!ReadFileEx(FileHandle, File->Data, (DWORD)FileSize.QuadPart, &IdkWhatThisDoes, LPOverlappedCompletionRoutine))
     {
         LogCoreError("Could not read file");
@@ -74,6 +58,8 @@ CreateFile(const char *Path)
 void
 DestroyFile(file **File)
 {
+    ASSERT(File);
+
     if (*File)
     {
         VirtualFree((*File)->Data, (*File)->Size, MEM_RESERVE);

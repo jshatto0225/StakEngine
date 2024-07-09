@@ -1,12 +1,11 @@
 #include "Win32Platform.h"
-#include <winuser.h>
 
 #ifdef SK_WINDOWS
 
 #include "Window.h"
 
+#include "Asserts.h"
 #include "Platform.h"
-#include "Log.h"
 
 /*********************
  * Private Interface *
@@ -123,12 +122,7 @@ CreateWindow(const window_config *Config)
     WindowCount++;
 
     window *Window = (window *)malloc(sizeof(window));
-
-    if (!Window)
-    {
-        LogCoreError("Failed to allocate memory for window");
-        return NULL;
-    }
+    ASSERT(Window);
 
     Window->X = Config->X;
     Window->Y = Config->Y;
@@ -144,8 +138,16 @@ CreateWindow(const window_config *Config)
 }
 
 void
+SendWindowCloseRequest(const window *Window)
+{
+    PostMessage(Window->Handle, WM_CLOSE, 0, 0);
+}
+
+void
 DestroyWindow(window **Window)
 {
+    ASSERT(Window);
+
     if (*Window)
     {
         //DestroyContext(&(*Window)->Context);
@@ -166,6 +168,8 @@ DestroyWindow(window **Window)
 void
 SetWindowPos(window *Window, i32 X, i32 Y)
 {
+    ASSERT(Window);
+
     Win32SetWindowPos(Window->Handle, NULL, X, Y, Window->Width, Window->Height, 0);
     Window->X = X;
     Window->Y = Y;
@@ -174,6 +178,8 @@ SetWindowPos(window *Window, i32 X, i32 Y)
 void
 SetWindowSize(window *Window, i32 Width, i32 Height)
 {
+    ASSERT(Window);
+
     Win32SetWindowPos(Window->Handle, NULL, Window->X, Window->Y, Width, Height, 0);
     Window->Width = Width;
     Window->Height = Height;
@@ -182,24 +188,32 @@ SetWindowSize(window *Window, i32 Width, i32 Height)
 window_pos_data
 GetWindowPos(const window *Window)
 {
+    ASSERT(Window);
+
     return { Window->X, Window->Y };
 }
 
 window_size_data
 GetWindowSize(const window *Window)
 {
+    ASSERT(Window);
+
     return { Window->Width, Window->Height };
 }
 
 void
 MakeWindowCurrent(const window *Window)
 {
+    ASSERT(Window);
+
     //MakeContextCurrent(Window->Context);
 }
 
 void
 UpdateWindow(window *Window)
 {
+    ASSERT(Window);
+
     RedrawWindow(Window->Handle, NULL, NULL, RDW_INVALIDATE);
     MSG Msg = {};
     while (PeekMessageA(&Msg, NULL, 0, 0, PM_REMOVE))
@@ -212,12 +226,16 @@ UpdateWindow(window *Window)
 void
 SwapWindowBuffers(window *Window)
 {
+    ASSERT(Window);
+
     //SwapContextBuffers(Window->Context);
 }
 
 void
 SetWindowEventFn(window *Window, EventFn Func)
 {
+    ASSERT(Window);
+
     Window->EventFunc = Func;
 }
 

@@ -38,21 +38,30 @@ void
 EditorLayerUpdate()
 {
     Data.QuadRotation += 1.0f;
-    if (GetKeyDown(K_W)) {
+    if (GetKeyDown(K_W))
+    {
         LogTrace("Forward");
         Data.Cam.Pos.y += 0.005f;
     }
-    if (GetKeyDown(K_A)) {
+    if (GetKeyDown(K_A))
+    {
         LogTrace("Left");
         Data.Cam.Pos.x -= 0.005f;
     }
-    if (GetKeyDown(K_S)) {
+    if (GetKeyDown(K_S))
+    {
         LogTrace("Backwards");
         Data.Cam.Pos.y -= 0.005f;
     }
-    if (GetKeyDown(K_D)) {
+    if (GetKeyDown(K_D))
+    {
         LogTrace("Right");
         Data.Cam.Pos.x += 0.005f;
+    }
+    if (GetKeyDown(K_ESCAPE))
+    {
+        LogTrace("Escape pressed. Quitting.");
+        ApplicationRequestShutdown();
     }
 
     //RecalculateCameraView(&Data.Cam);

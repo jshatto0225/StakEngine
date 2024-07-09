@@ -29,34 +29,34 @@ LogShutdown()
 void
 LogCoreTrace(const char *fmt, ...)
 {
-    fprintf(stdout, "[StakRuntime] [TRACE]: ");
+    fprintf(stderr, "[StakRuntime] [TRACE]: ");
     fprintf(CoreLogFile, "[StakRuntime] [TRACE]: ");
     va_list args1;
     va_list args2;
     va_start(args1, fmt);
     va_start(args2, fmt);
-    vfprintf(stdout, fmt, args1);
+    vfprintf(stderr, fmt, args1);
     vfprintf(CoreLogFile, fmt, args2);
     va_end(args1);
     va_end(args2);
-    fprintf(stdout, "\n");
+    fprintf(stderr, "\n");
     fprintf(CoreLogFile, "\n");
 }
 
 void
 LogCoreInfo(const char *fmt, ...)
 {
-    fprintf(stdout, "[StakRuntime] [INFO]: ");
+    fprintf(stderr, "[StakRuntime] [INFO]: ");
     fprintf(CoreLogFile, "[StakRuntime] [TRACE]: ");
     va_list args1;
     va_list args2;
     va_start(args1, fmt);
     va_start(args2, fmt);
-    vfprintf(stdout, fmt, args1);
+    vfprintf(stderr, fmt, args1);
     vfprintf(CoreLogFile, fmt, args2);
     va_end(args1);
     va_end(args2);
-    fprintf(stdout, "\n");
+    fprintf(stderr, "\n");
     fprintf(CoreLogFile, "\n");
 }
 
@@ -114,29 +114,29 @@ LogCoreCritical(const char *fmt, ...)
 void
 LogTrace(const char *fmt, ...)
 {
-    fprintf(stdout, "[StakRuntime] [TRACE]: ");
+    fprintf(stderr, "[App] [TRACE]: ");
     va_list args;
     va_start(args, fmt);
-    vfprintf(stdout, fmt, args);
+    vfprintf(stderr, fmt, args);
     va_end(args);
-    fprintf(stdout, "\n");
+    fprintf(stderr, "\n");
 }
 
 void
 LogInfo(const char *fmt, ...)
 {
-    fprintf(stdout, "[StakRuntime] [INFO]: ");
+    fprintf(stderr, "[App] [INFO]: ");
     va_list args;
     va_start(args, fmt);
-    vfprintf(stdout, fmt, args);
+    vfprintf(stderr, fmt, args);
     va_end(args);
-    fprintf(stdout, "\n");
+    fprintf(stderr, "\n");
 }
 
 void
 LogWarn(const char *fmt, ...)
 {
-    fprintf(stderr, "[StakRuntime] [WARN]: ");
+    fprintf(stderr, "[App] [WARN]: ");
     va_list args;
     va_start(args, fmt);
     vfprintf(stderr, fmt, args);
@@ -147,7 +147,7 @@ LogWarn(const char *fmt, ...)
 void
 LogError(const char *fmt, ...)
 {
-    fprintf(stderr, "[StakRuntime] [ERROR]: ");
+    fprintf(stderr, "[App] [ERROR]: ");
     va_list args;
     va_start(args, fmt);
     vfprintf(stderr, fmt, args);
@@ -158,7 +158,7 @@ LogError(const char *fmt, ...)
 void
 LogCritical(const char *fmt, ...)
 {
-    fprintf(stderr, "[StakRuntime] [CRITICAL]: ");
+    fprintf(stderr, "[App] [CRITICAL]: ");
     va_list args;
     va_start(args, fmt);
     vfprintf(stderr, fmt, args);

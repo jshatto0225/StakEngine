@@ -43,3 +43,4 @@ window_size_data GetWindowSize(const window *Window);
 void SetWindowEventFn(window *Window, EventFn Func);
 void UpdateWindow(window *window);
 void MakeWindowCurrent(const window *Window);
+void SendWindowCloseRequest(const window *Window);

@@ -23,10 +23,7 @@ platform Platform;
 void
 PlatformInit()
 {
-    if (Platform.Initialized)
-    {
-        return;
-    }
+    ASSERT(!Platform.Initialized);
     
     Platform.Instance = GetModuleHandleW(NULL);
     
@@ -52,18 +49,10 @@ PlatformInit()
 void
 PlatformShutdown()
 {
-    if (!Platform.Initialized)
-    {
-        return;
-    }
+    ASSERT(Platform.Initialized);
+
     Platform.Initialized = false;
     UnregisterClassA(WIN32_DEFAULT_WNDCLASS_NAME, Platform.Instance);
-}
-
-bool
-PlatformIsInitialized()
-{
-    return Platform.Initialized;
 }
 
 #endif

@@ -49,3 +49,8 @@ void ApplicationOnEvent(const event *Event);
  * @param OnEvent Layer's event function
  */
 void AddLayerToStack(layer_init Init, layer_shutdown Shutdown, layer_update Update, layer_on_event OnEvent);
+
+/**
+ * @brief Function to tell the application that the main window should close after the current loop
+ */
+void ApplicationRequestShutdown();

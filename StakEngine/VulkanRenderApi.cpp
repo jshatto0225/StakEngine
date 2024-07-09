@@ -862,6 +862,7 @@ RecreateSwapChain()
     while (Size.Width == 0 || Size.Height == 0)
     {
         Size = GetWindowSize(VulkanApi.Window);
+        LogCoreError("Problem");
         UpdateWindow(VulkanApi.Window);
     }
 

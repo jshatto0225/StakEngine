@@ -1,8 +1,8 @@
 #include "Application.h"
 
-#include "Log.h"
 #include "Renderer.h"
 #include "Window.h"
+#include "Asserts.h"
 
 /*********************
  * Private Interface *
@@ -25,11 +25,7 @@ application App;
 void
 AddLayerToStack(layer_init Init, layer_shutdown Shutdown, layer_update Update, layer_on_event OnEvent)
 {
-    if (App.LayerStack.Size == MAX_LAYERS)
-    {
-        LogCoreError("Max number of layers reached");
-        return;
-    }
+    ASSERT(App.LayerStack.Size <= MAX_LAYERS);
 
     App.LayerStack.Layers[App.LayerStack.Size].Init = Init;
     App.LayerStack.Layers[App.LayerStack.Size].Shutdown = Shutdown;
@@ -41,6 +37,8 @@ AddLayerToStack(layer_init Init, layer_shutdown Shutdown, layer_update Update, l
 void
 ApplicationInit(const application_spec *Spec)
 {
+    ASSERT(!App.Running);
+
     window_config Cfg =
     {
         Spec->WindowX,
@@ -55,7 +53,6 @@ ApplicationInit(const application_spec *Spec)
     RendererInit(App.Window);
 
     App.Running = true;
-    LogCoreInfo("Application Initialized");
 
     for (u32 i = 0; i < App.LayerStack.Size; i++)
     {
@@ -72,6 +69,7 @@ ApplicationRun()
         {
             App.LayerStack.Layers[i].Update();
         }
+
         UpdateWindow(App.Window);
 
         DrawFrame();
@@ -89,19 +87,17 @@ ApplicationOnEvent(const event *Event)
         {
             App.LayerStack.Layers[i].OnEvent(Event);
         }
+
         switch (Event->Type)
         {
         case WINDOW_CLOSE:
-            LogCoreTrace("Window Closed");
             App.Running = false;
             break;
 
         case WINDOW_RESIZED:
             RendererOnWindowResize(Event->WinResizeEvent.Width, Event->WinResizeEvent.Height);
-            LogCoreTrace("Viewport: 0, 0, %d, %d",
-                         Event->WinResizeEvent.Width,
-                         Event->WinResizeEvent.Height);
             break;
+
         default:
             break;
         }
@@ -111,7 +107,12 @@ ApplicationOnEvent(const event *Event)
 void
 ApplicationShutdown()
 {
-    LogCoreTrace("Application Shutdown");
+    if (!App.Running)
+    {
+        return;
+    }
+
+    App.Running = false;
 
     for (u32 i = 0; i < App.LayerStack.Size; i++)
     {
@@ -121,4 +122,10 @@ ApplicationShutdown()
     RendererShutdown();
 
     DestroyWindow(&App.Window);
+}
+
+void
+ApplicationRequestShutdown()
+{
+    SendWindowCloseRequest(App.Window);
 }
