@@ -2,15 +2,21 @@
 
 #include <stdio.h>
 
+namespace Log
+{
+
 /**
  * @brief Function to initialize console and file logging
  */
-void LogInit();
+void Init();
 
 /**
  * @brief Function to shutdown console and file logging
  */
-void LogShutdown();
+void Shutdown();
+
+namespace Core
+{
 
 /**
  * @brief Function to log at trace level
@@ -19,7 +25,7 @@ void LogShutdown();
  * @param fmt Format of the message
  * @param ... variadic arguments to fill the Format
  */
-void LogCoreTrace(const char *fmt, ...);
+void Trace(const char *fmt, ...);
 
 /**
  * @brief Function to log at info level
@@ -28,7 +34,7 @@ void LogCoreTrace(const char *fmt, ...);
  * @param fmt Format of the message
  * @param ... variadic arguments to fill the Format
  */
-void LogCoreInfo(const char *fmt, ...);
+void Info(const char *fmt, ...);
 
 /**
  * @brief Function to log at warn level
@@ -37,7 +43,7 @@ void LogCoreInfo(const char *fmt, ...);
  * @param fmt Format of the message
  * @param ... variadic arguments to fill the Format
  */
-void LogCoreWarn(const char *fmt, ...);
+void Warn(const char *fmt, ...);
 
 /**
  * @brief Function to log at error level
@@ -46,7 +52,7 @@ void LogCoreWarn(const char *fmt, ...);
  * @param fmt Format of the message
  * @param ... variadic arguments to fill the Format
  */
-void LogCoreError(const char *fmt, ...);
+void Error(const char *fmt, ...);
 
 /**
  * @brief Function to log at critical level
@@ -55,7 +61,9 @@ void LogCoreError(const char *fmt, ...);
  * @param fmt Format of the message
  * @param ... variadic arguments to fill the Format
  */
-void LogCoreCritical(const char *fmt, ...);
+void Critical(const char *fmt, ...);
+
+} // namespace Core
 
 /**
  * @brief Function to log at trace level
@@ -64,7 +72,7 @@ void LogCoreCritical(const char *fmt, ...);
  * @param fmt Format of the message
  * @param ... variadic arguments to fill the Format
  */
-void LogTrace(const char *fmt, ...);
+void Trace(const char *fmt, ...);
 
 /**
  * @brief Function to log at info level
@@ -73,7 +81,7 @@ void LogTrace(const char *fmt, ...);
  * @param fmt Format of the message
  * @param ... variadic arguments to fill the Format
  */
-void LogInfo(const char *fmt, ...);
+void Info(const char *fmt, ...);
 
 /**
  * @brief Function to log at warn level
@@ -82,7 +90,7 @@ void LogInfo(const char *fmt, ...);
  * @param fmt Format of the message
  * @param ... variadic arguments to fill the Format
  */
-void LogWarn(const char *fmt, ...);
+void Warn(const char *fmt, ...);
 
 /**
  * @brief Function to log at error level
@@ -91,7 +99,7 @@ void LogWarn(const char *fmt, ...);
  * @param fmt Format of the message
  * @param ... variadic arguments to fill the Format
  */
-void LogError(const char *fmt, ...);
+void Error(const char *fmt, ...);
 
 /**
  * @brief Function to log at critical level
@@ -100,5 +108,6 @@ void LogError(const char *fmt, ...);
  * @param fmt Format of the message
  * @param ... variadic arguments to fill the Format
  */
-void LogCritical(const char *fmt, ...);
+void Critical(const char *fmt, ...);
 
+} // namespace Log

@@ -1,19 +1,8 @@
--- Create a GUI Renderer in the editor
+-- Finish Vulkan implementation
+  -- 2D and 3D rendering
+  -- GUI rendering
 
--- Create a GUI Renderer in the runtime
-
--- Create a 2D Renderer in the runtime
-  -- text
-    -- Might need to use stb_truetype because fonts are hard
-  -- lines
-    -- Mostly for debugging
-
--- switch to vulkan
-
--- Linux support
-
--- Creat a 3D Renderer in the runtime
-  -- Both will also be used in the editor for a preview window
+-- Remove std:: from vulkan files
 
 -- Camera System
   -- Perspective proj
@@ -24,17 +13,9 @@
 
 -- Make test app without editor
 
--- Rework Input
-  -- Add Gamepad Support
+-- Linux support
 
--- Load Images
-  -- Support More Image Types
+-- Add Gamepad Support
 
--- Post processing
+-- Support More Image Types
 
--- I should switch back to cmake so i can ditch the microsoft compiler and visual studio
-
--- Change rendering interface to work better with vulkan and dx12
-  -- OpenGL renderer will need to change a lot
-
--- Remove std:: from vulkan files

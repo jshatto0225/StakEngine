@@ -3,6 +3,9 @@
 #include "Types.h"
 #include "StakMath.h"
 
+namespace Input
+{
+
 enum key
 {
     K_BUTTON_1 = 0,
@@ -139,6 +142,7 @@ enum key
     K_LAST = K_MENU
 };
 
-bool GetKeyDown(key Key);
-static vec2 GetMousePos();
+bool KeyDown(key Key);
+static vec2 MousePos();
 
+} // namespace Input

@@ -15,7 +15,7 @@ const UINT TIMER_INTERVAL = 10;
 UINT_PTR TimerId;
 
 LRESULT CALLBACK
-Win32MessageCallback(HWND Window, UINT Msg, WPARAM WParam, LPARAM LParam)
+WindowMessageCallback(HWND Window, UINT Msg, WPARAM WParam, LPARAM LParam)
 {
     window *Win = (window *)GetWindowLongPtrA(Window, GWLP_USERDATA);
     if (Win)
@@ -117,7 +117,7 @@ CreateWindow(const window_config *Config)
 {
     if (WindowCount == 0)
     {
-        PlatformInit();
+        Platform::Init();
     }
     WindowCount++;
 
@@ -130,9 +130,8 @@ CreateWindow(const window_config *Config)
     Window->Height = Config->Height;
     Window->Title = Config->Title;
 
-    Window->Handle = CreateWindowExA(0, WIN32_DEFAULT_WNDCLASS_NAME, Window->Title, WS_OVERLAPPEDWINDOW | WS_VISIBLE, Window->X, Window->Y, Window->Width, Window->Height, NULL, NULL, Platform.Instance, NULL);
+    Window->Handle = CreateWindowExA(0, Platform::DEFAULT_WNDCLASS_NAME, Window->Title, WS_OVERLAPPEDWINDOW | WS_VISIBLE, Window->X, Window->Y, Window->Width, Window->Height, NULL, NULL, Platform::Win32.Instance, NULL);
     SetWindowLongPtrA(Window->Handle, GWLP_USERDATA, (LONG_PTR)Window);
-    //Window->Context = CreateContext(Window);
 
     return Window;
 }
@@ -150,13 +149,11 @@ DestroyWindow(window **Window)
 
     if (*Window)
     {
-        //DestroyContext(&(*Window)->Context);
-
         Win32DestroyWindow((*Window)->Handle);
         WindowCount--;
         if (WindowCount == 0)
         {
-            PlatformShutdown();
+            Platform::Shutdown();
         }
 
         free(*Window);
@@ -202,14 +199,6 @@ GetWindowSize(const window *Window)
 }
 
 void
-MakeWindowCurrent(const window *Window)
-{
-    ASSERT(Window);
-
-    //MakeContextCurrent(Window->Context);
-}
-
-void
 UpdateWindow(window *Window)
 {
     ASSERT(Window);
@@ -221,14 +210,6 @@ UpdateWindow(window *Window)
         TranslateMessage(&Msg);
         DispatchMessageA(&Msg);
     }
-}
-
-void
-SwapWindowBuffers(window *Window)
-{
-    ASSERT(Window);
-
-    //SwapContextBuffers(Window->Context);
 }
 
 void

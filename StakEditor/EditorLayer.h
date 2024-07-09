@@ -2,23 +2,10 @@
 
 #include "../StakEngine/StakEngine.h"
 
-struct editor_data
+namespace EditorLayer
 {
-    scene_view_camera Cam;
-    i32 WindowWidth;
-    i32 WindowHeight;
-    
-    f32 QuadRotation;
-    vec2 Vec1;
-    vec2 Vec2;
-    vec2 Vec3;
-    texture2d *Tex1;
-    texture2d *Tex2;
-    texture2d *Tex3;
-    vec4 Color;
-};
-
-void EditorLayerInit();
-void EditorLayerShutdown();
-void EditorLayerUpdate();
-void EditorLayerOnEvent(const event *);
+void Init();
+void Shutdown();
+void Update();
+void OnEvent(const event *Event);
+}

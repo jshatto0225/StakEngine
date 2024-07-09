@@ -4,6 +4,8 @@
 
 #include "Input.h"
 
+namespace Input
+{
 
 /*********************
  * Private Interface *
@@ -138,17 +140,19 @@ const i32 KeyMap[K_LAST + 1] =
  ********************/
 
 bool
-GetKeyDown(key Key)
+KeyDown(key Key)
 {
     return GetAsyncKeyState(KeyMap[Key]);
 }
 
 vec2
-GetMousePos()
+MousePos()
 {
     POINT Pos = {};
     GetCursorPos(&Pos);
     return vec2{ (f32)Pos.x, (f32)Pos.y };
 }
 
-#endif
+} // namespace Input
+
+#endif // #ifdef SK_WIN32

@@ -4,6 +4,9 @@
 
 #include "Platform.h"
 
+namespace Log
+{
+
 /*********************
  * Private Interface *
  *********************/
@@ -15,19 +18,22 @@ static FILE *CoreLogFile;
  ********************/
 
 void
-LogInit()
+Init()
 {
     CoreLogFile = fopen(ROOT_DIR "StakRuntime.log", "w");
 }
 
 void
-LogShutdown()
+Shutdown()
 {
     fclose(CoreLogFile);
 }
 
+namespace Core
+{
+
 void
-LogCoreTrace(const char *fmt, ...)
+Trace(const char *fmt, ...)
 {
     fprintf(stderr, "[StakRuntime] [TRACE]: ");
     fprintf(CoreLogFile, "[StakRuntime] [TRACE]: ");
@@ -44,7 +50,7 @@ LogCoreTrace(const char *fmt, ...)
 }
 
 void
-LogCoreInfo(const char *fmt, ...)
+Info(const char *fmt, ...)
 {
     fprintf(stderr, "[StakRuntime] [INFO]: ");
     fprintf(CoreLogFile, "[StakRuntime] [TRACE]: ");
@@ -61,7 +67,7 @@ LogCoreInfo(const char *fmt, ...)
 }
 
 void
-LogCoreWarn(const char *fmt, ...)
+Warn(const char *fmt, ...)
 {
     fprintf(stderr, "[StakRuntime] [WARN]: ");
     fprintf(CoreLogFile, "[StakRuntime] [WARN]: ");
@@ -78,7 +84,7 @@ LogCoreWarn(const char *fmt, ...)
 }
 
 void
-LogCoreError(const char *fmt, ...)
+Error(const char *fmt, ...)
 {
     fprintf(stderr, "[StakRuntime] [ERROR]: ");
     fprintf(CoreLogFile, "[StakRuntime] [ERROR]: ");
@@ -95,7 +101,7 @@ LogCoreError(const char *fmt, ...)
 }
 
 void
-LogCoreCritical(const char *fmt, ...)
+Critical(const char *fmt, ...)
 {
     fprintf(stderr, "[StakRuntime] [CRITICAL]: ");
     fprintf(CoreLogFile, "[StakRuntime] [CRITICAL]: ");
@@ -111,8 +117,10 @@ LogCoreCritical(const char *fmt, ...)
     fprintf(CoreLogFile, "\n");
 }
 
+} // namespace Core
+
 void
-LogTrace(const char *fmt, ...)
+Trace(const char *fmt, ...)
 {
     fprintf(stderr, "[App] [TRACE]: ");
     va_list args;
@@ -123,7 +131,7 @@ LogTrace(const char *fmt, ...)
 }
 
 void
-LogInfo(const char *fmt, ...)
+Info(const char *fmt, ...)
 {
     fprintf(stderr, "[App] [INFO]: ");
     va_list args;
@@ -134,7 +142,7 @@ LogInfo(const char *fmt, ...)
 }
 
 void
-LogWarn(const char *fmt, ...)
+Warn(const char *fmt, ...)
 {
     fprintf(stderr, "[App] [WARN]: ");
     va_list args;
@@ -145,7 +153,7 @@ LogWarn(const char *fmt, ...)
 }
 
 void
-LogError(const char *fmt, ...)
+Error(const char *fmt, ...)
 {
     fprintf(stderr, "[App] [ERROR]: ");
     va_list args;
@@ -156,7 +164,7 @@ LogError(const char *fmt, ...)
 }
 
 void
-LogCritical(const char *fmt, ...)
+Critical(const char *fmt, ...)
 {
     fprintf(stderr, "[App] [CRITICAL]: ");
     va_list args;
@@ -165,3 +173,5 @@ LogCritical(const char *fmt, ...)
     va_end(args);
     fprintf(stderr, "\n");
 }
+
+} // namespace Log

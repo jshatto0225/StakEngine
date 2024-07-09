@@ -32,7 +32,7 @@ RecalculateCameraProjection(scene_view_camera *Camera)
         break;
     }
     case PROJ_TYPE_PERSPECTIVE:
-        LogCoreError("Perspective Projection Not Supported");
+        Log::Core::Error("Perspective Projection Not Supported");
         break;
     }
 }

@@ -2,8 +2,6 @@
 
 #include "Platform.h"
 
-#ifdef SK_VULKAN
-
 #ifdef SK_WINDOWS
 #define VK_USE_PLATFORM_WIN32_KHR
 #include "Win32Platform.h"
@@ -36,6 +34,4 @@ const i32 MAX_FRAMES_IN_FLIGHT = 2;
 const bool EnableValidationLayers = true;
 #else
 const bool EnableValidationLayers = false;
-#endif
-
 #endif

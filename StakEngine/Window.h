@@ -26,12 +26,6 @@ struct window_pos_data
 };
 
 struct window;
-struct context;
-
-context *CreateContext(const window *Window);
-void DestroyContext(context **Context);
-void MakeContextCurrent(const context *Context);
-void SwapContextBuffers(const context *Context);
 
 window *CreateWindow(const window_config *Config);
 void DestroyWindow(window **Window);
@@ -42,5 +36,4 @@ window_pos_data GetWindowPos(const window *Window);
 window_size_data GetWindowSize(const window *Window);
 void SetWindowEventFn(window *Window, EventFn Func);
 void UpdateWindow(window *window);
-void MakeWindowCurrent(const window *Window);
 void SendWindowCloseRequest(const window *Window);

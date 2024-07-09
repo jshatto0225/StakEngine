@@ -3,11 +3,14 @@
 #include "ApplicationLayer.h"
 #include "Event.h"
 
+namespace Application
+{
+
 /**
  * @brief Struct to tell the app how to initialize
  * 
  */
-struct application_spec
+struct spec
 {
     const char *WindowTitle; /**< Title of app's main window */
     i32 WindowX; /**< Initial x position of main window */
@@ -21,24 +24,24 @@ struct application_spec
  * 
  * @param Spec Specification to initialize the application with
  */
-void ApplicationInit(const application_spec *Spec);
+void Init(const spec *Spec);
 
 /**
  * @brief Function to shut the app down 
  */
-void ApplicationShutdown();
+void Shutdown();
 
 /**
  * @brief Function containing main app loop
  */
-void ApplicationRun();
+void Run();
 
 /**
  * @brief Function to notify the app of an event
  * 
  * @param Event Event to sent to the app
  */
-void ApplicationOnEvent(const event *Event);
+void OnEvent(const event *Event);
 
 /**
  * @brief Function to add a layer to the app
@@ -53,4 +56,6 @@ void AddLayerToStack(layer_init Init, layer_shutdown Shutdown, layer_update Upda
 /**
  * @brief Function to tell the application that the main window should close after the current loop
  */
-void ApplicationRequestShutdown();
+void RequestShutdown();
+
+} // namespace Application

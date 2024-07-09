@@ -1,20 +1,12 @@
 #pragma once
 
-#include "Types.h"
-#include "StakMath.h"
-#include "Font.h"
-#include "Camera.h"
 #include "Window.h"
-#include "Shader.h"
-#include "VertexArray.h"
 
-void RendererInit(window *Window);
-void RendererShutdown();
-void RendererOnWindowResize(i32 Width, i32 Height);
-void RendererBeginScene();
-void RendererEndScene();
-void RendererSubmit(shader *Shader, vertex_array *VertexArray);
-
-// From Vulkan Tutorial
+namespace Renderer
+{
+void Init(window *Window);
+void Shutdown();
+void SetViewport(i32 X, i32 Y, i32 Width, i32 Height);
 void DrawFrame();
 void WaitForDevice();
+}

@@ -10,49 +10,50 @@
 #include "File.h"
 #include "Win32Platform.h"
 
+namespace Platform 
+{
+
 /*********************
  * Private Interface *
  *********************/
 
-platform Platform;
+win32 Win32;
 
 /********************
  * Public Interface *
  ********************/
 
 void
-PlatformInit()
+Init()
 {
-    ASSERT(!Platform.Initialized);
+    ASSERT(!Win32.Initialized);
     
-    Platform.Instance = GetModuleHandleW(NULL);
+    Win32.Instance = GetModuleHandleW(NULL);
     
     WNDCLASSEXA WindowClass = {};
     WindowClass.cbSize = sizeof(WNDCLASSEXA);
-    WindowClass.lpszClassName = WIN32_DEFAULT_WNDCLASS_NAME;
-    WindowClass.hInstance = Platform.Instance;
+    WindowClass.lpszClassName = DEFAULT_WNDCLASS_NAME;
+    WindowClass.hInstance = Win32.Instance;
     WindowClass.hIcon = LoadIconW(NULL, (LPCWSTR)IDI_WINLOGO);
     WindowClass.hCursor = LoadCursorW(NULL, (LPCWSTR)IDC_ARROW);
-    WindowClass.lpfnWndProc = Win32MessageCallback;
+    WindowClass.lpfnWndProc = WindowMessageCallback;
     WindowClass.cbClsExtra = sizeof(window *);
-    Platform.DefaultWindowClass = RegisterClassExA(&WindowClass);
+    Win32.DefaultWindowClass = RegisterClassExA(&WindowClass);
     
-    Platform.DummyWindow = CreateWindowExA(0, WIN32_DEFAULT_WNDCLASS_NAME, "Dummy Window", 0, 0, 0, 0, 0, NULL, NULL, Platform.Instance, NULL);
-    
-    //PlatformInitExtensions();
-
     SetProcessDpiAwarenessContext(DPI_AWARENESS_CONTEXT_PER_MONITOR_AWARE_V2);
     
-    Platform.Initialized = true;
+    Win32.Initialized = true;
 }
 
 void
-PlatformShutdown()
+Shutdown()
 {
-    ASSERT(Platform.Initialized);
+    ASSERT(Win32.Initialized);
 
-    Platform.Initialized = false;
-    UnregisterClassA(WIN32_DEFAULT_WNDCLASS_NAME, Platform.Instance);
+    Win32.Initialized = false;
+    UnregisterClassA(DEFAULT_WNDCLASS_NAME, Win32.Instance);
 }
 
-#endif
+} // namespace Win32
+
+#endif // #ifdef SK_WIN32

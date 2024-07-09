@@ -3,30 +3,9 @@
 // Set Release Mode
 #define SK_DEBUG
 
-// Set Renderer API
-//#define SK_OPENGL
-
-#define SK_VULKAN
-
 #if defined(_WIN32)
     #define SK_WINDOWS
     #define _CRT_SECURE_NO_WARNINGS
-    #ifdef SK_OPENGL
-        #define SK_WGL
-    #elif defined(SK_VULKAN)
-        // Vulkan Defines
-    #else
-        #error Renderer not supported
-    #endif
-#elif defined(__linux__)
-    #define SK_LINUX
-
-    // TODO:
-    #define SK_X11
-
-    #if defined(SK_OPENGL) and defined(SK_X11)
-        #define SK_GLX
-    #endif
 #else
     #error Platform not supported
 #endif
@@ -39,11 +18,8 @@
 
 typedef void (*proc)();
 
-void PlatformInit();
-void PlatformShutdown();
-void PlatformInitExtensions();
-void *PlatformGetProcAddress(const char *Name);
-
-void LoadRenderApiLibrary();
-
-void *GetRendererApiProc(const char *Name);
+namespace Platform
+{
+void Init();
+void Shutdown();
+} // namespace Platform

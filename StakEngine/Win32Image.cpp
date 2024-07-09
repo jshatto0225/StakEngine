@@ -43,7 +43,7 @@ CreateImage(const char *Path)
         DestroyFile(&File);
         return Image;
     }
-    LogCoreError("Unsupported Image Format");
+    Log::Core::Error("Unsupported Image Format");
     return NULL;
 }
 
@@ -88,7 +88,7 @@ LoadImageAsBMP(image *Image, u8 *FileData, u64 FileSize)
         break;
     default:
         // TODO: IDK how to handle this yet
-        LogCoreError("Invalid BPP: %d", BPP);
+        Log::Core::Error("Invalid BPP: %d", BPP);
         Image->Data.Channels = 0;
         break;
     }

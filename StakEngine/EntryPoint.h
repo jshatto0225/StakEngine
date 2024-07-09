@@ -10,7 +10,7 @@
  * 
  * @return application_spec Specification used to start the app
  */
-extern application_spec GetAppSpec();
+extern Application::spec GetAppSpec();
 
 /**
  * @brief Applications main function
@@ -20,14 +20,14 @@ extern application_spec GetAppSpec();
 inline i32
 StakMain()
 {
-    LogInit();
+    Log::Init();
 
-    application_spec Spec = GetAppSpec();
-    ApplicationInit(&Spec);
-    ApplicationRun();
-    ApplicationShutdown();
+    Application::spec Spec = GetAppSpec();
+    Application::Init(&Spec);
+    Application::Run();
+    Application::Shutdown();
 
-    LogShutdown();
+    Log::Shutdown();
 
     return 0;
 }

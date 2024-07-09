@@ -4,19 +4,22 @@
 #include "Window.h"
 #include "Asserts.h"
 
+namespace Application
+{
+
 /*********************
  * Private Interface *
  *********************/
 
 struct application
 {
-    application_spec Spec;
+    spec Spec;
     window *Window;
     bool Running;
     layer_stack LayerStack;
 };
 
-application App;
+static application App;
 
 /********************
  * Public Interface *
@@ -35,7 +38,7 @@ AddLayerToStack(layer_init Init, layer_shutdown Shutdown, layer_update Update, l
 }
 
 void
-ApplicationInit(const application_spec *Spec)
+Init(const spec *Spec)
 {
     ASSERT(!App.Running);
 
@@ -48,9 +51,9 @@ ApplicationInit(const application_spec *Spec)
         Spec->WindowTitle
     };
     App.Window = CreateWindow(&Cfg);
-    SetWindowEventFn(App.Window, ApplicationOnEvent);
+    SetWindowEventFn(App.Window, OnEvent);
 
-    RendererInit(App.Window);
+    Renderer::Init(App.Window);
 
     App.Running = true;
 
@@ -61,7 +64,7 @@ ApplicationInit(const application_spec *Spec)
 }
 
 void
-ApplicationRun()
+Run()
 {
     while (App.Running)
     {
@@ -72,14 +75,14 @@ ApplicationRun()
 
         UpdateWindow(App.Window);
 
-        DrawFrame();
+        Renderer::DrawFrame();
     }
 
-    WaitForDevice();
+    Renderer::WaitForDevice();
 }
 
 void
-ApplicationOnEvent(const event *Event)
+OnEvent(const event *Event)
 {
     if (App.Running)
     {
@@ -95,7 +98,7 @@ ApplicationOnEvent(const event *Event)
             break;
 
         case WINDOW_RESIZED:
-            RendererOnWindowResize(Event->WinResizeEvent.Width, Event->WinResizeEvent.Height);
+            Renderer::SetViewport(0, 0, Event->WinResizeEvent.Width, Event->WinResizeEvent.Height);
             break;
 
         default:
@@ -105,7 +108,7 @@ ApplicationOnEvent(const event *Event)
 }
 
 void
-ApplicationShutdown()
+Shutdown()
 {
     if (!App.Running)
     {
@@ -119,13 +122,15 @@ ApplicationShutdown()
         App.LayerStack.Layers[i].Shutdown();
     }
 
-    RendererShutdown();
+    Renderer::Shutdown();
 
     DestroyWindow(&App.Window);
 }
 
 void
-ApplicationRequestShutdown()
+RequestShutdown()
 {
     SendWindowCloseRequest(App.Window);
 }
+
+} // namespace Application

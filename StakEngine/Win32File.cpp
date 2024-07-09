@@ -44,7 +44,7 @@ CreateFile(const char *Path)
     // NOTE: Can fail if file is locked by another program
     if (!ReadFileEx(FileHandle, File->Data, (DWORD)FileSize.QuadPart, &IdkWhatThisDoes, LPOverlappedCompletionRoutine))
     {
-        LogCoreError("Could not read file");
+        Log::Core::Error("Could not read file");
         VirtualFree(File->Data, File->Size, MEM_RESERVE);
         CloseHandle(FileHandle);
         File->Data = NULL;
