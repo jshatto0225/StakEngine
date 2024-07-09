@@ -19,3 +19,5 @@
 
 -- Support More Image Types
 
+-- Add colors to terminal log messages
+-- Add timestamp to file log messages
