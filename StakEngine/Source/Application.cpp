@@ -41,12 +41,14 @@ void Application::OnEvent(Event &event) {
     }
 
     switch (event.GetType()) {
-    case EventType::WINDOW_CLOSE: {
+    case EventType::WINDOW_CLOSE:
+    {
       m_Running = false;
       break;
     }
 
-    case EventType::WINDOW_RESIZED: {
+    case EventType::WINDOW_RESIZED:
+    {
       WindowResizeEvent *wre = (WindowResizeEvent *)&event;
       //m_Renderer->SetViewport(0, 0, wre->Width, wre->Height);
       break;

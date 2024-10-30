@@ -7,10 +7,14 @@ project "StakEditor"
 	targetdir ("%{wks.location}/bin/" .. outputdir .. "/%{prj.name}")
 	objdir ("%{wks.location}/bin-int/" .. outputdir .. "/%{prj.name}")
 
-	files
-	{
+	files {
 		"Source/**.h",
 		"Source/**.cpp",
+	}
+
+	includedirs {
+		"../StakEngine",
+		"../StakEngine/External/spdlog/include"
 	}
 
   links {

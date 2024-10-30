@@ -7,14 +7,12 @@
 extern Stak::Application *CreateApplication();
 
 inline i32 StakMain() {
-  //Log::Init();
+  Stak::Log::Init();
 
   Stak::Application *app = CreateApplication();
   app->Run();
 
   delete app;
-
-  //Log::Shutdown();
 
   return 0;
 }

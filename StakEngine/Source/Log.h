@@ -1,35 +1,33 @@
 #pragma once
 
-#include <stdio.h>
+#include <spdlog/spdlog.h>
 
-namespace Log {
+#include "Types.h"
 
-void Init();
+namespace Stak {
 
-void Shutdown();
+class Log {
+public:
+  static void Init();
 
-namespace Core {
+  inline static Ref<spdlog::logger> &GetCoreLogger() { return s_CoreLogger; }
+  inline static Ref<spdlog::logger> &GetClientLogger() { return s_ClientLogger;  }
 
-void Trace(const char *fmt, ...);
+private:
+  static Ref<spdlog::logger> s_CoreLogger;
+  static Ref<spdlog::logger> s_ClientLogger;
+};
 
-void Info(const char *fmt, ...);
+} // namespace Stak
 
-void Warn(const char *fmt, ...);
+#define SK_LOG_TRACE(...)     ::Stak::Log::GetCoreLogger()->trace(__VA_ARGS__)
+#define SK_CORE_INFO(...)     ::Stak::Log::GetCoreLogger()->info(__VA_ARGS__)
+#define SK_LOG_WARN(...)      ::Stak::Log::GetCoreLogger()->warn(__VA_ARGS__)
+#define SK_LOG_ERROR(...)     ::Stak::Log::GetCoreLogger()->error(__VA_ARGS__)
+#define SK_LOG_CRITICAL(...)  ::Stak::Log::GetCoreLogger()->critical(__VA_ARGS__)
 
-void Error(const char *fmt, ...);
-
-void Critical(const char *fmt, ...);
-
-} // namespace Core
-
-void Trace(const char *fmt, ...);
-
-void Info(const char *fmt, ...);
-
-void Warn(const char *fmt, ...);
-
-void Error(const char *fmt, ...);
-
-void Critical(const char *fmt, ...);
-
-} // namespace Log
+#define LOG_TRACE(...)    ::Stak::Log::GetClientLogger()->trace(__VA_ARGS__)
+#define LOG_INFO(...)     ::Stak::Log::GetClientLogger()->info(__VA_ARGS__)
+#define LOG_WARN(...)     ::Stak::Log::GetClientLogger()->warn(__VA_ARGS__)
+#define LOG_ERROR(...)    ::Stak::Log::GetClientLogger()->error(__VA_ARGS__)
+#define LOG_CRITICAL(...) ::Stak::Log::GetClientLogger()->critical(__VA_ARGS__)

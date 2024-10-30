@@ -1,6 +1,6 @@
 #pragma once
 
-#include "../StakEngine/StakEngine.h"
+#include <StakEngine.h>
 
 #include "Editor.h"
 

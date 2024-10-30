@@ -1,4 +1,4 @@
-#include "../StakEngine/StakEngine.h"
+#include <StakEngine.h>
 
 class Editor : public Stak::Application {
 public:

@@ -7,10 +7,15 @@ project "StakEngine"
 	targetdir ("%{wks.location}/bin/" .. outputdir .. "/%{prj.name}")
 	objdir ("%{wks.location}/bin-int/" .. outputdir .. "/%{prj.name}")
 
-	files
-	{
+	files {
 		"Source/**.h",
 		"Source/**.cpp",
+		"StakEngine.h"
+	}
+
+	includedirs {
+		"Source",
+		"External/spdlog/include"
 	}
 
 	filter "system:windows"

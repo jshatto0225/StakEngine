@@ -1,9 +1,10 @@
-#include "../StakEngine/EntryPoint.h"
+#include "../../StakEngine/Source/EntryPoint.h"
 
 #include "EditorLayer.h"
 
 Editor::Editor(Stak::ApplicationSpec &spec) : Stak::Application(spec) {
   AddLayer(new EditorLayer(this));
+  LOG_TRACE("Hello from editor");
 }
 
 Stak::Application *CreateApplication() {
