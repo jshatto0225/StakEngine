@@ -9,8 +9,8 @@ project "StakEditor"
 
 	files
 	{
-		"**.h",
-		"**.cpp",
+		"Source/**.h",
+		"Source/**.cpp",
 	}
 
   links {

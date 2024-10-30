@@ -1,0 +1,3 @@
+[submodule "StakEngine/External/spdlog"]
+	path = StakEngine/External/spdlog
+	url = https://github.com/gabime/spdlog

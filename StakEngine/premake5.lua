@@ -9,8 +9,8 @@ project "StakEngine"
 
 	files
 	{
-		"**.h",
-		"**.cpp",
+		"Source/**.h",
+		"Source/**.cpp",
 	}
 
 	filter "system:windows"
