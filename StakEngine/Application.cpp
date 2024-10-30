@@ -2,135 +2,62 @@
 
 #include "Renderer.h"
 #include "Window.h"
-#include "Asserts.h"
 
-namespace Application
-{
+namespace Stak {
 
-/*********************
- * Private Interface *
- *********************/
-
-struct application
-{
-    spec Spec;
-    window *Window;
-    bool Running;
-    layer_stack LayerStack;
-};
-
-static application App;
-
-/********************
- * Public Interface *
- ********************/
-
-void
-AddLayerToStack(layer_init Init, layer_shutdown Shutdown, layer_update Update, layer_on_event OnEvent)
-{
-    ASSERT(App.LayerStack.Size <= MAX_LAYERS);
-
-    App.LayerStack.Layers[App.LayerStack.Size].Init = Init;
-    App.LayerStack.Layers[App.LayerStack.Size].Shutdown = Shutdown;
-    App.LayerStack.Layers[App.LayerStack.Size].Update = Update;
-    App.LayerStack.Layers[App.LayerStack.Size].OnEvent = OnEvent;
-    App.LayerStack.Size++;
+void Application::AddLayer(ApplicationLayer *layer) {
+  m_LayerStack.Push(layer);
 }
 
-void
-Init(const spec *Spec)
-{
-    ASSERT(!App.Running);
+Application::Application(const ApplicationSpec &spec) {
+  WindowConfig cfg = {spec.windowX, spec.windowY, spec.windowWidth,
+                      spec.windowHeight, spec.windowTitle};
+  //m_Window = Window::Create(cfg);
+  //m_Window->SetEventFn([this](Event &event) { return this->OnEvent(event); });
 
-    window_config Cfg =
-    {
-        Spec->WindowX,
-        Spec->WindowY,
-        Spec->WindowWidth,
-        Spec->WindowHeight,
-        Spec->WindowTitle
-    };
-    App.Window = CreateWindow(&Cfg);
-    SetWindowEventFn(App.Window, OnEvent);
+  //m_Renderer = Renderer::Create(m_Window);
 
-    Renderer::Init(App.Window);
-
-    App.Running = true;
-
-    for (u32 i = 0; i < App.LayerStack.Size; i++)
-    {
-        App.LayerStack.Layers[i].Init();
-    }
+  m_Running = true;
 }
 
-void
-Run()
-{
-    while (App.Running)
-    {
-        for (u32 i = 0; i < App.LayerStack.Size; i++)
-        {
-            App.LayerStack.Layers[i].Update();
-        }
-
-        UpdateWindow(App.Window);
-
-        Renderer::DrawFrame();
+void Application::Run() {
+  while (m_Running) {
+    for (ApplicationLayer *layer : m_LayerStack) {
+      layer->Update();
     }
 
-    Renderer::WaitForDevice();
+    //m_Window->Update();
+
+    //m_Renderer->DrawFrame();
+  }
+
+  //m_Renderer->WaitForGpu();
 }
 
-void
-OnEvent(const event *Event)
-{
-    if (App.Running)
-    {
-        for (u32 i = 0; i < App.LayerStack.Size; i++)
-        {
-            App.LayerStack.Layers[i].OnEvent(Event);
-        }
-
-        switch (Event->Type)
-        {
-        case WINDOW_CLOSE:
-            App.Running = false;
-            break;
-
-        case WINDOW_RESIZED:
-            Renderer::SetViewport(0, 0, Event->WinResizeEvent.Width, Event->WinResizeEvent.Height);
-            break;
-
-        default:
-            break;
-        }
-    }
-}
-
-void
-Shutdown()
-{
-    if (!App.Running)
-    {
-        return;
+void Application::OnEvent(Event &event) {
+  if (m_Running) {
+    for (ApplicationLayer *layer : m_LayerStack) {
+      layer->OnEvent(event);
     }
 
-    App.Running = false;
-
-    for (u32 i = 0; i < App.LayerStack.Size; i++)
-    {
-        App.LayerStack.Layers[i].Shutdown();
+    switch (event.GetType()) {
+    case EventType::WINDOW_CLOSE: {
+      m_Running = false;
+      break;
     }
 
-    Renderer::Shutdown();
+    case EventType::WINDOW_RESIZED: {
+      WindowResizeEvent *wre = (WindowResizeEvent *)&event;
+      //m_Renderer->SetViewport(0, 0, wre->Width, wre->Height);
+      break;
+    }
 
-    DestroyWindow(&App.Window);
+    default:
+      break;
+    }
+  }
 }
 
-void
-RequestShutdown()
-{
-    SendWindowCloseRequest(App.Window);
-}
+void Application::Close() { m_Running = false; }
 
-} // namespace Application
+} // namespace Stak

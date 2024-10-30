@@ -2,10 +2,12 @@
 
 #include "../StakEngine/StakEngine.h"
 
-namespace EditorLayer
-{
-void Init();
-void Shutdown();
-void Update();
-void OnEvent(const event *Event);
-}
+#include "Editor.h"
+
+class EditorLayer : public Stak::ApplicationLayer {
+public:
+  EditorLayer(Editor *editor);
+  void Update();
+private:
+  Editor *m_Editor;
+};

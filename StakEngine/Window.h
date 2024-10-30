@@ -1,39 +1,41 @@
 #pragma once
 
-#include "Types.h"
-#include "StakMath.h"
+#include <functional>
+
 #include "Event.h"
+#include "Types.h"
 
-struct window_config
-{
-    i32 X;
-    i32 Y;
-    i32 Width;
-    i32 Height;
-    const char *Title;
+namespace Stak {
+
+struct WindowConfig {
+  i32 X;
+  i32 Y;
+  i32 Width;
+  i32 Height;
+  const char *Title;
 };
 
-struct window_size_data
-{
-    i32 Width;
-    i32 Height;
+struct WindowSizeData {
+  i32 Width;
+  i32 Height;
 };
 
-struct window_pos_data
-{
-    i32 X;
-    i32 Y;
+struct WindowPosData {
+  i32 X;
+  i32 Y;
 };
 
-struct window;
+class Window {
+  using EventFn = std::function<void(Event &)>;
+public:
+  virtual void Update() = 0;
 
-window *CreateWindow(const window_config *Config);
-void DestroyWindow(window **Window);
-void SwapWindowBuffers(window *Window);
-void SetWindowPos(window *window, i32 X, i32 Y);
-void SetWindowSize(window *Window, i32 Width, i32 Height);
-window_pos_data GetWindowPos(const window *Window);
-window_size_data GetWindowSize(const window *Window);
-void SetWindowEventFn(window *Window, EventFn Func);
-void UpdateWindow(window *window);
-void SendWindowCloseRequest(const window *Window);
+  virtual WindowSizeData GetWindowSize() = 0;
+  virtual WindowPosData GetWindowPos() = 0;
+
+  virtual void SetEventFn(const EventFn &func) = 0;
+
+  static Scope<Window> Create(const WindowConfig &cfg);
+};
+
+} // namespace Stak

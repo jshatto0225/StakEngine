@@ -1,61 +1,38 @@
 #pragma once
 
+#include <vector>
+
 #include "ApplicationLayer.h"
 #include "Event.h"
+#include "Renderer.h"
 
-namespace Application
-{
+namespace Stak {
 
-/**
- * @brief Struct to tell the app how to initialize
- * 
- */
-struct spec
-{
-    const char *WindowTitle; /**< Title of app's main window */
-    i32 WindowX; /**< Initial x position of main window */
-    i32 WindowY; /**< Initial y position of main window */
-    i32 WindowWidth; /**< Initial width of window */
-    i32 WindowHeight; /**< Initial height of window */
+struct ApplicationSpec {
+  const char *windowTitle;
+  i32 windowX;
+  i32 windowY;
+  i32 windowWidth;
+  i32 windowHeight;
 };
 
-/**
- * @brief Function to initialize the application 
- * 
- * @param Spec Specification to initialize the application with
- */
-void Init(const spec *Spec);
+class Application {
+public:
+  Application(const ApplicationSpec &Spec);
 
-/**
- * @brief Function to shut the app down 
- */
-void Shutdown();
+  void Run();
 
-/**
- * @brief Function containing main app loop
- */
-void Run();
+  void OnEvent(Event &event);
 
-/**
- * @brief Function to notify the app of an event
- * 
- * @param Event Event to sent to the app
- */
-void OnEvent(const event *Event);
+  void AddLayer(ApplicationLayer *layer);
 
-/**
- * @brief Function to add a layer to the app
- * 
- * @param Init Layer's init function
- * @param Shutdown Layer's shutdown function
- * @param Update Layer's update function
- * @param OnEvent Layer's event function
- */
-void AddLayerToStack(layer_init Init, layer_shutdown Shutdown, layer_update Update, layer_on_event OnEvent);
+  void Close();
 
-/**
- * @brief Function to tell the application that the main window should close after the current loop
- */
-void RequestShutdown();
+private:
+  Ref<Window> m_Window;
+  LayerStack m_LayerStack;
+  bool m_Running;
+  Scope<Renderer> m_Renderer;
+};
 
-} // namespace Application
+} // namespace Stak

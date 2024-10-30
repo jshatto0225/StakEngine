@@ -2,15 +2,17 @@
 
 #include "EditorLayer.h"
 
-Application::spec GetAppSpec()
-{
-    Application::spec Spec = {};
-    Spec.WindowWidth = 1920;
-    Spec.WindowHeight = 1080;
-    Spec.WindowX = 0;
-    Spec.WindowY = 0;
-    Spec.WindowTitle = "Stak Editor";
+Editor::Editor(Stak::ApplicationSpec &spec) : Stak::Application(spec) {
+  AddLayer(new EditorLayer(this));
+}
 
-    Application::AddLayerToStack(EditorLayer::Init, EditorLayer::Shutdown, EditorLayer::Update, EditorLayer::OnEvent);
-    return Spec;
+Stak::Application *CreateApplication() {
+  Stak::ApplicationSpec spec = {};
+  spec.windowWidth = 1920;
+  spec.windowHeight = 1080;
+  spec.windowX = 0;
+  spec.windowY = 0;
+  spec.windowTitle = "Stak Editor";
+
+  return new Editor(spec);
 }

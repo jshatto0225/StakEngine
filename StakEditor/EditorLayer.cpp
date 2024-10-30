@@ -1,31 +1,10 @@
 #include "EditorLayer.h"
 
-namespace EditorLayer
-{
+EditorLayer::EditorLayer(Editor *editor) : m_Editor(editor) {}
 
-void
-Init()
-{
-}
-
-void
-Shutdown()
-{
-}
-
-void
-Update()
-{
-    if (Input::KeyDown(Input::K_ESCAPE))
-    {
-        Log::Trace("Escape pressed. Quitting.");
-        Application::RequestShutdown();
-    }
-}
-
-void
-OnEvent(const event *Event)
-{
-}
-
+void EditorLayer::Update() {
+  //if (Stak::Input::KeyDown(Stak::Input::Key::ESCAPE)) {
+    //Log::Trace("Escape pressed. Quitting.");
+    //m_Editor->Close();
+  //}
 }

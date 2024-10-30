@@ -1,34 +1,54 @@
 #pragma once
 
+#include <vector>
+
 #include "Event.h"
 
-/**
- * @brief Typedefed functions for convenience
- * 
- */
-typedef void (*layer_init)();
-typedef void (*layer_shutdown)();
-typedef void (*layer_update)();
-typedef void (*layer_on_event)(const event *);
+namespace Stak {
 
-/**
- * @brief Struct with data for an application layer 
- */
-struct application_layer
-{
-    layer_init Init; /**< Layer's init function */
-    layer_shutdown Shutdown; /**< Layer's shutdown function */
-    layer_update Update; /**< Layer's update function */
-    layer_on_event OnEvent; /**< Layer's event function */
+class ApplicationLayer {
+public:
+  virtual ~ApplicationLayer() = default;
+
+  virtual void OnAttach() {};
+  virtual void OnDetach() {};
+  virtual void Update() {};
+  virtual void FixedUpdate(f32 DeltaTime) {};
+  virtual void OnEvent(const Event &event) {};
 };
 
-constexpr u32 MAX_LAYERS = 255; /**< Max number of layers in the stack */
+class LayerStack {
+public:
+  ~LayerStack() {
+    for (ApplicationLayer *layer : m_Layers) {
+      layer->OnDetach();
+      delete layer;
+    }
+  }
 
-/**
- * @brief Struct to store a list of layers
- */
-struct layer_stack
-{
-    u32 Size; /**< Current number of layers */
-    application_layer Layers[MAX_LAYERS]; /**< List of layers */
+  inline void Push(ApplicationLayer *layer) {
+    m_Layers.push_back(layer);
+  }
+
+  inline ApplicationLayer *Pop() {
+    ApplicationLayer *layer = *m_Layers.rbegin();
+    m_Layers.pop_back();
+    return layer;
+  }
+
+  inline void Remove(ApplicationLayer *layer) {
+    std::vector<ApplicationLayer *>::iterator it = std::find(m_Layers.begin(), m_Layers.end(), layer);
+    if (it != m_Layers.end()) {
+      layer->OnDetach();
+      m_Layers.erase(it);
+    }
+  }
+
+  inline std::vector<ApplicationLayer *>::iterator begin() { return m_Layers.begin(); }
+  inline std::vector<ApplicationLayer *>::iterator end() { return m_Layers.end(); }
+
+private:
+  std::vector<ApplicationLayer *> m_Layers;
 };
+
+} // namespace Stak
