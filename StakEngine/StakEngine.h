@@ -1,8 +1,8 @@
 #pragma once
 
-#include "Source/Types.h"
-#include "Source/ApplicationLayer.h"
-#include "Source/Event.h"
-#include "Source/Input.h"
-#include "Source/Application.h"
-#include "Source/Log.h"
+#include "Source/Core/Types.h"
+#include "Source/Core/ApplicationLayer.h"
+#include "Source/Core/Event.h"
+#include "Source/Core/Input.h"
+#include "Source/Core/Application.h"
+#include "Source/Core/Log.h"

@@ -21,7 +21,7 @@ private:
 } // namespace Stak
 
 #define SK_LOG_TRACE(...)     ::Stak::Log::GetCoreLogger()->trace(__VA_ARGS__)
-#define SK_CORE_INFO(...)     ::Stak::Log::GetCoreLogger()->info(__VA_ARGS__)
+#define SK_LOG_INFO(...)     ::Stak::Log::GetCoreLogger()->info(__VA_ARGS__)
 #define SK_LOG_WARN(...)      ::Stak::Log::GetCoreLogger()->warn(__VA_ARGS__)
 #define SK_LOG_ERROR(...)     ::Stak::Log::GetCoreLogger()->error(__VA_ARGS__)
 #define SK_LOG_CRITICAL(...)  ::Stak::Log::GetCoreLogger()->critical(__VA_ARGS__)

@@ -3,8 +3,9 @@
 EditorLayer::EditorLayer(Editor *editor) : m_Editor(editor) {}
 
 void EditorLayer::Update() {
-  //if (Stak::Input::KeyDown(Stak::Input::Key::ESCAPE)) {
-    //Log::Trace("Escape pressed. Quitting.");
-    //m_Editor->Close();
-  //}
+  auto [x, y] = m_Editor->Input()->GetMousePos();
+  if (m_Editor->Input()->KeyDown(Stak::KeyCode::ESCAPE)) {
+    LOG_TRACE("Escape pressed. Quitting.");
+    m_Editor->Close();
+  }
 }

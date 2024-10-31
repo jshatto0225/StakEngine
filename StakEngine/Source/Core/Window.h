@@ -8,8 +8,6 @@
 namespace Stak {
 
 struct WindowConfig {
-  i32 X;
-  i32 Y;
   i32 Width;
   i32 Height;
   const char *Title;
@@ -26,14 +24,20 @@ struct WindowPosData {
 };
 
 class Window {
-  using EventFn = std::function<void(Event &)>;
 public:
+  using EventFn = std::function<void(Event &)>;
+
+  Window() = default;
+  virtual ~Window() {}
+
   virtual void Update() = 0;
 
   virtual WindowSizeData GetWindowSize() = 0;
   virtual WindowPosData GetWindowPos() = 0;
 
   virtual void SetEventFn(const EventFn &func) = 0;
+
+  virtual void *GetNativeHandle() = 0;
 
   static Scope<Window> Create(const WindowConfig &cfg);
 };

@@ -1,7 +1,9 @@
 #include "Application.h"
 
-#include "Renderer.h"
+#include "../Renderer/Renderer.h"
 #include "Window.h"
+#include "Log.h"
+#include "Input.h"
 
 namespace Stak {
 
@@ -10,10 +12,19 @@ void Application::AddLayer(ApplicationLayer *layer) {
 }
 
 Application::Application(const ApplicationSpec &spec) {
-  WindowConfig cfg = {spec.windowX, spec.windowY, spec.windowWidth,
-                      spec.windowHeight, spec.windowTitle};
-  //m_Window = Window::Create(cfg);
-  //m_Window->SetEventFn([this](Event &event) { return this->OnEvent(event); });
+  WindowConfig cfg = {
+    spec.windowWidth,
+    spec.windowHeight, 
+    spec.windowTitle
+  
+  };
+  m_Window = Window::Create(cfg);
+  m_Window->SetEventFn([this](Event &event) { return this->OnEvent(event); });
+  if (m_Window) {
+    SK_LOG_INFO("Window Created");
+  }
+
+  m_InputManager = InputManager::Create(m_Window);
 
   //m_Renderer = Renderer::Create(m_Window);
 
@@ -26,7 +37,7 @@ void Application::Run() {
       layer->Update();
     }
 
-    //m_Window->Update();
+    m_Window->Update();
 
     //m_Renderer->DrawFrame();
   }
@@ -50,6 +61,7 @@ void Application::OnEvent(Event &event) {
     case EventType::WINDOW_RESIZED:
     {
       WindowResizeEvent *wre = (WindowResizeEvent *)&event;
+      SK_LOG_INFO("Window Resized: {0}, {1}", wre->Width, wre->Height);
       //m_Renderer->SetViewport(0, 0, wre->Width, wre->Height);
       break;
     }

@@ -1,4 +1,4 @@
-#include "../../StakEngine/Source/EntryPoint.h"
+#include "../../StakEngine/Source/Core/EntryPoint.h"
 
 #include "EditorLayer.h"
 
