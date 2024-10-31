@@ -17,5 +17,7 @@ inline i32 StakMain() {
   return 0;
 }
 
-int main(int argc, char **argv) { return StakMain(); }
+int main(int argc, char **argv) { 
+  return StakMain(); 
+}
 

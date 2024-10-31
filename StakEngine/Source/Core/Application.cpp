@@ -13,13 +13,15 @@ void Application::AddLayer(ApplicationLayer *layer) {
 
 Application::Application(const ApplicationSpec &spec) {
   WindowConfig cfg = {
-    spec.windowWidth,
-    spec.windowHeight, 
-    spec.windowTitle
-  
+    spec.WindowWidth,
+    spec.WindowHeight, 
+    spec.WindowTitle
   };
   m_Window = Window::Create(cfg);
-  m_Window->SetEventFn([this](Event &event) { return this->OnEvent(event); });
+  m_Window->SetEventFn([this](Event &event) { 
+    return this->OnEvent(event);
+    });
+
   if (m_Window) {
     SK_LOG_INFO("Window Created");
   }
@@ -46,32 +48,30 @@ void Application::Run() {
 }
 
 void Application::OnEvent(Event &event) {
-  if (m_Running) {
-    for (ApplicationLayer *layer : m_LayerStack) {
-      layer->OnEvent(event);
-    }
+  for (ApplicationLayer *layer : m_LayerStack) {
+    layer->OnEvent(event);
+  }
 
-    switch (event.GetType()) {
-    case EventType::WINDOW_CLOSE:
-    {
-      m_Running = false;
-      break;
-    }
-
-    case EventType::WINDOW_RESIZED:
-    {
-      WindowResizeEvent *wre = (WindowResizeEvent *)&event;
-      SK_LOG_INFO("Window Resized: {0}, {1}", wre->Width, wre->Height);
-      //m_Renderer->SetViewport(0, 0, wre->Width, wre->Height);
-      break;
-    }
-
-    default:
-      break;
-    }
+  switch (event.GetType()) {
+  case EventType::WINDOW_CLOSE:
+  {
+    m_Running = false;
+    break;
+  }
+  case EventType::WINDOW_RESIZED:
+  {
+    WindowResizeEvent *wre = static_cast<WindowResizeEvent *>(&event);
+    SK_LOG_INFO("Window Resized: {0}, {1}", wre->Width, wre->Height);
+    //m_Renderer->SetViewport(0, 0, wre->Width, wre->Height);
+    break;
+  }
+  default:
+    break;
   }
 }
 
-void Application::Close() { m_Running = false; }
+void Application::Close() { 
+  m_Running = false;
+}
 
 } // namespace Stak

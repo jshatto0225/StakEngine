@@ -9,11 +9,9 @@ Editor::Editor(Stak::ApplicationSpec &spec) : Stak::Application(spec) {
 
 Stak::Application *CreateApplication() {
   Stak::ApplicationSpec spec = {};
-  spec.windowWidth = 1920;
-  spec.windowHeight = 1080;
-  spec.windowX = 0;
-  spec.windowY = 0;
-  spec.windowTitle = "Stak Editor";
+  spec.WindowWidth = 1920;
+  spec.WindowHeight = 1080;
+  spec.WindowTitle = "Stak Editor";
 
   return new Editor(spec);
 }

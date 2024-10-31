@@ -10,11 +10,9 @@
 namespace Stak {
 
 struct ApplicationSpec {
-  const char *windowTitle;
-  i32 windowX;
-  i32 windowY;
-  i32 windowWidth;
-  i32 windowHeight;
+  const char *WindowTitle;
+  i32 WindowWidth;
+  i32 WindowHeight;
 };
 
 class Application {
