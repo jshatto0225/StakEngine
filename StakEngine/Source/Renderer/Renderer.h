@@ -1,14 +1,15 @@
 #pragma once
 
-#include "../Core/Window.h"
+#include "Window.h"
+#include "RendererAPI.h"
 
 namespace Stak {
 class Renderer {
 public:
-  virtual void SetViewport(i32 x, i32 y, i32 width, i32 height) = 0;
-  virtual void DrawFrame() = 0;
-  virtual void WaitForGpu() = 0;
+  Renderer(Ref<Window> window);
+  ~Renderer();
 
-  static Scope<Renderer> Create(Ref<Window> window);
+private:
+  Scope<RendererAPI> m_API;
 };
 } // namespace Stak

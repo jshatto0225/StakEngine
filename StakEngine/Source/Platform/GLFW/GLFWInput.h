@@ -2,7 +2,7 @@
 
 #include <GLFW/glfw3.h>
 
-#include "../../Core/Input.h"
+#include "Input.h"
 
 namespace Stak {
 

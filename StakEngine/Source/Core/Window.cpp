@@ -1,7 +1,7 @@
 #include "Window.h"
 
 #if defined(SK_WINDOWS) or defined(SK_LINUX)
-#include "../Platform/GLFW/GLFWWindow.h"
+#include "GLFWWindow.h"
 #endif
 
 #include "Log.h"

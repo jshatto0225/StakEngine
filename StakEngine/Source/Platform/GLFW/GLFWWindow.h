@@ -1,10 +1,11 @@
-#include "../../Core/Window.h"
+#pragma once
 
 #include <GLFW/glfw3.h>
 
 #include <string>
 
-#include "../../Core/Event.h"
+#include "Window.h"
+#include "Event.h"
 
 namespace Stak {
 

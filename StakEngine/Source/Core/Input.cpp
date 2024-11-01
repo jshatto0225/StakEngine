@@ -1,7 +1,7 @@
 #include "Input.h"
 
 #if defined(SK_WINDOWS) or defined(SK_LINUX)
-#include "../Platform/GLFW/GLFWInput.h"
+#include "GLFWInput.h"
 #endif
 
 #include "Log.h"

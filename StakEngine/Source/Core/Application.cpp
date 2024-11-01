@@ -1,6 +1,6 @@
 #include "Application.h"
 
-#include "../Renderer/Renderer.h"
+#include "Renderer.h"
 #include "Window.h"
 #include "Log.h"
 #include "Input.h"
@@ -28,7 +28,7 @@ Application::Application(const ApplicationSpec &spec) {
 
   m_InputManager = InputManager::Create(m_Window);
 
-  //m_Renderer = Renderer::Create(m_Window);
+  m_Renderer = CreateScope<Renderer>(m_Window);
 
   m_Running = true;
 }
@@ -62,7 +62,6 @@ void Application::OnEvent(Event &event) {
   {
     WindowResizeEvent *wre = static_cast<WindowResizeEvent *>(&event);
     SK_LOG_INFO("Window Resized: {0}, {1}", wre->Width, wre->Height);
-    //m_Renderer->SetViewport(0, 0, wre->Width, wre->Height);
     break;
   }
   default:

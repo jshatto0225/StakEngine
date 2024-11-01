@@ -4,7 +4,7 @@
 
 #include "ApplicationLayer.h"
 #include "Event.h"
-#include "../Renderer/Renderer.h"
+#include "Renderer.h"
 #include "Input.h"
 
 namespace Stak {

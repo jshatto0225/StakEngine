@@ -15,16 +15,23 @@ project "StakEngine"
 
 	includedirs {
 		"Source",
+		"Source/Core",
+		"Source/Platform/GLFW",
+		"Source/Platform/Vulkan",
+		"Source/Renderer",
 		"External/spdlog/include",
-		"External/glfw/include"
+		"External/glfw/include",
+		"$(VULKAN_SDK)/include"
 	}
-
-	links { "GLFW" }
 
 	filter "system:windows"
 		systemversion "latest"
 		defines {
 			"SK_WINDOWS"
+		}
+		links { 
+			"$(VULKAN_SDK)/lib/vulkan-1.lib",
+			"GLFW"
 		}
 
 	filter "configurations:Debug"

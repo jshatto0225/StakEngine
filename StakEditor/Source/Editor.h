@@ -1,3 +1,5 @@
+#pragma once
+
 #include <StakEngine.h>
 
 class Editor : public Stak::Application {
