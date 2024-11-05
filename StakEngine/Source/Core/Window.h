@@ -37,7 +37,7 @@ public:
 
   virtual void SetEventFn(const EventFn &func) = 0;
 
-  virtual void *GetNativeHandle() = 0;
+  virtual void *GetNativeHandle() const = 0;
 
   static Scope<Window> Create(const WindowConfig &cfg);
 };

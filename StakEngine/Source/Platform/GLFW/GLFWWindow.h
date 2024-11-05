@@ -19,7 +19,7 @@ public:
   WindowSizeData GetWindowSize();
   WindowPosData GetWindowPos();
 
-  inline void *GetNativeHandle() { return static_cast<void *>(m_NativeHandle); }
+  inline void *GetNativeHandle() const { return static_cast<void *>(m_NativeHandle); }
 
   void SetEventFn(const EventFn &func);
 

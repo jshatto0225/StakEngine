@@ -19,9 +19,15 @@ project "StakEngine"
 		"Source/Platform/GLFW",
 		"Source/Platform/Vulkan",
 		"Source/Renderer",
+		"Source/ImGui",
+		"External/imgui",
 		"External/spdlog/include",
 		"External/glfw/include",
 		"$(VULKAN_SDK)/include"
+	}
+
+	links {
+		"ImGui"
 	}
 
 	filter "system:windows"
@@ -36,6 +42,9 @@ project "StakEngine"
 
 	filter "configurations:Debug"
 		runtime "Debug"
+		defines {
+			"SK_DEBUG"
+		}
 		symbols "on"
 
 	filter "configurations:Release"
@@ -43,3 +52,4 @@ project "StakEngine"
 		optimize "on"
 
 include "External/glfw.lua"
+include "External/imgui.lua"

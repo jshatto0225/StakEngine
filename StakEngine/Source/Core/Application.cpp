@@ -1,61 +1,58 @@
 #include "Application.h"
 
-#include "Renderer.h"
-#include "Window.h"
 #include "Log.h"
-#include "Input.h"
 
 namespace Stak {
 
+Ref<Window> Application::s_Window;
+LayerStack Application::s_LayerStack;
+bool Application::s_Running = false;
+
 void Application::AddLayer(ApplicationLayer *layer) {
-  m_LayerStack.Push(layer);
+  s_LayerStack.Push(layer);
 }
 
 Application::Application(const ApplicationSpec &spec) {
   WindowConfig cfg = {
     spec.WindowWidth,
-    spec.WindowHeight, 
+    spec.WindowHeight,
     spec.WindowTitle
   };
-  m_Window = Window::Create(cfg);
-  m_Window->SetEventFn([this](Event &event) { 
+  s_Window = Window::Create(cfg);
+  s_Window->SetEventFn([this](Event &event) {
     return this->OnEvent(event);
     });
 
-  if (m_Window) {
+  if (s_Window) {
     SK_LOG_INFO("Window Created");
   }
 
-  m_InputManager = InputManager::Create(m_Window);
+  Input::Init(s_Window);
 
-  m_Renderer = CreateScope<Renderer>(m_Window);
+  Renderer::Init(s_Window);
 
-  m_Running = true;
+  s_Running = true;
 }
 
 void Application::Run() {
-  while (m_Running) {
-    for (ApplicationLayer *layer : m_LayerStack) {
+  while (s_Running) {
+    for (ApplicationLayer *layer : s_LayerStack) {
       layer->Update();
     }
 
-    m_Window->Update();
-
-    //m_Renderer->DrawFrame();
+    s_Window->Update();
   }
-
-  //m_Renderer->WaitForGpu();
 }
 
 void Application::OnEvent(Event &event) {
-  for (ApplicationLayer *layer : m_LayerStack) {
+  for (ApplicationLayer *layer : s_LayerStack) {
     layer->OnEvent(event);
   }
 
   switch (event.GetType()) {
   case EventType::WINDOW_CLOSE:
   {
-    m_Running = false;
+    s_Running = false;
     break;
   }
   case EventType::WINDOW_RESIZED:
@@ -69,8 +66,8 @@ void Application::OnEvent(Event &event) {
   }
 }
 
-void Application::Close() { 
-  m_Running = false;
+void Application::Close() {
+  s_Running = false;
 }
 
 } // namespace Stak

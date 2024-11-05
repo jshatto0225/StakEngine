@@ -6,20 +6,16 @@
 
 namespace Stak {
 
-class GLFWInputManager : public InputManager {
+class GLFWInput : public Input {
 public:
-  GLFWInputManager(Ref<Window> window);
-  ~GLFWInputManager();
+  GLFWInput(Ref<Window> window);
 
-  MousePosData GetMousePos() const;
-  i32 GetMouseX() const;
-  i32 GetMouseY() const;
-
-  bool KeyDown(KeyCode key) const;
-  bool MouseButtonDown(MouseCode button) const;
+  MousePosData GetMousePosImpl() const;
+  bool KeyDownImpl(KeyCode key) const;
+  bool MouseButtonDownImpl(MouseCode button) const;
 
 private:
-  GLFWwindow *m_Window;
+  Ref<Window> m_Window;
 };
 
 } // namespace Stak

@@ -1,8 +1,14 @@
 #pragma once
 
+#ifdef SK_WINDOWS
+#define VK_USE_PLATFORM_GLFW_KHR
+#endif
+
 #include <vulkan/vulkan.h>
 
-#include "../../Renderer/RendererAPI.h"
+#include <string>
+
+#include "RendererAPI.h"
 
 #define MAX_FRAMES_IN_FLIGHT 2
 
@@ -10,10 +16,40 @@ namespace Stak {
 
 class VulkanRendererAPI : public RendererAPI {
 public:
-  VulkanRendererAPI(Ref<Window> window);
+  VulkanRendererAPI(Ref<Window> window, std::string appName);
   ~VulkanRendererAPI();
 
   void WaitForDevice();
+
+public:
+  inline VkInstance GetImGuiInstance() { return m_Instance; }
+  inline VkPhysicalDevice GetImGuiPhysicalDevice() { return m_PhysicalDevice; }
+  inline VkDevice GetImGuiDevice() { return m_Device; }
+  inline u32 GetImGuiGraphicsQueueFamily() { return m_GraphicsQueueFamily; }
+  inline VkQueue GetImGuiGraphicsQueue() { return m_GraphicsQueue; }
+  inline VkPipelineCache GetImGuiPipelineCache() { return m_ImGuiPipelineCache; }
+  inline VkDescriptorPool GetImGuiDescriptorPool() { return m_ImGuiDescriptorPool; }
+  inline VkRenderPass GetImGuiRenderPass() { return m_ImGuiRenderPass; }
+  inline u32 GetImGuiMinImageCount() { return m_ImGuiMinImageCount; }
+  inline const VkAllocationCallbacks *GetImGuiAllocator() { return m_ImGuiAllocator; }
+
+private:
+  void CreateInstance(std::string appName);
+  void CreateDevice();
+  void CreateSurface();
+
+  static VkResult CreateDebugMessenger(
+    VkInstance instance, 
+    const VkDebugUtilsMessengerCreateInfoEXT *info, 
+    const VkAllocationCallbacks *allocator, 
+    VkDebugUtilsMessengerEXT *messenger
+  );
+
+private:
+  void CreateImGuiRenderPass();
+  void CreateImGuiPipelineCache();
+  void CreateImGuiDescriptorPool();
+  void CreateImGuiAllocator();
 
 private:
   Ref<Window> m_Window;
@@ -22,40 +58,17 @@ private:
   VkDebugUtilsMessengerEXT m_DebugMessenger;
   VkSurfaceKHR m_Surface;
   VkPhysicalDevice m_PhysicalDevice;
-  VkDevice m_LogicalDevice;
+  VkDevice m_Device;
+  u32 m_GraphicsQueueFamily;
   VkQueue m_GraphicsQueue;
   VkQueue m_PresentQueue;
-  VkExtent2D m_Extent;
-  VkSwapchainKHR m_Swapchain;
-  std::vector<VkImage> m_SwapchainImages;
-  VkFormat m_SwapchainImageFormat;
-  u32 m_SwapchainImageCount;
-  std::vector<VkImageView> m_SwapchainImageViews;
-  VkCommandPool m_CommandPool;
-  VkCommandBuffer m_CommandBuffers[MAX_FRAMES_IN_FLIGHT];
-  VkSemaphore m_ImageAvailableSemaphores[MAX_FRAMES_IN_FLIGHT];
-  VkSemaphore m_RenderFinishedSemaphores[MAX_FRAMES_IN_FLIGHT];
-  VkFence m_InFlightFences[MAX_FRAMES_IN_FLIGHT];
-  std::vector<VkFramebuffer> m_Framebuffers;
-  u32 CurrentFrame;
-  bool m_FramebufferResized;
-  VkRenderPass m_RenderPass;
-  VkPipeline m_GraphicsPipeline;
-  VkPipelineLayout m_PipelineLayout;
-  VkBuffer m_VertexBuffer;
-  VkDeviceMemory m_VertexBufferMemory;
-  VkBuffer m_VwertexStagingBuffer;
-  VkDeviceMemory m_VertexStagingBufferMemory;
-  VkBuffer m_IndexBuffer;
-  VkDeviceMemory m_IndexBufferMemory;
-  VkBuffer m_IndexStagingBuffer;
-  VkDeviceMemory m_IndexStagingBufferMemory;
-  VkDescriptorSetLayout m_DescriptorSetLayout;
-  VkBuffer m_UniformBuffers[MAX_FRAMES_IN_FLIGHT];
-  VkDeviceMemory m_UniformBuffersMemory[MAX_FRAMES_IN_FLIGHT];
-  void *m_UniformBuffersMapped[MAX_FRAMES_IN_FLIGHT];
-  VkDescriptorPool m_DescriptorPool;
-  VkDescriptorSet m_DescriptorSets[MAX_FRAMES_IN_FLIGHT];
+
+private:
+  VkPipelineCache m_ImGuiPipelineCache;
+  VkDescriptorPool m_ImGuiDescriptorPool;
+  VkRenderPass m_ImGuiRenderPass;
+  u32 m_ImGuiMinImageCount;
+  VkAllocationCallbacks *m_ImGuiAllocator;
 };
 
 } // namespace Stak

@@ -3,6 +3,8 @@
 #include "Types.h"
 #include "Window.h"
 
+#include <string>
+
 namespace Stak {
 
 class RendererAPI {
@@ -12,7 +14,7 @@ public:
 
   virtual void WaitForDevice() = 0;
 
-  static Scope<RendererAPI> Create(Ref<Window> window);
+  static Ref<RendererAPI> Create(Ref<Window> window, std::string appName);
 };
 
 } // namespace Stak

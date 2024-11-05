@@ -2,12 +2,14 @@
 
 namespace Stak {
 
-Renderer::Renderer(Ref<Window> window) {
-  m_API = RendererAPI::Create(window);
+Ref<RendererAPI> Renderer::s_API = NULL;
+
+void Renderer::Init(Ref<Window> window) {
+  s_API = RendererAPI::Create(window, "APP_NAME");
 }
 
-Renderer::~Renderer() {
-  m_API->WaitForDevice();
+void Renderer::Shutdown() {
+  s_API->WaitForDevice();
 }
 
 } // namespace Stak

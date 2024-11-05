@@ -14,7 +14,17 @@ project "StakEditor"
 
 	includedirs {
 		"../StakEngine",
-		"../StakEngine/External/spdlog/include"
+		"../StakEngine/External/spdlog/include",
+		"../StakEngine/Source",
+		"../StakEngine/Source/Core",
+		"../StakEngine/Source/Platform/GLFW",
+		"../StakEngine/Source/Platform/Vulkan",
+		"../StakEngine/Source/Renderer",
+		"../StakEngine/Source/ImGui",
+		"../StakEngine/External/imgui",
+		"../StakEngine/External/spdlog/include",
+		"../StakEngine/External/glfw/include",
+		"../StakEngine/$(VULKAN_SDK)/include"
 	}
 
   links {

@@ -6,10 +6,12 @@
 namespace Stak {
 class Renderer {
 public:
-  Renderer(Ref<Window> window);
-  ~Renderer();
+  static void Init(Ref<Window> window);
+  static void Shutdown();
+
+  static inline Ref<RendererAPI> &GetAPI() { return s_API; }
 
 private:
-  Scope<RendererAPI> m_API;
+  static Ref<RendererAPI> s_API;
 };
 } // namespace Stak

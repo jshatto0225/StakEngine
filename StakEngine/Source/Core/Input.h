@@ -145,20 +145,27 @@ enum class MouseCode : i8 {
   MIDDLE  = THREE
 };
 
-class InputManager {
+class Input {
 public:
-  static Scope<InputManager> Create(Ref<Window> window);
-
   struct MousePosData {
     i32 X;
     i32 Y;
   };
 
-  virtual MousePosData GetMousePos() const = 0;
-  virtual i32 GetMouseX() const = 0;
-  virtual i32 GetMouseY() const = 0;
-  virtual bool KeyDown(KeyCode key) const = 0;
-  virtual bool MouseButtonDown(MouseCode button) const = 0;
+  static void Init(Ref<Window> window);
+  static MousePosData GetMousePos();
+  static i32 GetMouseX();
+  static i32 GetMouseY();
+  static bool KeyDown(KeyCode key);
+  static bool MouseButtonDown(MouseCode button);
+
+protected:
+  virtual MousePosData GetMousePosImpl() const = 0;
+  virtual bool KeyDownImpl(KeyCode key) const = 0;
+  virtual bool MouseButtonDownImpl(MouseCode button) const = 0;
+
+private:
+  static Scope<Input> s_Impl;
 };
 
-} // namesoace Stak
+} // namespace Stak

@@ -19,19 +19,15 @@ class Application {
 public:
   Application(const ApplicationSpec &Spec);
 
-  void Run();
-  void OnEvent(Event &event);
-  void AddLayer(ApplicationLayer *layer);
-  void Close();
-
-  const Scope<InputManager> &Input() const { return m_InputManager; }
+  static void Run();
+  static void OnEvent(Event &event);
+  static void AddLayer(ApplicationLayer *layer);
+  static void Close();
 
 private:
-  Ref<Window> m_Window;
-  LayerStack m_LayerStack;
-  bool m_Running;
-  Scope<Renderer> m_Renderer;
-  Scope<InputManager> m_InputManager;
+  static Ref<Window> s_Window;
+  static LayerStack s_LayerStack;
+  static bool s_Running;
 };
 
 } // namespace Stak

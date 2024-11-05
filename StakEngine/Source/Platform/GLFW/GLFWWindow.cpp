@@ -4,7 +4,7 @@ namespace Stak {
 
 bool GLFWWindow::s_GLFWInitialized = false;
 
-GLFWWindow::GLFWWindow(const WindowConfig &cfg) : m_NativeHandle(NULL) {
+GLFWWindow::GLFWWindow(const WindowConfig &cfg) : m_NativeHandle(NULL), m_Data({ NULL, 0, 0, cfg.Width, cfg.Height, cfg.Title }) {
   if (!s_GLFWInitialized) {
     if (!glfwInit()) {
       return;
