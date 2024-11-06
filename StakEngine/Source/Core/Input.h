@@ -148,21 +148,21 @@ enum class MouseCode : i8 {
 class Input {
 public:
   struct MousePosData {
-    i32 X;
-    i32 Y;
+    i32 x;
+    i32 y;
   };
 
-  static void Init(Ref<Window> window);
-  static MousePosData GetMousePos();
-  static i32 GetMouseX();
-  static i32 GetMouseY();
-  static bool KeyDown(KeyCode key);
-  static bool MouseButtonDown(MouseCode button);
+  static void init(Ref<Window> window);
+  static MousePosData getMousePos();
+  static i32 getMouseX();
+  static i32 getMouseY();
+  static bool keyDown(KeyCode key);
+  static bool mouseButtonDown(MouseCode button);
 
 protected:
-  virtual MousePosData GetMousePosImpl() const = 0;
-  virtual bool KeyDownImpl(KeyCode key) const = 0;
-  virtual bool MouseButtonDownImpl(MouseCode button) const = 0;
+  virtual MousePosData getMousePosImpl() const = 0;
+  virtual bool keyDownImpl(KeyCode key) const = 0;
+  virtual bool mouseButtonDownImpl(MouseCode button) const = 0;
 
 private:
   static Scope<Input> s_Impl;

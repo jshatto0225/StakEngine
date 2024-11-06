@@ -8,9 +8,9 @@
 
 namespace Stak {
 
-Scope<Window> Window::Create(const WindowConfig &cfg) {
+Scope<Window> Window::create(const WindowConfig &cfg) {
 #if defined(SK_WINDOWS) or defined(SK_LINUX)
-  return CreateScope<GLFWWindow>(cfg);
+  return createScope<GLFWWindow>(cfg);
 #else
   SK_LOG_CRITICAL("Window Platform Not Supported")
   return NULL;

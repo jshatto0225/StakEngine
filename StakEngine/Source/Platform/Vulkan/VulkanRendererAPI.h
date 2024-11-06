@@ -19,37 +19,35 @@ public:
   VulkanRendererAPI(Ref<Window> window, std::string appName);
   ~VulkanRendererAPI();
 
-  void WaitForDevice();
-
 public:
-  inline VkInstance GetImGuiInstance() { return m_Instance; }
-  inline VkPhysicalDevice GetImGuiPhysicalDevice() { return m_PhysicalDevice; }
-  inline VkDevice GetImGuiDevice() { return m_Device; }
-  inline u32 GetImGuiGraphicsQueueFamily() { return m_GraphicsQueueFamily; }
-  inline VkQueue GetImGuiGraphicsQueue() { return m_GraphicsQueue; }
-  inline VkPipelineCache GetImGuiPipelineCache() { return m_ImGuiPipelineCache; }
-  inline VkDescriptorPool GetImGuiDescriptorPool() { return m_ImGuiDescriptorPool; }
-  inline VkRenderPass GetImGuiRenderPass() { return m_ImGuiRenderPass; }
-  inline u32 GetImGuiMinImageCount() { return m_ImGuiMinImageCount; }
-  inline const VkAllocationCallbacks *GetImGuiAllocator() { return m_ImGuiAllocator; }
+  inline VkInstance getImGuiInstance() { return m_Instance; }
+  inline VkPhysicalDevice getImGuiPhysicalDevice() { return m_PhysicalDevice; }
+  inline VkDevice getImGuiDevice() { return m_Device; }
+  inline u32 getImGuiGraphicsQueueFamily() { return m_GraphicsQueueFamily; }
+  inline VkQueue getImGuiGraphicsQueue() { return m_GraphicsQueue; }
+  inline VkPipelineCache getImGuiPipelineCache() { return m_ImGuiPipelineCache; }
+  inline VkDescriptorPool getImGuiDescriptorPool() { return m_ImGuiDescriptorPool; }
+  inline VkRenderPass getImGuiRenderPass() { return m_ImGuiRenderPass; }
+  inline u32 getImGuiMinImageCount() { return m_ImGuiMinImageCount; }
+  inline const VkAllocationCallbacks *getImGuiAllocator() { return m_ImGuiAllocator; }
 
 private:
-  void CreateInstance(std::string appName);
-  void CreateDevice();
-  void CreateSurface();
+  void createInstance(std::string appName);
+  void createDevice();
+  void createSurface();
 
-  static VkResult CreateDebugMessenger(
-    VkInstance instance, 
-    const VkDebugUtilsMessengerCreateInfoEXT *info, 
-    const VkAllocationCallbacks *allocator, 
+  static VkResult createDebugMessenger(
+    VkInstance instance,
+    const VkDebugUtilsMessengerCreateInfoEXT *info,
+    const VkAllocationCallbacks *allocator,
     VkDebugUtilsMessengerEXT *messenger
   );
 
 private:
-  void CreateImGuiRenderPass();
-  void CreateImGuiPipelineCache();
-  void CreateImGuiDescriptorPool();
-  void CreateImGuiAllocator();
+  void createImGuiRenderPass();
+  void createImGuiPipelineCache();
+  void createImGuiDescriptorPool();
+  void createImGuiAllocator();
 
 private:
   Ref<Window> m_Window;

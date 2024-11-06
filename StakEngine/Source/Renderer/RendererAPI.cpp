@@ -6,9 +6,9 @@
 
 namespace Stak {
 
-Ref<RendererAPI> RendererAPI::Create(Ref<Window> window, std::string appName) {
+Ref<RendererAPI> RendererAPI::create(Ref<Window> window, std::string appName) {
 #if defined(SK_WINDOWS) or defined(SK_LINUX)
-  return CreateRef<VulkanRendererAPI>(window, appName);
+  return createRef<VulkanRendererAPI>(window, appName);
 #else
   SK_LOG_CRITICAL("Invalid Render Platform");
   return NULL;

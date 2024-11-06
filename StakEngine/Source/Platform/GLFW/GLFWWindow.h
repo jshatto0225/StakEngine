@@ -14,23 +14,23 @@ public:
   GLFWWindow(const WindowConfig &cfg);
   ~GLFWWindow();
 
-  void Update();
+  void update();
 
-  WindowSizeData GetWindowSize();
-  WindowPosData GetWindowPos();
+  WindowSizeData getWindowSize();
+  WindowPosData getWindowPos();
 
-  inline void *GetNativeHandle() const { return static_cast<void *>(m_NativeHandle); }
+  inline void *getNativeHandle() const { return static_cast<void *>(m_NativeHandle); }
 
-  void SetEventFn(const EventFn &func);
+  void setEventFn(const EventFn &func);
 
 private:
   struct WindowData {
-    EventFn EventFunction;
-    i32 X;
-    i32 Y;
-    i32 Width;
-    i32 Height;
-    std::string Title;
+    EventFn eventFunction;
+    i32 x;
+    i32 y;
+    i32 width;
+    i32 height;
+    std::string title;
   };
 
   WindowData m_Data;

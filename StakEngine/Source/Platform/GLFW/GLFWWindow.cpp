@@ -4,7 +4,7 @@ namespace Stak {
 
 bool GLFWWindow::s_GLFWInitialized = false;
 
-GLFWWindow::GLFWWindow(const WindowConfig &cfg) : m_NativeHandle(NULL), m_Data({ NULL, 0, 0, cfg.Width, cfg.Height, cfg.Title }) {
+GLFWWindow::GLFWWindow(const WindowConfig &cfg) : m_Data({ NULL, 0, 0, cfg.width, cfg.height, cfg.title }), m_NativeHandle(NULL) {
   if (!s_GLFWInitialized) {
     if (!glfwInit()) {
       return;
@@ -12,29 +12,29 @@ GLFWWindow::GLFWWindow(const WindowConfig &cfg) : m_NativeHandle(NULL), m_Data({
     s_GLFWInitialized = true;
   }
 
-  m_NativeHandle = glfwCreateWindow(cfg.Width, cfg.Height, cfg.Title, NULL, NULL);
+  m_NativeHandle = glfwCreateWindow(cfg.width, cfg.height, cfg.title, NULL, NULL);
   glfwSetWindowUserPointer(m_NativeHandle, static_cast<void *>(&m_Data));
 
   glfwSetWindowSizeCallback(m_NativeHandle, [](GLFWwindow *window, i32 width, i32 height) {
     WindowData *data = static_cast<WindowData *>(glfwGetWindowUserPointer(window));
-    data->Width = width;
-    data->Height = height;
+    data->width = width;
+    data->height = height;
     WindowResizeEvent e(width, height);
-    data->EventFunction(e);
+    data->eventFunction(e);
     });
 
   glfwSetWindowPosCallback(m_NativeHandle, [](GLFWwindow *window, i32 x, i32 y) {
     WindowData *data = static_cast<WindowData *>(glfwGetWindowUserPointer(window));
-    data->X = x;
-    data->Y = y;
+    data->x = x;
+    data->y = y;
     WindowMovedEvent e(x, y);
-    data->EventFunction(e);
+    data->eventFunction(e);
     });
 
   glfwSetWindowCloseCallback(m_NativeHandle, [](GLFWwindow *window) {
     WindowData *data = static_cast<WindowData *>(glfwGetWindowUserPointer(window));
     WindowCloseEvent e;
-    data->EventFunction(e);
+    data->eventFunction(e);
     });
 }
 
@@ -43,20 +43,20 @@ GLFWWindow::~GLFWWindow() {
   m_NativeHandle = NULL;
 }
 
-void GLFWWindow::Update() {
+void GLFWWindow::update() {
   glfwPollEvents();
 }
 
-WindowSizeData GLFWWindow::GetWindowSize() {
-  return { m_Data.Width, m_Data.Height };
+WindowSizeData GLFWWindow::getWindowSize() {
+  return { m_Data.width, m_Data.height };
 }
 
-WindowPosData GLFWWindow::GetWindowPos() {
-  return { m_Data.X, m_Data.Y };
+WindowPosData GLFWWindow::getWindowPos() {
+  return { m_Data.x, m_Data.y };
 }
 
-void GLFWWindow::SetEventFn(const EventFn &func) {
-  m_Data.EventFunction = func;
+void GLFWWindow::setEventFn(const EventFn &func) {
+  m_Data.eventFunction = func;
 }
 
 } // namespace Stak

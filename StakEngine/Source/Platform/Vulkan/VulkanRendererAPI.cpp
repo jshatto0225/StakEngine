@@ -14,7 +14,7 @@ const std::vector<const char *> VALIDATION_LAYERS = {
   "VK_LAYER_KHRONOS_validation",
 };
 
-VKAPI_ATTR VkBool32 VKAPI_CALL VkMessenger(
+VKAPI_ATTR VkBool32 VKAPI_CALL vkMessenger(
   VkDebugUtilsMessageSeverityFlagBitsEXT severity,
   VkDebugUtilsMessageTypeFlagsEXT type,
   const VkDebugUtilsMessengerCallbackDataEXT *callback_data,
@@ -33,6 +33,8 @@ VKAPI_ATTR VkBool32 VKAPI_CALL VkMessenger(
   case VK_DEBUG_UTILS_MESSAGE_SEVERITY_WARNING_BIT_EXT:
     SK_LOG_WARN(callback_data->pMessage);
     break;
+  default:
+    break;
   }
 
   return VK_FALSE;
@@ -40,10 +42,10 @@ VKAPI_ATTR VkBool32 VKAPI_CALL VkMessenger(
 
 namespace Stak {
 
-VkResult VulkanRendererAPI::CreateDebugMessenger(
-  VkInstance instance, 
-  const VkDebugUtilsMessengerCreateInfoEXT *info, 
-  const VkAllocationCallbacks *allocator, 
+VkResult VulkanRendererAPI::createDebugMessenger(
+  VkInstance instance,
+  const VkDebugUtilsMessengerCreateInfoEXT *info,
+  const VkAllocationCallbacks *allocator,
   VkDebugUtilsMessengerEXT *messenger
 ) {
   PFN_vkCreateDebugUtilsMessengerEXT func =
@@ -61,16 +63,16 @@ VkResult VulkanRendererAPI::CreateDebugMessenger(
 VulkanRendererAPI::VulkanRendererAPI(Ref<Window> window, std::string appName) {
   m_Window = window;
 
-  CreateInstance(appName);
-  CreateDevice();
-  CreateSurface();
+  createInstance(appName);
+  createDevice();
+  createSurface();
 }
 
 VulkanRendererAPI::~VulkanRendererAPI() {
 
 }
 
-void VulkanRendererAPI::CreateInstance(std::string appName) {
+void VulkanRendererAPI::createInstance(std::string appName) {
   bool extensionsSupported = true;
   u32 layerCount;
   vkEnumerateInstanceLayerProperties(&layerCount, NULL);
@@ -124,7 +126,7 @@ void VulkanRendererAPI::CreateInstance(std::string appName) {
       VK_DEBUG_UTILS_MESSAGE_TYPE_GENERAL_BIT_EXT |
       VK_DEBUG_UTILS_MESSAGE_TYPE_VALIDATION_BIT_EXT |
       VK_DEBUG_UTILS_MESSAGE_TYPE_PERFORMANCE_BIT_EXT;
-    debugMessengerInfo.pfnUserCallback = VkMessenger;
+    debugMessengerInfo.pfnUserCallback = vkMessenger;
 
     instanceInfo.pNext = &debugMessengerInfo;
   }
@@ -146,37 +148,33 @@ void VulkanRendererAPI::CreateInstance(std::string appName) {
     return;
   }
 
-  r = CreateDebugMessenger(m_Instance, &debugMessengerInfo, NULL, &m_DebugMessenger);
+  r = createDebugMessenger(m_Instance, &debugMessengerInfo, NULL, &m_DebugMessenger);
   if (r != VK_SUCCESS) {
     SK_LOG_ERROR("Failed to create vulkan debug messenger");
   }
 }
 
-void VulkanRendererAPI::WaitForDevice() {
+void VulkanRendererAPI::createDevice() {
 
 }
 
-void VulkanRendererAPI::CreateDevice() {
+void VulkanRendererAPI::createSurface() {
 
 }
 
-void VulkanRendererAPI::CreateSurface() {
+void VulkanRendererAPI::createImGuiRenderPass() {
 
 }
 
-void VulkanRendererAPI::CreateImGuiRenderPass() {
+void VulkanRendererAPI::createImGuiPipelineCache() {
 
 }
 
-void VulkanRendererAPI::CreateImGuiPipelineCache() {
+void VulkanRendererAPI::createImGuiDescriptorPool() {
 
 }
 
-void VulkanRendererAPI::CreateImGuiDescriptorPool() {
-
-}
-
-void VulkanRendererAPI::CreateImGuiAllocator() {
+void VulkanRendererAPI::createImGuiAllocator() {
 
 }
 

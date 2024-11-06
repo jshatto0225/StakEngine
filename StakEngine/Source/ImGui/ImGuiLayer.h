@@ -10,10 +10,10 @@ public:
   ImGuiLayer(Ref<Window> window);
   ~ImGuiLayer();
 
-  void OnAttach();
-  void OnDetach();
-  void Update();
-  void OnEvent(Event &event);
+  void onAttach();
+  void onDetach();
+  void update();
+  void onEvent(Event &event);
 };
 
 } // namespace Stak

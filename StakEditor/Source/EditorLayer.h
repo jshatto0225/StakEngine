@@ -7,7 +7,7 @@
 class EditorLayer : public Stak::ApplicationLayer {
 public:
   EditorLayer(Editor *editor);
-  void Update();
+  void update();
 private:
   Editor *m_Editor;
 };

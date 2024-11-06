@@ -3,15 +3,15 @@
 #include "EditorLayer.h"
 
 Editor::Editor(Stak::ApplicationSpec &spec) : Stak::Application(spec) {
-  AddLayer(new EditorLayer(this));
+  addLayer(new EditorLayer(this));
   LOG_TRACE("Hello from editor");
 }
 
-Stak::Application *CreateApplication() {
+Stak::Application *createApplication() {
   Stak::ApplicationSpec spec = {};
-  spec.WindowWidth = 1920;
-  spec.WindowHeight = 1080;
-  spec.WindowTitle = "Stak Editor";
+  spec.windowWidth = 1920;
+  spec.windowHeight = 1080;
+  spec.windowTitle = "Stak Editor";
 
   return new Editor(spec);
 }

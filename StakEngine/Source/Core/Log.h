@@ -8,10 +8,10 @@ namespace Stak {
 
 class Log {
 public:
-  static void Init();
+  static void init();
 
-  inline static Ref<spdlog::logger> &GetCoreLogger() { return s_CoreLogger; }
-  inline static Ref<spdlog::logger> &GetClientLogger() { return s_ClientLogger;  }
+  inline static Ref<spdlog::logger> &getCoreLogger() { return s_CoreLogger; }
+  inline static Ref<spdlog::logger> &getClientLogger() { return s_ClientLogger;  }
 
 private:
   static Ref<spdlog::logger> s_CoreLogger;
@@ -20,14 +20,14 @@ private:
 
 } // namespace Stak
 
-#define SK_LOG_TRACE(...)     ::Stak::Log::GetCoreLogger()->trace(__VA_ARGS__)
-#define SK_LOG_INFO(...)     ::Stak::Log::GetCoreLogger()->info(__VA_ARGS__)
-#define SK_LOG_WARN(...)      ::Stak::Log::GetCoreLogger()->warn(__VA_ARGS__)
-#define SK_LOG_ERROR(...)     ::Stak::Log::GetCoreLogger()->error(__VA_ARGS__)
-#define SK_LOG_CRITICAL(...)  ::Stak::Log::GetCoreLogger()->critical(__VA_ARGS__)
+#define SK_LOG_TRACE(...)     ::Stak::Log::getCoreLogger()->trace(__VA_ARGS__)
+#define SK_LOG_INFO(...)      ::Stak::Log::getCoreLogger()->info(__VA_ARGS__)
+#define SK_LOG_WARN(...)      ::Stak::Log::getCoreLogger()->warn(__VA_ARGS__)
+#define SK_LOG_ERROR(...)     ::Stak::Log::getCoreLogger()->error(__VA_ARGS__)
+#define SK_LOG_CRITICAL(...)  ::Stak::Log::getCoreLogger()->critical(__VA_ARGS__)
 
-#define LOG_TRACE(...)    ::Stak::Log::GetClientLogger()->trace(__VA_ARGS__)
-#define LOG_INFO(...)     ::Stak::Log::GetClientLogger()->info(__VA_ARGS__)
-#define LOG_WARN(...)     ::Stak::Log::GetClientLogger()->warn(__VA_ARGS__)
-#define LOG_ERROR(...)    ::Stak::Log::GetClientLogger()->error(__VA_ARGS__)
-#define LOG_CRITICAL(...) ::Stak::Log::GetClientLogger()->critical(__VA_ARGS__)
+#define LOG_TRACE(...)    ::Stak::Log::getClientLogger()->trace(__VA_ARGS__)
+#define LOG_INFO(...)     ::Stak::Log::getClientLogger()->info(__VA_ARGS__)
+#define LOG_WARN(...)     ::Stak::Log::getClientLogger()->warn(__VA_ARGS__)
+#define LOG_ERROR(...)    ::Stak::Log::getClientLogger()->error(__VA_ARGS__)
+#define LOG_CRITICAL(...) ::Stak::Log::getClientLogger()->critical(__VA_ARGS__)

@@ -22,26 +22,26 @@ ImGuiLayer::ImGuiLayer(Ref<Window> window) {
 
   ImGui::StyleColorsDark();
 #if defined(SK_WINDOWS) or defined(SK_LINUX)
-  ImGui_ImplGlfw_InitForVulkan(static_cast<GLFWwindow *>(window->GetNativeHandle()), true);
+  ImGui_ImplGlfw_InitForVulkan(static_cast<GLFWwindow *>(window->getNativeHandle()), true);
 
-  Ref<VulkanRendererAPI> vulkanRenderer = std::dynamic_pointer_cast<VulkanRendererAPI>(Renderer::GetAPI());
+  Ref<VulkanRendererAPI> vulkanRenderer = std::dynamic_pointer_cast<VulkanRendererAPI>(Renderer::getAPI());
 
   ImGui_ImplVulkan_InitInfo initInfo = {};
 
-  initInfo.Instance = vulkanRenderer->GetImGuiInstance();
-  initInfo.PhysicalDevice = vulkanRenderer->GetImGuiPhysicalDevice();
-  initInfo.Device = vulkanRenderer->GetImGuiDevice();
-  initInfo.QueueFamily = vulkanRenderer->GetImGuiGraphicsQueueFamily();
-  initInfo.Queue = vulkanRenderer->GetImGuiGraphicsQueue();
-  initInfo.PipelineCache = vulkanRenderer->GetImGuiPipelineCache();
-  initInfo.DescriptorPool = vulkanRenderer->GetImGuiDescriptorPool();
-  initInfo.RenderPass = vulkanRenderer->GetImGuiRenderPass();
+  initInfo.Instance = vulkanRenderer->getImGuiInstance();
+  initInfo.PhysicalDevice = vulkanRenderer->getImGuiPhysicalDevice();
+  initInfo.Device = vulkanRenderer->getImGuiDevice();
+  initInfo.QueueFamily = vulkanRenderer->getImGuiGraphicsQueueFamily();
+  initInfo.Queue = vulkanRenderer->getImGuiGraphicsQueue();
+  initInfo.PipelineCache = vulkanRenderer->getImGuiPipelineCache();
+  initInfo.DescriptorPool = vulkanRenderer->getImGuiDescriptorPool();
+  initInfo.RenderPass = vulkanRenderer->getImGuiRenderPass();
   initInfo.Subpass = 0;
-  initInfo.MinImageCount = vulkanRenderer->GetImGuiMinImageCount();
+  initInfo.MinImageCount = vulkanRenderer->getImGuiMinImageCount();
   initInfo.MSAASamples = VK_SAMPLE_COUNT_1_BIT;
-  initInfo.Allocator = vulkanRenderer->GetImGuiAllocator();
+  initInfo.Allocator = vulkanRenderer->getImGuiAllocator();
   initInfo.CheckVkResultFn = [](VkResult err) {
-    SK_LOG_ERROR("Vulkan ImGui Error: {0}", static_cast<u32>(err));
+    SK_LOG_ERROR("Vulkan ImGui Error");
     };
 
   ImGui_ImplVulkan_Init(&initInfo);
@@ -52,19 +52,19 @@ ImGuiLayer::~ImGuiLayer() {
 
 }
 
-void ImGuiLayer::OnAttach() {
+void ImGuiLayer::onAttach() {
 
 }
 
-void ImGuiLayer::OnDetach() {
+void ImGuiLayer::onDetach() {
 
 }
 
-void ImGuiLayer::Update() {
+void ImGuiLayer::update() {
 
 }
 
-void ImGuiLayer::OnEvent(Event &event) {
+void ImGuiLayer::onEvent(Event &event) {
 
 }
 

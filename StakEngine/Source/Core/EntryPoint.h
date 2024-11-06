@@ -4,20 +4,20 @@
 #include "Log.h"
 #include "Types.h"
 
-extern Stak::Application *CreateApplication();
+extern Stak::Application *createApplication();
 
-inline i32 StakMain() {
-  Stak::Log::Init();
+inline i32 stakMain() {
+  Stak::Log::init();
 
-  Stak::Application *app = CreateApplication();
-  app->Run();
+  Stak::Application *app = createApplication();
+  app->run();
 
   delete app;
 
   return 0;
 }
 
-int main(int argc, char **argv) { 
-  return StakMain(); 
+int main(int argc, char **argv) {
+  return stakMain();
 }
 

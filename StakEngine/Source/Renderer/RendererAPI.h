@@ -12,9 +12,7 @@ public:
   RendererAPI() = default;
   virtual ~RendererAPI() {}
 
-  virtual void WaitForDevice() = 0;
-
-  static Ref<RendererAPI> Create(Ref<Window> window, std::string appName);
+  static Ref<RendererAPI> create(Ref<Window> window, std::string appName);
 };
 
 } // namespace Stak

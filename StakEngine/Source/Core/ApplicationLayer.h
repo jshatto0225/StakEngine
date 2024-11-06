@@ -10,36 +10,36 @@ class ApplicationLayer {
 public:
   virtual ~ApplicationLayer() = default;
 
-  virtual void OnAttach() {};
-  virtual void OnDetach() {};
-  virtual void Update() {};
-  virtual void FixedUpdate(f32 DeltaTime) {};
-  virtual void OnEvent(const Event &event) {};
+  virtual void onAttach() {};
+  virtual void onDetach() {};
+  virtual void update() {};
+  virtual void fixedUpdate(f32 deltaTime) {};
+  virtual void onEvent(const Event &event) {};
 };
 
 class LayerStack {
 public:
   ~LayerStack() {
     for (ApplicationLayer *layer : m_Layers) {
-      layer->OnDetach();
+      layer->onDetach();
       delete layer;
     }
   }
 
-  inline void Push(ApplicationLayer *layer) {
+  inline void push(ApplicationLayer *layer) {
     m_Layers.push_back(layer);
   }
 
-  inline ApplicationLayer *Pop() {
+  inline ApplicationLayer *pop() {
     ApplicationLayer *layer = *m_Layers.rbegin();
     m_Layers.pop_back();
     return layer;
   }
 
-  inline void Remove(ApplicationLayer *layer) {
+  inline void remove(ApplicationLayer *layer) {
     std::vector<ApplicationLayer *>::iterator it = std::find(m_Layers.begin(), m_Layers.end(), layer);
     if (it != m_Layers.end()) {
-      layer->OnDetach();
+      layer->onDetach();
       m_Layers.erase(it);
     }
   }

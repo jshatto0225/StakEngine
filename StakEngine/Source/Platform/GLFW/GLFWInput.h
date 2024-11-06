@@ -10,9 +10,9 @@ class GLFWInput : public Input {
 public:
   GLFWInput(Ref<Window> window);
 
-  MousePosData GetMousePosImpl() const;
-  bool KeyDownImpl(KeyCode key) const;
-  bool MouseButtonDownImpl(MouseCode button) const;
+  MousePosData getMousePosImpl() const;
+  bool keyDownImpl(KeyCode key) const;
+  bool mouseButtonDownImpl(MouseCode button) const;
 
 private:
   Ref<Window> m_Window;

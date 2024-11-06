@@ -10,19 +10,19 @@
 namespace Stak {
 
 struct ApplicationSpec {
-  const char *WindowTitle;
-  i32 WindowWidth;
-  i32 WindowHeight;
+  const char *windowTitle;
+  i32 windowWidth;
+  i32 windowHeight;
 };
 
 class Application {
 public:
   Application(const ApplicationSpec &Spec);
 
-  static void Run();
-  static void OnEvent(Event &event);
-  static void AddLayer(ApplicationLayer *layer);
-  static void Close();
+  static void run();
+  static void onEvent(Event &event);
+  static void addLayer(ApplicationLayer *layer);
+  static void close();
 
 private:
   static Ref<Window> s_Window;

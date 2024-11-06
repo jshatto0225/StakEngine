@@ -23,11 +23,14 @@ project "ImGui"
 
 		files {
 			"Imgui/backends/imgui_impl_vulkan.h",
-			"Imgui/backends/imgui_impl_vulkan.cpp"
+			"Imgui/backends/imgui_impl_vulkan.cpp",
+			"ImGui/backends/imgui_impl_glfw.h",
+			"ImGui/backends/imgui_impl_glfw.cpp"
 		}
 
 		includedirs {
-			"$(VULKAN_SDK)/include"
+			"$(VULKAN_SDK)/include",
+			"glfw/include"
 		}
 
 	filter "system:windows"
@@ -36,11 +39,14 @@ project "ImGui"
 
 		files {
 			"Imgui/backends/imgui_impl_vulkan.h",
-			"Imgui/backends/imgui_impl_vulkan.cpp"
+			"Imgui/backends/imgui_impl_vulkan.cpp",
+			"ImGui/backends/imgui_impl_glfw.h",
+			"ImGui/backends/imgui_impl_glfw.cpp"
 		}
 
 		includedirs {
-			"$(VULKAN_SDK)/include"
+			"$(VULKAN_SDK)/include",
+			"glfw/include"
 		}
 
 		defines {

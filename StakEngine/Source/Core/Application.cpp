@@ -1,6 +1,7 @@
 #include "Application.h"
 
 #include "Log.h"
+#include "ImGuiLayer.h"
 
 namespace Stak {
 
@@ -8,48 +9,50 @@ Ref<Window> Application::s_Window;
 LayerStack Application::s_LayerStack;
 bool Application::s_Running = false;
 
-void Application::AddLayer(ApplicationLayer *layer) {
-  s_LayerStack.Push(layer);
+void Application::addLayer(ApplicationLayer *layer) {
+  s_LayerStack.push(layer);
 }
 
 Application::Application(const ApplicationSpec &spec) {
   WindowConfig cfg = {
-    spec.WindowWidth,
-    spec.WindowHeight,
-    spec.WindowTitle
+    spec.windowWidth,
+    spec.windowHeight,
+    spec.windowTitle
   };
-  s_Window = Window::Create(cfg);
-  s_Window->SetEventFn([this](Event &event) {
-    return this->OnEvent(event);
+  s_Window = Window::create(cfg);
+  s_Window->setEventFn([this](Event &event) {
+    return this->onEvent(event);
     });
 
   if (s_Window) {
     SK_LOG_INFO("Window Created");
   }
 
-  Input::Init(s_Window);
+  Input::init(s_Window);
 
-  Renderer::Init(s_Window);
+  Renderer::init(s_Window);
+
+  addLayer(new ImGuiLayer(s_Window));
 
   s_Running = true;
 }
 
-void Application::Run() {
+void Application::run() {
   while (s_Running) {
     for (ApplicationLayer *layer : s_LayerStack) {
-      layer->Update();
+      layer->update();
     }
 
-    s_Window->Update();
+    s_Window->update();
   }
 }
 
-void Application::OnEvent(Event &event) {
+void Application::onEvent(Event &event) {
   for (ApplicationLayer *layer : s_LayerStack) {
-    layer->OnEvent(event);
+    layer->onEvent(event);
   }
 
-  switch (event.GetType()) {
+  switch (event.getType()) {
   case EventType::WINDOW_CLOSE:
   {
     s_Running = false;
@@ -58,7 +61,7 @@ void Application::OnEvent(Event &event) {
   case EventType::WINDOW_RESIZED:
   {
     WindowResizeEvent *wre = static_cast<WindowResizeEvent *>(&event);
-    SK_LOG_INFO("Window Resized: {0}, {1}", wre->Width, wre->Height);
+    SK_LOG_INFO("Window Resized: {}, {}", wre.width, wre.height);
     break;
   }
   default:
@@ -66,7 +69,7 @@ void Application::OnEvent(Event &event) {
   }
 }
 
-void Application::Close() {
+void Application::close() {
   s_Running = false;
 }
 

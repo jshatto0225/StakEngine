@@ -8,19 +8,19 @@
 namespace Stak {
 
 struct WindowConfig {
-  i32 Width;
-  i32 Height;
-  const char *Title;
+  i32 width;
+  i32 height;
+  const char *title;
 };
 
 struct WindowSizeData {
-  i32 Width;
-  i32 Height;
+  i32 width;
+  i32 height;
 };
 
 struct WindowPosData {
-  i32 X;
-  i32 Y;
+  i32 x;
+  i32 y;
 };
 
 class Window {
@@ -30,16 +30,16 @@ public:
   Window() = default;
   virtual ~Window() {}
 
-  virtual void Update() = 0;
+  virtual void update() = 0;
 
-  virtual WindowSizeData GetWindowSize() = 0;
-  virtual WindowPosData GetWindowPos() = 0;
+  virtual WindowSizeData getWindowSize() = 0;
+  virtual WindowPosData getWindowPos() = 0;
 
-  virtual void SetEventFn(const EventFn &func) = 0;
+  virtual void setEventFn(const EventFn &func) = 0;
 
-  virtual void *GetNativeHandle() const = 0;
+  virtual void *getNativeHandle() const = 0;
 
-  static Scope<Window> Create(const WindowConfig &cfg);
+  static Scope<Window> create(const WindowConfig &cfg);
 };
 
 } // namespace Stak
