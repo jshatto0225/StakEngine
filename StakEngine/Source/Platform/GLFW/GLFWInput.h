@@ -15,7 +15,7 @@ public:
   bool mouseButtonDownImpl(MouseCode button) const;
 
 private:
-  Ref<Window> m_Window;
+  Ref<Window> mWindow;
 };
 
 } // namespace Stak

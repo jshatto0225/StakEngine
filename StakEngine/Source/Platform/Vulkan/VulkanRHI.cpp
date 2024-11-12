@@ -1,18 +1,18 @@
-#include "VulkanRendererAPI.h"
+#include "VulkanRHI.h"
 
-#include <vector>
-
+#include "VulkanRHIDevice.h"
+#include "VulkanRHIContext.h"
 #include "Log.h"
 
-#ifdef SK_DEBUG
-const bool ENABLE_VALIDATION_LAYERS = true;
-#else
-const bool ENABLE_VALIDATION_LAYERS = false;
+#if defined(SK_GLFW)
+#define GLFW_INCLUDE_VULKAN
+#include <GLFW/glfw3.h>
 #endif
 
-const std::vector<const char *> VALIDATION_LAYERS = {
-  "VK_LAYER_KHRONOS_validation",
-};
+#include <imgui.h>
+#include <backends/imgui_impl_vulkan.h>
+
+namespace Stak {
 
 VKAPI_ATTR VkBool32 VKAPI_CALL vkMessenger(
   VkDebugUtilsMessageSeverityFlagBitsEXT severity,
@@ -40,9 +40,7 @@ VKAPI_ATTR VkBool32 VKAPI_CALL vkMessenger(
   return VK_FALSE;
 }
 
-namespace Stak {
-
-VkResult VulkanRendererAPI::createDebugMessenger(
+VkResult VulkanRHI::createDebugMessenger(
   VkInstance instance,
   const VkDebugUtilsMessengerCreateInfoEXT *info,
   const VkAllocationCallbacks *allocator,
@@ -60,19 +58,7 @@ VkResult VulkanRendererAPI::createDebugMessenger(
   }
 }
 
-VulkanRendererAPI::VulkanRendererAPI(Ref<Window> window, std::string appName) {
-  m_Window = window;
-
-  createInstance(appName);
-  createDevice();
-  createSurface();
-}
-
-VulkanRendererAPI::~VulkanRendererAPI() {
-
-}
-
-void VulkanRendererAPI::createInstance(std::string appName) {
+void VulkanRHI::init() {
   bool extensionsSupported = true;
   u32 layerCount;
   vkEnumerateInstanceLayerProperties(&layerCount, NULL);
@@ -101,7 +87,7 @@ void VulkanRendererAPI::createInstance(std::string appName) {
 
   VkApplicationInfo appInfo = {};
   appInfo.sType = VK_STRUCTURE_TYPE_APPLICATION_INFO;
-  appInfo.pApplicationName = appName.c_str();
+  appInfo.pApplicationName = ""; // TODO
   appInfo.applicationVersion = VK_MAKE_VERSION(1, 0, 0);
   appInfo.pEngineName = "StakEngine";
   appInfo.engineVersion = VK_MAKE_VERSION(1, 0, 0);
@@ -131,51 +117,69 @@ void VulkanRendererAPI::createInstance(std::string appName) {
     instanceInfo.pNext = &debugMessengerInfo;
   }
 
-  std::vector<const char *> extensions = {
-        VK_KHR_SURFACE_EXTENSION_NAME,
-#ifdef SK_DEBUG
-        VK_EXT_DEBUG_UTILS_EXTENSION_NAME,
+#ifdef SK_GLFW
+  u32 glfwExtensionCount = 0;
+  const char **glfwExtensions;
+  glfwExtensions = glfwGetRequiredInstanceExtensions(&glfwExtensionCount);
+
+  std::vector<const char *> extensions(glfwExtensions, glfwExtensions + glfwExtensionCount);
+#else
+  std::vector<const char *> extensions;
 #endif
-  };
+
+  if (ENABLE_VALIDATION_LAYERS) {
+    extensions.push_back(VK_EXT_DEBUG_UTILS_EXTENSION_NAME);
+  }
 
   instanceInfo.enabledExtensionCount = extensions.size();
   instanceInfo.ppEnabledExtensionNames = extensions.data();
 
-  VkResult r = vkCreateInstance(&instanceInfo, NULL, &m_Instance);
+  VkResult r = vkCreateInstance(&instanceInfo, NULL, &mInstance);
 
   if (r != VK_SUCCESS) {
     SK_LOG_ERROR("Failed to create vulkan instance");
     return;
   }
 
-  r = createDebugMessenger(m_Instance, &debugMessengerInfo, NULL, &m_DebugMessenger);
+  r = createDebugMessenger(mInstance, &debugMessengerInfo, NULL, &mDebugMessenger);
   if (r != VK_SUCCESS) {
     SK_LOG_ERROR("Failed to create vulkan debug messenger");
   }
 }
 
-void VulkanRendererAPI::createDevice() {
-
+void VulkanRHI::shutdown() {
+  vkDestroyDebugUtilsMessengerEXT(mInstance, mDebugMessenger, NULL);
+  vkDestroyInstance(mInstance, NULL);
 }
 
-void VulkanRendererAPI::createSurface() {
-
+Ref<IRHIDevice> VulkanRHI::createDevice(Ref<Window> window) {
+  return createRef<VulkanRHIDevice>(mInstance, window);
 }
 
-void VulkanRendererAPI::createImGuiRenderPass() {
+void VulkanRHI::initImGui(Ref<IRHIDevice> device, Ref<IRHIGraphicsContext> context) {
+  Ref<VulkanRHIDevice> vulkanDevice = std::static_pointer_cast<VulkanRHIDevice>(device);
+  Ref<VulkanRHIGraphicsContext> vulkanContext = std::static_pointer_cast<VulkanRHIGraphicsContext>(context);
 
+  ImGui_ImplVulkan_InitInfo initInfo = {};
+
+  initInfo.Instance = mInstance;
+
+  initInfo.PhysicalDevice = vulkanDevice->getPhysicalDevice();
+  initInfo.Device = vulkanDevice->getDevice();
+  initInfo.QueueFamily = vulkanDevice->getGraphicsQueueFamily();
+  initInfo.Queue = vulkanDevice->getGraphicsQueue();
+
+  initInfo.DescriptorPool = vulkanContext->getDescriptorPool();
+  initInfo.RenderPass = vulkanContext->getRenderPass();
+
+  initInfo.MinImageCount = vulkanDevice->getImageCount();
+  initInfo.ImageCount = vulkanDevice->getImageCount();
+
+  ImGui_ImplVulkan_Init(&initInfo);
 }
 
-void VulkanRendererAPI::createImGuiPipelineCache() {
-
-}
-
-void VulkanRendererAPI::createImGuiDescriptorPool() {
-
-}
-
-void VulkanRendererAPI::createImGuiAllocator() {
-
+void VulkanRHI::imGuiNewFrame() {
+  ImGui_ImplVulkan_NewFrame();
 }
 
 } // namespace Stak

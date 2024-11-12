@@ -8,11 +8,11 @@
 
 namespace Stak {
 
-Scope<Input> Input::s_Impl;
+Scope<Input> Input::sImpl;
 
 void Input::init(Ref<Window> window) {
 #if defined(SK_WINDOWS) or defined(SK_LINUX)
-  s_Impl = createScope<GLFWInput>(window);
+  sImpl = createScope<GLFWInput>(window);
 #else
   SK_LOG_CRITICAL("Invalid Input Platform");
   s_Impl = NULL;
@@ -20,7 +20,7 @@ void Input::init(Ref<Window> window) {
 }
 
 Input::MousePosData Input::getMousePos() {
-  return s_Impl->getMousePosImpl();
+  return sImpl->getMousePosImpl();
 }
 
 i32 Input::getMouseX() {
@@ -32,11 +32,11 @@ i32 Input::getMouseY() {
 }
 
 bool Input::keyDown(KeyCode key) {
-  return s_Impl->keyDownImpl(key);
+  return sImpl->keyDownImpl(key);
 }
 
 bool Input::mouseButtonDown(MouseCode button) {
-  return s_Impl->mouseButtonDownImpl(button);
+  return sImpl->mouseButtonDownImpl(button);
 }
 
 } // namespace Stak

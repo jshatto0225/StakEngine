@@ -1,17 +1,27 @@
 #pragma once
 
 #include "Window.h"
-#include "RendererAPI.h"
+#include "RHICore.h"
+#include "IRHIBuffer.h"
+#include "IRHIContext.h"
+#include "IRHIDevice.h"
+#include "IRHIPipeline.h"
+#include "IRHIShader.h"
+#include "IRHITexture.h"
 
 namespace Stak {
 class Renderer {
 public:
-  static void init(Ref<Window> window);
-  static void shutdown();
+  Renderer(Ref<Window> window);
+  ~Renderer();
 
-  static inline Ref<RendererAPI> &getAPI() { return s_API; }
+  void initImGui();
+  void imGuiNewFrame();
+
+  void processWindowChanges(Ref<Window> window);
 
 private:
-  static Ref<RendererAPI> s_API;
+  Scope<IRHI> mRHI;
+  Ref<IRHIDevice> mDevice;
 };
 } // namespace Stak

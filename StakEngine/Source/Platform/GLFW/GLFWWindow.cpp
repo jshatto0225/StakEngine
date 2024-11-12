@@ -1,21 +1,25 @@
 #include "GLFWWindow.h"
 
+#include <imgui.h>
+#include <backends/imgui_impl_glfw.h>
+
 namespace Stak {
 
-bool GLFWWindow::s_GLFWInitialized = false;
+bool GLFWWindow::sGLFWInitialized = false;
 
-GLFWWindow::GLFWWindow(const WindowConfig &cfg) : m_Data({ NULL, 0, 0, cfg.width, cfg.height, cfg.title }), m_NativeHandle(NULL) {
-  if (!s_GLFWInitialized) {
+GLFWWindow::GLFWWindow(const WindowConfig &cfg) : mData({ NULL, 0, 0, cfg.width, cfg.height, cfg.title }), mNativeHandle(NULL) {
+  if (!sGLFWInitialized) {
     if (!glfwInit()) {
       return;
     }
-    s_GLFWInitialized = true;
+    sGLFWInitialized = true;
   }
 
-  m_NativeHandle = glfwCreateWindow(cfg.width, cfg.height, cfg.title, NULL, NULL);
-  glfwSetWindowUserPointer(m_NativeHandle, static_cast<void *>(&m_Data));
+  glfwWindowHint(GLFW_CLIENT_API, GLFW_NO_API);
+  mNativeHandle = glfwCreateWindow(cfg.width, cfg.height, cfg.title, NULL, NULL);
+  glfwSetWindowUserPointer(mNativeHandle, static_cast<void *>(&mData));
 
-  glfwSetWindowSizeCallback(m_NativeHandle, [](GLFWwindow *window, i32 width, i32 height) {
+  glfwSetWindowSizeCallback(mNativeHandle, [](GLFWwindow *window, i32 width, i32 height) {
     WindowData *data = static_cast<WindowData *>(glfwGetWindowUserPointer(window));
     data->width = width;
     data->height = height;
@@ -23,7 +27,7 @@ GLFWWindow::GLFWWindow(const WindowConfig &cfg) : m_Data({ NULL, 0, 0, cfg.width
     data->eventFunction(e);
     });
 
-  glfwSetWindowPosCallback(m_NativeHandle, [](GLFWwindow *window, i32 x, i32 y) {
+  glfwSetWindowPosCallback(mNativeHandle, [](GLFWwindow *window, i32 x, i32 y) {
     WindowData *data = static_cast<WindowData *>(glfwGetWindowUserPointer(window));
     data->x = x;
     data->y = y;
@@ -31,7 +35,7 @@ GLFWWindow::GLFWWindow(const WindowConfig &cfg) : m_Data({ NULL, 0, 0, cfg.width
     data->eventFunction(e);
     });
 
-  glfwSetWindowCloseCallback(m_NativeHandle, [](GLFWwindow *window) {
+  glfwSetWindowCloseCallback(mNativeHandle, [](GLFWwindow *window) {
     WindowData *data = static_cast<WindowData *>(glfwGetWindowUserPointer(window));
     WindowCloseEvent e;
     data->eventFunction(e);
@@ -39,24 +43,32 @@ GLFWWindow::GLFWWindow(const WindowConfig &cfg) : m_Data({ NULL, 0, 0, cfg.width
 }
 
 GLFWWindow::~GLFWWindow() {
-  glfwDestroyWindow(m_NativeHandle);
-  m_NativeHandle = NULL;
+  glfwDestroyWindow(mNativeHandle);
+  mNativeHandle = NULL;
+}
+
+void GLFWWindow::initImGui() {
+  ImGui_ImplGlfw_InitForVulkan(mNativeHandle, true);
+}
+
+void GLFWWindow::imGuiNewFrame() {
+  ImGui_ImplGlfw_NewFrame();
 }
 
 void GLFWWindow::update() {
   glfwPollEvents();
 }
 
-WindowSizeData GLFWWindow::getWindowSize() {
-  return { m_Data.width, m_Data.height };
+WindowSizeData GLFWWindow::getSize() {
+  return { mData.width, mData.height };
 }
 
-WindowPosData GLFWWindow::getWindowPos() {
-  return { m_Data.x, m_Data.y };
+WindowPosData GLFWWindow::getPos() {
+  return { mData.x, mData.y };
 }
 
 void GLFWWindow::setEventFn(const EventFn &func) {
-  m_Data.eventFunction = func;
+  mData.eventFunction = func;
 }
 
 } // namespace Stak

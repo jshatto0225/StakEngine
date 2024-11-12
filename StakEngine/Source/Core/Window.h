@@ -32,12 +32,15 @@ public:
 
   virtual void update() = 0;
 
-  virtual WindowSizeData getWindowSize() = 0;
-  virtual WindowPosData getWindowPos() = 0;
+  virtual WindowSizeData getSize() = 0;
+  virtual WindowPosData getPos() = 0;
 
   virtual void setEventFn(const EventFn &func) = 0;
 
-  virtual void *getNativeHandle() const = 0;
+  virtual OpaqueHandle getNativeHandle() const = 0;
+
+  virtual void initImGui() = 0;
+  virtual void imGuiNewFrame() = 0;
 
   static Scope<Window> create(const WindowConfig &cfg);
 };

@@ -5,12 +5,14 @@
 
 namespace Stak {
 
-Ref<Window> Application::s_Window;
-LayerStack Application::s_LayerStack;
-bool Application::s_Running = false;
+Ref<Window> Application::sWindow;
+LayerStack Application::sLayerStack;
+bool Application::sRunning = false;
+ImGuiLayer *Application::sImGuiLayer;
+Ref<Renderer> Application::sRenderer;
 
 void Application::addLayer(ApplicationLayer *layer) {
-  s_LayerStack.push(layer);
+  sLayerStack.push(layer);
 }
 
 Application::Application(const ApplicationSpec &spec) {
@@ -19,49 +21,58 @@ Application::Application(const ApplicationSpec &spec) {
     spec.windowHeight,
     spec.windowTitle
   };
-  s_Window = Window::create(cfg);
-  s_Window->setEventFn([this](Event &event) {
+  sWindow = Window::create(cfg);
+  sWindow->setEventFn([this](Event &event) {
     return this->onEvent(event);
     });
 
-  if (s_Window) {
+  if (sWindow) {
     SK_LOG_INFO("Window Created");
   }
 
-  Input::init(s_Window);
+  Input::init(sWindow);
 
-  Renderer::init(s_Window);
+  sRenderer = createRef<Renderer>(sWindow);
 
-  addLayer(new ImGuiLayer(s_Window));
+  sImGuiLayer = new ImGuiLayer(sWindow, sRenderer);
 
-  s_Running = true;
+  addLayer(sImGuiLayer);
+
+  sRunning = true;
 }
 
 void Application::run() {
-  while (s_Running) {
-    for (ApplicationLayer *layer : s_LayerStack) {
+  while (sRunning) {
+    for (ApplicationLayer *layer : sLayerStack) {
       layer->update();
     }
 
-    s_Window->update();
+    sImGuiLayer->beginFrame();
+    {
+      for (ApplicationLayer *layer : sLayerStack) {
+        layer->onImGuiRender();
+      }
+    }
+    sImGuiLayer->endFrame();
+
+    sWindow->update();
   }
 }
 
 void Application::onEvent(Event &event) {
-  for (ApplicationLayer *layer : s_LayerStack) {
+  for (ApplicationLayer *layer : sLayerStack) {
     layer->onEvent(event);
   }
 
   switch (event.getType()) {
   case EventType::WINDOW_CLOSE:
   {
-    s_Running = false;
+    sRunning = false;
     break;
   }
   case EventType::WINDOW_RESIZED:
   {
-    WindowResizeEvent *wre = static_cast<WindowResizeEvent *>(&event);
-    SK_LOG_INFO("Window Resized: {}, {}", wre.width, wre.height);
+    sRenderer->processWindowChanges(sWindow);
     break;
   }
   default:
@@ -70,7 +81,7 @@ void Application::onEvent(Event &event) {
 }
 
 void Application::close() {
-  s_Running = false;
+  sRunning = false;
 }
 
 } // namespace Stak

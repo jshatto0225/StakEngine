@@ -22,8 +22,6 @@ project "StakEngine"
 		"Source/ImGui",
 		"External/imgui",
 		"External/spdlog/include",
-		"External/glfw/include",
-		"$(VULKAN_SDK)/include"
 	}
 
 	links {
@@ -33,11 +31,17 @@ project "StakEngine"
 	filter "system:windows"
 		systemversion "latest"
 		defines {
-			"SK_WINDOWS"
+			"SK_WINDOWS",
+			"SK_VULKAN",
+			"SK_GLFW"
 		}
 		links { 
 			"$(VULKAN_SDK)/lib/vulkan-1.lib",
 			"GLFW"
+		}
+		includedirs {
+			"External/glfw/include",
+			"$(VULKAN_SDK)/include"
 		}
 
 	filter "configurations:Debug"

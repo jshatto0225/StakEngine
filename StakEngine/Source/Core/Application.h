@@ -6,6 +6,7 @@
 #include "Event.h"
 #include "Renderer.h"
 #include "Input.h"
+#include "ImGuiLayer.h"
 
 namespace Stak {
 
@@ -25,9 +26,11 @@ public:
   static void close();
 
 private:
-  static Ref<Window> s_Window;
-  static LayerStack s_LayerStack;
-  static bool s_Running;
+  static Ref<Window> sWindow;
+  static Ref<Renderer> sRenderer;
+  static LayerStack sLayerStack;
+  static bool sRunning;
+  static ImGuiLayer *sImGuiLayer;
 };
 
 } // namespace Stak

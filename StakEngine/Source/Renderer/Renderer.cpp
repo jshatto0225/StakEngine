@@ -2,13 +2,25 @@
 
 namespace Stak {
 
-Ref<RendererAPI> Renderer::s_API = NULL;
-
-void Renderer::init(Ref<Window> window) {
-  s_API = RendererAPI::create(window, "APP_NAME");
+Renderer::Renderer(Ref<Window> window) {
+  mRHI = IRHI::create();
+  mDevice = mRHI->createDevice(window);
 }
 
-void Renderer::shutdown() {
+Renderer::~Renderer() {
+}
+
+void Renderer::initImGui() {
+  Ref<IRHIGraphicsContext> context = mDevice->createGraphicsContext();
+  mRHI->initImGui(mDevice, context);
+}
+
+void Renderer::imGuiNewFrame() {
+  mRHI->imGuiNewFrame();
+}
+
+void Renderer::processWindowChanges(Ref<Window> window) {
+  mDevice->processWindowChanges(window);
 }
 
 } // namespace Stak

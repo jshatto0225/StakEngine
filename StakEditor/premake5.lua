@@ -23,8 +23,7 @@ project "StakEditor"
 		"../StakEngine/Source/ImGui",
 		"../StakEngine/External/imgui",
 		"../StakEngine/External/spdlog/include",
-		"../StakEngine/External/glfw/include",
-		"../StakEngine/$(VULKAN_SDK)/include"
+		"../StakEngine/External/glfw/include"
 	}
 
   links {
@@ -33,6 +32,9 @@ project "StakEditor"
 
 	filter "system:windows"
 		systemversion "latest"
+		includedirs {
+			"$(VULKAN_SDK)/include"
+		}
 
 	filter "configurations:Debug"
 		runtime "Debug"

@@ -16,10 +16,13 @@ public:
 
   void update();
 
-  WindowSizeData getWindowSize();
-  WindowPosData getWindowPos();
+  WindowSizeData getSize();
+  WindowPosData getPos();
 
-  inline void *getNativeHandle() const { return static_cast<void *>(m_NativeHandle); }
+  void initImGui();
+  void imGuiNewFrame();
+
+  inline OpaqueHandle getNativeHandle() const { return reinterpret_cast<OpaqueHandle>(mNativeHandle); }
 
   void setEventFn(const EventFn &func);
 
@@ -33,10 +36,10 @@ private:
     std::string title;
   };
 
-  WindowData m_Data;
-  GLFWwindow *m_NativeHandle;
+  WindowData mData;
+  GLFWwindow *mNativeHandle;
 
-  static bool s_GLFWInitialized;
+  static bool sGLFWInitialized;
 };
 
 } // namespace Stak

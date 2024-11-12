@@ -165,7 +165,7 @@ protected:
   virtual bool mouseButtonDownImpl(MouseCode button) const = 0;
 
 private:
-  static Scope<Input> s_Impl;
+  static Scope<Input> sImpl;
 };
 
 } // namespace Stak

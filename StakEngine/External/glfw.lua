@@ -8,8 +8,7 @@ project "GLFW"
 	
 	includedirs { "glfw/include/" }
 
-	files
-	{
+	files {
 		"glfw/include/GLFW/glfw3.h",
 		"glfw/include/GLFW/glfw3native.h",
 		"glfw/src/glfw_config.h",
@@ -32,8 +31,7 @@ project "GLFW"
 		systemversion "latest"
 		staticruntime "On"
 
-		files
-		{
+		files {
 			"glfw/src/x11_init.c",
 			"glfw/src/x11_monitor.c",
 			"glfw/src/x11_window.c",
@@ -48,8 +46,7 @@ project "GLFW"
 			"glfw/src/posix_poll.c"
 		}
 
-		defines
-		{
+		defines {
 			"_GLFW_X11"
 		}
 
@@ -57,8 +54,7 @@ project "GLFW"
 		systemversion "latest"
 		staticruntime "On"
 
-		files
-		{
+		files {
 			"glfw/src/win32_init.c",
 			"glfw/src/win32_joystick.c",
 			"glfw/src/win32_monitor.c",
@@ -71,8 +67,7 @@ project "GLFW"
 			"glfw/src/win32_module.c"
 		}
 
-		defines 
-		{ 
+		defines { 
 			"_GLFW_WIN32",
 			"_CRT_SECURE_NO_WARNINGS"
 		}
