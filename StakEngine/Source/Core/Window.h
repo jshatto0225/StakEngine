@@ -25,7 +25,7 @@ struct WindowPosData {
 
 class Window {
 public:
-  using EventFn = std::function<void(Event &)>;
+  using EventFn = std::function<void(IEvent &)>;
 
   Window() = default;
   virtual ~Window() {}
@@ -41,6 +41,8 @@ public:
 
   virtual void initImGui() = 0;
   virtual void imGuiNewFrame() = 0;
+
+  virtual void shutdownImGui() = 0;
 
   static Scope<Window> create(const WindowConfig &cfg);
 };

@@ -31,16 +31,15 @@ struct VulkanRHIRecipt : public IRHIRecipt {
 
 class VulkanRHI : public IRHI {
 public:
-  VulkanRHI() = default;
-  ~VulkanRHI() = default;
-
-  void init();
-  void shutdown();
+  VulkanRHI();
+  ~VulkanRHI();
 
   Ref<IRHIDevice> createDevice(Ref<Window> window);
 
-  void initImGui(Ref<IRHIDevice> device, Ref<IRHIGraphicsContext> context);
+  void initImGui(Ref<IRHIDevice> device);
   void imGuiNewFrame();
+  void shutdownImGui();
+  void renderImGuiDrawData(ImDrawData *data, Ref<IRHIGraphicsContext> context);
 
 private:
   VkResult createDebugMessenger(

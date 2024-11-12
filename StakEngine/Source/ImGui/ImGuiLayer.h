@@ -9,23 +9,19 @@
 
 namespace Stak {
 
-class ImGuiLayer : public ApplicationLayer {
+class ImGuiLayer : public IApplicationLayer {
 public:
   ImGuiLayer(Ref<Window> window, Ref<Renderer> renderer);
   ~ImGuiLayer();
 
-  void update();
-  void onEvent(Event &event);
+  void onEvent(const IEvent &event);
   void beginFrame();
   void endFrame();
 
 private:
-  void FrameRender(ImDrawData *drawData);
-  void FramePresent();
-
-private:
   Ref<Window> mWindow;
   Ref<Renderer> mRenderer;
+  Ref<IRHIGraphicsContext> mGraphicsContext;
 };
 
 } // namespace Stak

@@ -6,50 +6,54 @@
 
 namespace Stak {
 
-class ApplicationLayer {
+class IApplicationLayer {
 public:
-  virtual ~ApplicationLayer() = default;
+  virtual ~IApplicationLayer() = default;
 
   virtual void onAttach() {}
   virtual void onDetach() {}
   virtual void update() {}
   virtual void fixedUpdate(f32 deltaTime) {}
-  virtual void onEvent(const Event &event) {}
+  virtual void onEvent(const IEvent &event) {}
   virtual void onImGuiRender() {}
 };
 
 class LayerStack {
 public:
   ~LayerStack() {
-    for (ApplicationLayer *layer : mLayers) {
+    clear();
+  }
+
+  inline void clear() {
+    for (IApplicationLayer *layer : mLayers) {
       layer->onDetach();
       delete layer;
     }
   }
 
-  inline void push(ApplicationLayer *layer) {
+  inline void push(IApplicationLayer *layer) {
     mLayers.push_back(layer);
   }
 
-  inline ApplicationLayer *pop() {
-    ApplicationLayer *layer = *mLayers.rbegin();
+  inline IApplicationLayer *pop() {
+    IApplicationLayer *layer = *mLayers.rbegin();
     mLayers.pop_back();
     return layer;
   }
 
-  inline void remove(ApplicationLayer *layer) {
-    std::vector<ApplicationLayer *>::iterator it = std::find(mLayers.begin(), mLayers.end(), layer);
+  inline void remove(IApplicationLayer *layer) {
+    std::vector<IApplicationLayer *>::iterator it = std::find(mLayers.begin(), mLayers.end(), layer);
     if (it != mLayers.end()) {
       layer->onDetach();
       mLayers.erase(it);
     }
   }
 
-  inline std::vector<ApplicationLayer *>::iterator begin() { return mLayers.begin(); }
-  inline std::vector<ApplicationLayer *>::iterator end() { return mLayers.end(); }
+  inline std::vector<IApplicationLayer *>::iterator begin() { return mLayers.begin(); }
+  inline std::vector<IApplicationLayer *>::iterator end() { return mLayers.end(); }
 
 private:
-  std::vector<ApplicationLayer *> mLayers;
+  std::vector<IApplicationLayer *> mLayers;
 };
 
 } // namespace Stak

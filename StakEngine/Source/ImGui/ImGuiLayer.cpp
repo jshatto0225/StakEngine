@@ -16,11 +16,18 @@ ImGuiLayer::ImGuiLayer(Ref<Window> window, Ref<Renderer> renderer) : mWindow(win
   ImGui::StyleColorsDark();
 
   window->initImGui();
-  renderer->initImGui();
+
+  mGraphicsContext = mRenderer->createGraphicsContext();
+
+  mRenderer->initImGui();
 }
 
 ImGuiLayer::~ImGuiLayer() {
+  mRenderer->shutdownImGui();
+  mWindow->shutdownImGui();
 
+  mRenderer = NULL;
+  mWindow = NULL;
 }
 
 void ImGuiLayer::beginFrame() {
@@ -30,31 +37,16 @@ void ImGuiLayer::beginFrame() {
 }
 
 void ImGuiLayer::endFrame() {
-  // Rendering
   ImGui::Render();
   ImDrawData *drawData = ImGui::GetDrawData();
   const bool isMinimized = (drawData->DisplaySize.x <= 0.0f || drawData->DisplaySize.y <= 0.0f);
-
   if (!isMinimized) {
-    FrameRender(drawData);
-    FramePresent();
+    mRenderer->renderImGuiDrawData(drawData, mGraphicsContext);
   }
 }
 
-void ImGuiLayer::FrameRender(ImDrawData *drawData) {
-
-}
-
-void ImGuiLayer::FramePresent() {
-
-}
-
-void ImGuiLayer::update() {
-
-}
-
-void ImGuiLayer::onEvent(Event &event) {
-
+void ImGuiLayer::onEvent(const IEvent &event) {
+  
 }
 
 } // namespace Stak

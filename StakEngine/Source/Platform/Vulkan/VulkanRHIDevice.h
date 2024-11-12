@@ -15,16 +15,19 @@ public:
   ~VulkanRHIDevice();
 
   void processWindowChanges(Ref<Window> window);
-  Ref<IRHIBuffer> createBuffer(BufferDescription &bufferDesc);
-  Ref<IRHITexture> createTexture(TextureDescription &textureDesc);
-  Ref<IRHIShader> createShader(ShaderDescription &shaderDesc);
-  Ref<IRHIPipeline> createPipeline(PipelineDescription &pipelineDesc);
+  Ref<IRHIBuffer> createBuffer(RHIBufferDescription &bufferDesc);
+  Ref<IRHITexture> createTexture(RHITextureDescription &textureDesc);
+  Ref<IRHIShader> createShader(RHIShaderDescription &shaderDesc);
+  Ref<IRHIPipeline> createPipeline(RHIPipelineDescription &pipelineDesc);
   Ref<IRHIGraphicsContext> createGraphicsContext();
 
   Scope<IRHIRecipt> submitWork(Ref<IRHIContext> context);
   void waitOnWork(Scope<IRHIRecipt> recipt);
 
   void present();
+
+public:
+  VkFormat getSwapchainImageFormat() { return mSwapchainImageFormat.format; }
 
 private:
   struct VulkanSwapchainSupport {

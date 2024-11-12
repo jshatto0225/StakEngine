@@ -6,6 +6,10 @@ namespace Stak {
 
 GLFWInput::GLFWInput(Ref<Window> window) : mWindow(window) {}
 
+GLFWInput::~GLFWInput() {
+  mWindow = NULL;
+}
+
 Input::MousePosData GLFWInput::getMousePosImpl() const {
   double x;
   double y;

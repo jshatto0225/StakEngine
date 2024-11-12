@@ -51,6 +51,10 @@ void GLFWWindow::initImGui() {
   ImGui_ImplGlfw_InitForVulkan(mNativeHandle, true);
 }
 
+void GLFWWindow::shutdownImGui() {
+  ImGui_ImplGlfw_Shutdown();
+}
+
 void GLFWWindow::imGuiNewFrame() {
   ImGui_ImplGlfw_NewFrame();
 }

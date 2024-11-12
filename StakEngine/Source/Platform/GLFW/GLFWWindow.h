@@ -26,6 +26,8 @@ public:
 
   void setEventFn(const EventFn &func);
 
+  void shutdownImGui();
+
 private:
   struct WindowData {
     EventFn eventFunction;

@@ -36,6 +36,7 @@ public:
   virtual void setPipeline(Ref<IRHIPipeline> pipeline) = 0;
   virtual void setVertexBuffer(Ref<IRHIBuffer> buffer) = 0;
   virtual void setIndexBuffer(Ref<IRHIBuffer> buffer) = 0;
+  virtual void setViewport(i32 x, i32 y, i32 width, i32 height) = 0;
   virtual void draw() = 0;
 };
 

@@ -11,8 +11,17 @@ bool Application::sRunning = false;
 ImGuiLayer *Application::sImGuiLayer;
 Ref<Renderer> Application::sRenderer;
 
-void Application::addLayer(ApplicationLayer *layer) {
+void Application::addLayer(IApplicationLayer *layer) {
   sLayerStack.push(layer);
+}
+
+Application::~Application() {
+  Input::shutdown();
+  sLayerStack.clear();
+
+  sImGuiLayer = NULL;
+  sRenderer = NULL;
+  sWindow = NULL;
 }
 
 Application::Application(const ApplicationSpec &spec) {
@@ -22,7 +31,7 @@ Application::Application(const ApplicationSpec &spec) {
     spec.windowTitle
   };
   sWindow = Window::create(cfg);
-  sWindow->setEventFn([this](Event &event) {
+  sWindow->setEventFn([this](IEvent &event) {
     return this->onEvent(event);
     });
 
@@ -43,13 +52,13 @@ Application::Application(const ApplicationSpec &spec) {
 
 void Application::run() {
   while (sRunning) {
-    for (ApplicationLayer *layer : sLayerStack) {
+    for (IApplicationLayer *layer : sLayerStack) {
       layer->update();
     }
 
     sImGuiLayer->beginFrame();
     {
-      for (ApplicationLayer *layer : sLayerStack) {
+      for (IApplicationLayer *layer : sLayerStack) {
         layer->onImGuiRender();
       }
     }
@@ -59,18 +68,18 @@ void Application::run() {
   }
 }
 
-void Application::onEvent(Event &event) {
-  for (ApplicationLayer *layer : sLayerStack) {
+void Application::onEvent(IEvent &event) {
+  for (IApplicationLayer *layer : sLayerStack) {
     layer->onEvent(event);
   }
 
   switch (event.getType()) {
-  case EventType::WINDOW_CLOSE:
+  case EEventType::WINDOW_CLOSE:
   {
     sRunning = false;
     break;
   }
-  case EventType::WINDOW_RESIZED:
+  case EEventType::WINDOW_RESIZED:
   {
     sRenderer->processWindowChanges(sWindow);
     break;

@@ -19,10 +19,11 @@ struct ApplicationSpec {
 class Application {
 public:
   Application(const ApplicationSpec &Spec);
+  ~Application();
 
   static void run();
-  static void onEvent(Event &event);
-  static void addLayer(ApplicationLayer *layer);
+  static void onEvent(IEvent &event);
+  static void addLayer(IApplicationLayer *layer);
   static void close();
 
 private:

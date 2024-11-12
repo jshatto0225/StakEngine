@@ -19,6 +19,10 @@ void Input::init(Ref<Window> window) {
 #endif
 }
 
+void Input::shutdown() {
+  sImpl = NULL;
+}
+
 Input::MousePosData Input::getMousePos() {
   return sImpl->getMousePosImpl();
 }

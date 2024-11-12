@@ -405,24 +405,24 @@ void VulkanRHIDevice::processWindowChanges(Ref<Window> window) {
   // TODO: Notify framebuffers that recreation is required
 }
 
-Ref<IRHIBuffer> VulkanRHIDevice::createBuffer(BufferDescription &bufferDesc) {
+Ref<IRHIBuffer> VulkanRHIDevice::createBuffer(RHIBufferDescription &bufferDesc) {
   return createRef<VulkanRHIBuffer>(mDevice, bufferDesc);
 }
 
-Ref<IRHITexture> VulkanRHIDevice::createTexture(TextureDescription &textureDesc) {
+Ref<IRHITexture> VulkanRHIDevice::createTexture(RHITextureDescription &textureDesc) {
   return createRef<VulkanRHITexture>(mDevice, textureDesc);
 }
 
-Ref<IRHIShader> VulkanRHIDevice::createShader(ShaderDescription &shaderDesc) {
+Ref<IRHIShader> VulkanRHIDevice::createShader(RHIShaderDescription &shaderDesc) {
   return createRef<VulkanRHIShader>(mDevice, shaderDesc);
 }
 
-Ref<IRHIPipeline> VulkanRHIDevice::createPipeline(PipelineDescription &pipelineDesc) {
+Ref<IRHIPipeline> VulkanRHIDevice::createPipeline(RHIPipelineDescription &pipelineDesc) {
   return createRef<VulkanRHIPipeline>(mDevice, pipelineDesc);
 }
 
 Ref<IRHIGraphicsContext> VulkanRHIDevice::createGraphicsContext() {
-  return createRef<VulkanRHIGraphicsContext>(mDevice);
+  return createRef<VulkanRHIGraphicsContext>(mDevice, mGraphicsQueueFamily);
 }
 
 Scope<IRHIRecipt> VulkanRHIDevice::submitWork(Ref<IRHIContext> context) {

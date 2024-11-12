@@ -9,7 +9,7 @@ namespace Stak {
 
 class VulkanRHIGraphicsContext : public IRHIGraphicsContext {
 public:
-  VulkanRHIGraphicsContext(VkDevice device);
+  VulkanRHIGraphicsContext(VkDevice device, u32 graphicsQueueFamily);
   ~VulkanRHIGraphicsContext();
 
   void begin();
@@ -19,20 +19,20 @@ public:
   void setPipeline(Ref<IRHIPipeline> pipeline);
   void setVertexBuffer(Ref<IRHIBuffer> buffer);
   void setIndexBuffer(Ref<IRHIBuffer> buffer);
+  void setViewport(i32 x, i32 y, i32 width, i32 height);
   void draw();
 
   inline ERHIContextType getType() { return ERHIContextType::GRAPHICS; }
 
-  inline std::vector<VkFence> getFences() { return mFences; }
 
 public:
-  VkDescriptorPool getDescriptorPool() { return mPipeline->getDescriptorPool(); }
-  VkRenderPass getRenderPass() { return mPipeline->getRenderPass(); }
+  inline std::vector<VkFence> getFences() { return mFences; }
+  inline VkCommandBuffer getCommandBuffer() { return mCommandBuffer; }
 
 private:
-  Ref<VulkanRHIPipeline> mPipeline;
-  Ref<VulkanRHIBuffer> mVertexBuffer;
-  Ref<VulkanRHIBuffer> mIndexBuffer;
+  VkCommandBuffer mCommandBuffer;
+  VkCommandPool mCommandPool;
+  VkDevice mDevice;
 
 private:
   std::vector<VkFence> mFences;

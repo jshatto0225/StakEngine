@@ -158,6 +158,7 @@ public:
   static i32 getMouseY();
   static bool keyDown(KeyCode key);
   static bool mouseButtonDown(MouseCode button);
+  static void shutdown();
 
 protected:
   virtual MousePosData getMousePosImpl() const = 0;

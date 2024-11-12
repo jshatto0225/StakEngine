@@ -4,7 +4,7 @@
 
 #include "Editor.h"
 
-class EditorLayer : public Stak::ApplicationLayer {
+class EditorLayer : public Stak::IApplicationLayer {
 public:
   EditorLayer(Editor *editor);
   void update();

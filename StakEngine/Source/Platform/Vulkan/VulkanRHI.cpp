@@ -58,7 +58,7 @@ VkResult VulkanRHI::createDebugMessenger(
   }
 }
 
-void VulkanRHI::init() {
+VulkanRHI::VulkanRHI() {
   bool extensionsSupported = true;
   u32 layerCount;
   vkEnumerateInstanceLayerProperties(&layerCount, NULL);
@@ -147,7 +147,7 @@ void VulkanRHI::init() {
   }
 }
 
-void VulkanRHI::shutdown() {
+VulkanRHI::~VulkanRHI() {
   vkDestroyDebugUtilsMessengerEXT(mInstance, mDebugMessenger, NULL);
   vkDestroyInstance(mInstance, NULL);
 }
@@ -156,9 +156,8 @@ Ref<IRHIDevice> VulkanRHI::createDevice(Ref<Window> window) {
   return createRef<VulkanRHIDevice>(mInstance, window);
 }
 
-void VulkanRHI::initImGui(Ref<IRHIDevice> device, Ref<IRHIGraphicsContext> context) {
+void VulkanRHI::initImGui(Ref<IRHIDevice> device) {
   Ref<VulkanRHIDevice> vulkanDevice = std::static_pointer_cast<VulkanRHIDevice>(device);
-  Ref<VulkanRHIGraphicsContext> vulkanContext = std::static_pointer_cast<VulkanRHIGraphicsContext>(context);
 
   ImGui_ImplVulkan_InitInfo initInfo = {};
 
@@ -169,8 +168,84 @@ void VulkanRHI::initImGui(Ref<IRHIDevice> device, Ref<IRHIGraphicsContext> conte
   initInfo.QueueFamily = vulkanDevice->getGraphicsQueueFamily();
   initInfo.Queue = vulkanDevice->getGraphicsQueue();
 
-  initInfo.DescriptorPool = vulkanContext->getDescriptorPool();
-  initInfo.RenderPass = vulkanContext->getRenderPass();
+  VkDescriptorPoolSize poolSizes[] = {
+    { VK_DESCRIPTOR_TYPE_SAMPLER, 1000 },
+    { VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, 1000 },
+    { VK_DESCRIPTOR_TYPE_SAMPLED_IMAGE, 1000 },
+    { VK_DESCRIPTOR_TYPE_STORAGE_IMAGE, 1000 },
+    { VK_DESCRIPTOR_TYPE_UNIFORM_TEXEL_BUFFER, 1000 },
+    { VK_DESCRIPTOR_TYPE_STORAGE_TEXEL_BUFFER, 1000 },
+    { VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, 1000 },
+    { VK_DESCRIPTOR_TYPE_STORAGE_BUFFER, 1000 },
+    { VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER_DYNAMIC, 1000 },
+    { VK_DESCRIPTOR_TYPE_STORAGE_BUFFER_DYNAMIC, 1000 },
+    { VK_DESCRIPTOR_TYPE_INPUT_ATTACHMENT, 1000 }
+  };
+
+  VkDescriptorPoolCreateInfo poolInfo = {};
+  poolInfo.sType = VK_STRUCTURE_TYPE_DESCRIPTOR_POOL_CREATE_INFO;
+  poolInfo.flags = VK_DESCRIPTOR_POOL_CREATE_FREE_DESCRIPTOR_SET_BIT;
+  poolInfo.maxSets = 1000;
+  poolInfo.poolSizeCount = (uint32_t)std::size(poolSizes);
+  poolInfo.pPoolSizes = poolSizes;
+
+  VkDescriptorPool imguiPool = {};
+  VkResult r = vkCreateDescriptorPool(vulkanDevice->getDevice(), &poolInfo, nullptr, &imguiPool);
+  if (r != VK_SUCCESS) {
+    SK_LOG_ERROR("Failed to create imgui descriptor pool");
+  }
+  initInfo.DescriptorPool = imguiPool;
+
+  VkRenderPass imGuiRenderPass = {};
+
+  VkAttachmentDescription colorAttachment = {};
+  colorAttachment.format = vulkanDevice->getSwapchainImageFormat();
+  colorAttachment.samples = VK_SAMPLE_COUNT_1_BIT;
+  colorAttachment.loadOp = VK_ATTACHMENT_LOAD_OP_CLEAR;
+  colorAttachment.storeOp = VK_ATTACHMENT_STORE_OP_STORE;
+  colorAttachment.stencilLoadOp = VK_ATTACHMENT_LOAD_OP_DONT_CARE;
+  colorAttachment.stencilStoreOp = VK_ATTACHMENT_STORE_OP_DONT_CARE;
+  colorAttachment.initialLayout = VK_IMAGE_LAYOUT_UNDEFINED;
+  colorAttachment.finalLayout = VK_IMAGE_LAYOUT_PRESENT_SRC_KHR;
+
+  VkAttachmentReference colorAttachmentRef = {};
+  colorAttachmentRef.attachment = 0;
+  colorAttachmentRef.layout = VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL;
+
+  VkSubpassDescription subpass = { 0 };
+  subpass.pipelineBindPoint = VK_PIPELINE_BIND_POINT_GRAPHICS;
+  subpass.colorAttachmentCount = 1;
+  subpass.pColorAttachments = &colorAttachmentRef;
+
+  VkSubpassDependency dependency = { 0 };
+  dependency.srcSubpass = VK_SUBPASS_EXTERNAL;
+  dependency.dstSubpass = 0;
+  dependency.srcStageMask = VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT;
+  dependency.srcAccessMask = 0;
+  dependency.dstStageMask = VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT;
+  dependency.dstAccessMask = VK_ACCESS_COLOR_ATTACHMENT_WRITE_BIT;
+
+  VkRenderPassCreateInfo renderPassInfo = {};
+  renderPassInfo.sType = VK_STRUCTURE_TYPE_RENDER_PASS_CREATE_INFO;
+  renderPassInfo.attachmentCount = 1;
+  renderPassInfo.pAttachments = &colorAttachment;
+  renderPassInfo.subpassCount = 1;
+  renderPassInfo.pSubpasses = &subpass;
+  renderPassInfo.dependencyCount = 1;
+  renderPassInfo.pDependencies = &dependency;
+
+  r = vkCreateRenderPass(
+    vulkanDevice->getDevice(),
+    &renderPassInfo,
+    NULL,
+    &imGuiRenderPass
+  );
+
+  if (r != VK_SUCCESS) {
+    SK_LOG_ERROR("Failed to create imgui render pass");
+  }
+
+  initInfo.RenderPass = imGuiRenderPass;
 
   initInfo.MinImageCount = vulkanDevice->getImageCount();
   initInfo.ImageCount = vulkanDevice->getImageCount();
@@ -178,8 +253,17 @@ void VulkanRHI::initImGui(Ref<IRHIDevice> device, Ref<IRHIGraphicsContext> conte
   ImGui_ImplVulkan_Init(&initInfo);
 }
 
+void VulkanRHI::shutdownImGui() {
+  ImGui_ImplVulkan_Shutdown();
+}
+
 void VulkanRHI::imGuiNewFrame() {
   ImGui_ImplVulkan_NewFrame();
+}
+
+void VulkanRHI::renderImGuiDrawData(ImDrawData *data, Ref<IRHIGraphicsContext> context) {
+  Ref<VulkanRHIGraphicsContext> vulkanContext = std::static_pointer_cast<VulkanRHIGraphicsContext>(context);
+  ImGui_ImplVulkan_RenderDrawData(data, vulkanContext->getCommandBuffer());
 }
 
 } // namespace Stak
