@@ -15,11 +15,13 @@ public:
   virtual ~IRHIDevice() = default;
 
   virtual void processWindowChanges(Ref<Window> window) = 0;
-  virtual Ref<IRHIBuffer> createBuffer(RHIBufferDescription &bufferDesc) = 0;
-  virtual Ref<IRHITexture> createTexture(RHITextureDescription &textureDesc) = 0;
-  virtual Ref<IRHIShader> createShader(RHIShaderDescription &shaderDesc) = 0;
-  virtual Ref<IRHIPipeline> createPipeline(RHIPipelineDescription &pipelineDesc) = 0;
+  virtual Ref<IRHIBuffer> createBuffer(const RHIBufferDescription &bufferDesc) = 0;
+  virtual Ref<IRHITexture> createTexture(const RHITextureDescription &textureDesc) = 0;
+  virtual Ref<IRHIShader> createShader(const RHIShaderDescription &shaderDesc) = 0;
+  virtual Ref<IRHIPipeline> createPipeline(const RHIPipelineDescription &pipelineDesc) = 0;
   virtual Ref<IRHIGraphicsContext> createGraphicsContext() = 0;
+  virtual Ref<IRHIComputeContext> createComputeContext() = 0;
+  virtual Ref<IRHIUploadContext> createUploadContext() = 0;
 
   virtual Scope<IRHIRecipt> submitWork(Ref<IRHIContext> context) = 0;
   virtual void waitOnWork(Scope<IRHIRecipt> recipt) = 0;

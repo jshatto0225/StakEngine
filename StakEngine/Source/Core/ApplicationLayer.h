@@ -25,19 +25,20 @@ public:
   }
 
   inline void clear() {
-    for (IApplicationLayer *layer : mLayers) {
-      layer->onDetach();
-      delete layer;
+    while (mLayers.size() > 0) {
+      delete pop();
     }
   }
 
   inline void push(IApplicationLayer *layer) {
     mLayers.push_back(layer);
+    layer->onAttach();
   }
 
   inline IApplicationLayer *pop() {
     IApplicationLayer *layer = *mLayers.rbegin();
     mLayers.pop_back();
+    layer->onDetach();
     return layer;
   }
 
@@ -46,6 +47,7 @@ public:
     if (it != mLayers.end()) {
       layer->onDetach();
       mLayers.erase(it);
+      delete layer;
     }
   }
 

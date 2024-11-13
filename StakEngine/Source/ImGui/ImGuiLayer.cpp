@@ -41,7 +41,9 @@ void ImGuiLayer::endFrame() {
   ImDrawData *drawData = ImGui::GetDrawData();
   const bool isMinimized = (drawData->DisplaySize.x <= 0.0f || drawData->DisplaySize.y <= 0.0f);
   if (!isMinimized) {
+    mGraphicsContext->begin();
     mRenderer->renderImGuiDrawData(drawData, mGraphicsContext);
+    mGraphicsContext->end();
   }
 }
 

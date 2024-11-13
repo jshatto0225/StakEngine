@@ -15,11 +15,13 @@ public:
   ~VulkanRHIDevice();
 
   void processWindowChanges(Ref<Window> window);
-  Ref<IRHIBuffer> createBuffer(RHIBufferDescription &bufferDesc);
-  Ref<IRHITexture> createTexture(RHITextureDescription &textureDesc);
-  Ref<IRHIShader> createShader(RHIShaderDescription &shaderDesc);
-  Ref<IRHIPipeline> createPipeline(RHIPipelineDescription &pipelineDesc);
+  Ref<IRHIBuffer> createBuffer(const RHIBufferDescription &bufferDesc);
+  Ref<IRHITexture> createTexture(const RHITextureDescription &textureDesc);
+  Ref<IRHIShader> createShader(const RHIShaderDescription &shaderDesc);
+  Ref<IRHIPipeline> createPipeline(const RHIPipelineDescription &pipelineDesc);
   Ref<IRHIGraphicsContext> createGraphicsContext();
+  Ref<IRHIComputeContext> createComputeContext();
+  Ref<IRHIUploadContext> createUploadContext();
 
   Scope<IRHIRecipt> submitWork(Ref<IRHIContext> context);
   void waitOnWork(Scope<IRHIRecipt> recipt);
@@ -70,6 +72,7 @@ private:
   std::vector<VkImage> mSwapchainImages;
   VkSurfaceFormatKHR mSwapchainImageFormat;
   std::vector<VkImageView> mSwapchainImageViews;
+  VkCommandPool mCommandPool;
 };
 
 } // namespace Stak

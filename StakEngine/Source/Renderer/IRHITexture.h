@@ -2,33 +2,33 @@
 
 #include "Types.h"
 #include "IRHIShader.h"
+#include "RHICore.h"
 
 namespace Stak {
 
-enum class ERHIImageFormat {
-  UNORM,
-  SRGB
+enum class ERHIAttachmentType {
+  NONE,
+  COLOR,
+  DEPTH,
+  STENCIL,
+  RESOLVE
 };
 
-enum class ERHITextureType {
-  SAMPLER,
-  RENDER_TARGET
+enum class ERHITextureUsage {
+  NONE,
+  SAMPLED,
+  STORAGE,
+  TRANSFER_SRC,
+  TRANSFER_DST,
 };
 
 struct RHITextureDescription {
   i32 width;
   i32 height;
-  ERHIDataFormat dataFormat;
-  ERHIImageFormat imageFormat;
+  ERHIFormat dataFormat;
   ERHIShaderStage stage;
-};
-
-enum class ETextureUsage {
-  None,
-  Sampled,
-  Storage,
-  TransferSrc,
-  TransferDst,
+  ERHITextureUsage usage;
+  ERHIAttachmentType attachmentType;
 };
 
 class IRHITexture {
@@ -42,8 +42,8 @@ public:
 
   virtual TextureSizeData getSize() = 0;
   virtual void setSize(i32 x, i32 y) = 0;
-  virtual void setUsage(ETextureUsage usage) = 0;
-  virtual ETextureUsage getUsage() = 0;
+  virtual void setUsage(ERHITextureUsage usage) = 0;
+  virtual ERHITextureUsage getUsage() = 0;
 };
 
 } // namespace Stak

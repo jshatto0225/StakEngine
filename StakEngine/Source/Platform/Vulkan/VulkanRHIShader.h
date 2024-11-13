@@ -7,7 +7,8 @@ namespace Stak {
 
 class VulkanRHIShader : public IRHIShader {
 public:
-  VulkanRHIShader(VkDevice device, RHIShaderDescription &desc);
+  VulkanRHIShader(VkDevice device, const RHIShaderDescription &desc);
+  ~VulkanRHIShader();
 };
 
 } // namespace Stak

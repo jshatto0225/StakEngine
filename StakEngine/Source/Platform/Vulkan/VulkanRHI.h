@@ -48,10 +48,20 @@ private:
     const VkAllocationCallbacks *allocator,
     VkDebugUtilsMessengerEXT *messenger
   );
+  void destroyDebugMessenger(
+    VkInstance instance,
+    VkDebugUtilsMessengerEXT messenger,
+    const VkAllocationCallbacks *allocator
+  );
 
 private:
   VkInstance mInstance;
   VkDebugUtilsMessengerEXT mDebugMessenger;
+  
+private:
+  VkDevice mImGuiDevice;
+  VkRenderPass mImGuiRenderPass;
+  VkDescriptorPool mImGuiDescriptorPool;
 };
 
 } // namespace Stak

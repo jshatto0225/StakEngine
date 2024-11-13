@@ -5,8 +5,9 @@
 namespace Stak {
 
 enum class ERHIShaderStage {
+  NONE,
   VERTEX,
-  FRAGMENT
+  FRAGMENT,
 };
 
 struct RHIShaderDescription {

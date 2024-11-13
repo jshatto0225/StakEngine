@@ -6,7 +6,7 @@
 
 #include "Log.h"
 #include "VulkanRHI.h"
-#include "VulkanbRHIBuffer.h"
+#include "VulkanRHIBuffer.h"
 #include "VulkanRHITexture.h"
 #include "VulkanRHIShader.h"
 #include "VulkanRHIPipeline.h"
@@ -14,7 +14,8 @@
 
 namespace Stak {
 
-VulkanRHIDevice::VulkanRHIDevice(VkInstance instance, Ref<Window> window) : mInstance(instance) {
+VulkanRHIDevice::VulkanRHIDevice(VkInstance instance, Ref<Window> window) {
+  mInstance = instance;
   // SURFACE
 #ifdef SK_GLFW
   VkResult r = glfwCreateWindowSurface(
@@ -157,10 +158,45 @@ VulkanRHIDevice::VulkanRHIDevice(VkInstance instance, Ref<Window> window) : mIns
   mGraphicsQueueFamily = indices.graphicsFamily.value();
 
   createSwapchain(window);
+  createImageViews();
+
+  // For one time command buffers
+  VkCommandPoolCreateInfo poolInfo = {};
+  poolInfo.sType = VK_STRUCTURE_TYPE_COMMAND_POOL_CREATE_INFO;
+  poolInfo.flags = VK_COMMAND_POOL_CREATE_RESET_COMMAND_BUFFER_BIT;
+  poolInfo.queueFamilyIndex = mGraphicsQueueFamily;
+
+  r = vkCreateCommandPool(
+    mDevice,
+    &poolInfo,
+    NULL,
+    &mCommandPool
+  );
+  if (r != VK_SUCCESS) {
+    SK_LOG_ERROR("Failed to create command pool");
+  }
 }
 
 VulkanRHIDevice::~VulkanRHIDevice() {
+  vkDeviceWaitIdle(mDevice);
+
+  vkDestroyCommandPool(mDevice, mCommandPool, NULL);
+
+  for (u32 i = 0; i < mSwapchainImages.size(); i++) {
+    vkDestroyImageView(
+      mDevice,
+      mSwapchainImageViews[i],
+      NULL
+    );
+  }
+
+  vkDestroySwapchainKHR(
+    mDevice,
+    mSwapchain,
+    NULL
+  );
   vkDestroySurfaceKHR(mInstance, mSurface, NULL);
+  vkDestroyDevice(mDevice, NULL);
 }
 
 void VulkanRHIDevice::createSwapchain(Ref<Window> window) {
@@ -405,24 +441,32 @@ void VulkanRHIDevice::processWindowChanges(Ref<Window> window) {
   // TODO: Notify framebuffers that recreation is required
 }
 
-Ref<IRHIBuffer> VulkanRHIDevice::createBuffer(RHIBufferDescription &bufferDesc) {
-  return createRef<VulkanRHIBuffer>(mDevice, bufferDesc);
+Ref<IRHIBuffer> VulkanRHIDevice::createBuffer(const RHIBufferDescription &bufferDesc) {
+  return createRef<VulkanRHIBuffer>(mDevice, mPhysicalDevice, bufferDesc);
 }
 
-Ref<IRHITexture> VulkanRHIDevice::createTexture(RHITextureDescription &textureDesc) {
+Ref<IRHITexture> VulkanRHIDevice::createTexture(const RHITextureDescription &textureDesc) {
   return createRef<VulkanRHITexture>(mDevice, textureDesc);
 }
 
-Ref<IRHIShader> VulkanRHIDevice::createShader(RHIShaderDescription &shaderDesc) {
+Ref<IRHIShader> VulkanRHIDevice::createShader(const RHIShaderDescription &shaderDesc) {
   return createRef<VulkanRHIShader>(mDevice, shaderDesc);
 }
 
-Ref<IRHIPipeline> VulkanRHIDevice::createPipeline(RHIPipelineDescription &pipelineDesc) {
+Ref<IRHIPipeline> VulkanRHIDevice::createPipeline(const RHIPipelineDescription &pipelineDesc) {
   return createRef<VulkanRHIPipeline>(mDevice, pipelineDesc);
 }
 
 Ref<IRHIGraphicsContext> VulkanRHIDevice::createGraphicsContext() {
   return createRef<VulkanRHIGraphicsContext>(mDevice, mGraphicsQueueFamily);
+}
+
+Ref<IRHIComputeContext> VulkanRHIDevice::createComputeContext() {
+  return createRef<VulkanRHIComputeContext>();
+}
+
+Ref<IRHIUploadContext> VulkanRHIDevice::createUploadContext() {
+  return createRef<VulkanRHIUploadContext>();
 }
 
 Scope<IRHIRecipt> VulkanRHIDevice::submitWork(Ref<IRHIContext> context) {

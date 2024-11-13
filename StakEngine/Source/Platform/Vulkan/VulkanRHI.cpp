@@ -58,7 +58,20 @@ VkResult VulkanRHI::createDebugMessenger(
   }
 }
 
-VulkanRHI::VulkanRHI() {
+void VulkanRHI::destroyDebugMessenger(
+  VkInstance instance,
+  VkDebugUtilsMessengerEXT messenger,
+  const VkAllocationCallbacks *allocator
+) {
+  PFN_vkDestroyDebugUtilsMessengerEXT func =
+    (PFN_vkDestroyDebugUtilsMessengerEXT)
+    vkGetInstanceProcAddr(instance, "vkDestroyDebugUtilsMessengerEXT");
+  if (func != NULL) {
+    func(instance, messenger, allocator);
+  }
+}
+
+VulkanRHI::VulkanRHI() : mDebugMessenger(VK_NULL_HANDLE) {
   bool extensionsSupported = true;
   u32 layerCount;
   vkEnumerateInstanceLayerProperties(&layerCount, NULL);
@@ -148,7 +161,7 @@ VulkanRHI::VulkanRHI() {
 }
 
 VulkanRHI::~VulkanRHI() {
-  vkDestroyDebugUtilsMessengerEXT(mInstance, mDebugMessenger, NULL);
+  destroyDebugMessenger(mInstance, mDebugMessenger, NULL);
   vkDestroyInstance(mInstance, NULL);
 }
 
@@ -251,10 +264,17 @@ void VulkanRHI::initImGui(Ref<IRHIDevice> device) {
   initInfo.ImageCount = vulkanDevice->getImageCount();
 
   ImGui_ImplVulkan_Init(&initInfo);
+
+  mImGuiRenderPass = imGuiRenderPass;
+  mImGuiDescriptorPool = imguiPool;
+  mImGuiDevice = vulkanDevice->getDevice();
 }
 
 void VulkanRHI::shutdownImGui() {
   ImGui_ImplVulkan_Shutdown();
+
+  vkDestroyRenderPass(mImGuiDevice, mImGuiRenderPass, NULL);
+  vkDestroyDescriptorPool(mImGuiDevice, mImGuiDescriptorPool, NULL);
 }
 
 void VulkanRHI::imGuiNewFrame() {

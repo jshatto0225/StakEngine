@@ -132,26 +132,6 @@ struct RHIDepthStencilState {
   ERHIComparisonFunc backFaceStencilCompareFunc;
 };
 
-enum class ERHIAttachmentType {
-  COLOR,
-  DEPTH,
-  STENCIL,
-  RESOLVE
-};
-
-enum class RHIResourceUsage {
-  INPUT,
-  OUTPUT,
-  INPUT_OUTPUT
-};
-
-struct RHIRenderPassAttachment {
-  RHIResourceUsage usage;
-  ERHIAttachmentType type;
-  ERHIDataFormat format;
-  bool isWritable;
-};
-
 struct RHIPipelineDescription {
   Ref<IRHIBuffer> vertexInput;
   Ref<IRHIShader> vertexShader;
@@ -165,7 +145,6 @@ struct RHIPipelineDescription {
   RHIColorBlendState blending;
   RHIDepthStencilState depthStencil;
   ERHITopology topology;
-  std::unordered_map<u32, RHIRenderPassAttachment> renderPassAttachments;
 
   std::vector<IRHITexture> textures;
   std::vector<IRHIBuffer> buffers;
@@ -177,7 +156,7 @@ class IRHIPipeline {
 public:
   virtual ~IRHIPipeline() = default;
 
-  void setAttachment(u32 id, Ref<IRHITexture> attachment);
+  virtual void bind() = 0;
 };
 
 } // namespace Stak

@@ -2,7 +2,7 @@
 
 #include "IRHIContext.h"
 #include "VulkanRHIPipeline.h"
-#include "VulkanbRHIBuffer.h"
+#include "VulkanRHIBuffer.h"
 #include "VulkanRHITexture.h"
 
 namespace Stak {
@@ -33,15 +33,17 @@ private:
   VkCommandBuffer mCommandBuffer;
   VkCommandPool mCommandPool;
   VkDevice mDevice;
-
-private:
   std::vector<VkFence> mFences;
 };
 
-class VulkanRHIComputeContext : public IRHIContext {
+class VulkanRHIComputeContext : public IRHIComputeContext {
 public:
   VulkanRHIComputeContext();
   ~VulkanRHIComputeContext();
+
+  void begin();
+  void end();
+  void resourceBarrier(ResourceBarrierDescription &barrierDesc);
 
   void setPipeline(Ref<IRHIPipeline> pipeline);
   void dispatch();
@@ -54,10 +56,14 @@ private:
   std::vector<VkFence> mFences;
 };
 
-class VulkanRHIUploadContext : public IRHIContext {
+class VulkanRHIUploadContext : public IRHIUploadContext {
 public:
   VulkanRHIUploadContext();
   ~VulkanRHIUploadContext();
+
+  void begin();
+  void end();
+  void resourceBarrier(ResourceBarrierDescription &barrierDesc);
 
   void uploadBuffer(Ref<IRHIBuffer> buffer, void *data);
   void uploadTexture(Ref<IRHITexture> texture, void *data);
