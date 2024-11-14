@@ -19,6 +19,7 @@ project "StakEngine"
 		"Source/Platform/GLFW",
 		"Source/Platform/Vulkan",
 		"Source/Renderer",
+		"Source/RHI",
 		"Source/ImGui",
 		"External/imgui",
 		"External/spdlog/include",

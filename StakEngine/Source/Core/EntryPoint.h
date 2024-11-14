@@ -1,23 +1,23 @@
 #pragma once
 
-#include "Application.h"
-#include "Log.h"
+#include "FApplication.h"
+#include "FLog.h"
 #include "Types.h"
 
-extern Stak::Application *createApplication();
+extern TRef<FApplication> CreateApplication();
 
-inline i32 stakMain() {
-  Stak::Log::init();
+inline FSInt32 StakMain() {
+  FLog::Init();
 
-  Stak::Application *app = createApplication();
-  app->run();
+  TRef<FApplication> App = CreateApplication();
+  App->Run();
 
-  delete app;
+  App = NULL;
 
   return 0;
 }
 
 int main(int argc, char **argv) {
-  return stakMain();
+  return StakMain();
 }
 

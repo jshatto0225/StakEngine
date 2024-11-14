@@ -4,10 +4,13 @@
 
 #include "Editor.h"
 
-class EditorLayer : public Stak::IApplicationLayer {
+class FEditorLayer final : public IApplicationLayer {
 public:
-  EditorLayer(Editor *editor);
-  void update();
+  FEditorLayer(TRef<const IInput> Input);
+
+  void Update() override;
+  void OnImGuiRender() override;
+
 private:
-  Editor *m_Editor;
+  TRef<const IInput> mInput;
 };
