@@ -10,7 +10,7 @@
 
 class FVulkanRHIDevice final : public IRHIDevice {
 public:
-  FVulkanRHIDevice(TRef<IRHIInstance> Instance, TRef<IWindow> Window);
+  FVulkanRHIDevice(TRef<FVulkanRHIInstance> Instance, TRef<IWindow> Window);
   ~FVulkanRHIDevice();
 
 public:

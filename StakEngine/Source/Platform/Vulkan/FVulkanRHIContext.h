@@ -3,15 +3,15 @@
 #include "IRHIContext.h"
 #include "FVulkanRHIDevice.h"
 
-class VulkanRHIGraphicsContext final : public IRHIGraphicsContext {
+class FVulkanRHIGraphicsContext final : public IRHIGraphicsContext {
 public:
-  VulkanRHIGraphicsContext(TRef<IRHIDevice> Device);
-  ~VulkanRHIGraphicsContext();
+  FVulkanRHIGraphicsContext(TRef<FVulkanRHIDevice> Device);
+  ~FVulkanRHIGraphicsContext();
 
   void Begin();
   void End();
 
-  void SetRenderPass(TRef<IRHIRenderPass> RenderPass);
+  void SetRenderPass(TRef<IRHIRenderPass> RenderPass, FRHIRenderArea RenderArea);
   void SetPipeline(TRef<IRHIPipeline> Pipeline);
   void SetVertexBuffer(TRef<IRHIBuffer> Buffer);
   void SetIndexBuffer(TRef<IRHIBuffer> Buffer);
@@ -26,14 +26,14 @@ private:
   VkCommandBuffer mCommandBuffer;
 };
 
-class VulkanRHIComputeContext final : public IRHIComputeContext {
+class FVulkanRHIComputeContext final : public IRHIComputeContext {
 public:
-  VulkanRHIComputeContext(TRef<IRHIDevice> Device);
-  ~VulkanRHIComputeContext();
+  FVulkanRHIComputeContext(TRef<IRHIDevice> Device);
+  ~FVulkanRHIComputeContext();
 };
 
-class VulkanRHIUploadContext final : public IRHIUploadContext {
+class FVulkanRHIUploadContext final : public IRHIUploadContext {
 public:
-  VulkanRHIUploadContext(TRef<IRHIDevice> Device);
-  ~VulkanRHIUploadContext();
+  FVulkanRHIUploadContext(TRef<IRHIDevice> Device);
+  ~FVulkanRHIUploadContext();
 };

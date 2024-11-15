@@ -20,9 +20,9 @@ const std::vector<const char *> DEVICE_EXTENSIONS = {
   VK_KHR_SWAPCHAIN_EXTENSION_NAME
 };
 
-class VulkanRHIGraphicsContext;
-class VulkanRHIComputeContext;
-class VulkanRHIUploadContext;
+class FVulkanRHIGraphicsContext;
+class FVulkanRHIComputeContext;
+class FVulkanRHIUploadContext;
 
 class FVulkanRHIInstance final : public IRHIInstance {
 public:

@@ -4,8 +4,24 @@
 #include "IWindow.h"
 
 #include <imgui.h>
+#include <map>
 
 #define MAX_FRAMES_IN_FLIGHT 2
+
+class IRHIContext;
+class IRHIGraphicsContext;
+class IRHIComputeContext;
+class IRHIUploadContext;
+class IRHIDevice;
+class IRHIInstance;
+class IRHIPipeline;
+class IRHIRenderPass;
+class IRHIResource;
+class IRHIBuffer;
+class IRHITexture;
+class IRHIShader;
+class IRHISyncObject;
+class IRHIFramebuffer;
 
 enum class ERHIFormat {
   R8_SINT,
@@ -34,78 +50,50 @@ enum class ERHIFormat {
   R16_FLOAT,
   R16_UNORM,
   R16_SNORM,
-  R16_SRGB,
   R16G16_SINT,
   R16G16_UINT,
   R16G16_FLOAT,
   R16G16_UNORM,
-  R16G16_DNORM,
-  R16G16_SRGB,
+  R16G16_SNORM,
   R16G16B16_SINT,
   R16G16B16_UINT,
   R16G16B16_FLOAT,
   R16G16B16_UNORM,
   R16G16B16_SNORM,
-  R16G16B16_SRGB,
   R16G16B16A16_SINT,
   R16G16B16A16_UINT,
   R16G16B16A16_FLOAT,
   R16G16B16A16_UNORM,
   R16G16B16A16_SNORM,
-  R16G16B16A16_SRGB,
   
   R32_SINT,
   R32_UINT,
   R32_FLOAT,
-  R32_UNORM,
-  R32_SNORM,
-  R32_SRGB,
   R32G32_SINT,
   R32G32_UINT,
   R32G32_FLOAT,
-  R32G32_UNORM,
-  R32G32_SNORM,
-  R32G32_SRGB,
   R32G32B32_SINT,
   R32G32B32_UINT,
   R32G32B32_FLOAT,
-  R32G32B32_UNORM,
-  R32G32B32_SNORM,
-  R32G32B32_SRGB,
   R32G32B32A32_SINT,
   R32G32B32A32_UINT,
   R32G32B32A32_FLOAT,
-  R32G32B32A32_UNORM,
-  R32G32B32A32_SNORM,
-  R32G32B32A32_SRGB,
   
   R64_SINT,
   R64_UINT,
   R64_FLOAT,
-  R64_UNORM,
-  R64_SNORM,
-  R64_SRGB,
   R64G64_SINT,
   R64G64_UINT,
   R64G64_FLOAT,
-  R64G64_UNORM,
-  R64G64_SNORM,
-  R64G64_SRGB,
   R64G64B64_SINT,
   R64G64B64_UINT,
   R64G64B64_FLOAT,
-  R64G64B64_UNORM,
-  R64G64B64_SNORM,
-  R64G64B64_SRGB,
   R64G64B64A64_SINT,
   R64G64B64A64_UINT,
   R64G64B64A64_FLOAT,
-  R64G64B64A64_UNORM,
-  R64G64B64A64_SNORM,
-  R64G64B64A64_SRGB,
 
   D32_FLOAT,
-  D24_S8_UINT,
+  D24_UNORM_S8_UINT,
   S8_UINT,
 };
 
@@ -128,7 +116,6 @@ enum class ERHIBufferUsage {
 enum class ERHIPipelineBindPoint {
   GRAPHICS,
   COMPUTE,
-  RAY_TRACING
 };
 
 enum class ERHIImageState {
@@ -139,17 +126,15 @@ enum class ERHIImageState {
   PRESENT,
   TRANSFER_SOURCE,
   TRANSFER_DESTINATION,
-  DEPTH_READ,
 };
 
 enum class ERHIPipelineStage {
   TOP_OF_PIPE,
   VERTEX_INPUT,
   VERTEX_SHADER,
-  TESSELATION_CONTROL_SHADER,
-  TESSELATION_EVALUATION_SHADER,
+  TESSELLATION_CONTROL_SHADER,
+  TESSELLATION_EVALUATION_SHADER,
   GEOMETRY_SHADER,
-  RASTERIZER,
   FRAGMENT_SHADER,
   FRAMEBUFFER_WRITE,
   COMPUTE_SHADER,
@@ -186,6 +171,16 @@ enum class ERHIStoreOp {
   STORE,
 };
 
+enum class ERHISampleCount {
+  ONE,
+  TWO,
+  FOUR,
+  EIGHT,
+  SIXTEEN,
+  THIRTY_TWO,
+  SIXTY_FOUR
+};
+
 struct FRHIShaderDescription {
 
 };
@@ -197,6 +192,10 @@ struct FRHIResourceBarrierDescription {
 struct FRHITextureDescription {
   bool IsSwapchainImage;
   FUInt32 SwapchainImageIndex;
+
+  FUInt32 Width;
+  FUInt32 Height;
+  FUInt32 Layers;
 };
 
 struct FRHIRenderPassAttachmentDescription {
@@ -207,17 +206,10 @@ struct FRHIRenderPassAttachmentDescription {
   ERHILoadOp StencilLoadOp;
   ERHIStoreOp StoreOp;
   ERHIStoreOp StencilStoreOp;
+  ERHISampleCount Samples;
 };
 
-struct FRHISubpassDescription {
-  std::vector<FRHIRenderPassAttachmentDescription> InputAttachments;
-  std::vector<FRHIRenderPassAttachmentDescription> ColorAttachments;
-  std::vector<FRHIRenderPassAttachmentDescription> ResolveAttachments;
-  std::vector<FRHIRenderPassAttachmentDescription> PreserveAttachments;
-  FRHIRenderPassAttachmentDescription DepthStencilAttachment;
-};
-
-struct SubpassDependency {
+struct FRHISubpassDependency {
   FUInt32 SourceSubpass;
   FUInt32 DestinationSubpass;
   ERHIPipelineStage SourceStage;
@@ -226,10 +218,24 @@ struct SubpassDependency {
   ERHIAccess DestinationAccess;
 };
 
+struct FRHIAttachmentReference {
+  FRHIRenderPassAttachmentDescription *Attachment;
+  ERHIImageState State;
+};
+
+struct FRHISubpassDescription {
+  std::vector<FUInt32> InputAttachmentIndices;
+  std::vector<FUInt32> ColorAttachmentIndices;
+  std::vector<FUInt32> ResolveAttachmentIndices;
+  std::vector<FUInt32> PreserveAttachmentIndices;
+  FUInt32 DepthStencilAttachmentIndex;
+  ERHIPipelineBindPoint PipelineBindPoint;
+};
+
 struct FRHIRenderPassDescription {
-  std::vector<FRHIRenderPassAttachmentDescription> Attachments;
+  std::vector<FRHIAttachmentReference> Attachments;
   std::vector<FRHISubpassDescription> Subpasses;
-  std::vector<SubpassDependency> Dependencies;
+  std::vector<FRHISubpassDependency> Dependencies;
 };
 
 struct FRHIPipelineDescription {
@@ -248,18 +254,11 @@ struct FRHIBufferDescription {
   ERHIShaderStage ShaderAccess;
 };
 
-class IRHIContext;
-class IRHIGraphicsContext;
-class IRHIComputeContext;
-class IRHIUploadContext;
-class IRHIDevice;
-class IRHIInstance;
-class IRHIPipeline;
-class IRHIRenderPass;
-class IRHIResource;
-class IRHIBuffer;
-class IRHITexture;
-class IRHIShader;
-class IRHISyncObject;
+struct FRHIRenderArea {
+  FUInt32 X;
+  FUInt32 Y;
+  FUInt32 Width;
+  FUInt32 Height;
+};
 
 FUInt32 GetSizeOfRHIFormat(ERHIFormat Format);

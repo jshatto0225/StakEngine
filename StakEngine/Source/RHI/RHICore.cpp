@@ -19,7 +19,6 @@ FUInt32 GetSizeOfRHIFormat(ERHIFormat format) {
   case ERHIFormat::R16_FLOAT:
   case ERHIFormat::R16_UNORM:
   case ERHIFormat::R16_SNORM:
-  case ERHIFormat::R16_SRGB:
     return 2;
   case ERHIFormat::R8G8B8_SINT:
   case ERHIFormat::R8G8B8_UINT:
@@ -36,76 +35,48 @@ FUInt32 GetSizeOfRHIFormat(ERHIFormat format) {
   case ERHIFormat::R16G16_UINT:
   case ERHIFormat::R16G16_FLOAT:
   case ERHIFormat::R16G16_UNORM:
-  case ERHIFormat::R16G16_DNORM:
-  case ERHIFormat::R16G16_SRGB:
   case ERHIFormat::R32_SINT:
   case ERHIFormat::R32_UINT:
   case ERHIFormat::R32_FLOAT:
-  case ERHIFormat::R32_UNORM:
-  case ERHIFormat::R32_SNORM:
-  case ERHIFormat::R32_SRGB:
   case ERHIFormat::D32_FLOAT:
-  case ERHIFormat::D24_S8_UINT:
+  case ERHIFormat::D24_UNORM_S8_UINT:
     return 4;
   case ERHIFormat::R16G16B16_SINT:
   case ERHIFormat::R16G16B16_UINT:
   case ERHIFormat::R16G16B16_FLOAT:
   case ERHIFormat::R16G16B16_UNORM:
   case ERHIFormat::R16G16B16_SNORM:
-  case ERHIFormat::R16G16B16_SRGB:
     return 6;
   case ERHIFormat::R16G16B16A16_SINT:
   case ERHIFormat::R16G16B16A16_UINT:
   case ERHIFormat::R16G16B16A16_FLOAT:
   case ERHIFormat::R16G16B16A16_UNORM:
   case ERHIFormat::R16G16B16A16_SNORM:
-  case ERHIFormat::R16G16B16A16_SRGB:
   case ERHIFormat::R32G32_SINT:
   case ERHIFormat::R32G32_UINT:
   case ERHIFormat::R32G32_FLOAT:
-  case ERHIFormat::R32G32_UNORM:
-  case ERHIFormat::R32G32_SNORM:
-  case ERHIFormat::R32G32_SRGB:
   case ERHIFormat::R64_SINT:
   case ERHIFormat::R64_UINT:
   case ERHIFormat::R64_FLOAT:
-  case ERHIFormat::R64_UNORM:
-  case ERHIFormat::R64_SNORM:
-  case ERHIFormat::R64_SRGB:
     return 8;
   case ERHIFormat::R32G32B32_SINT:
   case ERHIFormat::R32G32B32_UINT:
   case ERHIFormat::R32G32B32_FLOAT:
-  case ERHIFormat::R32G32B32_UNORM:
-  case ERHIFormat::R32G32B32_SNORM:
-  case ERHIFormat::R32G32B32_SRGB:
     return 12;
   case ERHIFormat::R32G32B32A32_SINT:
   case ERHIFormat::R32G32B32A32_UINT:
   case ERHIFormat::R32G32B32A32_FLOAT:
-  case ERHIFormat::R32G32B32A32_UNORM:
-  case ERHIFormat::R32G32B32A32_SNORM:
-  case ERHIFormat::R32G32B32A32_SRGB:
   case ERHIFormat::R64G64_SINT:
   case ERHIFormat::R64G64_UINT:
   case ERHIFormat::R64G64_FLOAT:
-  case ERHIFormat::R64G64_UNORM:
-  case ERHIFormat::R64G64_SNORM:
-  case ERHIFormat::R64G64_SRGB:
     return 16;
   case ERHIFormat::R64G64B64_SINT:
   case ERHIFormat::R64G64B64_UINT:
   case ERHIFormat::R64G64B64_FLOAT:
-  case ERHIFormat::R64G64B64_UNORM:
-  case ERHIFormat::R64G64B64_SNORM:
-  case ERHIFormat::R64G64B64_SRGB:
     return 24;
   case ERHIFormat::R64G64B64A64_SINT:
   case ERHIFormat::R64G64B64A64_UINT:
   case ERHIFormat::R64G64B64A64_FLOAT:
-  case ERHIFormat::R64G64B64A64_UNORM:
-  case ERHIFormat::R64G64B64A64_SNORM:
-  case ERHIFormat::R64G64B64A64_SRGB:
     return 32;
   }
 }

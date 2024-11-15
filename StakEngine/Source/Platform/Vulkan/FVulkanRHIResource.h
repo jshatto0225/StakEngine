@@ -13,6 +13,10 @@ public:
   FVulkanRHITexture(TRef<IRHIDevice> Device, FRHITextureDescription &Description);
   ~FVulkanRHITexture();
 
+  inline FUInt32 GetWidth() { return mDescription.Width; }
+  inline FUInt32 GetHeight() { return mDescription.Height; }
+  inline FUInt32 GetLayers() { return mDescription.Layers; }
+
 public:
   inline VkImage GetVkImage() const { return mImage; }
   inline VkImageView GetVkImageView() const { return mImageView; }

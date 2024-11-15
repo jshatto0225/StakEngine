@@ -1,9 +1,10 @@
 #include "FVulkanRHIContext.h"
 
 #include "FLog.h"
+#include "FVulkanRHIRenderPass.h"
 
-VulkanRHIGraphicsContext::VulkanRHIGraphicsContext(TRef<IRHIDevice> Device) {
-  mDevice = std::static_pointer_cast<FVulkanRHIDevice>(Device);
+FVulkanRHIGraphicsContext::FVulkanRHIGraphicsContext(TRef<FVulkanRHIDevice> Device) {
+  mDevice = Device;
 
   VkCommandPoolCreateInfo PoolInfo = {};
 
@@ -11,8 +12,8 @@ VulkanRHIGraphicsContext::VulkanRHIGraphicsContext(TRef<IRHIDevice> Device) {
   PoolInfo.flags = VK_COMMAND_POOL_CREATE_RESET_COMMAND_BUFFER_BIT;
   PoolInfo.queueFamilyIndex = mDevice->GetGraphicsQueueFamilyIndex();
 
-  VkResult r = vkCreateCommandPool(mDevice->GetVkDevice(), &PoolInfo, NULL, &mCommandPool);
-  if (r != VK_SUCCESS) {
+  VkResult Err = vkCreateCommandPool(mDevice->GetVkDevice(), &PoolInfo, NULL, &mCommandPool);
+  if (Err != VK_SUCCESS) {
     SK_LOG_ERROR("Failed to create command pool");
   }
 
@@ -22,44 +23,55 @@ VulkanRHIGraphicsContext::VulkanRHIGraphicsContext(TRef<IRHIDevice> Device) {
   AllocInfo.level = VK_COMMAND_BUFFER_LEVEL_PRIMARY;
   AllocInfo.commandBufferCount = MAX_FRAMES_IN_FLIGHT;
 
-  VkResult r = vkAllocateCommandBuffers(mDevice->GetVkDevice(), &AllocInfo, &mCommandBuffer);
-  if (r != VK_SUCCESS) {
+  Err = vkAllocateCommandBuffers(mDevice->GetVkDevice(), &AllocInfo, &mCommandBuffer);
+  if (Err != VK_SUCCESS) {
     SK_LOG_ERROR("Failed to allocate command buffers");
   }
 }
 
-VulkanRHIGraphicsContext::~VulkanRHIGraphicsContext() {
+FVulkanRHIGraphicsContext::~FVulkanRHIGraphicsContext() {
   vkFreeCommandBuffers(mDevice->GetVkDevice(), mCommandPool, 1, &mCommandBuffer);
   vkDestroyCommandPool(mDevice->GetVkDevice(), mCommandPool, NULL);
 }
 
-void VulkanRHIGraphicsContext::Begin() {
+void FVulkanRHIGraphicsContext::Begin() {
   vkResetCommandBuffer(mCommandBuffer, 0);
 }
 
-void VulkanRHIGraphicsContext::End() {
+void FVulkanRHIGraphicsContext::End() {
   vkEndCommandBuffer(mCommandBuffer);
 }
 
-void VulkanRHIGraphicsContext::SetRenderPass(TRef<IRHIRenderPass> RenderPass) {
+void FVulkanRHIGraphicsContext::SetRenderPass(TRef<IRHIRenderPass> RenderPass, FRHIRenderArea RenderArea) {
+  TRef<FVulkanRHIRenderPass> VulkanRenderPass = std::static_pointer_cast<FVulkanRHIRenderPass>(RenderPass);
+
+  VkRenderPassBeginInfo BeginInfo = {};
+  BeginInfo.sType = VK_STRUCTURE_TYPE_RENDER_PASS_BEGIN_INFO;
+  BeginInfo.renderPass = VulkanRenderPass->GetVkRenderPass();
+  BeginInfo.clearValueCount = 0; // TODO
+  BeginInfo.pClearValues = 0; // TODO
+  BeginInfo.framebuffer = VulkanRenderPass->GetVkFramebuffer();
+  BeginInfo.renderArea.offset = { static_cast<FSInt32>(RenderArea.X), static_cast<FSInt32>(RenderArea.Y) };
+  BeginInfo.renderArea.extent = { RenderArea.Width, RenderArea.Height };
+
+  vkCmdBeginRenderPass(mCommandBuffer, &BeginInfo, VK_SUBPASS_CONTENTS_INLINE /* TODO */);
+}
+
+void FVulkanRHIGraphicsContext::SetPipeline(TRef<IRHIPipeline> Pipeline) {
 
 }
 
-void VulkanRHIGraphicsContext::SetPipeline(TRef<IRHIPipeline> Pipeline) {
+void FVulkanRHIGraphicsContext::SetVertexBuffer(TRef<IRHIBuffer> Buffer) {
 
 }
 
-void VulkanRHIGraphicsContext::SetVertexBuffer(TRef<IRHIBuffer> Buffer) {
+void FVulkanRHIGraphicsContext::SetIndexBuffer(TRef<IRHIBuffer> Buffer) {
 
 }
 
-void VulkanRHIGraphicsContext::SetIndexBuffer(TRef<IRHIBuffer> Buffer) {
+void FVulkanRHIGraphicsContext::SetViewport(FSInt32 X, FSInt32 Y, FSInt32 Width, FSInt32 Height) {
 
 }
 
-void VulkanRHIGraphicsContext::SetViewport(FSInt32 X, FSInt32 Y, FSInt32 Width, FSInt32 Height) {
-
-}
-
-void VulkanRHIGraphicsContext::Draw() {
+void FVulkanRHIGraphicsContext::Draw() {
 }

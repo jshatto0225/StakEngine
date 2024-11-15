@@ -2,6 +2,8 @@
 
 #include "Types.h"
 
+#include <string>
+
 class IRHIInstance {
 public:
   virtual ~IRHIInstance() = default;

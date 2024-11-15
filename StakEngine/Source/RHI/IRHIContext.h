@@ -14,7 +14,7 @@ public:
   virtual void Begin() = 0;
   virtual void End() = 0;
 
-  virtual void SetRenderPass(TRef<IRHIRenderPass> RenderPass) = 0;
+  virtual void SetRenderPass(TRef<IRHIRenderPass> RenderPass, FRHIRenderArea RenderArea) = 0;
   virtual void SetPipeline(TRef<IRHIPipeline> Pipeline) = 0;
   virtual void SetVertexBuffer(TRef<IRHIBuffer> Buffer) = 0;
   virtual void SetIndexBuffer(TRef<IRHIBuffer> Buffer) = 0;

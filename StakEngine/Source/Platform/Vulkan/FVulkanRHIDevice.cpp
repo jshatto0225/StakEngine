@@ -8,8 +8,8 @@
 #include "FLog.h"
 #include "FVulkanRHIInstance.h"
 
-FVulkanRHIDevice::FVulkanRHIDevice(TRef<IRHIInstance> Instance, TRef<IWindow> Window) {
-  mInstance = std::static_pointer_cast<FVulkanRHIInstance>(Instance);
+FVulkanRHIDevice::FVulkanRHIDevice(TRef<FVulkanRHIInstance> Instance, TRef<IWindow> Window) {
+  mInstance = Instance;
   mWindow = Window;
 
   // SURFACE
