@@ -2,8 +2,12 @@
 
 #ifdef SK_GLFW
 #include <GLFW/glfw3.h>
+#include <backends/imgui_impl_glfw.h>
 #include "FGLFWWindow.h"
 #endif
+
+#include <imgui.h>
+#include <backends/imgui_impl_vulkan.h>
 
 #include "FLog.h"
 #include "FVulkanRHIInstance.h"
@@ -15,14 +19,14 @@ FVulkanRHIDevice::FVulkanRHIDevice(TRef<FVulkanRHIInstance> Instance, TRef<IWind
   // SURFACE
 #ifdef SK_GLFW
   TRef<FGLFWWindow> glfwWindow = std::static_pointer_cast<FGLFWWindow>(Window);
-  glfwCreateWindowSurface(mInstance->GetInstance(), glfwWindow->mNativeHandle, NULL, &mSurface);
+  glfwCreateWindowSurface(mInstance->GetVkInstance(), glfwWindow->GetGlfwWindow(), NULL, &mSurface);
 #endif
   
   // DEVICE
   FUInt32 DeviceCount = 0;
-  vkEnumeratePhysicalDevices(mInstance->GetInstance(), &DeviceCount, NULL);
+  vkEnumeratePhysicalDevices(mInstance->GetVkInstance(), &DeviceCount, NULL);
   std::vector<VkPhysicalDevice> Devices(DeviceCount);
-  vkEnumeratePhysicalDevices(mInstance->GetInstance(), &DeviceCount, Devices.data());
+  vkEnumeratePhysicalDevices(mInstance->GetVkInstance(), &DeviceCount, Devices.data());
 
   FBool DeviceFound = false;
   for (FUInt32 DeviceIndex = 0; DeviceIndex < DeviceCount; DeviceIndex++) {
@@ -123,7 +127,7 @@ FVulkanRHIDevice::~FVulkanRHIDevice() {
   }
 
   vkDestroySwapchainKHR(mDevice, mSwapchain, NULL);
-  vkDestroySurfaceKHR(mInstance->GetInstance(), mSurface, NULL);
+  vkDestroySurfaceKHR(mInstance->GetVkInstance(), mSurface, NULL);
   vkDestroyDevice(mDevice, NULL);
 }
 
@@ -213,7 +217,6 @@ void FVulkanRHIDevice::CreateSwapchain() {
   }
 
   mSwapchainImages.resize(ImageCount);
-
   vkGetSwapchainImagesKHR(mDevice, mSwapchain, &ImageCount, mSwapchainImages.data());
 }
 

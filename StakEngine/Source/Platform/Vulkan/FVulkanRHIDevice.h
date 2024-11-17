@@ -2,6 +2,7 @@
 
 #include "IRHIDevice.h"
 #include "FVulkanRHIInstance.h"
+#include "VulkanRHICore.h"
 
 #include <vulkan/vulkan.h>
 
@@ -13,12 +14,23 @@ public:
   FVulkanRHIDevice(TRef<FVulkanRHIInstance> Instance, TRef<IWindow> Window);
   ~FVulkanRHIDevice();
 
+  ERHIFormat GetSwapchainImageFormat() { return VulkanRHIGetERHIFormat(mSwapchainImageFormat.format); };
+  FUInt32 GetSwapchainImageCount() { return mSwapchainImages.size(); }
+
+  TRef<IRHIWorkRecipt> SubmitWork(TRef<IRHIContext> Context);
+  void WaitOnWork(TRef<IRHIWorkRecipt> Recipt);
+  void Present();
+
+  FUInt32 GetCurrentFrameIndex() { return mCurrentFrame; }
+
+  FUInt32 GetSwapchainWidth() const { return mExtent.width; }
+  FUInt32 GetSwapchainHeight() const { return mExtent.height; }
+  FUInt32 GetSwapchainLayers() const { return 1; }
+
 public:
-  inline const VkImageView &GetSwapchainImageView(FUInt32 Index) const { return mSwapchainImageViews[Index]; }
-  inline const VkImage &GetSwapchainImage(FUInt32 Index) const { return mSwapchainImages[Index]; }
-  inline const VkFormat &GetSwapchainImageFormat() const { return mSwapchainImageFormat.format; }
+  inline std::vector<VkImageView> GetVkSwapchainImageViews() const { return mSwapchainImageViews; }
+  inline std::vector<VkImage> GetVkSwapchainImages() const { return mSwapchainImages; }
   inline VkDevice GetVkDevice() const { return mDevice; }
-  inline FUInt32 GetGraphicsQueueFamilyIndex() const { return mGraphicsQueueFamily; }
 
 private:
   struct VulkanSwapchainSupport {
@@ -58,4 +70,5 @@ private:
   VkSurfaceFormatKHR mSwapchainImageFormat;
   std::vector<VkImageView> mSwapchainImageViews;
   VkCommandPool mCommandPool;
+  VkDescriptorPool mImGuiPool;
 };

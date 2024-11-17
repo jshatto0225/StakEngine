@@ -34,4 +34,8 @@ private:
   FBool mRunning;
   FImGuiLayer *mImGuiLayer;
   TRef<const IInput> mInput;
+
+private:
+  TRef<IRHIInstance> mRHIInstance;
+  TRef<IRHIDevice> mRHIDevice;
 };

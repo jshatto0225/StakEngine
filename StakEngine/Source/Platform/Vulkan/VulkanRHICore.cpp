@@ -1,7 +1,156 @@
 #include "VulkanRHICore.h"
 
+ERHIFormat VulkanRHIGetERHIFormat(VkFormat Format) {
+  switch (Format) {
+  case VK_FORMAT_R8_SINT:
+    return ERHIFormat::R8_SINT;
+  case VK_FORMAT_R8_UINT:
+    return ERHIFormat::R8_UINT;
+  case VK_FORMAT_R8_UNORM:
+    return ERHIFormat::R8_UNORM;
+  case VK_FORMAT_R8_SNORM:
+    return ERHIFormat::R8_SNORM;
+  case VK_FORMAT_R8_SRGB:
+    return ERHIFormat::R8_SRGB;
+  case VK_FORMAT_R8G8_SINT:
+    return ERHIFormat::R8G8_SINT;
+  case VK_FORMAT_R8G8_UINT:
+    return ERHIFormat::R8G8_UINT;
+  case VK_FORMAT_R8G8_UNORM:
+    return ERHIFormat::R8G8_UNORM;
+  case VK_FORMAT_R8G8_SNORM:
+    return ERHIFormat::R8G8_SNORM;
+  case VK_FORMAT_R8G8_SRGB:
+    return ERHIFormat::R8G8_SRGB;
+  case VK_FORMAT_R8G8B8_SINT:
+    return ERHIFormat::R8G8B8_SINT;
+  case VK_FORMAT_R8G8B8_UINT:
+    return ERHIFormat::R8G8B8_UINT;
+  case VK_FORMAT_R8G8B8_UNORM:
+    return ERHIFormat::R8G8B8_UNORM;
+  case VK_FORMAT_R8G8B8_SNORM:
+    return ERHIFormat::R8G8B8_SNORM;
+  case VK_FORMAT_R8G8B8_SRGB:
+    return ERHIFormat::R8G8B8_SRGB;
+  case VK_FORMAT_R8G8B8A8_SINT:
+    return ERHIFormat::R8G8B8A8_SINT;
+  case VK_FORMAT_R8G8B8A8_UINT:
+    return ERHIFormat::R8G8B8A8_UINT;
+  case VK_FORMAT_R8G8B8A8_UNORM:
+    return ERHIFormat::R8G8B8A8_UNORM;
+  case VK_FORMAT_R8G8B8A8_SNORM:
+    return ERHIFormat::R8G8B8A8_SNORM;
+  case VK_FORMAT_R8G8B8A8_SRGB:
+    return ERHIFormat::R8G8B8A8_SRGB;
+  case VK_FORMAT_R16_SINT:
+    return ERHIFormat::R16_SINT;
+  case VK_FORMAT_R16_UINT:
+    return ERHIFormat::R16_UINT;
+  case VK_FORMAT_R16_SFLOAT:
+    return ERHIFormat::R16_FLOAT;
+  case VK_FORMAT_R16_UNORM:
+    return ERHIFormat::R16_UNORM;
+  case VK_FORMAT_R16_SNORM:
+    return ERHIFormat::R16_SNORM;
+  case VK_FORMAT_R16G16_SINT:
+    return ERHIFormat::R16G16_SINT;
+  case VK_FORMAT_R16G16_UINT:
+    return ERHIFormat::R16G16_UINT;
+  case VK_FORMAT_R16G16_SFLOAT:
+    return ERHIFormat::R16G16_FLOAT;
+  case VK_FORMAT_R16G16_UNORM:
+    return ERHIFormat::R16G16_UNORM;
+  case VK_FORMAT_R16G16_SNORM:
+    return ERHIFormat::R16G16_SNORM;
+  case VK_FORMAT_R16G16B16_SINT:
+    return ERHIFormat::R16G16B16_SINT;
+  case VK_FORMAT_R16G16B16_UINT:
+    return ERHIFormat::R16G16B16_UINT;
+  case VK_FORMAT_R16G16B16_SFLOAT:
+    return ERHIFormat::R16G16B16_FLOAT;
+  case VK_FORMAT_R16G16B16_UNORM:
+    return ERHIFormat::R16G16B16_UNORM;
+  case VK_FORMAT_R16G16B16_SNORM:
+    return ERHIFormat::R16G16B16_SNORM;
+  case VK_FORMAT_R16G16B16A16_SINT:
+    return ERHIFormat::R16G16B16A16_SINT;
+  case VK_FORMAT_R16G16B16A16_UINT:
+    return ERHIFormat::R16G16B16A16_UINT;
+  case VK_FORMAT_R16G16B16A16_SFLOAT:
+    return ERHIFormat::R16G16B16A16_FLOAT;
+  case VK_FORMAT_R16G16B16A16_UNORM:
+    return ERHIFormat::R16G16B16A16_UNORM;
+  case VK_FORMAT_R16G16B16A16_SNORM:
+    return ERHIFormat::R16G16B16A16_SNORM;
+  case VK_FORMAT_R32_SINT:
+    return ERHIFormat::R32_SINT;
+  case VK_FORMAT_R32_UINT:
+    return ERHIFormat::R32_UINT;
+  case VK_FORMAT_R32_SFLOAT:
+    return ERHIFormat::R32_FLOAT;
+  case VK_FORMAT_R32G32_SINT:
+    return ERHIFormat::R32G32_SINT;
+  case VK_FORMAT_R32G32_UINT:
+    return ERHIFormat::R32G32_UINT;
+  case VK_FORMAT_R32G32_SFLOAT:
+    return ERHIFormat::R32G32_FLOAT;
+  case VK_FORMAT_R32G32B32_SINT:
+    return ERHIFormat::R32G32B32_SINT;
+  case VK_FORMAT_R32G32B32_UINT:
+    return ERHIFormat::R32G32B32_UINT;
+  case VK_FORMAT_R32G32B32_SFLOAT:
+    return ERHIFormat::R32G32B32_FLOAT;
+  case VK_FORMAT_R32G32B32A32_SINT:
+    return ERHIFormat::R32G32B32A32_SINT;
+  case VK_FORMAT_R32G32B32A32_UINT:
+    return ERHIFormat::R32G32B32A32_UINT;
+  case VK_FORMAT_R32G32B32A32_SFLOAT:
+    return ERHIFormat::R32G32B32A32_FLOAT;
+  case VK_FORMAT_R64_SINT:
+    return ERHIFormat::R64_SINT;
+  case VK_FORMAT_R64_UINT:
+    return ERHIFormat::R64_UINT;
+  case VK_FORMAT_R64_SFLOAT:
+    return ERHIFormat::R64_FLOAT;
+  case VK_FORMAT_R64G64_SINT:
+    return ERHIFormat::R64G64_SINT;
+  case VK_FORMAT_R64G64_UINT:
+    return ERHIFormat::R64G64_UINT;
+  case VK_FORMAT_R64G64_SFLOAT:
+    return ERHIFormat::R64G64_FLOAT;
+  case VK_FORMAT_R64G64B64_SINT:
+    return ERHIFormat::R64G64B64_SINT;
+  case VK_FORMAT_R64G64B64_UINT:
+    return ERHIFormat::R64G64B64_UINT;
+  case VK_FORMAT_R64G64B64_SFLOAT:
+    return ERHIFormat::R64G64B64_FLOAT;
+  case VK_FORMAT_R64G64B64A64_SINT:
+    return ERHIFormat::R64G64B64A64_SINT;
+  case VK_FORMAT_R64G64B64A64_UINT:
+    return ERHIFormat::R64G64B64A64_UINT;
+  case VK_FORMAT_R64G64B64A64_SFLOAT:
+    return ERHIFormat::R64G64B64A64_FLOAT;
+  case VK_FORMAT_D32_SFLOAT:
+    return ERHIFormat::D32_FLOAT;
+  case VK_FORMAT_D24_UNORM_S8_UINT:
+    return ERHIFormat::D24_UNORM_S8_UINT;
+  case VK_FORMAT_S8_UINT:
+    return ERHIFormat::S8_UINT;
+
+  case VK_FORMAT_B8G8R8A8_UNORM:
+    return ERHIFormat::B8G8R8A8_UNORM;
+  case VK_FORMAT_B8G8R8A8_SRGB:
+    return ERHIFormat::B8G8R8A8_UNORM_SRGB;
+  }
+}
+
 VkFormat VulkanRHIGetVkFormat(ERHIFormat Format) {
   switch (Format) {
+  case ERHIFormat::B8G8R8A8_UNORM:
+    return VK_FORMAT_B8G8R8A8_UNORM;
+  case ERHIFormat::B8G8R8A8_UNORM_SRGB:
+    return VK_FORMAT_B8G8R8A8_SRGB;
+
   case ERHIFormat::R8_SINT:
     return VK_FORMAT_R8_SINT;
   case ERHIFormat::R8_UINT:
@@ -178,21 +327,21 @@ VkAttachmentStoreOp VulkanRHIGetVkStoreOp(ERHIStoreOp StoreOp) {
   }
 }
 
-VkImageLayout VulkanRHIGetVkImageLayout(ERHIImageState State) {
-  switch (State) {
-  case ERHIImageState::COLOR_ATTACHMENT:
+VkImageLayout VulkanRHIGetVkImageLayout(ERHIImageUsage Usage) {
+  switch (Usage) {
+  case ERHIImageUsage::COLOR_ATTACHMENT:
     return VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL;
-  case ERHIImageState::DEPTH_STENCIL:
+  case ERHIImageUsage::DEPTH_STENCIL:
     return VK_IMAGE_LAYOUT_DEPTH_STENCIL_ATTACHMENT_OPTIMAL;
-  case ERHIImageState::PRESENT:
+  case ERHIImageUsage::PRESENT:
     return VK_IMAGE_LAYOUT_PRESENT_SRC_KHR;
-  case ERHIImageState::SHADER_READ:
+  case ERHIImageUsage::SHADER_READ:
     return VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL;
-  case ERHIImageState::TRANSFER_DESTINATION:
+  case ERHIImageUsage::TRANSFER_DESTINATION:
     return VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL;
-  case ERHIImageState::TRANSFER_SOURCE:
+  case ERHIImageUsage::TRANSFER_SOURCE:
     return VK_IMAGE_LAYOUT_TRANSFER_SRC_OPTIMAL;
-  case ERHIImageState::UNDEFINED:
+  case ERHIImageUsage::UNDEFINED:
     return VK_IMAGE_LAYOUT_UNDEFINED;
   }
 }
@@ -233,6 +382,8 @@ VkPipelineStageFlags VulkanRHIGetVkPipelineStage(ERHIPipelineStage Stage) {
 
 VkAccessFlags VulkanRHIGetVkAccessMask(ERHIAccess Access) {
   switch (Access) {
+  case ERHIAccess::DONT_CARE:
+      return 0;
   case ERHIAccess::COLOR_ATTACHMENT_READ:
     return VK_ACCESS_COLOR_ATTACHMENT_READ_BIT;
   case ERHIAccess::COLOR_ATTACHMENT_WRITE:

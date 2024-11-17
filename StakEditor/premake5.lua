@@ -20,6 +20,7 @@ project "StakEditor"
 		"../StakEngine/Source/Platform/GLFW",
 		"../StakEngine/Source/Platform/Vulkan",
 		"../StakEngine/Source/Renderer",
+		"../StakEngine/Source/RHI",
 		"../StakEngine/Source/ImGui",
 		"../StakEngine/External/imgui",
 		"../StakEngine/External/spdlog/include",

@@ -10,7 +10,7 @@ class FVulkanRHIBuffer final : public IRHIBuffer {
 
 class FVulkanRHITexture final : public IRHITexture {
 public:
-  FVulkanRHITexture(TRef<IRHIDevice> Device, FRHITextureDescription &Description);
+  FVulkanRHITexture(TRef<FVulkanRHIDevice> Device, const FRHITextureDescription &Description);
   ~FVulkanRHITexture();
 
   inline FUInt32 GetWidth() { return mDescription.Width; }
@@ -18,12 +18,12 @@ public:
   inline FUInt32 GetLayers() { return mDescription.Layers; }
 
 public:
-  inline VkImage GetVkImage() const { return mImage; }
-  inline VkImageView GetVkImageView() const { return mImageView; }
+  inline const std::vector<VkImage> &GetVkImages() const { return mImages; }
+  inline const std::vector<VkImageView> &GetVkImageViews() const { return mImageViews; }
   inline VkFormat GetVkFormat() const { return mFormat; }
 
 private:
-  void GetSwapchainImage();
+  void GetSwapchainImages();
 
 private:
   FRHITextureDescription mDescription;
@@ -32,7 +32,7 @@ private:
   TRef<FVulkanRHIDevice> mDevice;
 
 private:
-  VkImage mImage;
-  VkImageView mImageView;
+  std::vector<VkImage> mImages;
+  std::vector<VkImageView> mImageViews;
   VkFormat mFormat;
 };

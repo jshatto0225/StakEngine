@@ -29,6 +29,9 @@ public:
   bool KeyDown(EKeyCode Key) override;
   bool MouseButtonDown(EMouseCode Button) override;
 
+public:
+  GLFWwindow *GetGlfwWindow() { return mNativeHandle; }
+
 private:
   struct FWindowData {
     FWindowCloseEventFn WindowCloseEventFn;
@@ -44,6 +47,4 @@ private:
   GLFWwindow *mNativeHandle;
 
   static FBool sGLFWInitialized;
-
-  friend class FVulkanRHIDevice;
 };

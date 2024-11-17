@@ -14,11 +14,20 @@ public:
   virtual void Begin() = 0;
   virtual void End() = 0;
 
-  virtual void SetRenderPass(TRef<IRHIRenderPass> RenderPass, FRHIRenderArea RenderArea) = 0;
   virtual void SetPipeline(TRef<IRHIPipeline> Pipeline) = 0;
-  virtual void SetVertexBuffer(TRef<IRHIBuffer> Buffer) = 0;
   virtual void SetIndexBuffer(TRef<IRHIBuffer> Buffer) = 0;
-  virtual void SetViewport(FSInt32 X, FSInt32 Y, FSInt32 Width, FSInt32 Height) = 0;
+  virtual void SetVertexBuffers(std::vector<TRef<IRHIBuffer>> Buffers) = 0;
+  virtual void SetStreamOutputTargets(std::vector<TRef<IRHITexture>> Textures) = 0;
+  virtual void SetRenderTargets(std::vector<TRef<IRHITexture>> Textures, const FRHIRect &RenderArea) = 0;
+  virtual void SetDescriptorSet(TRef<IRHIDescritporSet> Set) = 0;
+  virtual void SetViewports(const std::vector<FRHIRect> &Viewports) = 0;
+  virtual void SetScissors(const std::vector<FRHIRect> &Scissors) = 0;
+  virtual void SetBlendConstants(std::array<FFloat, 4> Constants) = 0;
+  virtual void SetDepthStencilReferenceValue(FUInt32 Val) = 0;
+  virtual void SetTopology(ERHITopology Topology) = 0;
+
+  virtual void ResourceBarrier(const FRHIResourceBarrierDescription &Description) = 0;
+  
   virtual void Draw() = 0;
 };
 

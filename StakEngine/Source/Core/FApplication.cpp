@@ -3,6 +3,9 @@
 #include "FLog.h"
 #include "FImGuiLayer.h"
 
+#include "IRHIInstance.h"
+#include "IRHIDevice.h"
+
 void FApplication::AddLayer(IApplicationLayer *Layer) {
   mLayerStack.Push(Layer);
 }
@@ -28,7 +31,10 @@ FApplication::FApplication(const FApplicationSpec &Spec) {
 
   mInput = IInput::Create(mWindow);
 
-  mImGuiLayer = new FImGuiLayer();
+  mRHIInstance = IRHIInstance::Create("");
+  mRHIDevice = IRHIDevice::Create(mRHIInstance, mWindow);
+
+  mImGuiLayer = new FImGuiLayer(mRHIDevice, mWindow);
 
   AddLayer(mImGuiLayer);
 

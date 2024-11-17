@@ -5,8 +5,10 @@
 
 #include <imgui.h>
 #include <map>
+#include <optional>
 
 #define MAX_FRAMES_IN_FLIGHT 2
+#define EXTERNAL_SUBPASS (~0U)
 
 class IRHIContext;
 class IRHIGraphicsContext;
@@ -22,6 +24,8 @@ class IRHITexture;
 class IRHIShader;
 class IRHISyncObject;
 class IRHIFramebuffer;
+class IRHIDescritporSet;
+class IRHIWorkRecipt;
 
 enum class ERHIFormat {
   R8_SINT,
@@ -44,6 +48,9 @@ enum class ERHIFormat {
   R8G8B8A8_UNORM,
   R8G8B8A8_SNORM,
   R8G8B8A8_SRGB,
+
+  B8G8R8A8_UNORM,
+  B8G8R8A8_UNORM_SRGB,
   
   R16_SINT,
   R16_UINT,
@@ -118,7 +125,7 @@ enum class ERHIPipelineBindPoint {
   COMPUTE,
 };
 
-enum class ERHIImageState {
+enum class ERHIImageUsage {
   UNDEFINED,
   COLOR_ATTACHMENT,
   DEPTH_STENCIL,
@@ -142,6 +149,7 @@ enum class ERHIPipelineStage {
 };
 
 enum class ERHIAccess {
+  DONT_CARE,
   INDEX_READ,
   VERTEX_ATTRIBUTE_READ,
   UNIFORM_READ,
@@ -161,9 +169,9 @@ enum class ERHIAccess {
 };
 
 enum class ERHILoadOp {
+  DISCARD,
   LOAD,
   CLEAR,
-  DISCARD,
 };
 
 enum class ERHIStoreOp {
@@ -181,6 +189,10 @@ enum class ERHISampleCount {
   SIXTY_FOUR
 };
 
+enum class ERHITopology {
+
+};
+
 struct FRHIShaderDescription {
 
 };
@@ -191,51 +203,15 @@ struct FRHIResourceBarrierDescription {
 
 struct FRHITextureDescription {
   bool IsSwapchainImage;
-  FUInt32 SwapchainImageIndex;
 
   FUInt32 Width;
   FUInt32 Height;
   FUInt32 Layers;
-};
 
-struct FRHIRenderPassAttachmentDescription {
-  ERHIImageState InitialState;
-  ERHIImageState FinalState;
-  ERHIFormat Format;
-  ERHILoadOp LoadOp;
-  ERHILoadOp StencilLoadOp;
   ERHIStoreOp StoreOp;
-  ERHIStoreOp StencilStoreOp;
-  ERHISampleCount Samples;
-};
+  ERHILoadOp LoadOp;
 
-struct FRHISubpassDependency {
-  FUInt32 SourceSubpass;
-  FUInt32 DestinationSubpass;
-  ERHIPipelineStage SourceStage;
-  ERHIAccess SourceAccess;
-  ERHIPipelineStage DestinationStage;
-  ERHIAccess DestinationAccess;
-};
-
-struct FRHIAttachmentReference {
-  FRHIRenderPassAttachmentDescription *Attachment;
-  ERHIImageState State;
-};
-
-struct FRHISubpassDescription {
-  std::vector<FUInt32> InputAttachmentIndices;
-  std::vector<FUInt32> ColorAttachmentIndices;
-  std::vector<FUInt32> ResolveAttachmentIndices;
-  std::vector<FUInt32> PreserveAttachmentIndices;
-  FUInt32 DepthStencilAttachmentIndex;
-  ERHIPipelineBindPoint PipelineBindPoint;
-};
-
-struct FRHIRenderPassDescription {
-  std::vector<FRHIAttachmentReference> Attachments;
-  std::vector<FRHISubpassDescription> Subpasses;
-  std::vector<FRHISubpassDependency> Dependencies;
+  ERHIImageUsage Usage;
 };
 
 struct FRHIPipelineDescription {
@@ -254,11 +230,16 @@ struct FRHIBufferDescription {
   ERHIShaderStage ShaderAccess;
 };
 
-struct FRHIRenderArea {
+struct FRHIRect {
   FUInt32 X;
   FUInt32 Y;
   FUInt32 Width;
   FUInt32 Height;
+};
+
+class IRHIWorkRecipt {
+public:
+  virtual ~IRHIWorkRecipt() = default;
 };
 
 FUInt32 GetSizeOfRHIFormat(ERHIFormat Format);

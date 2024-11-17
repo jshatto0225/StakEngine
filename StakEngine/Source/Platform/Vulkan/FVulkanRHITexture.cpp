@@ -1,13 +1,12 @@
 #include "FVulkanRHIResource.h"
 
-FVulkanRHITexture::FVulkanRHITexture(TRef<IRHIDevice> Device, FRHITextureDescription &Description) {
+FVulkanRHITexture::FVulkanRHITexture(TRef<FVulkanRHIDevice> Device, const FRHITextureDescription &Description) {
   mDescription = Description;
   mFormat = VK_FORMAT_UNDEFINED;
-  mImage = VK_NULL_HANDLE;
-  mImageView = VK_NULL_HANDLE;
+  mDevice = Device;
 
   if (Description.IsSwapchainImage) {
-    GetSwapchainImage();
+    GetSwapchainImages();
     return;
   }
 }
@@ -18,8 +17,11 @@ FVulkanRHITexture::~FVulkanRHITexture() {
   }
 }
 
-void FVulkanRHITexture::GetSwapchainImage() {
-  mImage = mDevice->GetSwapchainImage(mDescription.SwapchainImageIndex);
-  mImageView = mDevice->GetSwapchainImageView(mDescription.SwapchainImageIndex);
-  mFormat = mDevice->GetSwapchainImageFormat();
+void FVulkanRHITexture::GetSwapchainImages() {
+  mImages = mDevice->GetVkSwapchainImages();
+  mImageViews = mDevice->GetVkSwapchainImageViews();
+  mFormat = mDevice->GetVkSwapchainImageFormat();
+  mDescription.Width = mDevice->GetVkSwapchainWidth();
+  mDescription.Height = mDevice->GetVkSwapchainHeight();
+  mDescription.Layers = mDevice->GetVkSwapchainLayers();
 }

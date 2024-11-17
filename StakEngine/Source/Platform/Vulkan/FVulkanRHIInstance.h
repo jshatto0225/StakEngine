@@ -30,7 +30,7 @@ public:
   ~FVulkanRHIInstance();
 
 public:
-  VkInstance GetInstance() { return mInstance; }
+  VkInstance GetVkInstance() { return mInstance; }
 
 private:
   VkResult CreateDebugMessenger(VkInstance Instance, const VkDebugUtilsMessengerCreateInfoEXT *Info, const VkAllocationCallbacks *Allocator, VkDebugUtilsMessengerEXT *Messenger);

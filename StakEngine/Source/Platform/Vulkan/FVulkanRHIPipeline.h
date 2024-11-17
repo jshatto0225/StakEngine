@@ -4,10 +4,10 @@
 
 #include <vulkan/vulkan.h>
 
-class VulkanRHIPipeline final : public IRHIPipeline {
+class FVulkanRHIPipeline final : public IRHIPipeline {
 public:
-  VulkanRHIPipeline(TRef<IRHIDevice> Device, TRef<IRHIRenderPass> RenderPass);
-  ~VulkanRHIPipeline();
+  FVulkanRHIPipeline(TRef<IRHIDevice> Device, TRef<IRHIRenderPass> RenderPass);
+  ~FVulkanRHIPipeline();
 
 private:
 };

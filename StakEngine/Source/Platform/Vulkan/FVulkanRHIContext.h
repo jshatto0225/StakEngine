@@ -5,17 +5,26 @@
 
 class FVulkanRHIGraphicsContext final : public IRHIGraphicsContext {
 public:
-  FVulkanRHIGraphicsContext(TRef<FVulkanRHIDevice> Device);
+  FVulkanRHIGraphicsContext(TRef<FVulkanRHIDevice> Device, FUInt32 MaxFramesInFlight);
   ~FVulkanRHIGraphicsContext();
 
   void Begin();
   void End();
 
-  void SetRenderPass(TRef<IRHIRenderPass> RenderPass, FRHIRenderArea RenderArea);
   void SetPipeline(TRef<IRHIPipeline> Pipeline);
-  void SetVertexBuffer(TRef<IRHIBuffer> Buffer);
   void SetIndexBuffer(TRef<IRHIBuffer> Buffer);
-  void SetViewport(FSInt32 X, FSInt32 Y, FSInt32 Width, FSInt32 Height);
+  void SetVertexBuffers(std::vector<TRef<IRHIBuffer>> Buffers);
+  void SetStreamOutputTargets(std::vector<TRef<IRHITexture>> Textures);
+  void SetRenderTargets(std::vector<TRef<IRHITexture>> Textures, const FRHIRect &RenderArea);
+  void SetDescriptorSet(TRef<IRHIDescritporSet> Set);
+  void SetViewports(const std::vector<FRHIRect> &Viewports);
+  void SetScissors(const std::vector<FRHIRect> &Scissors);
+  void SetBlendConstants(std::array<FFloat, 4> Constants);
+  void SetDepthStencilReferenceValue(FUInt32 Val);
+  void SetTopology(ERHITopology Topology);
+
+  void ResourceBarrier(const FRHIResourceBarrierDescription &Description);
+
   void Draw();
 
 private:
@@ -23,7 +32,8 @@ private:
 
 private:
   VkCommandPool mCommandPool;
-  VkCommandBuffer mCommandBuffer;
+  std::vector<VkCommandBuffer> mCommandBuffers;
+  FBool mIsRendering;
 };
 
 class FVulkanRHIComputeContext final : public IRHIComputeContext {
