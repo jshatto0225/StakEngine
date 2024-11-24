@@ -118,8 +118,6 @@ FVulkanRHIInstance::FVulkanRHIInstance(const std::string &AppName) {
     Extensions.push_back(VK_EXT_DEBUG_UTILS_EXTENSION_NAME);
   }
 
-  //Extensions.push_back(VK_KHR_DYNAMIC_RENDERING_EXTENSION_NAME);
-
   InstanceInfo.enabledExtensionCount = static_cast<FUInt32>(Extensions.size());
   InstanceInfo.ppEnabledExtensionNames = Extensions.data();
 

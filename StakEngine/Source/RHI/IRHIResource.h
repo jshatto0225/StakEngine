@@ -32,4 +32,5 @@ public:
   virtual FUInt32 GetHeight() const = 0;
   virtual FUInt32 GetLayers() const = 0;
   virtual const FRHITextureDescription &GetDescription() const = 0;
+  virtual FBool IsSwapchainImage() const = 0;
 };

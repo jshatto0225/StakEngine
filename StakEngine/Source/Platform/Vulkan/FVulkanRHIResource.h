@@ -27,6 +27,8 @@ public:
   FUInt32 GetHeight() const override;
   FUInt32 GetLayers() const override;
 
+  inline FBool IsSwapchainImage() const override { return mIsSwapchainImage; }
+
   const FRHITextureDescription &GetDescription() const override;
 
   ERHIResourceUsage GetUsage() const override;

@@ -203,8 +203,6 @@ void FVulkanRHIGraphicsContext::SetTopology(ERHITopology Topology) {
 }
 
 void FVulkanRHIGraphicsContext::ResourceBarrier(const FRHIResourceBarrierDescription &Description) {
-  // PROBLEM: If we transition one image, the next (next frame or next swapchain image) will be in an unknown state
-
   std::vector<VkImageMemoryBarrier2> ImageBarriers = {};
   ImageBarriers.reserve(Description.Transitions.size());
 
@@ -213,7 +211,7 @@ void FVulkanRHIGraphicsContext::ResourceBarrier(const FRHIResourceBarrierDescrip
 
     TRef<FVulkanRHITexture> Texture = std::static_pointer_cast<FVulkanRHITexture>(Transition.Resource);
 
-    ASSERT(Texture->GetDescription().IsSwapchainImage);
+    ASSERT(Texture->IsSwapchainImage());
 
     VkImageMemoryBarrier2 ImageBarrier = {};
     ImageBarrier.sType = VK_STRUCTURE_TYPE_IMAGE_MEMORY_BARRIER_2;
@@ -227,12 +225,16 @@ void FVulkanRHIGraphicsContext::ResourceBarrier(const FRHIResourceBarrierDescrip
     ImageBarrier.dstStageMask = VulkanRHIGetVkPipelineStageFlags2(Transition.NewUsage);
     ImageBarrier.dstAccessMask = VulkanRHIGetVkAccessFlagBits2(Transition.NewUsage);
 
-    // TODO:
-    ImageBarrier.subresourceRange.aspectMask = VK_IMAGE_ASPECT_COLOR_BIT;
-    ImageBarrier.subresourceRange.baseMipLevel = 0;
-    ImageBarrier.subresourceRange.levelCount = 1;
-    ImageBarrier.subresourceRange.baseArrayLayer = 0;
-    ImageBarrier.subresourceRange.layerCount = 1;
+    if (Texture->IsSwapchainImage()) {
+      ImageBarrier.subresourceRange.aspectMask = VK_IMAGE_ASPECT_COLOR_BIT;
+      ImageBarrier.subresourceRange.baseMipLevel = 0;
+      ImageBarrier.subresourceRange.levelCount = 1;
+      ImageBarrier.subresourceRange.baseArrayLayer = 0;
+      ImageBarrier.subresourceRange.layerCount = 1;
+    }
+    else {
+      SK_LOG_ERROR("Non swapchain image transtions not implemented");
+    }
 
     ImageBarriers.push_back(ImageBarrier);
 
