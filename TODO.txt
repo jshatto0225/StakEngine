@@ -1,23 +1,4 @@
--- Finish Vulkan implementation
-  -- 2D and 3D rendering
-  -- GUI rendering
+Use VK_KHR_dynamic_rendering 
+This should simplify the renderer and improve the abstractions compatability with other apis
 
--- Remove std:: from vulkan files
-
--- Camera System
-  -- Perspective proj
-
--- Audio
-
--- ECS
-
--- Make test app without editor
-
--- Linux support
-
--- Add Gamepad Support
-
--- Support More Image Types
-
--- Add colors to terminal log messages
--- Add timestamp to file log messages
+Maybe the renderer should store the current frame

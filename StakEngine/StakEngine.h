@@ -1,20 +1,8 @@
 #pragma once
 
-#include "Platform.h"
-
-#include "Renderer.h"
-
-#include "Camera.h"
-
-#include "Image.h"
-#include "File.h"
-
-#include "StakMath.h"
-
-#include "Window.h"
-#include "Types.h"
-#include "ApplicationLayer.h"
-#include "Event.h"
-#include "Application.h"
-#include "Input.h"
-#include "Log.h"
+#include "Source/Core/Types.h"
+#include "Source/Core/IApplicationLayer.h"
+#include "Source/Core/Events.h"
+#include "Source/Core/IInput.h"
+#include "Source/Core/FApplication.h"
+#include "Source/Core/FLog.h"
