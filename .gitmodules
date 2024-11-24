@@ -1,0 +1,9 @@
+[submodule "StakEngine/External/spdlog"]
+	path = StakEngine/External/spdlog
+	url = https://github.com/gabime/spdlog
+[submodule "StakEngine/External/glfw"]
+	path = StakEngine/External/glfw
+	url = https://github.com/glfw/glfw
+[submodule "StakEngine/External/Imgui"]
+	path = StakEngine/External/Imgui
+	url = https://github.com/ocornut/imgui
