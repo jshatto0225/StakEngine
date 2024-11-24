@@ -5,28 +5,17 @@
 
 #include "IApplicationLayer.h"
 #include "IWindow.h"
-#include "IRHIDevice.h"
-#include "IRHIContext.h"
-#include "IRHIRenderPass.h"
-#include "IRHIFramebuffer.h"
-#include "IRHIResource.h"
-#include "IRHISyncObject.h"
+#include "FRenderer.h"
 
 class FImGuiLayer final : public IApplicationLayer {
 public:
-  FImGuiLayer(TRef<IRHIDevice> Device, TRef<IWindow> Window);
+  FImGuiLayer(TRef<FRenderer> Renderer);
   ~FImGuiLayer();
 
   void BeginFrame();
   void EndFrame();
-  void OnWindowResize(const FWindowResizeEvent &Event);
+  void OnWindowResize(const FWindowResizeEvent &Event) override;
 
 private:
-  TRef<IRHIGraphicsContext> mGraphicsContext;
-  TRef<IRHIRenderPass> mRenderPass;
-  std::vector<TRef<IRHIFramebuffer>> mSwapchainFramebuffers;
-  TRef<IRHIDevice> mDevice;
-  TRef<IWindow> mWindow;
-  FUInt32 mCurrentFrame;
-  TRef<IRHISyncObject> mImageAvailableSemaphore;
+  TRef<FRenderer> mRenderer;
 };

@@ -3,7 +3,6 @@
 #include "Types.h"
 #include "IWindow.h"
 
-#include <imgui.h>
 #include <map>
 #include <optional>
 
@@ -17,13 +16,10 @@ class IRHIUploadContext;
 class IRHIDevice;
 class IRHIInstance;
 class IRHIPipeline;
-class IRHIRenderPass;
 class IRHIResource;
 class IRHIBuffer;
 class IRHITexture;
 class IRHIShader;
-class IRHISyncObject;
-class IRHIFramebuffer;
 class IRHIDescritporSet;
 class IRHIWorkRecipt;
 
@@ -125,14 +121,26 @@ enum class ERHIPipelineBindPoint {
   COMPUTE,
 };
 
-enum class ERHIImageUsage {
-  UNDEFINED,
-  COLOR_ATTACHMENT,
-  DEPTH_STENCIL,
-  SHADER_READ,
-  PRESENT,
-  TRANSFER_SOURCE,
-  TRANSFER_DESTINATION,
+enum class ERHIResourceUsage {
+  RESOURCE_STATE_UNDEFINED,
+
+  RESOURCE_STATE_VERTEX_BUFFER,
+  RESOURCE_STATE_CONSTANT_BUFFER,
+  RESOURCE_STATE_INDEX_BUFFER,
+  RESOURCE_STATE_INDIRECT_ARGUMENT,
+
+  RESOURCE_STATE_COPY_SOURCE,
+  RESOURCE_STATE_COPY_DEST,
+
+  RESOURCE_STATE_SHADER_RESOURCE,
+  RESOURCE_STATE_UNORDERED_ACCESS,
+
+  RESOURCE_STATE_RENDER_TARGET,
+  RESOURCE_STATE_DEPTH_WRITE,
+  RESOURCE_STATE_DEPTH_READ,
+
+  RESOURCE_STATE_PRESENT,
+  RESOURCE_STATE_GENERIC_READ
 };
 
 enum class ERHIPipelineStage {
@@ -146,26 +154,6 @@ enum class ERHIPipelineStage {
   FRAMEBUFFER_WRITE,
   COMPUTE_SHADER,
   BOTTOM_OF_PIPE,
-};
-
-enum class ERHIAccess {
-  DONT_CARE,
-  INDEX_READ,
-  VERTEX_ATTRIBUTE_READ,
-  UNIFORM_READ,
-  INPUT_ATTACHMENT_READ,
-  SHADER_READ,
-  SHADER_WRITE,
-  COLOR_ATTACHMENT_READ,
-  COLOR_ATTACHMENT_WRITE,
-  DEPTH_STENCIL_ATTACHMENT_READ,
-  DEPTH_STENCIL_ATTACHMENT_WRITE,
-  TRANSFER_READ,
-  TRANSFER_WRITE,
-  HOST_READ,
-  HOST_WRITE,
-  MEMORY_READ,
-  MEMORY_WRITE,
 };
 
 enum class ERHILoadOp {
@@ -190,15 +178,49 @@ enum class ERHISampleCount {
 };
 
 enum class ERHITopology {
+  POINT,
+  LINE,
+  TRIANGLE,
+  PATCH,
+};
 
+enum class ERHIContextType {
+  GRAPHICS
+};
+
+enum class ERHIResourceType {
+  BUFFER,
+  TEXTURE
 };
 
 struct FRHIShaderDescription {
 
 };
 
-struct FRHIResourceBarrierDescription {
+struct FRHITransitionBarrierDescription {
+  TRef<IRHIResource> Resource;
+  ERHIResourceUsage NewUsage;
+};
 
+struct FRHIAliasingBarrierDescription {
+  TRef<IRHIResource> Before;
+  TRef<IRHIResource> After;
+};
+
+struct FRHIUAVBarrierDescription {
+  TRef<IRHIResource> Resource;
+};
+
+struct FRHIResourceBarrierDescription {
+  std::vector<FRHITransitionBarrierDescription> Transitions;
+};
+
+struct FRHIClearValue {
+  FFloat Color[4];
+  struct {
+    FFloat Depth;
+    FUInt8 Stencil;
+  } DepthStencil;
 };
 
 struct FRHITextureDescription {
@@ -211,11 +233,22 @@ struct FRHITextureDescription {
   ERHIStoreOp StoreOp;
   ERHILoadOp LoadOp;
 
-  ERHIImageUsage Usage;
+  ERHIResourceUsage Usage;
+
+  FRHIClearValue ClearValue;
 };
 
 struct FRHIPipelineDescription {
 
+};
+
+struct FRHIViewport {
+  FFloat X;
+  FFloat Y;
+  FFloat Width;
+  FFloat Height;
+  FFloat MinDepth;
+  FFloat MaxDepth;
 };
 
 struct FRHIBufferElement {

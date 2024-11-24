@@ -4,7 +4,7 @@
 
 #include "IApplicationLayer.h"
 #include "Events.h"
-#include "Renderer.h"
+#include "FRenderer.h"
 #include "IInput.h"
 #include "FImGuiLayer.h"
 
@@ -29,13 +29,9 @@ public:
 
 private:
   TRef<IWindow> mWindow;
-  TRef<Renderer> mRenderer;
+  TRef<FRenderer> mRenderer;
   FLayerStack mLayerStack;
   FBool mRunning;
   FImGuiLayer *mImGuiLayer;
   TRef<const IInput> mInput;
-
-private:
-  TRef<IRHIInstance> mRHIInstance;
-  TRef<IRHIDevice> mRHIDevice;
 };

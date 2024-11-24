@@ -5,7 +5,9 @@
 
 bool FGLFWWindow::sGLFWInitialized = false;
 
-FGLFWWindow::FGLFWWindow(const FWindowConfig &Cfg) : mData({ NULL, NULL, 0, 0, Cfg.Width, Cfg.Height, Cfg.Title }), mNativeHandle(NULL) {
+FGLFWWindow::FGLFWWindow(const FWindowConfig &Cfg) {
+  mData = { NULL, NULL, 0, 0, Cfg.Width, Cfg.Height, Cfg.Title };
+
   if (!sGLFWInitialized) {
     if (!glfwInit()) {
       return;
@@ -17,18 +19,22 @@ FGLFWWindow::FGLFWWindow(const FWindowConfig &Cfg) : mData({ NULL, NULL, 0, 0, C
   mNativeHandle = glfwCreateWindow(Cfg.Width, Cfg.Height, Cfg.Title, NULL, NULL);
   glfwSetWindowUserPointer(mNativeHandle, static_cast<void *>(&mData));
 
-  glfwSetWindowSizeCallback(mNativeHandle, [](GLFWwindow *Window, FSInt32 Width, FSInt32 Height) {
-    FWindowData *Data = static_cast<FWindowData *>(glfwGetWindowUserPointer(Window));
-    Data->Width = Width;
-    Data->Height = Height;
-    FWindowResizeEvent e(Width, Height);
-    Data->WindowResizeEventFn(e);
-    });
+  glfwSetWindowSizeCallback(mNativeHandle, 
+    [](GLFWwindow *Window, FSInt32 Width, FSInt32 Height) {
+      auto *Data = static_cast<FWindowData *>(glfwGetWindowUserPointer(Window));
+      Data->Width = Width;
+      Data->Height = Height;
+      FWindowResizeEvent e(Width, Height);
+      Data->WindowResizeEventFn(e);
+    }
+  );
 
-  glfwSetWindowCloseCallback(mNativeHandle, [](GLFWwindow *Window) {
-    FWindowData *Data = static_cast<FWindowData *>(glfwGetWindowUserPointer(Window));
-    Data->WindowCloseEventFn();
-    });
+  glfwSetWindowCloseCallback(mNativeHandle, 
+    [](GLFWwindow *Window) {
+      auto *Data = static_cast<FWindowData *>(glfwGetWindowUserPointer(Window));
+      Data->WindowCloseEventFn();
+    }
+  );
 }
 
 FGLFWWindow::~FGLFWWindow() {

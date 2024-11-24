@@ -30,7 +30,7 @@ public:
   bool MouseButtonDown(EMouseCode Button) override;
 
 public:
-  GLFWwindow *GetGlfwWindow() { return mNativeHandle; }
+  inline GLFWwindow *GetGlfwWindow() { return mNativeHandle; }
 
 private:
   struct FWindowData {
@@ -44,7 +44,7 @@ private:
   };
 
   FWindowData mData;
-  GLFWwindow *mNativeHandle;
+  GLFWwindow *mNativeHandle = NULL;
 
   static FBool sGLFWInitialized;
 };

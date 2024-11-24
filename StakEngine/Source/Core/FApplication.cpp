@@ -26,15 +26,22 @@ FApplication::FApplication(const FApplicationSpec &Spec) {
     Spec.WindowTitle
   };
   mWindow = IWindow::Create(Cfg);
-  mWindow->SetResizeEventFn([this](FWindowResizeEvent &Event) { return this->OnWindowResize(Event); });
-  mWindow->SetCloseEventFn([this]() { return this->OnWindowClose(); });
+  mWindow->SetResizeEventFn(
+    [this](FWindowResizeEvent &Event) { 
+      return this->OnWindowResize(Event); 
+    }
+  );
+  mWindow->SetCloseEventFn(
+    [this]() { 
+      return this->OnWindowClose(); 
+    }
+  );
 
   mInput = IInput::Create(mWindow);
 
-  mRHIInstance = IRHIInstance::Create("");
-  mRHIDevice = IRHIDevice::Create(mRHIInstance, mWindow);
+  mRenderer = TCreateRef<FRenderer>(mWindow);
 
-  mImGuiLayer = new FImGuiLayer(mRHIDevice, mWindow);
+  mImGuiLayer = new FImGuiLayer(mRenderer);
 
   AddLayer(mImGuiLayer);
 
@@ -54,6 +61,8 @@ void FApplication::Run() {
       }
     }
     mImGuiLayer->EndFrame();
+
+    mRenderer->Render();
 
     mWindow->Update();
   }

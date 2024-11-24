@@ -1,6 +1,8 @@
 #include "FVulkanRHIInstance.h"
 
 #include "FLog.h"
+#include "FVulkanRHIDevice.h"
+#include "FVulkanRHIContext.h"
 
 #ifdef SK_GLFW
 #define GLFW_INCLUDE_VULKAN
@@ -32,7 +34,7 @@ VKAPI_ATTR VkBool32 VKAPI_CALL VkMessenger(VkDebugUtilsMessageSeverityFlagBitsEX
 }
 
 VkResult FVulkanRHIInstance::CreateDebugMessenger(VkInstance Instance, const VkDebugUtilsMessengerCreateInfoEXT *Info, const VkAllocationCallbacks *Allocator, VkDebugUtilsMessengerEXT *Messenger) {
-  PFN_vkCreateDebugUtilsMessengerEXT Func = (PFN_vkCreateDebugUtilsMessengerEXT)vkGetInstanceProcAddr(Instance, "vkCreateDebugUtilsMessengerEXT");
+  auto Func = (PFN_vkCreateDebugUtilsMessengerEXT)vkGetInstanceProcAddr(Instance, "vkCreateDebugUtilsMessengerEXT");
   if (Func != NULL) {
     return Func(Instance, Info, Allocator, Messenger);
   }
@@ -43,13 +45,13 @@ VkResult FVulkanRHIInstance::CreateDebugMessenger(VkInstance Instance, const VkD
 }
 
 void FVulkanRHIInstance::DestroyDebugMessenger(VkInstance Instance, VkDebugUtilsMessengerEXT Messenger, const VkAllocationCallbacks *Allocator) {
-  PFN_vkDestroyDebugUtilsMessengerEXT Func = (PFN_vkDestroyDebugUtilsMessengerEXT)vkGetInstanceProcAddr(Instance, "vkDestroyDebugUtilsMessengerEXT");
+  auto Func = (PFN_vkDestroyDebugUtilsMessengerEXT)vkGetInstanceProcAddr(Instance, "vkDestroyDebugUtilsMessengerEXT");
   if (Func != NULL) {
     Func(Instance, Messenger, Allocator);
   }
 }
 
-FVulkanRHIInstance::FVulkanRHIInstance(const std::string &AppName) : mDebugMessenger(VK_NULL_HANDLE) {
+FVulkanRHIInstance::FVulkanRHIInstance(const std::string &AppName) {
   FBool ExtensionsSupported = true;
   FUInt32 LayerCount = 0;
   vkEnumerateInstanceLayerProperties(&LayerCount, NULL);
@@ -82,7 +84,7 @@ FVulkanRHIInstance::FVulkanRHIInstance(const std::string &AppName) : mDebugMesse
   AppInfo.applicationVersion = VK_MAKE_VERSION(1, 0, 0);
   AppInfo.pEngineName = "StakEngine";
   AppInfo.engineVersion = VK_MAKE_VERSION(1, 0, 0);
-  AppInfo.apiVersion = VK_API_VERSION_1_0;
+  AppInfo.apiVersion = VK_API_VERSION_1_3;
 
   VkInstanceCreateInfo InstanceInfo = {};
   InstanceInfo.sType = VK_STRUCTURE_TYPE_INSTANCE_CREATE_INFO;
@@ -116,6 +118,8 @@ FVulkanRHIInstance::FVulkanRHIInstance(const std::string &AppName) : mDebugMesse
     Extensions.push_back(VK_EXT_DEBUG_UTILS_EXTENSION_NAME);
   }
 
+  //Extensions.push_back(VK_KHR_DYNAMIC_RENDERING_EXTENSION_NAME);
+
   InstanceInfo.enabledExtensionCount = static_cast<FUInt32>(Extensions.size());
   InstanceInfo.ppEnabledExtensionNames = Extensions.data();
 
@@ -135,4 +139,57 @@ FVulkanRHIInstance::FVulkanRHIInstance(const std::string &AppName) : mDebugMesse
 FVulkanRHIInstance::~FVulkanRHIInstance() {
   DestroyDebugMessenger(mInstance, mDebugMessenger, NULL);
   vkDestroyInstance(mInstance, NULL);
+}
+
+void FVulkanRHIInstance::InitImGui(TRef<IRHIDevice> Device) {
+  TRef<FVulkanRHIDevice> VulkanDevice = std::static_pointer_cast<FVulkanRHIDevice>(Device);
+
+  ImGui_ImplVulkan_InitInfo InitInfo = {};
+  InitInfo.Allocator = NULL;
+  InitInfo.CheckVkResultFn = [](VkResult Err) {
+    if (Err != VK_SUCCESS) {
+      SK_LOG_ERROR("ImGui Vulkan Error");
+    }
+  };
+  InitInfo.DescriptorPool = VulkanDevice->GetImGuiVkDescriptorPool();
+  InitInfo.Instance = mInstance;
+  InitInfo.Device = VulkanDevice->GetVkDevice();
+  InitInfo.ImageCount = VulkanDevice->GetSwapchainImageCount();
+  InitInfo.MinImageCount = VulkanDevice->GetSwapchainImageCount();
+  InitInfo.MinAllocationSize = 1024 * 1024;
+  InitInfo.MSAASamples = VK_SAMPLE_COUNT_1_BIT;
+  InitInfo.PhysicalDevice = VulkanDevice->GetVkPhysicalDevice();
+  InitInfo.PipelineCache = NULL;
+  VkPipelineRenderingCreateInfo PipelineInfo = {};
+  PipelineInfo.sType = VK_STRUCTURE_TYPE_PIPELINE_RENDERING_CREATE_INFO;
+  PipelineInfo.viewMask = 0x01; // Render to attachment 1
+  PipelineInfo.colorAttachmentCount = 1;
+  VkFormat Formats[] = { VulkanDevice->GetVkSwapchainImageFormat() };
+  PipelineInfo.pColorAttachmentFormats = Formats;
+  PipelineInfo.depthAttachmentFormat = VK_FORMAT_UNDEFINED;
+  PipelineInfo.stencilAttachmentFormat = VK_FORMAT_UNDEFINED;
+  InitInfo.PipelineRenderingCreateInfo = PipelineInfo;
+  InitInfo.Queue = VulkanDevice->GetVkGraphicsQueue();
+  InitInfo.QueueFamily = VulkanDevice->GetVkGraphicsQueueFamilyIndex();
+  InitInfo.RenderPass = VK_NULL_HANDLE;
+  InitInfo.Subpass = 0;
+  InitInfo.UseDynamicRendering = true;
+
+  ImGui_ImplVulkan_Init(&InitInfo);
+}
+
+void FVulkanRHIInstance::ShutdownImGui(TRef<IRHIDevice> Device) {
+  TRef<FVulkanRHIDevice> VulkanDevice = std::static_pointer_cast<FVulkanRHIDevice>(Device);
+
+  ImGui_ImplVulkan_Shutdown();
+  VulkanDevice->FreeImGuiVkDescriptorPool();
+}
+
+void FVulkanRHIInstance::ImGuiNewFrame() {
+  ImGui_ImplVulkan_NewFrame();
+}
+
+void FVulkanRHIInstance::SubmitImGuiDrawData(ImDrawData *DrawData, TRef<IRHIGraphicsContext> Context) {
+  TRef<FVulkanRHIGraphicsContext> VulkanContext = std::static_pointer_cast<FVulkanRHIGraphicsContext>(Context);
+  ImGui_ImplVulkan_RenderDrawData(DrawData, VulkanContext->GetVkCommandBuffer());
 }

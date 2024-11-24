@@ -11,26 +11,36 @@
 
 class FVulkanRHIDevice final : public IRHIDevice {
 public:
-  FVulkanRHIDevice(TRef<FVulkanRHIInstance> Instance, TRef<IWindow> Window);
+  FVulkanRHIDevice(TRef<FVulkanRHIInstance> Instance, TRef<IWindow> Window, FUInt32 MaxFramesInFlight);
   ~FVulkanRHIDevice();
 
   ERHIFormat GetSwapchainImageFormat() { return VulkanRHIGetERHIFormat(mSwapchainImageFormat.format); };
-  FUInt32 GetSwapchainImageCount() { return mSwapchainImages.size(); }
+  FUInt32 GetSwapchainImageCount() { return static_cast<FUInt32>(mSwapchainImages.size()); }
 
-  TRef<IRHIWorkRecipt> SubmitWork(TRef<IRHIContext> Context);
-  void WaitOnWork(TRef<IRHIWorkRecipt> Recipt);
-  void Present();
+  TRef<IRHIWorkRecipt> SubmitWork(TRef<IRHIContext> Context) override;
+  void WaitOnWork(TRef<IRHIWorkRecipt> Recipt) override;
+  void Present() override;
 
-  FUInt32 GetCurrentFrameIndex() { return mCurrentFrame; }
+  FUInt32 GetCurrentFrameIndex() const override { return mCurrentFrame; }
 
-  FUInt32 GetSwapchainWidth() const { return mExtent.width; }
-  FUInt32 GetSwapchainHeight() const { return mExtent.height; }
-  FUInt32 GetSwapchainLayers() const { return 1; }
+  FUInt32 GetSwapchainWidth() const override { return mExtent.width; }
+  FUInt32 GetSwapchainHeight() const override { return mExtent.height; }
+  FUInt32 GetSwapchainLayers() const override { return 1; }
+
+  inline FUInt32 GetCurrentSwapchainImageIndex() const override { return mSwapchainImageIndex; }
+  inline FUInt32 GetMaxFramesInFlight() const override { return mMaxFramesInFlight; }
 
 public:
-  inline std::vector<VkImageView> GetVkSwapchainImageViews() const { return mSwapchainImageViews; }
-  inline std::vector<VkImage> GetVkSwapchainImages() const { return mSwapchainImages; }
+  inline VkImageView GetCurrentVkSwapchainImageView() const { return mSwapchainImageViews[mSwapchainImageIndex]; }
+  inline VkImage GetCurrentVkSwapchainImage() const { return mSwapchainImages[mSwapchainImageIndex]; }
   inline VkDevice GetVkDevice() const { return mDevice; }
+  inline VkFormat GetVkSwapchainImageFormat() const { return mSwapchainImageFormat.format; }
+
+  inline FUInt32 GetVkGraphicsQueueFamilyIndex() const { return mGraphicsQueueFamily; }
+  inline VkQueue GetVkGraphicsQueue() const { return mGraphicsQueue; }
+  inline VkPhysicalDevice GetVkPhysicalDevice() const { return mPhysicalDevice; }
+  inline VkDescriptorPool GetImGuiVkDescriptorPool() const { return mImGuiPool; }
+  void FreeImGuiVkDescriptorPool();
 
 private:
   struct VulkanSwapchainSupport {
@@ -50,6 +60,7 @@ private:
   void CreateImageViews();
   VkImageView CreateImageView(VkImage Image, VkFormat Format);
   void RecreateSwapchain();
+  void CreateSyncObjects();
 
 private:
   TRef<IWindow> mWindow;
@@ -58,17 +69,23 @@ private:
   TRef<FVulkanRHIInstance> mInstance;
 
 private:
-  VkSurfaceKHR mSurface;
-  VkPhysicalDevice mPhysicalDevice;
-  VkDevice mDevice;
-  VkQueue mGraphicsQueue;
-  FUInt32 mGraphicsQueueFamily;
-  VkQueue mPresentQueue;
-  VkExtent2D mExtent;
-  VkSwapchainKHR mSwapchain;
-  std::vector<VkImage> mSwapchainImages;
-  VkSurfaceFormatKHR mSwapchainImageFormat;
-  std::vector<VkImageView> mSwapchainImageViews;
-  VkCommandPool mCommandPool;
-  VkDescriptorPool mImGuiPool;
+  VkSurfaceKHR mSurface = VK_NULL_HANDLE;
+  VkPhysicalDevice mPhysicalDevice = VK_NULL_HANDLE;
+  VkDevice mDevice = VK_NULL_HANDLE;
+  VkQueue mGraphicsQueue = VK_NULL_HANDLE;
+  FUInt32 mGraphicsQueueFamily = UINT32_MAX;
+  FUInt32 mSwapchainImageIndex = UINT32_MAX;
+  VkQueue mPresentQueue = VK_NULL_HANDLE;
+  VkExtent2D mExtent = {};
+  VkSwapchainKHR mSwapchain = VK_NULL_HANDLE;
+  std::vector<VkImage> mSwapchainImages = {};
+  VkSurfaceFormatKHR mSwapchainImageFormat = {};
+  std::vector<VkImageView> mSwapchainImageViews = {};
+  VkCommandPool mCommandPool = VK_NULL_HANDLE;
+  VkDescriptorPool mImGuiPool = VK_NULL_HANDLE;
+  FUInt32 mMaxFramesInFlight = 0;
+  FUInt32 mCurrentFrame = 0;
+  std::vector<VkSemaphore> mImageAvailableSemaphores = {};
+  std::vector<VkSemaphore> mRenderFinishedSemaphores = {};
+  std::vector<VkFence> mFrameInFlightFences = {};
 };

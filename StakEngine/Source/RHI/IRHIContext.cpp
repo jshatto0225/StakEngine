@@ -2,8 +2,8 @@
 
 #ifdef SK_VULKAN
 #include "FVulkanRHIContext.h"
-typedef FVulkanRHIGraphicsContext FPlatformRHIContext;
-typedef FVulkanRHIDevice FPlatformRHIDevce;
+using FPlatformRHIContext = FVulkanRHIGraphicsContext;
+using FPlatformRHIDevce = FVulkanRHIDevice;
 #endif
 
 TRef<IRHIGraphicsContext> IRHIGraphicsContext::Create(TRef<IRHIDevice> Device) {

@@ -2,8 +2,8 @@
 
 #ifdef SK_VULKAN
 #include "FVulkanRHIResource.h"
-typedef FVulkanRHITexture FPlatformRHITexture;
-typedef FVulkanRHIDevice FPlatformRHIDevice;
+using FPlatformRHITexture = FVulkanRHITexture;
+using FPlatformRHIDevice = FVulkanRHIDevice;
 #endif
 
 TRef<IRHITexture> IRHITexture::Create(TRef<IRHIDevice> Device, FRHITextureDescription &Description) {

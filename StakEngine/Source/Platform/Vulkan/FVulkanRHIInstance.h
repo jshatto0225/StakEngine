@@ -29,14 +29,19 @@ public:
   FVulkanRHIInstance(const std::string &AppName);
   ~FVulkanRHIInstance();
 
+  void InitImGui(TRef<IRHIDevice> Device) override;
+  void ShutdownImGui(TRef<IRHIDevice> Device) override;
+  void ImGuiNewFrame() override;
+  void SubmitImGuiDrawData(ImDrawData *DrawData, TRef<IRHIGraphicsContext> Context) override;
+
 public:
-  VkInstance GetVkInstance() { return mInstance; }
+  VkInstance GetVkInstance() const { return mInstance; }
 
 private:
   VkResult CreateDebugMessenger(VkInstance Instance, const VkDebugUtilsMessengerCreateInfoEXT *Info, const VkAllocationCallbacks *Allocator, VkDebugUtilsMessengerEXT *Messenger);
   void DestroyDebugMessenger(VkInstance Instance, VkDebugUtilsMessengerEXT Messenger, const VkAllocationCallbacks *Allocator);
 
 private:
-  VkInstance mInstance;
-  VkDebugUtilsMessengerEXT mDebugMessenger;
+  VkInstance mInstance = VK_NULL_HANDLE;
+  VkDebugUtilsMessengerEXT mDebugMessenger = VK_NULL_HANDLE;
 };

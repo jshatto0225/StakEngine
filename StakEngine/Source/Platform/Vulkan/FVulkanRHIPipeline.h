@@ -6,8 +6,13 @@
 
 class FVulkanRHIPipeline final : public IRHIPipeline {
 public:
-  FVulkanRHIPipeline(TRef<IRHIDevice> Device, TRef<IRHIRenderPass> RenderPass);
+  FVulkanRHIPipeline(TRef<IRHIDevice> Device);
   ~FVulkanRHIPipeline();
 
+
+public:
+  VkPipeline GetVkPipeline() const { return mPipeline; }
+
 private:
+  VkPipeline mPipeline = VK_NULL_HANDLE;
 };

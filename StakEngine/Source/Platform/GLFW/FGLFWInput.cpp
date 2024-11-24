@@ -4,10 +4,12 @@
 
 #include <GLFW/glfw3.h>
 
-FGLFWInput::FGLFWInput(TRef<IWindow> window) : mWindow(window) {}
+FGLFWInput::FGLFWInput(TRef<IWindow> Window) {
+  mWindow = Window;
+}
 
 FGLFWInput::~FGLFWInput() {
-  mWindow = NULL;
+
 }
 
 IInput::FMousePosData FGLFWInput::GetMousePos() const {

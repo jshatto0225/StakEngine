@@ -5,7 +5,15 @@
 #include "FVulkanRHIDevice.h"
 
 class FVulkanRHIBuffer final : public IRHIBuffer {
+public:
+  FVulkanRHIBuffer();
+  ~FVulkanRHIBuffer();
 
+public:
+  VkBuffer GetVkBuffer() const { return mBuffer; }
+
+private:
+  VkBuffer mBuffer = VK_NULL_HANDLE;
 };
 
 class FVulkanRHITexture final : public IRHITexture {
@@ -13,26 +21,35 @@ public:
   FVulkanRHITexture(TRef<FVulkanRHIDevice> Device, const FRHITextureDescription &Description);
   ~FVulkanRHITexture();
 
-  inline FUInt32 GetWidth() { return mDescription.Width; }
-  inline FUInt32 GetHeight() { return mDescription.Height; }
-  inline FUInt32 GetLayers() { return mDescription.Layers; }
+  inline ERHIResourceType GetType() const override { return ERHIResourceType::TEXTURE; }
+
+  FUInt32 GetWidth() const override;
+  FUInt32 GetHeight() const override;
+  FUInt32 GetLayers() const override;
+
+  const FRHITextureDescription &GetDescription() const override;
+
+  ERHIResourceUsage GetUsage() const override;
+
+  void SetUsage(ERHIResourceUsage Usage) override;
 
 public:
-  inline const std::vector<VkImage> &GetVkImages() const { return mImages; }
-  inline const std::vector<VkImageView> &GetVkImageViews() const { return mImageViews; }
+  VkImage GetVkImage() const;
+  VkImageView GetVkImageView() const;
   inline VkFormat GetVkFormat() const { return mFormat; }
 
 private:
   void GetSwapchainImages();
 
 private:
-  FRHITextureDescription mDescription;
+  std::vector<FRHITextureDescription> mDescriptions;
+  FBool mIsSwapchainImage = false;
 
 private:
   TRef<FVulkanRHIDevice> mDevice;
 
 private:
-  std::vector<VkImage> mImages;
-  std::vector<VkImageView> mImageViews;
-  VkFormat mFormat;
+  std::vector<VkImage> mImages = {};
+  std::vector<VkImageView> mImageViews = {};
+  VkFormat mFormat = VK_FORMAT_UNDEFINED;
 };
