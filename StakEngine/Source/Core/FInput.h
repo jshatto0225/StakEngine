@@ -1,9 +1,13 @@
 #pragma once
 
 #include "Types.h"
+#include "Asserts.h"
+
+#include <unordered_map>
+#include <functional>
 
 enum class EKeyCode : FSInt16 {
-  UNKNOWN       = -1,
+  UNKNOWN = -1,
   SPACE         = 32,
   APOSTROPHE    = 39, /* ' */
   COMMA         = 44, /* , */
@@ -142,22 +146,86 @@ enum class EMouseCode : FUInt8 {
   MIDDLE  = THREE
 };
 
-class IWindow;
+enum class ECursorVisibility : FUInt8 {
+  NORMAL,
+  HIDDEN,
+  DISABLED
+};
 
-class IInput {
+enum class EInputState : FUInt8 {
+  DOWN,
+  UP,
+};
+
+class FInput {
 public:
-  virtual ~IInput() = default;
+  FInput();
+
+  ~FInput();
+
+  inline static FInput *Get() { return sInstance; }
 
   struct FMousePosData {
-    FSInt32 X;
-    FSInt32 Y;
+    FFloat X;
+    FFloat Y;
   };
 
-  static TRef<const IInput> Create(TRef<IWindow> Window);
+  inline const FMousePosData &GetMousePos() const { return mMousePos; }
+  inline FFloat GetMouseX() const { return GetMousePos().X; }
+  inline FFloat GetMouseY() const { return GetMousePos().Y; }
+  inline EInputState GetKey(EKeyCode Key) const { return mKeys.at(Key); }
+  inline EInputState GetMouseButton(EMouseCode Button) const { return mMouseButtons.at(Button); }
 
-  virtual FMousePosData GetMousePos() const = 0;
-  virtual FSInt32 GetMouseX() const = 0;
-  virtual FSInt32 GetMouseY() const = 0;
-  virtual bool KeyDown(EKeyCode key) const = 0;
-  virtual bool MouseButtonDown(EMouseCode button) const = 0;
+  inline bool IsUsingRawInput() { return mIsUsingRawInput; }
+  void SetRawInput(FBool Value);
+
+  inline ECursorVisibility GetCursorVisibility() { return mCursorVisibility; }
+  void SetCursorVisibility(ECursorVisibility Visibility);
+
+  void AddKeyStateCallback(EInputState Action, EKeyCode Key, std::function<void()> Func);
+  void AddGenericKeyStateCallback(EInputState Action, std::function<void(EKeyCode)> Func);
+  void AddGenericKeyCallback(std::function<void(EInputState, EKeyCode)> Func);
+  
+  void AddMouseButtonStateCallback(EInputState Action, EMouseCode Button, std::function<void()> Func);
+  void AddGenericMouseButtonStateCallback(EInputState Action, std::function<void(EMouseCode)> Func);
+  void AddGenericMouseButtonCallback(std::function<void(EInputState, EMouseCode)> Func);
+  
+  void AddMouseMoveCallback(std::function<void(FFloat, FFloat)> Func);
+
+private:
+  void SetKey(EKeyCode Key, EInputState Action);
+  void SetMouseButton(EMouseCode Button, EInputState Action);
+  void SetMousePos(FFloat X, FFloat Y);
+
+private:
+  inline static FInput *sInstance = NULL;
+
+private:
+  FBool mIsUsingRawInput;
+  ECursorVisibility mCursorVisibility;
+
+  FMousePosData mMousePos = {};
+  std::unordered_map<EKeyCode, EInputState> mKeys;
+  std::unordered_map<EMouseCode, EInputState> mMouseButtons;
+
+  std::unordered_map<EKeyCode, std::vector<std::function<void()>>> mKeyPressCallbacks;
+  std::unordered_map<EKeyCode, std::vector<std::function<void()>>> mKeyReleaseCallbacks;
+
+  std::vector<std::function<void(EKeyCode)>> mGenericKeyPressCallbacks;
+  std::vector<std::function<void(EKeyCode)>> mGenericKeyReleaseCallbacks;
+
+  std::vector<std::function<void(EInputState, EKeyCode)>> mGenericKeyCallbacks;
+
+  std::unordered_map<EMouseCode, std::vector<std::function<void()>>> mMouseButtonPressCallbacks;
+  std::unordered_map<EMouseCode, std::vector<std::function<void()>>> mMouseButtonReleaseCallbacks;
+
+  std::vector<std::function<void(EMouseCode)>> mGenericMouseButtonPressCallbacks;
+  std::vector<std::function<void(EMouseCode)>> mGenericMouseButtonReleaseCallbacks;
+
+  std::vector<std::function<void(EInputState, EMouseCode)>> mGenericMouseButtonCallbacks;
+
+  std::vector<std::function<void(FFloat, FFloat)>> mMouseMoveCallbacks;
+
+private:
+  friend class FApplication;
 };

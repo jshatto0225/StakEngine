@@ -1,7 +1,17 @@
 #include "EditorLayer.h"
 
-FEditorLayer::FEditorLayer(TRef<const IInput> Input) {
-  mInput = Input;
+FEditorLayer::FEditorLayer() {
+  FInput::Get()->AddKeyStateCallback(EInputState::DOWN, EKeyCode::ESCAPE, 
+    []() {
+      LOG_TRACE("Escape pressed. Quitting.");
+      FApplication::Get()->Close();
+    }
+  );
+  FInput::Get()->AddKeyStateCallback(EInputState::DOWN, EKeyCode::W,
+    []() {
+      LOG_TRACE("W pressed");
+    }
+  );
 }
 
 void FEditorLayer::OnImGuiRender() {
@@ -15,7 +25,7 @@ void FEditorLayer::OnImGuiRender() {
 }
 
 void FEditorLayer::Update() {
-  if (mInput->KeyDown(EKeyCode::ESCAPE)) {
-    LOG_TRACE("Escape pressed. Quitting.");
+  if (FInput::Get()->GetKey(EKeyCode::SPACE) == EInputState::DOWN) {
+    LOG_TRACE("Space Pressed");
   }
 }

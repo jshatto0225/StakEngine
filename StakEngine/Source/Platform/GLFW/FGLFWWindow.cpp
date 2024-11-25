@@ -6,7 +6,7 @@
 bool FGLFWWindow::sGLFWInitialized = false;
 
 FGLFWWindow::FGLFWWindow(const FWindowConfig &Cfg) {
-  mData = { NULL, NULL, 0, 0, Cfg.Width, Cfg.Height, Cfg.Title };
+  mData = { NULL, NULL, NULL, NULL, NULL, 0, 0, Cfg.Width, Cfg.Height, Cfg.Title };
 
   if (!sGLFWInitialized) {
     if (!glfwInit()) {
@@ -22,17 +22,90 @@ FGLFWWindow::FGLFWWindow(const FWindowConfig &Cfg) {
   glfwSetWindowSizeCallback(mNativeHandle, 
     [](GLFWwindow *Window, FSInt32 Width, FSInt32 Height) {
       auto *Data = static_cast<FWindowData *>(glfwGetWindowUserPointer(Window));
+
+      if (!Data->WindowResizeEventFn) {
+        return;
+      }
+
       Data->Width = Width;
       Data->Height = Height;
-      FWindowResizeEvent e(Width, Height);
-      Data->WindowResizeEventFn(e);
+      FWindowResizeEvent E(Width, Height);
+      Data->WindowResizeEventFn(E);
     }
   );
 
   glfwSetWindowCloseCallback(mNativeHandle, 
     [](GLFWwindow *Window) {
       auto *Data = static_cast<FWindowData *>(glfwGetWindowUserPointer(Window));
+
+      if (!Data->WindowCloseEventFn) {
+        return;
+      }
+
       Data->WindowCloseEventFn();
+    }
+  );
+
+  glfwSetKeyCallback(mNativeHandle,
+    [](GLFWwindow *Window, FSInt32 Key, FSInt32 Scancode, FSInt32 Action, FSInt32 Mods) {
+      auto *Data = static_cast<FWindowData *>(glfwGetWindowUserPointer(Window));
+
+      if (!Data->KeyEventFn) {
+        return;
+      }
+
+      EInputState State;
+      switch (Action) {
+      case GLFW_PRESS:
+        State = EInputState::DOWN;
+        break;
+      case GLFW_RELEASE:
+        State = EInputState::UP;
+        break;
+      default:
+        return;
+      }
+
+      FKeyEvent E(static_cast<EKeyCode>(Key), State);
+      Data->KeyEventFn(E);
+    }
+  );
+
+  glfwSetMouseButtonCallback(mNativeHandle,
+    [](GLFWwindow *Window, FSInt32 Button, FSInt32 Action, FSInt32 Mods) {
+      auto *Data = static_cast<FWindowData *>(glfwGetWindowUserPointer(Window));
+      
+      if (!Data->MouseButtonEventFn) {
+        return;
+      }
+
+      EInputState State;
+      switch (Action) {
+      case GLFW_PRESS:
+        State = EInputState::DOWN;
+        break;
+      case GLFW_RELEASE:
+        State = EInputState::UP;
+        break;
+      default:
+        return;
+      }
+
+      FMouseButtonEvent E(static_cast<EMouseCode>(Button), State);
+      Data->MouseButtonEventFn(E);
+    }
+  );
+
+  glfwSetCursorPosCallback(mNativeHandle,
+    [](GLFWwindow *Window, double X, double Y) {
+      auto *Data = static_cast<FWindowData *>(glfwGetWindowUserPointer(Window));
+
+      if (!Data->MouseMoveEventFn) {
+        return;
+      }
+
+      FMouseMoveEvent E(static_cast<FFloat>(X), static_cast<FFloat>(Y));
+      Data->MouseMoveEventFn(E);
     }
   );
 }
@@ -54,21 +127,6 @@ void FGLFWWindow::ImGuiNewFrame() {
   ImGui_ImplGlfw_NewFrame();
 }
 
-IInput::FMousePosData FGLFWWindow::GetMousePos() {
-  FDouble X;
-  FDouble Y;
-  glfwGetCursorPos(mNativeHandle, &X, &Y);
-  return { static_cast<FSInt32>(X), static_cast<FSInt32>(Y) };
-}
-
-bool FGLFWWindow::KeyDown(EKeyCode Key) {
-  return glfwGetKey(mNativeHandle, static_cast<FUInt16>(Key)) == GLFW_PRESS;
-}
-
-bool FGLFWWindow::MouseButtonDown(EMouseCode Button) {
-  return glfwGetKey(mNativeHandle, static_cast<FSInt16>(Button)) == GLFW_PRESS;
-}
-
 void FGLFWWindow::Update() {
   glfwPollEvents();
 }
@@ -87,4 +145,16 @@ void FGLFWWindow::SetResizeEventFn(const FWindowResizeEventFn &Func) {
 
 void FGLFWWindow::SetCloseEventFn(const FWindowCloseEventFn &Func) {
   mData.WindowCloseEventFn = Func;
+}
+
+void FGLFWWindow::SetKeyEventFn(const FKeyEventFn &Func) {
+  mData.KeyEventFn = Func;
+}
+
+void FGLFWWindow::SetMouseButtonEventFn(const FMouseButtonEventFn &Func) {
+  mData.MouseButtonEventFn = Func;
+}
+
+void FGLFWWindow::SetMouseMoveEventFn(const FMouseMoveEventFn &Func) {
+  mData.MouseMoveEventFn = Func;
 }

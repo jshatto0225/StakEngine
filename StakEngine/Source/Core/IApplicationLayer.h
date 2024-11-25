@@ -23,7 +23,7 @@ public:
   }
 
   inline void Clear() {
-    while (mLayers.size() > 0) {
+    while (!mLayers.empty()) {
       delete Pop();
     }
   }

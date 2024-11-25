@@ -6,11 +6,8 @@
 
 class FEditorLayer final : public IApplicationLayer {
 public:
-  FEditorLayer(TRef<const IInput> Input);
+  FEditorLayer();
 
   void Update() override;
   void OnImGuiRender() override;
-
-private:
-  TRef<const IInput> mInput;
 };

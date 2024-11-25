@@ -5,7 +5,7 @@
 #include "IApplicationLayer.h"
 #include "Events.h"
 #include "FRenderer.h"
-#include "IInput.h"
+#include "FInput.h"
 #include "FImGuiLayer.h"
 
 struct FApplicationSpec {
@@ -19,19 +19,29 @@ public:
   FApplication(const FApplicationSpec &Spec);
   ~FApplication();
 
+  static FApplication *Get() { return sInstance; }
+
   void Run();
-  void OnWindowClose();
-  void OnWindowResize(FWindowResizeEvent &event);
   void AddLayer(IApplicationLayer *layer);
   void Close();
 
-  inline TRef<const IInput> GetInput() const { return mInput; }
+  inline const TRef<IWindow> GetWindow() const { return mWindow; }
+
+private:
+  void OnWindowClose();
+  void OnWindowResize(const FWindowResizeEvent &Event);
+  void OnKeyEvent(const FKeyEvent &Event);
+  void OnMouseButtonEvent(const FMouseButtonEvent &Event);
+  void OnMouseMoveEvent(const FMouseMoveEvent &Event);
+
+private:
+  inline static FApplication *sInstance = NULL;
 
 private:
   TRef<IWindow> mWindow;
   TRef<FRenderer> mRenderer;
+  TRef<FInput> mInput;
   FLayerStack mLayerStack;
   FBool mRunning;
   FImGuiLayer *mImGuiLayer;
-  TRef<const IInput> mInput;
 };

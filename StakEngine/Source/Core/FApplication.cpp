@@ -5,6 +5,7 @@
 
 #include "IRHIInstance.h"
 #include "IRHIDevice.h"
+#include "Asserts.h"
 
 void FApplication::AddLayer(IApplicationLayer *Layer) {
   mLayerStack.Push(Layer);
@@ -17,9 +18,15 @@ FApplication::~FApplication() {
   mImGuiLayer = NULL;
   mRenderer = NULL;
   mWindow = NULL;
+
+  sInstance = NULL;
 }
 
 FApplication::FApplication(const FApplicationSpec &Spec) {
+  ASSERT(!sInstance);
+
+  sInstance = this;
+
   FWindowConfig Cfg = {
     Spec.WindowWidth,
     Spec.WindowHeight,
@@ -27,17 +34,32 @@ FApplication::FApplication(const FApplicationSpec &Spec) {
   };
   mWindow = IWindow::Create(Cfg);
   mWindow->SetResizeEventFn(
-    [this](FWindowResizeEvent &Event) { 
-      return this->OnWindowResize(Event); 
+    [this](const FWindowResizeEvent &Event) { 
+      this->OnWindowResize(Event); 
     }
   );
   mWindow->SetCloseEventFn(
     [this]() { 
-      return this->OnWindowClose(); 
+      this->OnWindowClose(); 
+    }
+  );
+  mWindow->SetKeyEventFn(
+    [this](const FKeyEvent &Event) {
+      this->OnKeyEvent(Event);
+    }
+  );
+  mWindow->SetMouseButtonEventFn(
+    [this](const FMouseButtonEvent &Event) {
+      this->OnMouseButtonEvent(Event);
+    }
+  );
+  mWindow->SetMouseMoveEventFn(
+    [this](const FMouseMoveEvent &Event) {
+      this->OnMouseMoveEvent(Event);
     }
   );
 
-  mInput = IInput::Create(mWindow);
+  mInput = TCreateRef<FInput>();
 
   mRenderer = TCreateRef<FRenderer>(mWindow);
 
@@ -68,7 +90,7 @@ void FApplication::Run() {
   }
 }
 
-void FApplication::OnWindowResize(FWindowResizeEvent &Event) {
+void FApplication::OnWindowResize(const FWindowResizeEvent &Event) {
   for (IApplicationLayer *Layer : mLayerStack) {
     Layer->OnWindowResize(Event);
   }
@@ -76,6 +98,18 @@ void FApplication::OnWindowResize(FWindowResizeEvent &Event) {
 
 void FApplication::OnWindowClose() {
   Close();
+}
+
+void FApplication::OnKeyEvent(const FKeyEvent &Event) {
+  mInput->SetKey(Event.Key, Event.State);
+}
+
+void FApplication::OnMouseButtonEvent(const FMouseButtonEvent &Event) {
+  mInput->SetMouseButton(Event.Button, Event.State);
+}
+
+void FApplication::OnMouseMoveEvent(const FMouseMoveEvent &Event) {
+  mInput->SetMousePos(Event.X, Event.Y);
 }
 
 void FApplication::Close() {

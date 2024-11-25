@@ -1,6 +1,6 @@
 #pragma once
 
-#include <assert.h>
+#include <cassert>
 
 #ifdef SK_DEBUG
     #define ASSERT(x) assert(x);

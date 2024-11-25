@@ -23,11 +23,9 @@ public:
 
   void SetResizeEventFn(const FWindowResizeEventFn &Func) override;
   void SetCloseEventFn(const FWindowCloseEventFn &Func) override;
-
-
-  IInput::FMousePosData GetMousePos() override;
-  bool KeyDown(EKeyCode Key) override;
-  bool MouseButtonDown(EMouseCode Button) override;
+  void SetKeyEventFn(const FKeyEventFn &Func) override;
+  void SetMouseButtonEventFn(const FMouseButtonEventFn &Func) override;
+  void SetMouseMoveEventFn(const FMouseMoveEventFn &Func) override;
 
 public:
   inline GLFWwindow *GetGlfwWindow() { return mNativeHandle; }
@@ -36,6 +34,9 @@ private:
   struct FWindowData {
     FWindowCloseEventFn WindowCloseEventFn;
     FWindowResizeEventFn WindowResizeEventFn;
+    FKeyEventFn KeyEventFn;
+    FMouseButtonEventFn MouseButtonEventFn;
+    FMouseMoveEventFn MouseMoveEventFn;
     FSInt32 X;
     FSInt32 Y;
     FSInt32 Width;
