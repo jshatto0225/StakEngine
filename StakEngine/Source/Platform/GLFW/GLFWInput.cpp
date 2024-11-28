@@ -7,17 +7,17 @@
 
 
 void GLFWEnableRawInput() {
-  TRef<FGLFWWindow> Window = std::static_pointer_cast<FGLFWWindow>(FApplication::Get()->GetWindow());
+  TRef<FGLFWWindow> Window = std::static_pointer_cast<FGLFWWindow>(FApplication::Get().GetWindow());
   glfwSetInputMode(Window->GetGlfwWindow(), GLFW_RAW_MOUSE_MOTION, GLFW_TRUE);
 }
 
 void GLFWDisableRawInput() {
-  TRef<FGLFWWindow> Window = std::static_pointer_cast<FGLFWWindow>(FApplication::Get()->GetWindow());
+  TRef<FGLFWWindow> Window = std::static_pointer_cast<FGLFWWindow>(FApplication::Get().GetWindow());
   glfwSetInputMode(Window->GetGlfwWindow(), GLFW_RAW_MOUSE_MOTION, GLFW_FALSE);
 }
 
 void GLFWSetCursorVisibility(ECursorVisibility Visibility) {
-  TRef<FGLFWWindow> Window = std::static_pointer_cast<FGLFWWindow>(FApplication::Get()->GetWindow());
+  TRef<FGLFWWindow> Window = std::static_pointer_cast<FGLFWWindow>(FApplication::Get().GetWindow());
 
   FSInt32 GlfwVisibility;
   switch (Visibility) {
@@ -29,6 +29,9 @@ void GLFWSetCursorVisibility(ECursorVisibility Visibility) {
     break;
   case ECursorVisibility::DISABLED:
     GlfwVisibility = GLFW_CURSOR_DISABLED;
+    break;
+  default:
+    return;
   }
 
   glfwSetInputMode(Window->GetGlfwWindow(), GLFW_CURSOR, GlfwVisibility);

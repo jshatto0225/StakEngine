@@ -34,18 +34,18 @@ public:
   }
 
   inline IApplicationLayer *Pop() {
-    IApplicationLayer *layer = *mLayers.rbegin();
+    IApplicationLayer *Layer = *mLayers.rbegin();
     mLayers.pop_back();
-    layer->OnDetach();
-    return layer;
+    Layer->OnDetach();
+    return Layer;
   }
 
-  inline void Remove(IApplicationLayer *layer) {
-    std::vector<IApplicationLayer *>::iterator it = std::find(mLayers.begin(), mLayers.end(), layer);
-    if (it != mLayers.end()) {
-      layer->OnDetach();
-      mLayers.erase(it);
-      delete layer;
+  inline void Remove(IApplicationLayer *Layer) {
+    auto It = std::find(mLayers.begin(), mLayers.end(), Layer);
+    if (It != mLayers.end()) {
+      Layer->OnDetach();
+      mLayers.erase(It);
+      delete Layer;
     }
   }
 

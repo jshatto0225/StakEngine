@@ -1,6 +1,7 @@
 #pragma once
 
 #include <vector>
+#include <string>
 
 #include "IApplicationLayer.h"
 #include "Events.h"
@@ -19,12 +20,13 @@ public:
   FApplication(const FApplicationSpec &Spec);
   ~FApplication();
 
-  static FApplication *Get() { return sInstance; }
+  static FApplication &Get() { ASSERT(sInstance);  return *sInstance; }
 
   void Run();
   void AddLayer(IApplicationLayer *layer);
   void Close();
-
+  
+  inline const char *GetName() const { return mName.c_str(); }
   inline const TRef<IWindow> GetWindow() const { return mWindow; }
 
 private:
@@ -44,4 +46,5 @@ private:
   FLayerStack mLayerStack;
   FBool mRunning;
   FImGuiLayer *mImGuiLayer;
+  std::string mName = "Stak Application";
 };

@@ -7,15 +7,17 @@
 #include "IWindow.h"
 #include "FRenderer.h"
 
-class FImGuiLayer final : public IApplicationLayer {
+class FImGuiLayer final : public IApplicationLayer, public FRenderProxy {
 public:
-  FImGuiLayer(TRef<FRenderer> Renderer);
+  FImGuiLayer();
   ~FImGuiLayer();
 
   void BeginFrame();
   void EndFrame();
   void OnWindowResize(const FWindowResizeEvent &Event) override;
 
+  void Render(FRHICommandList &Context) override;
+
 private:
-  TRef<FRenderer> mRenderer;
+  ImDrawData *mDrawData;
 };

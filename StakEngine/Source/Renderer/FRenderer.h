@@ -1,26 +1,45 @@
 #pragma once
 
-#include "RHICore.h"
-
 #include <imgui.h>
+
+#include "RHICommandList.h"
+#include "IWindow.h"
+
+class FRenderProxy {
+public:
+  FRenderProxy();
+  virtual ~FRenderProxy();
+
+  virtual void Render(FRHICommandList &CommandList) {}
+};
+
 
 class FRenderer {
 public:
-  FRenderer(TRef<IWindow> window);
+  FRenderer();
   ~FRenderer();
+
+  inline static FRenderer &Get() { return *sInstance; }
 
   void InitImGui();
   void ImGuiNewFrame();
-  void SubmitImGuiDrawData(ImDrawData *DrawData);
   void ShutdownImGui();
   void Render();
 
-private:
-  TRef<IRHIInstance> mRHIInstance;
-  TRef<IRHIDevice> mRHIDevice;
-  TRef<IWindow> mWindow;
+  void AddProxy(FRenderProxy *Proxy);
+  void RemoveProxy(FRenderProxy *Proxy);
+
+  void AddPostProxy(FRenderProxy *Proxy);
+  void RemovePostProxy(FRenderProxy *Proxy);
+
+  FRenderer(FRenderer &) = delete;
+  FRenderer &operator=(FRenderer &) = delete;
 
 private:
-  TRef<IRHIGraphicsContext> mImGuiRHIGraphicsContext;
-  TRef<IRHITexture> mImGuiRHISwapchainTexture;
+  inline static FRenderer *sInstance = NULL;
+
+private:
+  std::vector<FRenderProxy *> mRenderProxies;
+  std::vector<FRenderProxy *> mPostRenderProxies;
+  FRHICommandList mCommandList;
 };

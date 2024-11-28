@@ -3,9 +3,8 @@
 #include "FLog.h"
 #include "FImGuiLayer.h"
 
-#include "IRHIInstance.h"
-#include "IRHIDevice.h"
 #include "Asserts.h"
+#include "RHI.h"
 
 void FApplication::AddLayer(IApplicationLayer *Layer) {
   mLayerStack.Push(Layer);
@@ -14,10 +13,11 @@ void FApplication::AddLayer(IApplicationLayer *Layer) {
 FApplication::~FApplication() {
   mLayerStack.Clear();
 
-  mInput = NULL;
-  mImGuiLayer = NULL;
   mRenderer = NULL;
+  FRHI::Shutdown();
+  mInput = NULL;
   mWindow = NULL;
+
 
   sInstance = NULL;
 }
@@ -61,9 +61,11 @@ FApplication::FApplication(const FApplicationSpec &Spec) {
 
   mInput = TCreateRef<FInput>();
 
-  mRenderer = TCreateRef<FRenderer>(mWindow);
+  FRHI::Init();
 
-  mImGuiLayer = new FImGuiLayer(mRenderer);
+  mRenderer = TCreateRef<FRenderer>();
+
+  mImGuiLayer = new FImGuiLayer();
 
   AddLayer(mImGuiLayer);
 
@@ -78,8 +80,8 @@ void FApplication::Run() {
 
     mImGuiLayer->BeginFrame();
     {
-      for (IApplicationLayer *layer : mLayerStack) {
-        layer->OnImGuiRender();
+      for (IApplicationLayer *Layer : mLayerStack) {
+        Layer->OnImGuiRender();
       }
     }
     mImGuiLayer->EndFrame();
@@ -91,6 +93,7 @@ void FApplication::Run() {
 }
 
 void FApplication::OnWindowResize(const FWindowResizeEvent &Event) {
+  FRHI::Get().FramebufferResized();
   for (IApplicationLayer *Layer : mLayerStack) {
     Layer->OnWindowResize(Event);
   }

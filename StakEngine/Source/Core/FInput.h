@@ -6,6 +6,8 @@
 #include <unordered_map>
 #include <functional>
 
+#undef DELETE
+
 enum class EKeyCode : FSInt16 {
   UNKNOWN = -1,
   SPACE         = 32,
@@ -163,7 +165,7 @@ public:
 
   ~FInput();
 
-  inline static FInput *Get() { return sInstance; }
+  inline static FInput &Get() { ASSERT(sInstance); return *sInstance; }
 
   struct FMousePosData {
     FFloat X;

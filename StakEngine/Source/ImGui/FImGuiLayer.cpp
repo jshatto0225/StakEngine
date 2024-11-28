@@ -5,8 +5,8 @@
 #include "FLog.h"
 #include "FRenderer.h"
 
-FImGuiLayer::FImGuiLayer(TRef<FRenderer> Renderer) {
-  mRenderer = Renderer;
+FImGuiLayer::FImGuiLayer() {
+  mDrawData = NULL;
 
   ImGui::CreateContext();
   ImGuiIO &io = ImGui::GetIO();
@@ -14,16 +14,16 @@ FImGuiLayer::FImGuiLayer(TRef<FRenderer> Renderer) {
   io.ConfigFlags |= ImGuiConfigFlags_NavEnableGamepad;
   ImGui::StyleColorsDark();
 
-  mRenderer->InitImGui();
+  FRenderer::Get().InitImGui();
 }
 
 FImGuiLayer::~FImGuiLayer() {
-  mRenderer->ShutdownImGui();
+  FRenderer::Get().ShutdownImGui();
   ImGui::DestroyContext();
 }
 
 void FImGuiLayer::BeginFrame() {
-  mRenderer->ImGuiNewFrame();
+  FRenderer::Get().ImGuiNewFrame();
   ImGui::NewFrame();
 }
 
@@ -32,10 +32,14 @@ void FImGuiLayer::EndFrame() {
   ImDrawData *DrawData = ImGui::GetDrawData();
   const FBool IsMinimized = (DrawData->DisplaySize.x <= 0.0f || DrawData->DisplaySize.y <= 0.0f);
   if (!IsMinimized) {
-    mRenderer->SubmitImGuiDrawData(DrawData);
+    mDrawData = DrawData;
   }
 }
 
 void FImGuiLayer::OnWindowResize(const FWindowResizeEvent &Event) {
 
+}
+
+void FImGuiLayer::Render(FRHICommandList &CommandList) {
+  CommandList.RenderImGuiDrawData(mDrawData);
 }
