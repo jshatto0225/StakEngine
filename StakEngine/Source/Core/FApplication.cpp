@@ -2,119 +2,107 @@
 
 #include "FLog.h"
 #include "FImGuiLayer.h"
-
 #include "Asserts.h"
 #include "RHI.h"
 
-void FApplication::AddLayer(IApplicationLayer *Layer) {
-  mLayerStack.Push(Layer);
+void App::add_layer(App_Layer *Layer) {
+    layer_stack.push(Layer);
 }
 
-FApplication::~FApplication() {
-  mLayerStack.Clear();
+App::~App() {
+    layer_stack.clear();
 
-  mRenderer = NULL;
-  FRHI::Shutdown();
-  mInput = NULL;
-  mWindow = NULL;
+    renderer = nullptr;
+    Rhi::shutdown();
+    input = nullptr;
+    window = nullptr;
 
-
-  sInstance = NULL;
+    instance = nullptr;
 }
 
-FApplication::FApplication(const FApplicationSpec &Spec) {
-  ASSERT(!sInstance);
+App::App(const App_Spec &spec) {
+    ASSERT(!instance);
 
-  sInstance = this;
+    instance = this;
 
-  FWindowConfig Cfg = {
-    Spec.WindowWidth,
-    Spec.WindowHeight,
-    Spec.WindowTitle
-  };
-  mWindow = IWindow::Create(Cfg);
-  mWindow->SetResizeEventFn(
-    [this](const FWindowResizeEvent &Event) { 
-      this->OnWindowResize(Event); 
+    Window_Config cfg = {
+        spec.window_width,
+        spec.window_height,
+        spec.window_title
+    };
+    window = Window::create(cfg);
+    window->set_resize_proc([this](const Window_Resize_Event &event) { 
+        this->on_window_resize(event);
+    });
+    window->SetCloseEventFn([this]() { 
+        this->on_window_close(); 
+    });
+    window->set_key_proc([this](const Key_Event & event) {
+        this->on_key_event(event);
+    });
+    window->set_mouse_button_proc([this](const Mouse_Button_Event & event) {
+        this->on_mouse_button_event(event);
+    });
+    window->set_mouse_move_proc([this](const Mouse_Move_Event & event) {
+        this->on_mouse_move_event(event);
+    });
+
+    input = create_ref<Input>();
+
+    Rhi::init();
+
+    renderer = create_ref<Renderer>();
+
+    imgui_layer = new Imui_Layer();
+
+    add_layer(imgui_layer);
+
+    running = true;
+}
+
+void App::run() {
+    while (running) {
+        for (App_Layer *layer : layer_stack) {
+            layer->update();
+        }
+
+        imgui_layer->begin_frame();
+        {
+            for (App_Layer * layer : layer_stack) {
+                layer->on_imgui_render();
+            }
+        }
+        imgui_layer->end_frame();
+        
+        renderer->render();
+        
+        window->update();
     }
-  );
-  mWindow->SetCloseEventFn(
-    [this]() { 
-      this->OnWindowClose(); 
+}
+
+void App::on_window_resize(const Window_Resize_Event &event) {
+    Rhi::get().is_framebuffer_resized();
+    for (App_Layer * layer : layer_stack) {
+        layer->on_window_resize(event);
     }
-  );
-  mWindow->SetKeyEventFn(
-    [this](const FKeyEvent &Event) {
-      this->OnKeyEvent(Event);
-    }
-  );
-  mWindow->SetMouseButtonEventFn(
-    [this](const FMouseButtonEvent &Event) {
-      this->OnMouseButtonEvent(Event);
-    }
-  );
-  mWindow->SetMouseMoveEventFn(
-    [this](const FMouseMoveEvent &Event) {
-      this->OnMouseMoveEvent(Event);
-    }
-  );
-
-  mInput = TCreateRef<FInput>();
-
-  FRHI::Init();
-
-  mRenderer = TCreateRef<FRenderer>();
-
-  mImGuiLayer = new FImGuiLayer();
-
-  AddLayer(mImGuiLayer);
-
-  mRunning = true;
 }
 
-void FApplication::Run() {
-  while (mRunning) {
-    for (IApplicationLayer *Layer : mLayerStack) {
-      Layer->Update();
-    }
-
-    mImGuiLayer->BeginFrame();
-    {
-      for (IApplicationLayer *Layer : mLayerStack) {
-        Layer->OnImGuiRender();
-      }
-    }
-    mImGuiLayer->EndFrame();
-
-    mRenderer->Render();
-
-    mWindow->Update();
-  }
+void App::on_window_close() {
+    close();
 }
 
-void FApplication::OnWindowResize(const FWindowResizeEvent &Event) {
-  FRHI::Get().FramebufferResized();
-  for (IApplicationLayer *Layer : mLayerStack) {
-    Layer->OnWindowResize(Event);
-  }
+void App::on_key_event(const Key_Event & event) {
+    input->set_key(event.Key, event.State);
 }
 
-void FApplication::OnWindowClose() {
-  Close();
+void App::on_mouse_button_event(const Mouse_Button_Event & event) {
+    input->set_mouse_button(event.Button, event.State);
 }
 
-void FApplication::OnKeyEvent(const FKeyEvent &Event) {
-  mInput->SetKey(Event.Key, Event.State);
+void App::on_mouse_move_event(const Mouse_Move_Event & event) {
+    input->set_mouse_pos(event.X, event.Y);
 }
 
-void FApplication::OnMouseButtonEvent(const FMouseButtonEvent &Event) {
-  mInput->SetMouseButton(Event.Button, Event.State);
-}
-
-void FApplication::OnMouseMoveEvent(const FMouseMoveEvent &Event) {
-  mInput->SetMousePos(Event.X, Event.Y);
-}
-
-void FApplication::Close() {
-  mRunning = false;
+void App::close() {
+    running = false;
 }

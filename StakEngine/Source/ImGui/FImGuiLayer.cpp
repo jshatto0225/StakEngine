@@ -5,41 +5,41 @@
 #include "FLog.h"
 #include "FRenderer.h"
 
-FImGuiLayer::FImGuiLayer() {
-  mDrawData = NULL;
+Imui_Layer::Imui_Layer() {
+    draw_data = nullptr;
 
-  ImGui::CreateContext();
-  ImGuiIO &io = ImGui::GetIO();
-  io.ConfigFlags |= ImGuiConfigFlags_NavEnableKeyboard;
-  io.ConfigFlags |= ImGuiConfigFlags_NavEnableGamepad;
-  ImGui::StyleColorsDark();
+    ImGui::CreateContext();
+    ImGuiIO &io = ImGui::GetIO();
+    io.ConfigFlags |= ImGuiConfigFlags_NavEnableKeyboard;
+    io.ConfigFlags |= ImGuiConfigFlags_NavEnableGamepad;
+    ImGui::StyleColorsDark();
 
-  FRenderer::Get().InitImGui();
+    Renderer::get().init_imgui();
 }
 
-FImGuiLayer::~FImGuiLayer() {
-  FRenderer::Get().ShutdownImGui();
-  ImGui::DestroyContext();
+Imui_Layer::~Imui_Layer() {
+    Renderer::get().shutdown_imgui();
+    ImGui::DestroyContext();
 }
 
-void FImGuiLayer::BeginFrame() {
-  FRenderer::Get().ImGuiNewFrame();
-  ImGui::NewFrame();
+void Imui_Layer::begin_frame() {
+    Renderer::get().imgui_new_frame();
+    ImGui::NewFrame();
 }
 
-void FImGuiLayer::EndFrame() {
-  ImGui::Render();
-  ImDrawData *DrawData = ImGui::GetDrawData();
-  const FBool IsMinimized = (DrawData->DisplaySize.x <= 0.0f || DrawData->DisplaySize.y <= 0.0f);
-  if (!IsMinimized) {
-    mDrawData = DrawData;
-  }
+void Imui_Layer::end_frame() {
+    ImGui::Render();
+    ImDrawData *data = ImGui::GetDrawData();
+    const bool is_minimized = (data->DisplaySize.x <= 0.0f || data->DisplaySize.y <= 0.0f);
+    if (!is_minimized) {
+        draw_data = data;
+    }
 }
 
-void FImGuiLayer::OnWindowResize(const FWindowResizeEvent &Event) {
+void Imui_Layer::on_window_resize(const Window_Resize_Event &event) {
 
 }
 
-void FImGuiLayer::Render(FRHICommandList &CommandList) {
-  CommandList.RenderImGuiDrawData(mDrawData);
+void Imui_Layer::render(Rhi_Command_List &command_list) {
+    command_list.render_imgui_draw_data(draw_data);
 }

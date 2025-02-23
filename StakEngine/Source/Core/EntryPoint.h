@@ -4,19 +4,19 @@
 #include "FLog.h"
 #include "Types.h"
 
-extern FApplication *CreateApplication();
+extern App *create_application();
 
-inline FSInt32 StakMain() {
-  FLog::Init();
+inline s32 stak_main() {
+    Log::init();
 
-  FApplication *App = CreateApplication();
-  App->Run();
-  delete App;
+    App *app = create_application();
+    app->run();
+    delete app;
 
-  return 0;
+    return 0;
 }
 
 int main(int argc, char **argv) {
-  return StakMain();
+    return stak_main();
 }
 

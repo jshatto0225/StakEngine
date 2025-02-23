@@ -4,10 +4,10 @@
 
 #include "Editor.h"
 
-class FEditorLayer final : public IApplicationLayer {
+class Editor_Layer final : public App_Layer {
 public:
-  FEditorLayer();
+    Editor_Layer();
 
-  void Update() override;
-  void OnImGuiRender() override;
+    void update() override;
+    void on_imgui_render() override;
 };

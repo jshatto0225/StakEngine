@@ -3,24 +3,24 @@
 #include "Types.h"
 #include "FInput.h"
 
-class IWindow;
+class Window;
 
-struct FWindowResizeEvent {
-  const FSInt32 WIDTH;
-  const FSInt32 HEIGHT;
+struct Window_Resize_Event {
+    const s32 WIDTH;
+    const s32 HEIGHT;
 };
 
-struct FKeyEvent {
-  const EKeyCode Key;
-  const EInputState State;
+struct Key_Event {
+    const Key_Code Key;
+    const Input_State State;
 };
 
-struct FMouseButtonEvent {
-  const EMouseCode Button;
-  const EInputState State;
+struct Mouse_Button_Event {
+    const Mouse_Code Button;
+    const Input_State State;
 };
 
-struct FMouseMoveEvent {
-  const FFloat X;
-  const FFloat Y;
+struct Mouse_Move_Event {
+    const f32 X;
+    const f32 Y;
 };

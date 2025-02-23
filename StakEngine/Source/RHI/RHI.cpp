@@ -5,31 +5,31 @@
 
 #ifdef SK_VULKAN
 #include "VulkanRHI.h"
-using FPlatformRHI = FVulkanRHI;
+using Platform_Rhi = Vulkan_Rhi;
 #endif
 
-FRHI::FRHI() {
-  ASSERT(!sInstance);
+Rhi::Rhi() {
+    ASSERT(!instance);
 
-  sInstance = this;
+    instance = this;
 }
 
-FRHI::~FRHI() {
-  sInstance = NULL;
+Rhi::~Rhi() {
+    instance = NULL;
 }
 
-static FRHI *gRHI;
+static Rhi *rhi;
 
-void FRHI::Init() {
-  gRHI = new FPlatformRHI();
+void Rhi::init() {
+    rhi = new Platform_Rhi();
 }
 
-void FRHI::Shutdown() {
-  ASSERT(gRHI);
-  delete gRHI;
+void Rhi::shutdown() {
+    ASSERT(rhi);
+    delete rhi;
 }
 
 
-void FRHI::Submit(FRHICommandList &CommandList) {
-  CommandList.Execute();
+void Rhi::submit(Rhi_Command_List &command_list) {
+    command_list.Execute();
 }

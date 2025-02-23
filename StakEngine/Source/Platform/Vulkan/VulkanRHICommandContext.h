@@ -4,29 +4,29 @@
 #include "VulkanRHI.h"
 #include "FLog.h"
 
-class FVulkanRHICommandContext final : public IRHICommandContext {
+class Vulkan_Rhi_Command_Context final : public Rhi_Command_Context {
 public:
 
-  inline void BeginDrawing() override {
-    mIsActive = true;
-    FRHI::Get().BeginDrawing();
-  }
-
-  inline void EndDrawing() override {
-    mIsActive = false;
-    FRHI::Get().EndDrawing();
-  }
-
-  inline void ResourceTransition(IRHITransition *Transition) override {
-    SK_LOG_ERROR("Resource transitions not implemented");
-  }
-
-  inline void RenderImGuiDrawData(ImDrawData *DrawData) override {
-    FRHI::Get().SubmitImGuiDrawData(DrawData);
-  }
-
-  inline FBool IsActive() override { return mIsActive; }
-
+    inline void begin_drawing() override {
+        active = true;
+        Rhi::get().begin_drawing();
+    }
+    
+    inline void end_drawing() override {
+        active = false;
+        Rhi::get().end_drawing();
+    }
+    
+    inline void resource_transition(Rhi_Transition *transition) override {
+        SK_LOG_ERROR("Resource transitions not implemented");
+    }
+    
+    inline void render_ingui_draw_data(ImDrawData *draw_data) override {
+        Rhi::get().submit_imgui_draw_data(draw_data);
+    }
+    
+    inline bool is_active() override { return active; }
+    
 private:
-  FBool mIsActive = false;
+    bool active = false;
 };

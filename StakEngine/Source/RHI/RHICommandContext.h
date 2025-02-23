@@ -4,16 +4,16 @@
 
 #include <imgui.h>
 
-class IRHICommandContext {
+class Rhi_Command_Context {
 public:
-	~IRHICommandContext() = default;
+	~Rhi_Command_Context() = default;
 
-	virtual void BeginDrawing() = 0;
-	virtual void EndDrawing() = 0;
+	virtual void begin_drawing() = 0;
+	virtual void end_drawing() = 0;
 
-	virtual void ResourceTransition(IRHITransition *Transition) = 0;
+	virtual void resource_transition(Rhi_Transition *transition) = 0;
 
-	virtual void RenderImGuiDrawData(ImDrawData *DrawData) = 0;
+	virtual void render_ingui_draw_data(ImDrawData *draw_data) = 0;
 
-	virtual FBool IsActive() = 0;
+	virtual bool is_active() = 0;
 };

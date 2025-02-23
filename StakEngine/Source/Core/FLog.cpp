@@ -3,10 +3,10 @@
 #include <spdlog/sinks/stdout_color_sinks.h>
 #include <spdlog/sinks/basic_file_sink.h>
 
-TRef<spdlog::logger> FLog::sCoreLogger;
-TRef<spdlog::logger> FLog::sClientLogger;
+Ref<spdlog::logger> Log::core_logger;
+Ref<spdlog::logger> Log::client_logger;
 
-void FLog::Init() {
+void Log::init() {
 	std::vector<spdlog::sink_ptr> LogSinks;
 	LogSinks.emplace_back(std::make_shared<spdlog::sinks::stdout_color_sink_mt>());
 	LogSinks.emplace_back(std::make_shared<spdlog::sinks::basic_file_sink_mt>("StakEngine.log", true));
@@ -14,13 +14,13 @@ void FLog::Init() {
 	LogSinks[0]->set_pattern("%^[%T] %n: %v%$");
 	LogSinks[1]->set_pattern("[%T] [%l] %n: %v");
 
-	sCoreLogger = std::make_shared<spdlog::logger>("StakEngine", begin(LogSinks), end(LogSinks));
-	spdlog::register_logger(sCoreLogger);
-	sCoreLogger->set_level(spdlog::level::trace);
-	sCoreLogger->flush_on(spdlog::level::trace);
+	core_logger = std::make_shared<spdlog::logger>("StakEngine", begin(LogSinks), end(LogSinks));
+	spdlog::register_logger(core_logger);
+	core_logger->set_level(spdlog::level::trace);
+	core_logger->flush_on(spdlog::level::trace);
 
-	sClientLogger = std::make_shared<spdlog::logger>("Application", begin(LogSinks), end(LogSinks));
-	spdlog::register_logger(sClientLogger);
-	sClientLogger->set_level(spdlog::level::trace);
-	sClientLogger->flush_on(spdlog::level::trace);
+	client_logger = std::make_shared<spdlog::logger>("Application", begin(LogSinks), end(LogSinks));
+	spdlog::register_logger(client_logger);
+	client_logger->set_level(spdlog::level::trace);
+	client_logger->flush_on(spdlog::level::trace);
 }

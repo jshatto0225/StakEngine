@@ -4,54 +4,54 @@
 
 #include "Events.h"
 
-class IApplicationLayer {
+class App_Layer {
 public:
-  virtual ~IApplicationLayer() = default;
+    virtual ~App_Layer() = default;
 
-  virtual void OnAttach() {}
-  virtual void OnDetach() {}
-  virtual void Update() {}
-  virtual void FixedUpdate(FFloat deltaTime) {}
-  virtual void OnWindowResize(const FWindowResizeEvent &Event) {}
-  virtual void OnImGuiRender() {}
+    virtual void on_attach() {}
+    virtual void on_detach() {}
+    virtual void update() {}
+    virtual void fixed_update(f32 delta_time) {}
+    virtual void on_window_resize(const Window_Resize_Event &event) {}
+    virtual void on_imgui_render() {}
 };
 
-class FLayerStack {
+class Layer_Stack {
 public:
-  ~FLayerStack() {
-    Clear();
-  }
-
-  inline void Clear() {
-    while (!mLayers.empty()) {
-      delete Pop();
+    ~Layer_Stack() {
+        clear();
     }
-  }
 
-  inline void Push(IApplicationLayer *layer) {
-    mLayers.push_back(layer);
-    layer->OnAttach();
-  }
-
-  inline IApplicationLayer *Pop() {
-    IApplicationLayer *Layer = *mLayers.rbegin();
-    mLayers.pop_back();
-    Layer->OnDetach();
-    return Layer;
-  }
-
-  inline void Remove(IApplicationLayer *Layer) {
-    auto It = std::find(mLayers.begin(), mLayers.end(), Layer);
-    if (It != mLayers.end()) {
-      Layer->OnDetach();
-      mLayers.erase(It);
-      delete Layer;
+    inline void clear() {
+        while (!layers.empty()) {
+            delete pop();
+        }
     }
-  }
 
-  inline std::vector<IApplicationLayer *>::iterator begin() { return mLayers.begin(); }
-  inline std::vector<IApplicationLayer *>::iterator end() { return mLayers.end(); }
+    inline void push(App_Layer *layer) {
+        layers.push_back(layer);
+        layer->on_attach();
+    }
+
+    inline App_Layer *pop() {
+        App_Layer *layer = *layers.rbegin();
+        layers.pop_back();
+        layer->on_detach();
+        return layer;
+    }
+
+    inline void remove(App_Layer * layer) {
+        auto it = std::find(layers.begin(), layers.end(), layer);
+        if (it != layers.end()) {
+            layer->on_detach();
+            layers.erase(it);
+            delete layer;
+        }
+    }
+
+    inline std::vector<App_Layer *>::iterator begin() { return layers.begin(); }
+    inline std::vector<App_Layer *>::iterator end() { return layers.end(); }
 
 private:
-  std::vector<IApplicationLayer *> mLayers;
+    std::vector<App_Layer *> layers;
 };

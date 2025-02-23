@@ -6,33 +6,33 @@
 #include <GLFW/glfw3.h>
 
 
-void GLFWEnableRawInput() {
-  TRef<FGLFWWindow> Window = std::static_pointer_cast<FGLFWWindow>(FApplication::Get().GetWindow());
-  glfwSetInputMode(Window->GetGlfwWindow(), GLFW_RAW_MOUSE_MOTION, GLFW_TRUE);
+void glfw_enable_raw_input() {
+    Ref<Glfw_Window> window = std::static_pointer_cast<Glfw_Window>(App::get().get_window());
+    glfwSetInputMode(window->get_glfw_window(), GLFW_RAW_MOUSE_MOTION, GLFW_TRUE);
 }
 
-void GLFWDisableRawInput() {
-  TRef<FGLFWWindow> Window = std::static_pointer_cast<FGLFWWindow>(FApplication::Get().GetWindow());
-  glfwSetInputMode(Window->GetGlfwWindow(), GLFW_RAW_MOUSE_MOTION, GLFW_FALSE);
+void glfw_disable_raw_input() {
+    Ref<Glfw_Window> window = std::static_pointer_cast<Glfw_Window>(App::get().get_window());
+    glfwSetInputMode(window->get_glfw_window(), GLFW_RAW_MOUSE_MOTION, GLFW_FALSE);
 }
 
-void GLFWSetCursorVisibility(ECursorVisibility Visibility) {
-  TRef<FGLFWWindow> Window = std::static_pointer_cast<FGLFWWindow>(FApplication::Get().GetWindow());
+void glfw_set_cursor_visibility(Cursor_Visibility visibility) {
+    Ref<Glfw_Window> window = std::static_pointer_cast<Glfw_Window>(App::get().get_window());
 
-  FSInt32 GlfwVisibility;
-  switch (Visibility) {
-  case ECursorVisibility::NORMAL:
-    GlfwVisibility = GLFW_CURSOR_NORMAL;
-    break;
-  case ECursorVisibility::HIDDEN:
-    GlfwVisibility = GLFW_CURSOR_HIDDEN;
-    break;
-  case ECursorVisibility::DISABLED:
-    GlfwVisibility = GLFW_CURSOR_DISABLED;
-    break;
-  default:
-    return;
-  }
+    s32 glfw_visibility;
+    switch (visibility) {
+    case Cursor_Visibility::NORMAL:
+        glfw_visibility = GLFW_CURSOR_NORMAL;
+        break;
+    case Cursor_Visibility::HIDDEN:
+        glfw_visibility = GLFW_CURSOR_HIDDEN;
+        break;
+    case Cursor_Visibility::DISABLED:
+        glfw_visibility = GLFW_CURSOR_DISABLED;
+        break;
+    default:
+        return;
+    }
 
-  glfwSetInputMode(Window->GetGlfwWindow(), GLFW_CURSOR, GlfwVisibility);
+    glfwSetInputMode(window->get_glfw_window(), GLFW_CURSOR, glfw_visibility);
 }

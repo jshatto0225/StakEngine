@@ -8,104 +8,71 @@
 #include "RHI.h"
 #include "FApplication.h"
 
-FRenderer::FRenderer() {
-  ASSERT(!sInstance);
-  sInstance = this;
+Renderer::Renderer() {
+    ASSERT(!instance);
+    instance = this;
 }
 
-FRenderer::~FRenderer() {
+Renderer::~Renderer() {
 
 }
 
-void FRenderer::Render() {
-  /*
-  IRHIGraphicsContext &GraphicsContext = FRHI::Get().GetGraphicsContext();
-
-  TRef<IRHITexture> SwapchainTexture = FRHI::Get().GetSwapchainTexture();
-
-  GraphicsContext.Begin();
-  {
-    FRHIResourceBarrierDescription RenderTargetTransition = {};
-    RenderTargetTransition.Transitions.emplace_back(SwapchainTexture, ERHIResourceUsage::RESOURCE_STATE_RENDER_TARGET);
-    GraphicsContext.ResourceBarrier(RenderTargetTransition);
-
-    GraphicsContext.SetRenderTargets({ SwapchainTexture }, { 0, 0, SwapchainTexture->GetWidth(), SwapchainTexture->GetHeight() });
+void Renderer::render() {
+    command_list.begin_drawing();
     {
-      for (FRenderProxy *Proxy : mRenderProxies) {
-        Proxy->Render(GraphicsContext);
-      }
-      for (FRenderProxy *Proxy : mPostRenderProxies) {
-        Proxy->Render(GraphicsContext);
-      }
+        for (Render_Proxy *proxy : render_proxies) {
+            proxy->render(command_list);
+        }
+        for (Render_Proxy *proxy : post_render_proxies) {
+            proxy->render(command_list);
+        }
     }
-    GraphicsContext.UnsetRenderTargets();
+    command_list.end_drawing();
+    
+    Rhi::get().submit(command_list);
+}
 
-    FRHIResourceBarrierDescription PresentTransition = {};
-    PresentTransition.Transitions.emplace_back(SwapchainTexture, ERHIResourceUsage::RESOURCE_STATE_PRESENT);
-    GraphicsContext.ResourceBarrier(PresentTransition);
-  }
-  GraphicsContext.End();
+void Renderer::init_imgui() {
+    App::get().get_window()->init_imgui();
+    Rhi::get().init_imgui();
+}
 
-  IRHIWorkRecipt *Recipt = FRHI::Get().SubmitWork(GraphicsContext);
-  FRHI::Get().WaitOnWork(Recipt);
-  FRHI::Get().Present();
-  */
+void Renderer::imgui_new_frame() {
+    App::get().get_window()->imgui_new_frame();
+    Rhi::get().imgui_new_frame();
+}
 
-  mCommandList.BeginDrawing();
-  {
-    for (FRenderProxy *Proxy : mRenderProxies) {
-      Proxy->Render(mCommandList);
+void Renderer::shutdown_imgui() {
+    Rhi::get().shutdown_imgui();
+    App::get().get_window()->shutdown_imgui();
+}
+
+void Renderer::add_proxy(Render_Proxy *proxy) {
+    render_proxies.push_back(proxy);
+}
+
+void Renderer::remove_proxy(Render_Proxy *proxy) {
+    auto it = std::find(render_proxies.begin(), render_proxies.end(), proxy);
+    if (it != render_proxies.end()) {
+        render_proxies.erase(it);
     }
-    for (FRenderProxy *Proxy : mPostRenderProxies) {
-      Proxy->Render(mCommandList);
+}
+
+void Renderer::add_post_proxy(Render_Proxy *proxy) {
+    post_render_proxies.push_back(proxy);
+}
+
+void Renderer::remove_post_proxy(Render_Proxy *proxy) {
+    auto it = std::find(post_render_proxies.begin(), post_render_proxies.end(), proxy);
+    if (it != post_render_proxies.end()) {
+        post_render_proxies.erase(it);
     }
-  }
-  mCommandList.EndDrawing();
-
-  FRHI::Get().Submit(mCommandList);
 }
 
-void FRenderer::InitImGui() {
-  FApplication::Get().GetWindow()->InitImGui();
-  FRHI::Get().InitImGui();
+Render_Proxy::Render_Proxy() {
+    Renderer::get().add_proxy(this);
 }
 
-void FRenderer::ImGuiNewFrame() {
-  FApplication::Get().GetWindow()->ImGuiNewFrame();
-  FRHI::Get().ImGuiNewFrame();
-}
-
-void FRenderer::ShutdownImGui() {
-  FRHI::Get().ShutdownImGui();
-  FApplication::Get().GetWindow()->ShutdownImGui();
-}
-
-void FRenderer::AddProxy(FRenderProxy *Proxy) {
-  mRenderProxies.push_back(Proxy);
-}
-
-void FRenderer::RemoveProxy(FRenderProxy *Proxy) {
-  auto It = std::find(mRenderProxies.begin(), mRenderProxies.end(), Proxy);
-  if (It != mRenderProxies.end()) {
-    mRenderProxies.erase(It);
-  }
-}
-
-void FRenderer::AddPostProxy(FRenderProxy *Proxy) {
-  mPostRenderProxies.push_back(Proxy);
-}
-
-void FRenderer::RemovePostProxy(FRenderProxy *Proxy) {
-  auto It = std::find(mPostRenderProxies.begin(), mPostRenderProxies.end(), Proxy);
-  if (It != mPostRenderProxies.end()) {
-    mPostRenderProxies.erase(It);
-  }
-}
-
-FRenderProxy::FRenderProxy() {
-  FRenderer::Get().AddProxy(this);
-}
-
-FRenderProxy::~FRenderProxy() {
-  FRenderer::Get().RemoveProxy(this);
+Render_Proxy::~Render_Proxy() {
+    Renderer::get().remove_proxy(this);
 }

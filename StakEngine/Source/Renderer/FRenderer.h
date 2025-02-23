@@ -5,41 +5,41 @@
 #include "RHICommandList.h"
 #include "IWindow.h"
 
-class FRenderProxy {
+class Render_Proxy {
 public:
-  FRenderProxy();
-  virtual ~FRenderProxy();
+    Render_Proxy();
+    virtual ~Render_Proxy();
 
-  virtual void Render(FRHICommandList &CommandList) {}
+    virtual void render(Rhi_Command_List &command_list) {}
 };
 
 
-class FRenderer {
+class Renderer {
 public:
-  FRenderer();
-  ~FRenderer();
+    Renderer();
+    ~Renderer();
 
-  inline static FRenderer &Get() { return *sInstance; }
+    inline static Renderer &get() { return *instance; }
 
-  void InitImGui();
-  void ImGuiNewFrame();
-  void ShutdownImGui();
-  void Render();
+    void init_imgui();
+    void imgui_new_frame();
+    void shutdown_imgui();
+    void render();
 
-  void AddProxy(FRenderProxy *Proxy);
-  void RemoveProxy(FRenderProxy *Proxy);
+    void add_proxy(Render_Proxy *Proxy);
+    void remove_proxy(Render_Proxy *Proxy);
 
-  void AddPostProxy(FRenderProxy *Proxy);
-  void RemovePostProxy(FRenderProxy *Proxy);
+    void add_post_proxy(Render_Proxy *Proxy);
+    void remove_post_proxy(Render_Proxy *Proxy);
 
-  FRenderer(FRenderer &) = delete;
-  FRenderer &operator=(FRenderer &) = delete;
-
-private:
-  inline static FRenderer *sInstance = NULL;
+    Renderer(Renderer &) = delete;
+    Renderer &operator=(Renderer &) = delete;
 
 private:
-  std::vector<FRenderProxy *> mRenderProxies;
-  std::vector<FRenderProxy *> mPostRenderProxies;
-  FRHICommandList mCommandList;
+    inline static Renderer *instance = NULL;
+
+private:
+    std::vector<Render_Proxy *> render_proxies;
+    std::vector<Render_Proxy *> post_render_proxies;
+    Rhi_Command_List command_list;
 };

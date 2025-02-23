@@ -6,11 +6,11 @@
 
 #include "FLog.h"
 
-TScope<IWindow> IWindow::Create(const FWindowConfig &Cfg) {
+Scope<Window> Window::create(const Window_Config &Cfg) {
 #if defined(SK_WINDOWS) or defined(SK_LINUX)
-  return TCreateScope<FGLFWWindow>(Cfg);
+    return create_scope<Glfw_Window>(Cfg);
 #else
-  SK_LOG_CRITICAL("Window Platform Not Supported")
-  return NULL;
+    SK_LOG_CRITICAL("Window Platform Not Supported")
+        return nullptr;
 #endif
 }

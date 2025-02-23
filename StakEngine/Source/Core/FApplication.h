@@ -9,42 +9,42 @@
 #include "FInput.h"
 #include "FImGuiLayer.h"
 
-struct FApplicationSpec {
-  const char *WindowTitle;
-  FSInt32 WindowWidth;
-  FSInt32 WindowHeight;
+struct App_Spec {
+    const char *window_title;
+    s32 window_width;
+    s32 window_height;
 };
 
-class FApplication final {
+class App final {
 public:
-  FApplication(const FApplicationSpec &Spec);
-  ~FApplication();
+    App(const App_Spec &Spec);
+    ~App();
 
-  static FApplication &Get() { ASSERT(sInstance);  return *sInstance; }
+    static App &get() { ASSERT(instance);  return *instance; }
 
-  void Run();
-  void AddLayer(IApplicationLayer *layer);
-  void Close();
+    void run();
+    void add_layer(App_Layer *layer);
+    void close();
   
-  inline const char *GetName() const { return mName.c_str(); }
-  inline const TRef<IWindow> GetWindow() const { return mWindow; }
+    inline const char *get_name() const { return name.c_str(); }
+    inline const Ref<Window> get_window() const { return window; }
 
 private:
-  void OnWindowClose();
-  void OnWindowResize(const FWindowResizeEvent &Event);
-  void OnKeyEvent(const FKeyEvent &Event);
-  void OnMouseButtonEvent(const FMouseButtonEvent &Event);
-  void OnMouseMoveEvent(const FMouseMoveEvent &Event);
+    void on_window_close();
+    void on_window_resize(const Window_Resize_Event &event);
+    void on_key_event(const Key_Event &event);
+    void on_mouse_button_event(const Mouse_Button_Event &event);
+    void on_mouse_move_event(const Mouse_Move_Event &event);
 
 private:
-  inline static FApplication *sInstance = NULL;
+    inline static App *instance = nullptr;
 
 private:
-  TRef<IWindow> mWindow;
-  TRef<FRenderer> mRenderer;
-  TRef<FInput> mInput;
-  FLayerStack mLayerStack;
-  FBool mRunning;
-  FImGuiLayer *mImGuiLayer;
-  std::string mName = "Stak Application";
+    Ref<Window> window;
+    Ref<Renderer> renderer;
+    Ref<Input> input;
+    Layer_Stack layer_stack;
+    bool running;
+    Imui_Layer *imgui_layer;
+    std::string name = "Stak Application";
 };
