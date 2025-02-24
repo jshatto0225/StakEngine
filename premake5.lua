@@ -1,6 +1,6 @@
-workspace "StakEngine"
+workspace "stak_engine"
 	architecture "x86_64"
-	startproject "StakEditor"
+	startproject "stak_editor"
 
 	configurations
 	{
@@ -15,6 +15,6 @@ workspace "StakEngine"
 
 outputdir = "%{cfg.buildcfg}-%{cfg.system}-%{cfg.architecture}"
 
-include "StakEngine"
+include "stak_engine"
 
-include "StakEditor"
+include "stak_editor"
