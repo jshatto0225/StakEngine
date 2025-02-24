@@ -1,4 +1,4 @@
-project "ImGui"
+project "imgui"
 	kind "StaticLib"
 	language "C++"
 	architecture "x64"
@@ -12,7 +12,7 @@ project "ImGui"
 	}
 
 	includedirs {
-			"ImGui"
+			"imgui"
 	}
     
 	filter "system:linux"
