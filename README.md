@@ -1,2 +1,2 @@
 # StakEngine
-A C++ game engine made without any libraries
+A C++ game engine
