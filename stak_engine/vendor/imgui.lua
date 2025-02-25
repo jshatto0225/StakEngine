@@ -8,14 +8,14 @@ project "imgui"
 	objdir ("%{wks.location}/bin-int/" .. outputdir .. "/%{prj.name}")
 
 	files {
-		"Imgui/*.cpp",
-		"Imgui/*.h"
+		"imgui/*.cpp",
+		"imgui/*.h"
 	}
 
 	includedirs {
 			"imgui"
 	}
-    
+
 	filter "system:linux"
 		pic "On"
 
@@ -23,10 +23,10 @@ project "imgui"
 		staticruntime "On"
 
 		files {
-			"Imgui/backends/imgui_impl_vulkan.h",
-			"Imgui/backends/imgui_impl_vulkan.cpp",
-			"ImGui/backends/imgui_impl_glfw.h",
-			"ImGui/backends/imgui_impl_glfw.cpp"
+			"imgui/backends/imgui_impl_vulkan.h",
+			"imgui/backends/imgui_impl_vulkan.cpp",
+			"imgui/backends/imgui_impl_glfw.h",
+			"imgui/backends/imgui_impl_glfw.cpp"
 		}
 
 		includedirs {
