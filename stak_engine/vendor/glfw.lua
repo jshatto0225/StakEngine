@@ -1,11 +1,11 @@
-project "GLFW"
+project "glfw"
 	kind "StaticLib"
 	language "C"
 	architecture "x64"
 
 	targetdir ("%{wks.location}/bin/" .. outputdir .. "/%{prj.name}")
 	objdir ("%{wks.location}/bin-int/" .. outputdir .. "/%{prj.name}")
-	
+
 	includedirs { "glfw/include/" }
 
 	files {
@@ -24,7 +24,7 @@ project "GLFW"
 		"glfw/src/null_window.c",
 		"glfw/src/null_joystick.c"
 	}
-    
+
 	filter "system:linux"
 		pic "On"
 
@@ -67,7 +67,7 @@ project "GLFW"
 			"glfw/src/win32_module.c"
 		}
 
-		defines { 
+		defines {
 			"_GLFW_WIN32",
 			"_CRT_SECURE_NO_WARNINGS"
 		}

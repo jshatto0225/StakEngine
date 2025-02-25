@@ -19,3 +19,6 @@ bin
 bin-int
 *.user
 Makefile
+*.xcworkspace
+*.xcodeproj
+.DS_Store
