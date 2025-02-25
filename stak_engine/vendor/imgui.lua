@@ -1,6 +1,7 @@
 project "imgui"
 	kind "StaticLib"
 	language "C++"
+    cppdialect "C++20"
 	architecture "x64"
 
 	targetdir ("%{wks.location}/bin/" .. outputdir .. "/%{prj.name}")

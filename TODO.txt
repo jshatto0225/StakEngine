@@ -1,4 +1,2 @@
-Use VK_KHR_dynamic_rendering 
-This should simplify the renderer and improve the abstractions compatability with other apis
-
-Maybe the renderer should store the current frame
+Exclude files from platforms in premake
+Deal with some rhis not being available on all platforms
