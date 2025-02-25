@@ -1,54 +1,54 @@
 project "stak_engine"
-	kind "StaticLib"
-	language "C++"
-	cppdialect "C++20"
-	staticruntime "off"
+    kind "StaticLib"
+    language "C++"
+    cppdialect "C++20"
+    staticruntime "off"
 
-	targetdir ("%{wks.location}/bin/" .. outputdir .. "/%{prj.name}")
-	objdir ("%{wks.location}/bin-int/" .. outputdir .. "/%{prj.name}")
+    targetdir ("%{wks.location}/bin/" .. outputdir .. "/%{prj.name}")
+    objdir ("%{wks.location}/bin-int/" .. outputdir .. "/%{prj.name}")
 
-	files {
-		"src/**.hpp",
-		"src/**.cpp",
-	}
+    files {
+        "src/**.hpp",
+        "src/**.cpp",
+    }
 
-	includedirs {
-		"src",
-		"vendor/imgui",
-		"vendor/spdlog/include",
-	}
+    includedirs {
+        "src",
+        "vendor/imgui",
+        "vendor/spdlog/include",
+    }
 
-	links {
-		"ImGui"
-	}
+    links {
+        "imgui"
+    }
 
-	filter "system:windows"
-		systemversion "latest"
-		files {
-			"src/platform/windows.cpp",
-		}
-		defines {
-			"SK_WINDOWS"
-		}
-		links { 
-			"$(VULKAN_SDK)/lib/vulkan-1.lib",
-			"GLFW"
-		}
-		includedirs {
-			"vendor/glfw/include",
-			"$(VULKAN_SDK)/include"
-		}
+    filter "system:windows"
+        systemversion "latest"
+        files {
+            "src/platform/windows.cpp",
+        }
+        defines {
+            "SK_WINDOWS"
+        }
+        links {
+            "$(VULKAN_SDK)/lib/vulkan-1.lib",
+            "glfw"
+        }
+        includedirs {
+            "vendor/glfw/include",
+            "$(VULKAN_SDK)/include"
+        }
 
-	filter "configurations:Debug"
-		runtime "Debug"
-		defines {
-			"SK_DEBUG"
-		}
-		symbols "on"
+    filter "configurations:Debug"
+        runtime "Debug"
+        defines {
+            "SK_DEBUG"
+        }
+        symbols "on"
 
-	filter "configurations:Release"
-		runtime "Release"
-		optimize "on"
+    filter "configurations:Release"
+        runtime "Release"
+        optimize "on"
 
 include "vendor/glfw.lua"
 include "vendor/imgui.lua"
