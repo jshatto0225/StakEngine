@@ -2,7 +2,7 @@
 
 #include "log/log.hpp"
 #include "platform/platform.hpp"
-#include "utils/loops.hpp"
+#include "utils/utils.hpp"
 
 #undef DELETE
 
@@ -14,7 +14,7 @@ static auto cursor_visibility = Cursor_Visibility::NORMAL;
 static f32 mouse_x;
 static f32 mouse_y;
 
-static std::unordered_map<Key_Code, Input_State> keys = {
+static Hash_Map<Key_Code, Input_State> keys = {
     { Key_Code::UNKNOWN,    Input_State::UP },
     { Key_Code::SPACE,      Input_State::UP },
     { Key_Code::APOSTROPHE, Input_State::UP },
@@ -148,7 +148,7 @@ static std::unordered_map<Key_Code, Input_State> keys = {
 
 };
 
-static std::unordered_map<Mouse_Code, Input_State> mouse_buttons = {
+static Hash_Map<Mouse_Code, Input_State> mouse_buttons = {
     { Mouse_Code::ONE,    Input_State::UP },
     { Mouse_Code::TWO,    Input_State::UP },
     { Mouse_Code::THREE,  Input_State::UP },
@@ -163,23 +163,23 @@ static std::unordered_map<Mouse_Code, Input_State> mouse_buttons = {
     { Mouse_Code::MIDDLE, Input_State::UP },
 };
 
-static std::unordered_map<Key_Code, std::vector<void(*)()>> key_press_callbacks;
-static std::unordered_map<Key_Code, std::vector<void(*)()>> key_release_callbacks;
+static Hash_Map<Key_Code, Array<void(*)()>> key_press_callbacks;
+static Hash_Map<Key_Code, Array<void(*)()>> key_release_callbacks;
 
-static std::vector<void(*)(Key_Code)> generic_key_press_callbacks;
-static std::vector<void(*)(Key_Code)> generic_key_release_callbacks;
+static Array<void(*)(Key_Code)> generic_key_press_callbacks;
+static Array<void(*)(Key_Code)> generic_key_release_callbacks;
 
-static std::vector<void(*)(Input_State, Key_Code)> generic_key_callbacks;
+static Array<void(*)(Input_State, Key_Code)> generic_key_callbacks;
 
-static std::unordered_map<Mouse_Code, std::vector<void(*)()>> mouse_button_pressed_callbacks;
-static std::unordered_map<Mouse_Code, std::vector<void(*)()>> mouse_button_released_callbacks;
+static Hash_Map<Mouse_Code, Array<void(*)()>> mouse_button_pressed_callbacks;
+static Hash_Map<Mouse_Code, Array<void(*)()>> mouse_button_released_callbacks;
 
-static std::vector<void(*)(Mouse_Code)> generic_mouse_button_press_callbacks;
-static std::vector<void(*)(Mouse_Code)> generic_mouse_button_release_callbacks;
+static Array<void(*)(Mouse_Code)> generic_mouse_button_press_callbacks;
+static Array<void(*)(Mouse_Code)> generic_mouse_button_release_callbacks;
 
-static std::vector<void(*)(Input_State, Mouse_Code)> generic_mouse_button_callbacks;
+static Array<void(*)(Input_State, Mouse_Code)> generic_mouse_button_callbacks;
 
-static std::vector<void(*)(f32, f32)> mouse_move_callbacks;
+static Array<void(*)(f32, f32)> mouse_move_callbacks;
 
 void Input::get_mouse_pos(f32* x, f32* y) {
     *x = mouse_x;

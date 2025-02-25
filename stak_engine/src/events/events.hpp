@@ -1,6 +1,6 @@
 #pragma once
 
-#include "utils/types.hpp"
+#include "utils/utils.hpp"
 #include "input/input.hpp"
 
 class Window;

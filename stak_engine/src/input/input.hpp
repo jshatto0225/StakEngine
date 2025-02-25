@@ -1,7 +1,6 @@
 #pragma once
 
-#include "utils/types.hpp"
-#include "utils/asserts.hpp"
+#include "utils/utils.hpp"
 
 #include <unordered_map>
 #include <functional>

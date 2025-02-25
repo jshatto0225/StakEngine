@@ -1,6 +1,7 @@
 #pragma once
 
 #include "platform/platform.hpp"
+#include "utils/utils.hpp"
 
 namespace Rhi {
 
@@ -20,7 +21,7 @@ enum class Vendor {
 	VULKAN,
 };
 
-void init(Vendor vendor, const std::string &app_name);
+void init(Vendor vendor, const String &app_name);
 void shutdown();
 
 Device *create_device(Platform::Window *window);

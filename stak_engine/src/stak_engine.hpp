@@ -8,9 +8,7 @@
 #include "platform/platform.hpp"
 #include "renderer/renderer.hpp"
 #include "rhi/rhi.hpp"
-#include "utils/asserts.hpp"
-#include "utils/types.hpp"
-#include "utils/loops.hpp"
+#include "utils/utils.hpp"
 
 #undef SK_LOG_TRACE
 #undef SK_LOG_INFO

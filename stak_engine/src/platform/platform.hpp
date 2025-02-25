@@ -2,13 +2,13 @@
 
 #include <string>
 
-#include "utils/types.hpp"
+#include "utils/utils.hpp"
 #include "events/events.hpp"
 
 namespace Platform {
 
 struct Window_Config {
-	std::string title = "";
+	String title = "";
 
 	s32 width = 0;
 	s32 height = 0;

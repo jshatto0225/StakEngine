@@ -7,7 +7,7 @@ static Rhi::Command_List *command_list = nullptr;
 
 static bool initialized = false;
 
-void Renderer::init(Platform::Window *win, Rhi::Vendor vendor, const std::string &app_name) {
+void Renderer::init(Platform::Window *win, Rhi::Vendor vendor, const String &app_name) {
 	window = win;
     
     Rhi::init(vendor, app_name);

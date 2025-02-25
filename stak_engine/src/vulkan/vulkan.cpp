@@ -1,20 +1,19 @@
 #include "vulkan.hpp"
 
 #include "log/log.hpp"
-#include "utils/loops.hpp"
+#include "utils/utils.hpp"
 
 #include <cstring>
-#include <set>
 
 #include <vulkan/vulkan.h>
 
 static const u32 MAX_FRAMES_IN_FLIGHT = 2;
 
-static const std::vector<const char *> VALIDATION_LAYERS = {
+static const Array<const char *> VALIDATION_LAYERS = {
     "VK_LAYER_KHRONOS_validation",
 };
 
-static const std::vector<const char *> DEVICE_EXTENSIONS = {
+static const Array<const char *> DEVICE_EXTENSIONS = {
     VK_KHR_SWAPCHAIN_EXTENSION_NAME,
 };
 
@@ -38,13 +37,13 @@ struct Device {
     VkExtent2D extent = {};
     VkSwapchainKHR swapchain = VK_NULL_HANDLE;
     VkSurfaceFormatKHR swapchain_format = {};
-    std::vector<VkImage> swapchain_images = {};
-    std::vector<VkImageView> swapchain_image_views = {};
+    Array<VkImage> swapchain_images = {};
+    Array<VkImageView> swapchain_image_views = {};
     VkCommandPool command_pool = VK_NULL_HANDLE;
 
-    std::vector<VkSemaphore> render_finished_semaphores = {};
-    std::vector<VkSemaphore> image_available_semaphores = {};
-    std::vector<VkFence> in_flight_fences = {};
+    Array<VkSemaphore> render_finished_semaphores = {};
+    Array<VkSemaphore> image_available_semaphores = {};
+    Array<VkFence> in_flight_fences = {};
 
     u32 current_frame = 0;
     u32 image_index = 0;
@@ -59,24 +58,24 @@ struct Command_List {
 
 struct Frame_Data {
     Device *device = nullptr;
-    std::vector<Command_List *> command_lists = {};
+    Array<Command_List *> command_lists = {};
 };
 
 struct Queue_Families {
-    std::optional<u32> graphics_family = {};
-    std::optional<u32> present_family = {};
+    Option<u32> graphics_family = {};
+    Option<u32> present_family = {};
 };
 
 struct Swapchain_Support {
     VkSurfaceCapabilitiesKHR capabilities = {};
-    std::vector<VkSurfaceFormatKHR> formats = {};
-    std::vector<VkPresentModeKHR> present_modes = {};
+    Array<VkSurfaceFormatKHR> formats = {};
+    Array<VkPresentModeKHR> present_modes = {};
 };
 
 // Hidden from public platform interface
 namespace Platform {
 
-std::vector<const char *> get_vulkan_extensions();
+Array<const char *> get_vulkan_extensions();
 void get_vulkan_surface(Window *window, VkInstance instance, VkSurfaceKHR *surface);
 
 }
@@ -114,7 +113,7 @@ static Queue_Families get_queue_families(VkPhysicalDevice gpu, VkSurfaceKHR surf
 
     u32 queue_family_count = 0;
     vkGetPhysicalDeviceQueueFamilyProperties(gpu, &queue_family_count, nullptr);
-    std::vector<VkQueueFamilyProperties> queue_families(queue_family_count);
+    Array<VkQueueFamilyProperties> queue_families(queue_family_count);
     vkGetPhysicalDeviceQueueFamilyProperties(gpu, &queue_family_count, queue_families.data());
 
     For (queue_family_count) {
@@ -297,12 +296,12 @@ static void recreate_swapchain(Device *device) {
     create_swapchain(device);
 }
 
-void Vulkan::init(const std::string &app_name) {
+void Vulkan::init(const String &app_name) {
     bool extensions_supported = true;
     u32 layer_count = 0;
     vkEnumerateInstanceLayerProperties(&layer_count, nullptr);
 
-    std::vector<VkLayerProperties> available_layers(layer_count);
+    Array<VkLayerProperties> available_layers(layer_count);
     vkEnumerateInstanceLayerProperties(&layer_count, available_layers.data());
 
     ForI (VALIDATION_LAYERS.size()) {
@@ -352,7 +351,7 @@ void Vulkan::init(const std::string &app_name) {
         instance_info.pNext = &debug_messenger_info;
     }
 
-    std::vector<const char *> extensions = Platform::get_vulkan_extensions();
+    Array<const char *> extensions = Platform::get_vulkan_extensions();
     
 #ifdef SK_DEBUG
     extensions.push_back(VK_EXT_DEBUG_UTILS_EXTENSION_NAME);
@@ -382,7 +381,8 @@ void *Vulkan::create_device(Platform::Window *win) {
         return nullptr;
     }
     
-    Device *device = new Device;
+    auto device = new Device;
+    
     device->window = win;
 
     // Surface
@@ -391,7 +391,7 @@ void *Vulkan::create_device(Platform::Window *win) {
     // Logical Device
     u32 device_count = 0;
     vkEnumeratePhysicalDevices(context.instance, &device_count, nullptr);
-    std::vector<VkPhysicalDevice> devices(device_count);
+    Array<VkPhysicalDevice> devices(device_count);
     vkEnumeratePhysicalDevices(context.instance, &device_count, devices.data());
 
     It (devices) {
@@ -403,7 +403,7 @@ void *Vulkan::create_device(Platform::Window *win) {
         vkEnumerateDeviceExtensionProperties(it, nullptr, &device_extension_count, nullptr);
         u32 size = device_extension_count * sizeof(VkExtensionProperties);
         
-        std::vector<VkExtensionProperties> available_extensions(device_extension_count);
+        Array<VkExtensionProperties> available_extensions(device_extension_count);
 
         vkEnumerateDeviceExtensionProperties(it, nullptr, &device_extension_count, available_extensions.data());
 
@@ -441,12 +441,12 @@ void *Vulkan::create_device(Platform::Window *win) {
 
     Queue_Families indices = get_queue_families(device->gpu, device->surface);
 
-    std::set<u32> unique_families = {
+    Set<u32> unique_families = {
         indices.graphics_family.value(),
         indices.present_family.value()
     };
 
-    std::vector<VkDeviceQueueCreateInfo> queue_infos = {};
+    Array<VkDeviceQueueCreateInfo> queue_infos = {};
     queue_infos.reserve(unique_families.size());
 
     f32 queue_priority = 1.0f;
@@ -476,7 +476,7 @@ void *Vulkan::create_device(Platform::Window *win) {
         device_info.ppEnabledLayerNames = VALIDATION_LAYERS.data();
     }
 
-    if (vkCreateDevice(device->gpu, &device_info, NULL, &device->device) != VK_SUCCESS) {
+    if (vkCreateDevice(device->gpu, &device_info, nullptr, &device->device) != VK_SUCCESS) {
         SK_LOG_ERROR("Failed to create vulkan device");
         delete device;
         return nullptr;
@@ -576,8 +576,8 @@ void *Vulkan::create_command_list(void *d) {
         return nullptr;
     }
 
-    Device *device = (Device *)d;
-    Command_List *list = new Command_List;
+    auto device = (Device *)d;
+    auto list = new Command_List;
 
     list->device = device;
 
@@ -606,7 +606,7 @@ void Vulkan::destroy_command_list(void **l) {
     vkFreeCommandBuffers(list->device->device, list->device->command_pool, MAX_FRAMES_IN_FLIGHT, list->command_buffers);
 }
 
-void *Vulkan::begin_frame(void *d, const std::vector<void *> &lists) {
+void *Vulkan::begin_frame(void *d, const Array<void *> &lists) {
     auto device = (Device *)d;
 
     auto data = new Frame_Data;
@@ -649,7 +649,7 @@ void Vulkan::end_frame(void *frame_data) {
     auto data = (Frame_Data *)frame_data;
     auto device = (Device *)data->device;
 
-    std::vector<VkCommandBuffer> command_buffers;
+    Array<VkCommandBuffer> command_buffers;
     It (data->command_lists) {
         auto list = (Command_List *)it;
         if (list->device != device) {

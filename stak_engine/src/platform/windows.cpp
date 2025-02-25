@@ -1,6 +1,6 @@
 #include "platform.hpp"
 
-#include "utils/asserts.hpp"
+#include "utils/utils.hpp"
 
 #include <vulkan/vulkan.h>
 #include <glfw/glfw3.h>
@@ -8,7 +8,7 @@
 static s32 window_count = 0;
 
 struct Window_Data {
-	std::string title = "";
+	String title = "";
 	s32 width = 0;
 	s32 height = 0;
 	s32 x = 0;
@@ -28,10 +28,10 @@ void Platform::get_window_size(Window *window, s32 *width, s32 *height) {
 
 namespace Platform {
 
-std::vector<const char *> get_vulkan_extensions() {
+Array<const char *> get_vulkan_extensions() {
     u32 count;
     const char** glfw_extensions = glfwGetRequiredInstanceExtensions(&count);
-    std::vector<const char *> extensions(glfw_extensions, glfw_extensions + count);
+    Array<const char *> extensions(glfw_extensions, glfw_extensions + count);
     return extensions;
 }
 
@@ -84,7 +84,7 @@ Platform::Window* Platform::create_window(Window_Config* config, Window_Callback
 	});
 
 	glfwSetWindowSizeCallback(window->handle, [](GLFWwindow *window, s32 width, s32 height) {
-		auto data = (Window_Data*)glfwGetWindowUserPointer(window);
+		auto data = (Window_Data *)glfwGetWindowUserPointer(window);
 
 		if (data->callbacks.resize != nullptr) {
 			Window_Resize_Event e = {
@@ -96,7 +96,7 @@ Platform::Window* Platform::create_window(Window_Config* config, Window_Callback
 	});
 
 	glfwSetKeyCallback(window->handle, [](GLFWwindow* window, s32 key, s32 scancode, s32 action, s32 mods) {
-		auto* data = static_cast<Window_Data*>(glfwGetWindowUserPointer(window));
+		auto data = (Window_Data *)glfwGetWindowUserPointer(window);
 
 		if (!data->callbacks.key) {
 			return;
@@ -122,7 +122,7 @@ Platform::Window* Platform::create_window(Window_Config* config, Window_Callback
 	});
 
 	glfwSetMouseButtonCallback(window->handle, [](GLFWwindow* window, s32 button, s32 action, s32 mods) {
-		auto* data = static_cast<Window_Data*>(glfwGetWindowUserPointer(window));
+		auto data = (Window_Data *)glfwGetWindowUserPointer(window);
 
 		if (!data->callbacks.mouse_button) {
 			return;
@@ -148,7 +148,7 @@ Platform::Window* Platform::create_window(Window_Config* config, Window_Callback
     });
 
 	glfwSetCursorPosCallback(window->handle, [](GLFWwindow* window, double x, double y) {
-		auto* data = static_cast<Window_Data*>(glfwGetWindowUserPointer(window));
+		auto data = (Window_Data *)glfwGetWindowUserPointer(window);
 
 		if (!data->callbacks.mouse_move) {
 			return;

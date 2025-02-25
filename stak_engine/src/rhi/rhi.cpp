@@ -2,10 +2,10 @@
 
 #include "vulkan/vulkan.hpp"
 
-#include <unordered_map>
+#include "utils/utils.hpp"
 
 struct Rhi_Api {
-    void(*init)(const std::string &) = [](const std::string &app_name) {};
+    void(*init)(const String &) = [](const String &app_name) {};
     void(*shutdown)() = []() {};
     
     void *(*create_device)(Platform::Window *) = [](Platform::Window *win) -> void * { return nullptr; };
@@ -15,7 +15,7 @@ struct Rhi_Api {
     void (*destroy_command_list)(void **) = [](void **list) {};
 };
 
-static std::unordered_map<Rhi::Vendor, Rhi_Api> rhi = {
+static Hash_Map<Rhi::Vendor, Rhi_Api> rhi = {
     {
         Rhi::Vendor::NONE,
         {}
@@ -37,7 +37,7 @@ static std::unordered_map<Rhi::Vendor, Rhi_Api> rhi = {
 
 static Rhi::Vendor active_vendor = Rhi::Vendor::NONE;
 
-void Rhi::init(Vendor vendor, const std::string &app_name) {
+void Rhi::init(Vendor vendor, const String &app_name) {
     if (active_vendor != vendor) {
         rhi[active_vendor].shutdown();
         
