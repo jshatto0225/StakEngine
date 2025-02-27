@@ -5,7 +5,9 @@
 #include "rhi.hpp"
 
 static Ref<Rhi_Render_Pass> render_pass = nullptr;
+static Ref<Rhi_Render_Target> target = nullptr;
 static ImDrawData *draw_data = nullptr;
+static Ref<Rhi_Device> device = nullptr;
 
 void init_imgui(Ref<Window> window) {
     ImGui::CreateContext();
@@ -14,7 +16,7 @@ void init_imgui(Ref<Window> window) {
     io.ConfigFlags |= ImGuiConfigFlags_NavEnableGamepad;
     ImGui::StyleColorsDark();
     
-    Ref<Rhi_Device> device = window->get_device();
+    device = window->get_device();
     
     Rhi_Attachment color_attachment = {};
     color_attachment.format           = device->get_swapchain_image_format();
@@ -48,8 +50,10 @@ void init_imgui(Ref<Window> window) {
     desc.deps        = { dependency };
     
     render_pass = device->create_render_pass(desc);
-
     ASSERT(render_pass != nullptr);
+
+    target = device->create_swapchain_target(render_pass);
+    ASSERT(target != nullptr);
     
     init_imgui_rhi(window, render_pass);
 }
@@ -72,7 +76,34 @@ void end_imgui_frame() {
         draw_data = data;
 }
 
-void render_imgui(Ref<Rhi_Command_List> command_list) {
-    if (draw_data)
+void render_imgui(Ref<Rhi_Command_List> command_list) {    
+    // Gui render pass
+    Rhi_Rect render_area = {};
+    render_area.x      = 0;
+    render_area.y      = 0;
+
+    s32 width, height;
+    device->get_extent(&width, &height);
+    render_area.width = width;
+    render_area.height = height;
+        
+    Rhi_Clear_Value clear_value = {};
+    clear_value.format         = RHI_FORMAT_R32G32B32A32_SFLOAT;
+    clear_value.clear_color[0] = 1.0f;
+    clear_value.clear_color[1] = 0.0f;
+    clear_value.clear_color[2] = 1.0f;
+    clear_value.clear_color[3] = 1.0f;
+        
+    Rhi_Render_Pass_Info info = {};
+    info.render_area  = render_area;
+    info.clear_values = { clear_value };
+    info.target       = target;
+
+    command_list->begin_render_pass(render_pass, RHI_SUBPASS_CONTENTS_INLINE, info);
+
+    if (draw_data) {
         command_list->render_imgui_draw_data(draw_data);
+    }
+
+    command_list->end_render_pass();
 }

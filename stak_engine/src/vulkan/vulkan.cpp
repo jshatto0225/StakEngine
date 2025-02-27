@@ -117,16 +117,17 @@ static Queue_Families get_queue_families(VkPhysicalDevice gpu, VkSurfaceKHR surf
     vkGetPhysicalDeviceQueueFamilyProperties(gpu, &queue_family_count, queue_families.data());
 
     For (queue_family_count) {
-        if (queue_families[i].queueFlags & VK_QUEUE_GRAPHICS_BIT)
+        if (queue_families[i].queueFlags & VK_QUEUE_GRAPHICS_BIT) {
             indices.graphics_family = i;
+        }
 
         VkBool32 present_support = VK_FALSE;
         vkGetPhysicalDeviceSurfaceSupportKHR(gpu, i, surface, &present_support);
-        if (present_support)
+        if (present_support) {
             indices.present_family = i;
+        }
 
-        if (indices.graphics_family.has_value() && indices.present_family.has_value())
-            break;
+        if (indices.graphics_family.has_value() && indices.present_family.has_value()) break;
     }
 
     return indices;
@@ -176,17 +177,15 @@ static VKAPI_ATTR VkBool32 VKAPI_CALL messenger(VkDebugUtilsMessageSeverityFlagB
 
 static VkResult create_debug_messenger(VkInstance instance, const VkDebugUtilsMessengerCreateInfoEXT *info, const VkAllocationCallbacks *allocator, VkDebugUtilsMessengerEXT *messenger) {
     PFN_vkCreateDebugUtilsMessengerEXT func = (PFN_vkCreateDebugUtilsMessengerEXT)vkGetInstanceProcAddr(instance, "vkCreateDebugUtilsMessengerEXT");
-    if (func != nullptr) {
-        return func(instance, info, allocator, messenger);
-    } else {
-        return VK_ERROR_EXTENSION_NOT_PRESENT;
-    }
+    if (func != nullptr) return func(instance, info, allocator, messenger);
+    else return VK_ERROR_EXTENSION_NOT_PRESENT;
 }
 
 void destroy_debug_messenger(VkInstance instance, VkDebugUtilsMessengerEXT messenger, const VkAllocationCallbacks *allocator) {
     auto func = (PFN_vkDestroyDebugUtilsMessengerEXT)vkGetInstanceProcAddr(instance, "vkDestroyDebugUtilsMessengerEXT");
-    if (func != nullptr)
+    if (func != nullptr) {
         func(instance, messenger, allocator);
+    }
 }
 
 void init_vulkan(const String &app_name) {
@@ -273,10 +272,12 @@ void init_vulkan(const String &app_name) {
 void shutdown_vulkan() {
     Array<Vulkan_Device *> devices = {};
     devices.reserve(context.devices.size());
-    It (context.devices)
+    It (context.devices) {
         devices.push_back(it);
-    It (devices)
+    }
+    It (devices) {
         it->manual_shutdown();
+    }
     devices.clear();
 
     destroy_debug_messenger(context.instance, context.debug_messenger, nullptr);
@@ -449,8 +450,9 @@ Vulkan_Device::Vulkan_Device(Window *win) {
 }
 
 Vulkan_Device::~Vulkan_Device() {
-    if (initialized)
+    if (initialized) {
         manual_shutdown();
+    }
 }
 
 Ref<Rhi_Render_Target> Vulkan_Device::create_swapchain_target(Ref<Rhi_Render_Pass> pass) {
@@ -467,57 +469,71 @@ void Vulkan_Device::manual_shutdown() {
 
     Array<Vulkan_Command_List *> lists_to_destroy = {};
     lists_to_destroy.reserve(lists.size());
-    It (lists)
+    It (lists) {
         lists_to_destroy.push_back(it);
-    It (lists_to_destroy)
+    }
+    It (lists_to_destroy) {
         it->manual_shutdown();
+    }
     lists_to_destroy.clear();
 
     Array<Vulkan_Sync_Object *> syncs_to_destroy = {};
     syncs_to_destroy.reserve(syncs.size());
-    It (syncs)
+    It (syncs) {
         syncs_to_destroy.push_back(it);
-    It (syncs_to_destroy)
+    }
+    It (syncs_to_destroy) {
         it->manual_shutdown();
+    }
     syncs_to_destroy.clear();
 
     Array<Vulkan_Render_Pass *> passes_to_destroy = {};
     passes_to_destroy.reserve(passes.size());
-    It (passes)
+    It (passes) {
         passes_to_destroy.push_back(it);
-    It (passes_to_destroy)
+    }
+    It (passes_to_destroy) {
         it->manual_shutdown();
+    }
     passes_to_destroy.clear();
 
     Array<Vulkan_Render_Target *> targets_to_destroy = {};
     targets_to_destroy.reserve(targets.size());
-    It (targets)
+    It (targets) {
         targets_to_destroy.push_back(it);
-    It (targets_to_destroy)
+    }
+    It (targets_to_destroy) {
         it->manual_shutdown();
+    }
     targets_to_destroy.clear();
 
     Array<Vulkan_Render_Target *> backbuffers_to_destroy = {};
     backbuffers_to_destroy.reserve(backbuffers.size());
-    It (backbuffers)
+    It (backbuffers) {
         backbuffers_to_destroy.push_back(it);
-    It (backbuffers_to_destroy)
+    }
+    It (backbuffers_to_destroy) {
         it->manual_shutdown();
+    }
     backbuffers_to_destroy.clear();
     
-    It (image_available_semaphores)
+    It (image_available_semaphores) {
         vkDestroySemaphore(device, it, nullptr);
+    }
     
-    It (render_finished_semaphores)
+    It (render_finished_semaphores) {
         vkDestroySemaphore(device, it, nullptr);
+    }
 
-    It (in_flight_fences)
+    It (in_flight_fences) {
         vkDestroyFence(device, it, nullptr);
+    }
     
     vkDestroyCommandPool(device, command_pool, nullptr);
     
-    It (swapchain_image_views)
+    It (swapchain_image_views) {
         vkDestroyImageView(device, it, nullptr);
+    }
 
     vkDestroySwapchainKHR(device, swapchain, nullptr);
     
@@ -551,8 +567,9 @@ VkImageView Vulkan_Device::create_image_view(VkImage image, VkFormat format) {
     
     VkImageView image_view = VK_NULL_HANDLE;
     VkResult err = vkCreateImageView(device, &view_info, nullptr, &image_view);
-    if (err != VK_SUCCESS)
+    if (err != VK_SUCCESS) {
         SK_LOG_WARN("Failed to create image view: {}", get_err_string(err));
+    }
     
     return image_view;
 }
@@ -598,8 +615,9 @@ void Vulkan_Device::create_swapchain() {
     
     u32 image_count = support.capabilities.minImageCount + 1;
     
-    if (support.capabilities.maxImageCount > 0 && image_count > support.capabilities.maxImageCount)
+    if (support.capabilities.maxImageCount > 0 && image_count > support.capabilities.maxImageCount) {
         image_count = support.capabilities.maxImageCount;
+    }
     
     VkSwapchainCreateInfoKHR swapchain_info = {};
     swapchain_info.sType = VK_STRUCTURE_TYPE_SWAPCHAIN_CREATE_INFO_KHR;
@@ -671,8 +689,9 @@ void Vulkan_Device::recreate_swapchain() {
   
     wait_for_idle();
     
-    It (swapchain_image_views)
+    It (swapchain_image_views) {
         vkDestroyImageView(device, it, nullptr);
+    }
     
     vkDestroySwapchainKHR(device, swapchain, nullptr);
     
@@ -815,10 +834,14 @@ Ref<Rhi_Render_Pass> Vulkan_Device::create_render_pass(const Rhi_Render_Pass_Des
 }
 
 Rhi_Format Vulkan_Device::get_swapchain_image_format() {
+    CHECK(RHI_FORMAT_UNDEFINED);
+    
     return (Rhi_Format)swapchain_format.format;
 }
 
 void Vulkan_Device::notify_window_resize()  {
+    CHECK();
+    
     framebuffer_resized = true;
 }
 
@@ -850,8 +873,9 @@ Vulkan_Command_List::Vulkan_Command_List(Vulkan_Device *d) {
 }
 
 Vulkan_Command_List::~Vulkan_Command_List() {
-    if (initialized)
+    if (initialized) {
         manual_shutdown();
+    }
 }
 
 void Vulkan_Command_List::manual_shutdown() {
@@ -1028,8 +1052,9 @@ void Vulkan_Command_List::render_imgui_draw_data(ImDrawData *data) {
 Vulkan_Sync_Object::Vulkan_Sync_Object(Vulkan_Device *dev, Rhi_Pipeline_Stage_Mask s) {
     CHECK_CONTEXT();
 
-    if (s == 0)
+    if (s == 0) {
         SK_LOG_ERROR("Invalid pipeline stage");
+    }
     
     device = dev;
     stages = s;
@@ -1058,8 +1083,9 @@ Vulkan_Sync_Object::~Vulkan_Sync_Object() {
 void Vulkan_Sync_Object::manual_shutdown() {
     CHECK();
 
-    It (semaphores)
+    It (semaphores) {
         vkDestroySemaphore(device->device, it, nullptr);
+    }
 
     initialized = false;
     
@@ -1087,8 +1113,9 @@ Vulkan_Render_Pass::Vulkan_Render_Pass(Vulkan_Device *dev, const Rhi_Render_Pass
     It (desc.attachments) {
         VkAttachmentDescription attachment = {};
         
-        if (it.may_alias)
+        if (it.may_alias) {
             attachment.flags = VK_ATTACHMENT_DESCRIPTION_MAY_ALIAS_BIT;
+        }
 
         attachment.format = (VkFormat)it.format;
         attachment.samples = (VkSampleCountFlagBits)it.samples;
@@ -1202,8 +1229,9 @@ Vulkan_Render_Pass::Vulkan_Render_Pass(Vulkan_Device *dev, const Rhi_Render_Pass
 }
 
 Vulkan_Render_Pass::~Vulkan_Render_Pass() {
-    if (initialized)
+    if (initialized) {
         manual_shutdown();
+    }
 }
 
 void Vulkan_Render_Pass::manual_shutdown() {
@@ -1249,8 +1277,9 @@ Vulkan_Render_Target::~Vulkan_Render_Target() {
 void Vulkan_Render_Target::destroy_framebuffers() {
     CHECK();
     
-    It (framebuffers)
+    It (framebuffers) {
         vkDestroyFramebuffer(device->device, it, nullptr);
+    }
 
     initialized = false;
 }
@@ -1329,8 +1358,9 @@ void init_imgui_vulkan(Ref<Window> window, Ref<Rhi_Render_Pass> render_pass) {
     init_info.MSAASamples = VK_SAMPLE_COUNT_1_BIT;
     init_info.DescriptorPoolSize = 4000;
     init_info.CheckVkResultFn = [](VkResult err) {
-        if (err != VK_SUCCESS)
+        if (err != VK_SUCCESS) {
             SK_LOG_ERROR("ImGui Vulkan Error: {}", get_err_string(err));
+        }
     };
     init_info.MinAllocationSize = 1024 * 1024;
     
