@@ -1,14 +1,14 @@
 #pragma once
 
-#include "core/core.hpp"
-#include "events/events.hpp"
-#include "gui/gui.hpp"
-#include "input/input.hpp"
-#include "log/log.hpp"
-#include "platform/platform.hpp"
-#include "renderer/renderer.hpp"
-#include "rhi/rhi.hpp"
-#include "utils/utils.hpp"
+#include "core.hpp"
+#include "events.hpp"
+#include "gui.hpp"
+#include "input.hpp"
+#include "log.hpp"
+#include "platform.hpp"
+#include "renderer.hpp"
+#include "rhi.hpp"
+#include "utils.hpp"
 
 #undef SK_LOG_TRACE
 #undef SK_LOG_INFO

@@ -8,8 +8,8 @@ project "stak_engine"
     objdir ("%{wks.location}/bin-int/" .. outputdir .. "/%{prj.name}")
 
     files {
-        "src/**.hpp",
-        "src/**.cpp",
+        "src/*.hpp",
+        "src/*.cpp",
     }
 
     includedirs {
@@ -25,7 +25,9 @@ project "stak_engine"
     filter "system:windows"
         systemversion "latest"
         files {
-            "src/platform/windows.cpp",
+            "src/glfw/glfw.cpp",
+            "src/vulkan/vulkan.cpp",
+            "src/vulkan/vulkan.hpp"
         }
         defines {
             "SK_WINDOWS"

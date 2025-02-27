@@ -1,9 +1,22 @@
 #include "stak_engine.hpp"
 
+#include <imgui.h>
+
+void imgui_render() {
+    ImGui::Begin("Test Window");
+    {
+        ImGui::Text("Hello, world! This is a test ImGui window.");
+        if (ImGui::Button("Click Me")) {
+            LOG_TRACE("Button was clicked!");
+        }
+    }
+    ImGui::End();
+}
+
 int main() {
-	Core::App app = {};
+	App app = {};
     
-    app.renderer_vendor = Rhi::Vendor::VULKAN;
+    app.renderer_vendor = Rhi_Vendor::VULKAN;
 
     app.window_config.x = 100;
     app.window_config.y = 100;
@@ -13,5 +26,8 @@ int main() {
     
     app.name = "Stak Editor";
 
-	Core::run(&app);
+    app.imgui_render = imgui_render;
+
+	run_app(app);
 }
+

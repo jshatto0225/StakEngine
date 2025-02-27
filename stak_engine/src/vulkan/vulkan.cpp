@@ -1,13 +1,19 @@
 #include "vulkan.hpp"
 
-#include "log/log.hpp"
-#include "utils/utils.hpp"
+#include "rhi.hpp"
+
+#include "log.hpp"
+#include "utils.hpp"
+#include "window.hpp"
+#include "platform.hpp"
+#include "glfw/glfw.hpp"
 
 #include <cstring>
 
 #include <vulkan/vulkan.h>
 
-static const u32 MAX_FRAMES_IN_FLIGHT = 2;
+#include <backends/imgui_impl_glfw.h>
+#include <backends/imgui_impl_vulkan.h>
 
 static const Array<const char *> VALIDATION_LAYERS = {
     "VK_LAYER_KHRONOS_validation",
@@ -21,44 +27,8 @@ struct Context {
     bool initialized = false;
     VkInstance instance = VK_NULL_HANDLE;
     VkDebugUtilsMessengerEXT debug_messenger = VK_NULL_HANDLE;
-};
 
-struct Device {
-    Platform::Window *window = nullptr;
-    VkDevice device = VK_NULL_HANDLE;
-    VkPhysicalDevice gpu = VK_NULL_HANDLE;
-    u32 graphics_queue_index = UINT32_MAX;
-    VkQueue graphics_queue = VK_NULL_HANDLE;
-    u32 present_queue_index = UINT32_MAX;
-    VkQueue present_queue = VK_NULL_HANDLE;
-
-    VkSurfaceKHR surface = VK_NULL_HANDLE;
-
-    VkExtent2D extent = {};
-    VkSwapchainKHR swapchain = VK_NULL_HANDLE;
-    VkSurfaceFormatKHR swapchain_format = {};
-    Array<VkImage> swapchain_images = {};
-    Array<VkImageView> swapchain_image_views = {};
-    VkCommandPool command_pool = VK_NULL_HANDLE;
-
-    Array<VkSemaphore> render_finished_semaphores = {};
-    Array<VkSemaphore> image_available_semaphores = {};
-    Array<VkFence> in_flight_fences = {};
-
-    u32 current_frame = 0;
-    u32 image_index = 0;
-    bool framebuffer_resized = false;
-};
-
-struct Command_List {
-    Device *device;
-
-    VkCommandBuffer command_buffers[MAX_FRAMES_IN_FLIGHT];
-};
-
-struct Frame_Data {
-    Device *device = nullptr;
-    Array<Command_List *> command_lists = {};
+    Set<Vulkan_Device *> devices = {};
 };
 
 struct Queue_Families {
@@ -72,15 +42,25 @@ struct Swapchain_Support {
     Array<VkPresentModeKHR> present_modes = {};
 };
 
-// Hidden from public platform interface
-namespace Platform {
-
-Array<const char *> get_vulkan_extensions();
-void get_vulkan_surface(Window *window, VkInstance instance, VkSurfaceKHR *surface);
-
-}
-
 static Context context = {};
+
+#ifdef SK_DEBUG
+
+#define CHECK_CONTEXT(...)                             \
+    if (!context.initialized) {                        \
+        return __VA_ARGS__;                            \
+    }
+
+#define CHECK(...)                                      \
+    CHECK_CONTEXT(__VA_ARGS__);                         \
+    if (!initialized) {                                 \
+        return __VA_ARGS__;                             \
+    }
+
+#else
+#define CHECK_CONTEXT(...)
+#define CHECK(...)
+#endif
 
 #ifdef SK_DEBUG
 bool ENABLE_VALIDATION_LAYERS = true;
@@ -88,24 +68,44 @@ bool ENABLE_VALIDATION_LAYERS = true;
 bool ENABLE_VALIDATION_LAYERS = false;
 #endif
 
-static VkImageView create_image_view(Device *device, VkImage image, VkFormat format) {
-    VkImageViewCreateInfo view_info = {};
-    view_info.sType = VK_STRUCTURE_TYPE_IMAGE_VIEW_CREATE_INFO;
-    view_info.image = image;
-    view_info.viewType = VK_IMAGE_VIEW_TYPE_2D;
-    view_info.format = format;
-    view_info.subresourceRange.aspectMask = VK_IMAGE_ASPECT_COLOR_BIT;
-    view_info.subresourceRange.baseMipLevel = 0;
-    view_info.subresourceRange.levelCount = 1;
-    view_info.subresourceRange.baseArrayLayer = 0;
-    view_info.subresourceRange.layerCount = 1;
-    
-    VkImageView image_view = VK_NULL_HANDLE;
-    if (vkCreateImageView(device->device, &view_info, nullptr, &image_view) != VK_SUCCESS) {
-        SK_LOG_WARN("Failed to create image view");
+// NOTE: if is_error is false it will print at warning level
+static const char *get_err_string(VkResult err) {
+    switch (err) {
+    case VK_NOT_READY:
+        return "VK_NOT_READY";
+    case VK_TIMEOUT:
+        return "VK_TIMEOUT";
+    case VK_EVENT_SET:
+        return "VK_EVENT_SET";
+    case VK_EVENT_RESET:
+        return "VK_EVENT_RESET";
+    case VK_INCOMPLETE:
+        return "VK_INCOMPLETE";
+    case VK_ERROR_OUT_OF_HOST_MEMORY:
+        return "VK_ERROR_OUT_OF_HOST_MEMORY";
+    case VK_ERROR_INITIALIZATION_FAILED:
+        return "VK_ERROR_INITIALIZATION_FAILED";
+    case VK_ERROR_DEVICE_LOST:
+        return "VK_ERROR_DEVICE_LOST";
+    case VK_ERROR_MEMORY_MAP_FAILED:
+        return "VK_ERROR_MEMORY_MAP_FAILED";
+    case VK_ERROR_LAYER_NOT_PRESENT:
+        return "VK_ERROR_LAYER_NOT_PRESENT";
+    case VK_ERROR_EXTENSION_NOT_PRESENT:
+        return "VK_ERROR_EXTENSION_NOT_PRESENT";
+    case VK_ERROR_FEATURE_NOT_PRESENT:
+        return "VK_ERROR_FEATURE_NOT_PRESENT";
+    case VK_ERROR_INCOMPATIBLE_DRIVER:
+        return "VK_ERROR_INCOMPATIBLE_DRIVER";
+    case VK_ERROR_TOO_MANY_OBJECTS:
+        return "VK_ERROR_TOO_MANY_OBJECTS";
+    case VK_ERROR_FORMAT_NOT_SUPPORTED:
+        return "VK_ERROR_FORMAT_NOT_SUPPORTED";
+    case VK_ERROR_FRAGMENTED_POOL:
+        return "VK_ERROR_FRAGMENTED_POOL";
     }
-    
-    return image_view;
+
+    return "VK_UNKNOWN_ERROR";
 }
 
 static Queue_Families get_queue_families(VkPhysicalDevice gpu, VkSurfaceKHR surface) {
@@ -117,19 +117,16 @@ static Queue_Families get_queue_families(VkPhysicalDevice gpu, VkSurfaceKHR surf
     vkGetPhysicalDeviceQueueFamilyProperties(gpu, &queue_family_count, queue_families.data());
 
     For (queue_family_count) {
-        if (queue_families[i].queueFlags & VK_QUEUE_GRAPHICS_BIT) {
+        if (queue_families[i].queueFlags & VK_QUEUE_GRAPHICS_BIT)
             indices.graphics_family = i;
-        }
 
         VkBool32 present_support = VK_FALSE;
         vkGetPhysicalDeviceSurfaceSupportKHR(gpu, i, surface, &present_support);
-        if (present_support) {
+        if (present_support)
             indices.present_family = i;
-        }
 
-        if (indices.graphics_family.has_value() && indices.present_family.has_value()) {
+        if (indices.graphics_family.has_value() && indices.present_family.has_value())
             break;
-        }
     }
 
     return indices;
@@ -182,121 +179,17 @@ static VkResult create_debug_messenger(VkInstance instance, const VkDebugUtilsMe
     if (func != nullptr) {
         return func(instance, info, allocator, messenger);
     } else {
-        SK_LOG_ERROR("Extension not present");
         return VK_ERROR_EXTENSION_NOT_PRESENT;
     }
 }
 
-static void create_swapchain(Device *device) {
-Swapchain_Support support = get_swapchain_support(device->gpu, device->surface);
-    
-    VkSurfaceFormatKHR format = {};
-    It (support.formats) {
-        if (it.format == VK_FORMAT_B8G8R8A8_SRGB && it.colorSpace == VK_COLOR_SPACE_SRGB_NONLINEAR_KHR) {
-            format = it;
-            break;
-        }
-    }
-    
-    VkPresentModeKHR present_mode = {};
-    It (support.present_modes) {
-        if (it == VK_PRESENT_MODE_MAILBOX_KHR) {
-            present_mode = it;
-            break;
-        }
-    }
-    
-    if (support.capabilities.currentExtent.width != UINT32_MAX) {
-        device->extent = support.capabilities.currentExtent;
-    } else {
-        s32 width = 0;
-        s32 height = 0;
-        Platform::get_window_size(device->window, &width, &height);
-        
-        VkExtent2D extent = { 
-            (u32)width, 
-            (u32)height
-        };
-        
-        extent.width = std::clamp(extent.width, support.capabilities.minImageExtent.width, support.capabilities.maxImageExtent.width);
-        extent.height = std::clamp(extent.height, support.capabilities.minImageExtent.height, support.capabilities.maxImageExtent.height);
-        
-        device->extent = extent;
-    }
-    
-    u32 image_count = support.capabilities.minImageCount + 1;
-    
-    if (support.capabilities.maxImageCount > 0 && image_count > support.capabilities.maxImageCount) {
-        image_count = support.capabilities.maxImageCount;
-    }
-    
-    VkSwapchainCreateInfoKHR swapchain_info = {};
-    swapchain_info.sType = VK_STRUCTURE_TYPE_SWAPCHAIN_CREATE_INFO_KHR;
-    swapchain_info.surface = device->surface;
-    swapchain_info.minImageCount = image_count;
-    swapchain_info.imageFormat = format.format;
-    swapchain_info.imageColorSpace = format.colorSpace;
-    swapchain_info.imageExtent = device->extent;
-    swapchain_info.imageArrayLayers = 1;
-    swapchain_info.imageUsage = VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT;
-    
-    device->swapchain_format = format;
-
-    Queue_Families indices = get_queue_families(device->gpu, device->surface);
-    
-    u32 queue_family_indices[] = {
-        indices.graphics_family.value(),
-        indices.present_family.value()
-    };
-    
-    if (indices.graphics_family.value() != indices.present_family.value()) {
-        swapchain_info.imageSharingMode = VK_SHARING_MODE_CONCURRENT;
-        swapchain_info.queueFamilyIndexCount = 2;
-        swapchain_info.pQueueFamilyIndices = queue_family_indices;
-    } else {
-        swapchain_info.imageSharingMode = VK_SHARING_MODE_EXCLUSIVE;
-    }
-    
-    swapchain_info.preTransform = support.capabilities.currentTransform;
-    swapchain_info.compositeAlpha = VK_COMPOSITE_ALPHA_OPAQUE_BIT_KHR;
-    swapchain_info.presentMode = present_mode;
-    swapchain_info.clipped = VK_TRUE;
-    swapchain_info.oldSwapchain = VK_NULL_HANDLE;
-    if (vkCreateSwapchainKHR(device->device, &swapchain_info, nullptr, &device->swapchain) != VK_SUCCESS) {
-        SK_LOG_ERROR("Failed to create swapchian");
-    }
-    
-    device->swapchain_images.resize(image_count);
-    vkGetSwapchainImagesKHR(device->device, device->swapchain, &image_count, device->swapchain_images.data());
-    
-    device->swapchain_image_views.resize(device->swapchain_images.size());
-    
-    For (device->swapchain_images.size()) {
-        device->swapchain_image_views[i] = create_image_view(device, device->swapchain_images[i], device->swapchain_format.format);
-    }
+void destroy_debug_messenger(VkInstance instance, VkDebugUtilsMessengerEXT messenger, const VkAllocationCallbacks *allocator) {
+    auto func = (PFN_vkDestroyDebugUtilsMessengerEXT)vkGetInstanceProcAddr(instance, "vkDestroyDebugUtilsMessengerEXT");
+    if (func != nullptr)
+        func(instance, messenger, allocator);
 }
 
-static void recreate_swapchain(Device *device) {
-    s32 width = 0;
-    s32 height = 0;
-    Platform::get_window_size(device->window, &width, &height);
-    
-    while (width == 0 || height == 0) {
-        Platform::get_window_size(device->window, &width, &height);
-    }
-  
-    Vulkan::wait_for_device(device);
-    
-    It (device->swapchain_image_views) {
-        vkDestroyImageView(device->device, it, nullptr);
-    }
-    
-    vkDestroySwapchainKHR(device->device, device->swapchain, nullptr);
-    
-    create_swapchain(device);
-}
-
-void Vulkan::init(const String &app_name) {
+void init_vulkan(const String &app_name) {
     bool extensions_supported = true;
     u32 layer_count = 0;
     vkEnumerateInstanceLayerProperties(&layer_count, nullptr);
@@ -351,7 +244,7 @@ void Vulkan::init(const String &app_name) {
         instance_info.pNext = &debug_messenger_info;
     }
 
-    Array<const char *> extensions = Platform::get_vulkan_extensions();
+    Array<const char *> extensions = get_vulkan_extensions();
     
 #ifdef SK_DEBUG
     extensions.push_back(VK_EXT_DEBUG_UTILS_EXTENSION_NAME);
@@ -360,44 +253,60 @@ void Vulkan::init(const String &app_name) {
     instance_info.enabledExtensionCount = (u32)extensions.size();
     instance_info.ppEnabledExtensionNames = extensions.data();
 
-    if (vkCreateInstance(&instance_info, nullptr, &context.instance) != VK_SUCCESS) {
-        SK_LOG_ERROR("Failed to create vulkan instance");
+    VkResult err = vkCreateInstance(&instance_info, nullptr, &context.instance);
+    if (err != VK_SUCCESS) {
+        SK_LOG_ERROR("Failed to create vulkan instance: {}", get_err_string(err));
         return;
     }
 
-    if (ENABLE_VALIDATION_LAYERS && create_debug_messenger(context.instance, &debug_messenger_info, nullptr, &context.debug_messenger) != VK_SUCCESS) {
-        SK_LOG_ERROR("Failed to setup vulkan debug messenger");
-        return;
+    if (ENABLE_VALIDATION_LAYERS) {
+        err = create_debug_messenger(context.instance, &debug_messenger_info, nullptr, &context.debug_messenger);
+        if (err != VK_SUCCESS) {
+            SK_LOG_ERROR("Failed to setup vulkan debug messenger: {}", get_err_string(err));
+            return;
+        }
     }
+
+    context.initialized = true;
 }
 
-void Vulkan::shutdown() {
+void shutdown_vulkan() {
+    Array<Vulkan_Device *> devices = {};
+    devices.reserve(context.devices.size());
+    It (context.devices)
+        devices.push_back(it);
+    It (devices)
+        it->manual_shutdown();
+    devices.clear();
+
+    destroy_debug_messenger(context.instance, context.debug_messenger, nullptr);
     vkDestroyInstance(context.instance, nullptr);
     context.instance = VK_NULL_HANDLE;
 }
 
-void *Vulkan::create_device(Platform::Window *win) {
+Vulkan_Device::Vulkan_Device(Window *win) {
     if (win == nullptr) {
-        return nullptr;
+        SK_LOG_ERROR("Window was nullptr");
+        return;
     }
-    
-    auto device = new Device;
-    
-    device->window = win;
 
+    CHECK_CONTEXT();
+    
+    window = win;
+    
     // Surface
-    Platform::get_vulkan_surface(win, context.instance, &device->surface);
-
+    window->get_vulkan_surface((void *)&context.instance, (void *)&surface);
+    
     // Logical Device
     u32 device_count = 0;
     vkEnumeratePhysicalDevices(context.instance, &device_count, nullptr);
     Array<VkPhysicalDevice> devices(device_count);
     vkEnumeratePhysicalDevices(context.instance, &device_count, devices.data());
-
+        
     It (devices) {
         bool is_device_suitable = false;
-
-        Queue_Families indices = get_queue_families(it, device->surface);
+            
+        Queue_Families indices = get_queue_families(it, surface);
 
         u32 device_extension_count;
         vkEnumerateDeviceExtensionProperties(it, nullptr, &device_extension_count, nullptr);
@@ -418,7 +327,7 @@ void *Vulkan::create_device(Platform::Window *win) {
 
         bool swapchain_adequate = false;
         if (extensions_supported) {
-            Swapchain_Support support = get_swapchain_support(it, device->surface);
+            Swapchain_Support support = get_swapchain_support(it, surface);
             swapchain_adequate = support.present_modes.size() > 0 && support.formats.size() > 0;
         }
 
@@ -428,18 +337,20 @@ void *Vulkan::create_device(Platform::Window *win) {
         is_device_suitable = extensions_supported && swapchain_adequate && indices.graphics_family.has_value() && indices.present_family.has_value() && supported_features.samplerAnisotropy;
 
         if (is_device_suitable) {
-            device->gpu = it;
+            gpu = it;
             break;
         }
     }
 
-    if (device->gpu == VK_NULL_HANDLE) {
-        SK_LOG_WARN("Failed to find physical device");
-        delete device;
-        return nullptr;
+    if (gpu == VK_NULL_HANDLE) {
+        SK_LOG_ERROR("Failed to find physical device");
+        return;
     }
 
-    Queue_Families indices = get_queue_families(device->gpu, device->surface);
+    Queue_Families indices = get_queue_families(gpu, surface);
+
+    graphics_queue_index = indices.graphics_family.value();
+    present_queue_index = indices.present_family.value();
 
     Set<u32> unique_families = {
         indices.graphics_family.value(),
@@ -476,17 +387,17 @@ void *Vulkan::create_device(Platform::Window *win) {
         device_info.ppEnabledLayerNames = VALIDATION_LAYERS.data();
     }
 
-    if (vkCreateDevice(device->gpu, &device_info, nullptr, &device->device) != VK_SUCCESS) {
-        SK_LOG_ERROR("Failed to create vulkan device");
-        delete device;
-        return nullptr;
+    VkResult err = vkCreateDevice(gpu, &device_info, nullptr, &device);
+    if (err != VK_SUCCESS) {
+        SK_LOG_ERROR("Failed to create vulkan device: {}", get_err_string(err));
+        return;
     }
 
-    vkGetDeviceQueue(device->device, indices.graphics_family.value(), 0, &device->graphics_queue);
-    vkGetDeviceQueue(device->device, indices.present_family.value(), 0, &device->present_queue);
+    vkGetDeviceQueue(device, indices.graphics_family.value(), 0, &graphics_queue);
+    vkGetDeviceQueue(device, indices.present_family.value(), 0, &present_queue);
 
     // Swapchain
-    create_swapchain(device);
+    create_swapchain();
 
     // Sync Objects
     VkSemaphoreCreateInfo semaphore_info = {};
@@ -496,27 +407,27 @@ void *Vulkan::create_device(Platform::Window *win) {
     fence_info.sType = VK_STRUCTURE_TYPE_FENCE_CREATE_INFO;
     fence_info.flags = VK_FENCE_CREATE_SIGNALED_BIT;
 
-    device->render_finished_semaphores.resize(MAX_FRAMES_IN_FLIGHT);
-    device->image_available_semaphores.resize(MAX_FRAMES_IN_FLIGHT);
-    device->in_flight_fences.resize(MAX_FRAMES_IN_FLIGHT);
+    render_finished_semaphores.resize(MAX_FRAMES_IN_FLIGHT);
+    image_available_semaphores.resize(MAX_FRAMES_IN_FLIGHT);
+    in_flight_fences.resize(MAX_FRAMES_IN_FLIGHT);
 
     For (MAX_FRAMES_IN_FLIGHT) {
-        if (vkCreateSemaphore(device->device, &semaphore_info, nullptr, &device->image_available_semaphores[i]) != VK_SUCCESS) {
-            SK_LOG_ERROR("Failed to create vulkan semaphore");
-            delete device;
-            return nullptr;
+        err = vkCreateSemaphore(device, &semaphore_info, nullptr, &image_available_semaphores[i]);
+        if (err != VK_SUCCESS) {
+            SK_LOG_ERROR("Failed to create vulkan semaphore: {}", get_err_string(err));
+            return;
         }
-        
-        if (vkCreateSemaphore(device->device, &semaphore_info, nullptr, &device->render_finished_semaphores[i]) != VK_SUCCESS) {
-            SK_LOG_ERROR("Failed to create vulkan semaphore");
-            delete device;
-            return nullptr;
+
+        err = vkCreateSemaphore(device, &semaphore_info, nullptr, &render_finished_semaphores[i]);
+        if (err != VK_SUCCESS) {
+            SK_LOG_ERROR("Failed to create vulkan semaphore: {}", get_err_string(err));
+            return;
         }
-        
-        if (vkCreateFence(device->device, &fence_info, nullptr, &device->in_flight_fences[i]) != VK_SUCCESS) {
-            SK_LOG_ERROR("Failed to create vulkan fence");
-            delete device;
-            return nullptr;
+
+        err = vkCreateFence(device, &fence_info, nullptr, &in_flight_fences[i]);
+        if (err != VK_SUCCESS) {
+            SK_LOG_ERROR("Failed to create vulkan fence: {}", get_err_string(err));
+            return;
         }
     }
     
@@ -527,183 +438,911 @@ void *Vulkan::create_device(Platform::Window *win) {
     command_pool_info.flags = VK_COMMAND_POOL_CREATE_RESET_COMMAND_BUFFER_BIT;
     command_pool_info.queueFamilyIndex = indices.graphics_family.value();
 
-    if (vkCreateCommandPool(device->device, &command_pool_info, nullptr, &device->command_pool) != VK_SUCCESS) {
-        SK_LOG_ERROR("Failed to create vulkan command pool");
-        delete device;
-        return nullptr;
-    }
-
-    return device;
-}
-
-void Vulkan::destroy_device(void **d) {
-    if (d == nullptr || *d == nullptr) {
+    err = vkCreateCommandPool(device, &command_pool_info, nullptr, &command_pool);
+    if (err != VK_SUCCESS) {
+        SK_LOG_ERROR("Failed to create vulkan command pool: {}", get_err_string(err));
         return;
     }
 
-    auto device = (Device *)*d;
-
-    It (device->image_available_semaphores) {
-        vkDestroySemaphore(device->device, it, nullptr);
-    }
-    
-    It (device->render_finished_semaphores) {
-        vkDestroySemaphore(device->device, it, nullptr);
-    }
-
-    It (device->in_flight_fences) {
-        vkDestroyFence(device->device, it, nullptr);
-    }
-
-    vkDestroyCommandPool(device->device, device->command_pool, nullptr);
-    
-    It (device->swapchain_image_views) {
-        vkDestroyImageView(device->device, it, nullptr);
-    }
-
-    vkDestroySwapchainKHR(device->device, device->swapchain, nullptr);
-
-    vkDestroyDevice(device->device, nullptr);
-
-    vkDestroySurfaceKHR(context.instance, device->surface, nullptr);
-
-    delete *d;
-    *d = nullptr;
+    initialized = true;
+    context.devices.insert(this);
 }
 
-void *Vulkan::create_command_list(void *d) {
-    if (d == nullptr) {
-        return nullptr;
+Vulkan_Device::~Vulkan_Device() {
+    if (initialized)
+        manual_shutdown();
+}
+
+Ref<Rhi_Render_Target> Vulkan_Device::create_swapchain_target(Ref<Rhi_Render_Pass> pass) {
+    Rhi_Render_Target_Description desc = {};
+    desc.is_swapchain_target = true;
+    
+    return create_ref<Vulkan_Render_Target>(this, desc, pass);
+}
+
+void Vulkan_Device::manual_shutdown() {
+    CHECK();
+
+    wait_for_idle();
+
+    Array<Vulkan_Command_List *> lists_to_destroy = {};
+    lists_to_destroy.reserve(lists.size());
+    It (lists)
+        lists_to_destroy.push_back(it);
+    It (lists_to_destroy)
+        it->manual_shutdown();
+    lists_to_destroy.clear();
+
+    Array<Vulkan_Sync_Object *> syncs_to_destroy = {};
+    syncs_to_destroy.reserve(syncs.size());
+    It (syncs)
+        syncs_to_destroy.push_back(it);
+    It (syncs_to_destroy)
+        it->manual_shutdown();
+    syncs_to_destroy.clear();
+
+    Array<Vulkan_Render_Pass *> passes_to_destroy = {};
+    passes_to_destroy.reserve(passes.size());
+    It (passes)
+        passes_to_destroy.push_back(it);
+    It (passes_to_destroy)
+        it->manual_shutdown();
+    passes_to_destroy.clear();
+
+    Array<Vulkan_Render_Target *> targets_to_destroy = {};
+    targets_to_destroy.reserve(targets.size());
+    It (targets)
+        targets_to_destroy.push_back(it);
+    It (targets_to_destroy)
+        it->manual_shutdown();
+    targets_to_destroy.clear();
+
+    Array<Vulkan_Render_Target *> backbuffers_to_destroy = {};
+    backbuffers_to_destroy.reserve(backbuffers.size());
+    It (backbuffers)
+        backbuffers_to_destroy.push_back(it);
+    It (backbuffers_to_destroy)
+        it->manual_shutdown();
+    backbuffers_to_destroy.clear();
+    
+    It (image_available_semaphores)
+        vkDestroySemaphore(device, it, nullptr);
+    
+    It (render_finished_semaphores)
+        vkDestroySemaphore(device, it, nullptr);
+
+    It (in_flight_fences)
+        vkDestroyFence(device, it, nullptr);
+    
+    vkDestroyCommandPool(device, command_pool, nullptr);
+    
+    It (swapchain_image_views)
+        vkDestroyImageView(device, it, nullptr);
+
+    vkDestroySwapchainKHR(device, swapchain, nullptr);
+    
+    vkDestroyDevice(device, nullptr);
+    
+    vkDestroySurfaceKHR(context.instance, surface, nullptr);
+
+    initialized = false;
+    context.devices.erase(this);
+}
+
+Ref<Rhi_Command_List> Vulkan_Device::create_command_list() {
+    CHECK(nullptr);
+    
+    return create_ref<Vulkan_Command_List>(this);
+}
+
+VkImageView Vulkan_Device::create_image_view(VkImage image, VkFormat format) {
+    CHECK_CONTEXT(VK_NULL_HANDLE);
+    
+    VkImageViewCreateInfo view_info = {};
+    view_info.sType = VK_STRUCTURE_TYPE_IMAGE_VIEW_CREATE_INFO;
+    view_info.image = image;
+    view_info.viewType = VK_IMAGE_VIEW_TYPE_2D;
+    view_info.format = format;
+    view_info.subresourceRange.aspectMask = VK_IMAGE_ASPECT_COLOR_BIT;
+    view_info.subresourceRange.baseMipLevel = 0;
+    view_info.subresourceRange.levelCount = 1;
+    view_info.subresourceRange.baseArrayLayer = 0;
+    view_info.subresourceRange.layerCount = 1;
+    
+    VkImageView image_view = VK_NULL_HANDLE;
+    VkResult err = vkCreateImageView(device, &view_info, nullptr, &image_view);
+    if (err != VK_SUCCESS)
+        SK_LOG_WARN("Failed to create image view: {}", get_err_string(err));
+    
+    return image_view;
+}
+
+void Vulkan_Device::create_swapchain() {
+    CHECK_CONTEXT();
+    
+    Swapchain_Support support = get_swapchain_support(gpu, surface);
+    
+    VkSurfaceFormatKHR format = {};
+    It (support.formats) {
+        if (it.format == VK_FORMAT_B8G8R8A8_SRGB && it.colorSpace == VK_COLOR_SPACE_SRGB_NONLINEAR_KHR) {
+            format = it;
+            break;
+        }
+    }
+    
+    VkPresentModeKHR present_mode = {};
+    It (support.present_modes) {
+        if (it == VK_PRESENT_MODE_MAILBOX_KHR) {
+            present_mode = it;
+            break;
+        }
+    }
+    
+    if (support.capabilities.currentExtent.width != UINT32_MAX) {
+        extent = support.capabilities.currentExtent;
+    } else {
+        s32 width = 0;
+        s32 height = 0;
+        window->get_size(&width, &height);
+        
+        VkExtent2D e = { 
+            (u32)width, 
+            (u32)height
+        };
+        
+        e.width = std::clamp(e.width, support.capabilities.minImageExtent.width, support.capabilities.maxImageExtent.width);
+        e.height = std::clamp(e.height, support.capabilities.minImageExtent.height, support.capabilities.maxImageExtent.height);
+        
+        extent = e;
+    }
+    
+    u32 image_count = support.capabilities.minImageCount + 1;
+    
+    if (support.capabilities.maxImageCount > 0 && image_count > support.capabilities.maxImageCount)
+        image_count = support.capabilities.maxImageCount;
+    
+    VkSwapchainCreateInfoKHR swapchain_info = {};
+    swapchain_info.sType = VK_STRUCTURE_TYPE_SWAPCHAIN_CREATE_INFO_KHR;
+    swapchain_info.surface = surface;
+    swapchain_info.minImageCount = image_count;
+    swapchain_info.imageFormat = format.format;
+    swapchain_info.imageColorSpace = format.colorSpace;
+    swapchain_info.imageExtent = extent;
+    swapchain_info.imageArrayLayers = 1;
+    swapchain_info.imageUsage = VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT;
+    
+    swapchain_format = format;
+
+    Queue_Families indices = get_queue_families(gpu, surface);
+    
+    u32 queue_family_indices[] = {
+        indices.graphics_family.value(),
+        indices.present_family.value()
+    };
+    
+    if (indices.graphics_family.value() != indices.present_family.value()) {
+        swapchain_info.imageSharingMode = VK_SHARING_MODE_CONCURRENT;
+        swapchain_info.queueFamilyIndexCount = 2;
+        swapchain_info.pQueueFamilyIndices = queue_family_indices;
+    } else {
+        swapchain_info.imageSharingMode = VK_SHARING_MODE_EXCLUSIVE;
+    }
+    
+    swapchain_info.preTransform = support.capabilities.currentTransform;
+    swapchain_info.compositeAlpha = VK_COMPOSITE_ALPHA_OPAQUE_BIT_KHR;
+    swapchain_info.presentMode = present_mode;
+    swapchain_info.clipped = VK_TRUE;
+    swapchain_info.oldSwapchain = VK_NULL_HANDLE;
+    VkResult err = vkCreateSwapchainKHR(device, &swapchain_info, nullptr, &swapchain);
+    if (err != VK_SUCCESS) {
+        SK_LOG_ERROR("Failed to create swapchian: {}", get_err_string(err));
+        initialized = false;
+        return;
+    }
+    
+    swapchain_images.resize(image_count);
+    vkGetSwapchainImagesKHR(device, swapchain, &image_count, swapchain_images.data());
+    
+    swapchain_image_views.resize(swapchain_images.size());
+    
+    For (swapchain_images.size()) {
+        swapchain_image_views[i] = create_image_view(swapchain_images[i], swapchain_format.format);
+        if (swapchain_image_views[i] == VK_NULL_HANDLE) {
+            initialized = false;
+            return;
+        }
+    }
+}
+
+void Vulkan_Device::get_extent(s32 *width, s32 *height) {
+    *width  = extent.width;
+    *height = extent.height;
+}
+
+void Vulkan_Device::recreate_swapchain() {
+    CHECK();
+    
+    s32 width = 0;
+    s32 height = 0;
+    window->get_size(&width, &height);
+    
+    while (width == 0 || height == 0)
+        window->get_size(&width, &height);
+  
+    wait_for_idle();
+    
+    It (swapchain_image_views)
+        vkDestroyImageView(device, it, nullptr);
+    
+    vkDestroySwapchainKHR(device, swapchain, nullptr);
+    
+    create_swapchain();
+
+    It (backbuffers) {
+        it->destroy_framebuffers();
+        it->create_swapchain_framebuffers();
+    }
+}
+
+void Vulkan_Device::wait_for_idle() {
+    CHECK();
+    
+    vkDeviceWaitIdle(device);
+}
+
+void Vulkan_Device::new_frame() {
+    CHECK();
+    
+    VkResult err = vkWaitForFences(device, 1, &in_flight_fences[current_frame], VK_TRUE, UINT64_MAX);
+    if (err != VK_SUCCESS) {
+        SK_LOG_WARN("Could not wait for fence: {}", get_err_string(err));
+        return;
     }
 
-    auto device = (Device *)d;
-    auto list = new Command_List;
+    err = vkAcquireNextImageKHR(device, swapchain, UINT64_MAX, image_available_semaphores[current_frame], VK_NULL_HANDLE, &image_index);
+    
+    if (err == VK_ERROR_OUT_OF_DATE_KHR) {
+        recreate_swapchain();
+        new_frame();
+    } else if (err != VK_SUCCESS && err != VK_SUBOPTIMAL_KHR) {
+        SK_LOG_ERROR("Failed to get next swapchain image: {}", get_err_string(err));
+        initialized = false;
+        return;
+    }
+  
+    vkResetFences(device, 1, &in_flight_fences[current_frame]);
+}
 
-    list->device = device;
+void Vulkan_Device::submit(const Array<Ref<Rhi_Command_List>> &lists, const Array<Ref<Rhi_Sync_Object>> &waits, const Array<Ref<Rhi_Sync_Object>> &signals) {
+    CHECK();
+    
+    VkSubmitInfo submit_info = {};
+    submit_info.sType = VK_STRUCTURE_TYPE_SUBMIT_INFO;
 
+    Array<VkPipelineStageFlags> wait_stages = {};
+    Array<VkSemaphore> wait_semaphores = {};
+    Array<VkSemaphore> signal_semaphores = {};
+    
+    if (waits.size() > 0) {
+        wait_semaphores.reserve(waits.size());
+        wait_stages.reserve(waits.size());
+
+        It (waits) {
+            auto wait = (Vulkan_Sync_Object *)it.get();
+            if (!wait->initialized) {
+                SK_LOG_ERROR("Wait sync object is not initialized");
+                return;
+            }
+            wait_stages.push_back(wait->stages);
+            wait_semaphores.push_back(wait->semaphores[current_frame]);
+        }
+    } else {
+        wait_semaphores.push_back(image_available_semaphores[current_frame]);
+        wait_stages.push_back(VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT);
+    }
+
+    if (signals.size() > 0) {
+        signal_semaphores.reserve(signals.size());
+
+        It (signals) {
+            auto signal = (Vulkan_Sync_Object *)it.get();
+            if (!signal->initialized) {
+                SK_LOG_ERROR("Wait signal object is not initialized");
+                return;
+            }
+            signal_semaphores.push_back(signal->semaphores[current_frame]);
+        }
+    } else {
+        signal_semaphores.push_back(render_finished_semaphores[current_frame]);
+    }
+    
+    Array<VkCommandBuffer> command_buffers;
+    command_buffers.reserve(lists.size());
+
+    It (lists) {
+        auto list = (Vulkan_Command_List *)it.get();
+        command_buffers.push_back(list->command_buffers[current_frame]);
+    }
+    
+    submit_info.waitSemaphoreCount = (u32)wait_semaphores.size();
+    submit_info.pWaitSemaphores = wait_semaphores.data();
+    submit_info.pWaitDstStageMask = wait_stages.data();
+    submit_info.signalSemaphoreCount = 1;
+    submit_info.pSignalSemaphores = &render_finished_semaphores[current_frame];
+    submit_info.commandBufferCount = (u32)command_buffers.size();
+    submit_info.pCommandBuffers = command_buffers.data();
+    VkResult err = vkQueueSubmit(graphics_queue, 1, &submit_info, in_flight_fences[current_frame]);
+    if (err != VK_SUCCESS) {
+        SK_LOG_ERROR("Failed to submit to graphics queue: {}", get_err_string(err));
+        initialized = false;
+    }
+}
+
+void Vulkan_Device::present() {
+    CHECK();
+    
+    VkPresentInfoKHR present_info = {};
+    present_info.sType = VK_STRUCTURE_TYPE_PRESENT_INFO_KHR;
+    present_info.swapchainCount = 1;
+    present_info.pSwapchains = &swapchain;
+    present_info.waitSemaphoreCount = 1;
+    present_info.pWaitSemaphores = &render_finished_semaphores[current_frame];
+    present_info.pImageIndices = &image_index;
+    VkResult err = vkQueuePresentKHR(present_queue, &present_info);	
+  
+    if (err == VK_ERROR_OUT_OF_DATE_KHR || err == VK_SUBOPTIMAL_KHR || framebuffer_resized) {
+        framebuffer_resized = false;
+        recreate_swapchain();
+    } else if (err != VK_SUCCESS) {
+        SK_LOG_ERROR("Failed to present: {}", get_err_string(err));
+        initialized = false;
+        return;
+    }
+    
+    current_frame = (current_frame + 1) % MAX_FRAMES_IN_FLIGHT;
+}
+
+Ref<Rhi_Sync_Object> Vulkan_Device::create_sync_object(Rhi_Pipeline_Stage_Mask wait_stages) {
+    CHECK(nullptr);
+
+    return create_ref<Vulkan_Sync_Object>(this, wait_stages);
+}
+
+Ref<Rhi_Render_Pass> Vulkan_Device::create_render_pass(const Rhi_Render_Pass_Description &desc) {
+    CHECK(nullptr);
+
+    return create_ref<Vulkan_Render_Pass>(this, desc);
+}
+
+Rhi_Format Vulkan_Device::get_swapchain_image_format() {
+    return (Rhi_Format)swapchain_format.format;
+}
+
+void Vulkan_Device::notify_window_resize()  {
+    framebuffer_resized = true;
+}
+
+Vulkan_Command_List::Vulkan_Command_List(Vulkan_Device *d) {
+    CHECK_CONTEXT();
+    
+    if (d == nullptr || !d->initialized) {
+        SK_LOG_ERROR("Tried to create command list with uninitialized device");
+        return;
+    }
+    
+    device = d;
+    
     VkCommandBufferAllocateInfo alloc_info = {};
     alloc_info.sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_ALLOCATE_INFO;
     alloc_info.commandPool = device->command_pool;
     alloc_info.level = VK_COMMAND_BUFFER_LEVEL_PRIMARY;
     alloc_info.commandBufferCount = MAX_FRAMES_IN_FLIGHT;
 
-    if (vkAllocateCommandBuffers(device->device, &alloc_info, list->command_buffers) != VK_SUCCESS) {
-        SK_LOG_ERROR("Failed to allocate vulkan command buffers");
-        delete list;
-        return nullptr;
-    }
-
-    return list;
-}
-
-void Vulkan::destroy_command_list(void **l) {
-    if (l == nullptr || *l == nullptr) {
+    auto err = vkAllocateCommandBuffers(device->device, &alloc_info, command_buffers);
+    if (err != VK_SUCCESS) {
+        SK_LOG_ERROR("Failed to allocate vulkan command buffers: {}", get_err_string(err));
         return;
     }
 
-    auto list = (Command_List *)*l;
-    
-    vkFreeCommandBuffers(list->device->device, list->device->command_pool, MAX_FRAMES_IN_FLIGHT, list->command_buffers);
+    initialized = true;
+
+    device->lists.insert(this);
 }
 
-void *Vulkan::begin_frame(void *d, const Array<void *> &lists) {
-    auto device = (Device *)d;
-
-    auto data = new Frame_Data;
-    data->device = device;
-    data->command_lists.reserve(lists.size());
-    
-    It (lists) {
-        auto list = (Command_List *)it;
-
-        data->command_lists.push_back(list);
-        
-        vkResetCommandBuffer(list->command_buffers[list->device->current_frame], 0);
-        
-        VkCommandBufferBeginInfo begin_info = {};
-        begin_info.sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_BEGIN_INFO;
-        if (vkBeginCommandBuffer(list->command_buffers[list->device->current_frame], &begin_info) != VK_SUCCESS) {
-            SK_LOG_ERROR("Failed to begin command buffer");
-        }
-    }
-
-    vkWaitForFences(device->device, 1, &device->in_flight_fences[device->current_frame], VK_TRUE, UINT64_MAX);
-
-    VkResult err = vkAcquireNextImageKHR(device->device, device->swapchain, UINT64_MAX, device->image_available_semaphores[device->current_frame], VK_NULL_HANDLE, &device->image_index);
-    
-    if (err == VK_ERROR_OUT_OF_DATE_KHR) {
-        recreate_swapchain(device);
-        delete data;
-        begin_frame(d, lists);
-    }
-    else if (err != VK_SUCCESS && err != VK_SUBOPTIMAL_KHR) {
-        SK_LOG_ERROR("Failed to get next swapchain image");
-    }
-  
-    vkResetFences(device->device, 1, &device->in_flight_fences[device->current_frame]);
-
-    return (void *)data;
+Vulkan_Command_List::~Vulkan_Command_List() {
+    if (initialized)
+        manual_shutdown();
 }
 
-void Vulkan::end_frame(void *frame_data) {
-    auto data = (Frame_Data *)frame_data;
-    auto device = (Device *)data->device;
+void Vulkan_Command_List::manual_shutdown() {
+    CHECK();
 
-    Array<VkCommandBuffer> command_buffers;
-    It (data->command_lists) {
-        auto list = (Command_List *)it;
-        if (list->device != device) {
-            SK_LOG_ERROR("list does not belong to device");
-        }
+    vkFreeCommandBuffers(device->device, device->command_pool, MAX_FRAMES_IN_FLIGHT, command_buffers);
+    initialized = false;
+
+    device->lists.erase(this);
+}
+
+void Vulkan_Command_List::begin() {
+    CHECK();
+    
+    vkResetCommandBuffer(command_buffers[device->current_frame], 0);
         
-        command_buffers.push_back(list->command_buffers[device->current_frame]);
+    VkCommandBufferBeginInfo begin_info = {};
+    begin_info.sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_BEGIN_INFO;
 
-        if (vkEndCommandBuffer(list->command_buffers[device->current_frame]) != VK_SUCCESS) {
-            SK_LOG_ERROR("Failed to end command buffer");
+    auto err = vkBeginCommandBuffer(command_buffers[device->current_frame], &begin_info);
+    if (err != VK_SUCCESS) {
+        SK_LOG_ERROR("Failed to begin command buffer: {}", get_err_string(err));
+        initialized = false;
+    }
+}
+
+void Vulkan_Command_List::end() {
+    CHECK();
+
+    auto err = vkEndCommandBuffer(command_buffers[device->current_frame]);
+    if (err != VK_SUCCESS) {
+        SK_LOG_ERROR("Failed to end command buffer: {}", get_err_string(err));
+        initialized = false;
+    }
+}
+
+void Vulkan_Command_List::begin_render_pass(Ref<Rhi_Render_Pass> pass, Rhi_Subpass_Contents contents, const Rhi_Render_Pass_Info &info) {
+    CHECK();
+    
+    if (active_render_pass != nullptr) {
+        SK_LOG_ERROR("Previous render pass not ended");
+        initialized = false;
+        return;
+    }
+
+    if (pass == nullptr) {
+        SK_LOG_ERROR("render pass was nullptr");
+        initialized = false;
+        return;
+    }
+
+    if (info.target == nullptr) {
+        SK_LOG_ERROR("render target was nullptr");
+        initialized = false;
+        return;
+    }
+
+    if (info.clear_values.size() == 0) {
+        SK_LOG_ERROR("No clear values provided");
+        initialized = false;
+        return;
+    }
+
+    active_render_pass = ptr_cast<Vulkan_Render_Pass>(pass);
+    subpass_index = 0;
+
+    VkRenderPassBeginInfo begin_info = {};
+    
+    begin_info.sType = VK_STRUCTURE_TYPE_RENDER_PASS_BEGIN_INFO;
+    begin_info.renderPass = active_render_pass->render_pass;
+    auto target = ptr_cast<Vulkan_Render_Target>(info.target);
+    if (target->is_swapchain_backbuffer) {
+        begin_info.framebuffer = target->framebuffers[device->image_index];
+    } else {
+        SK_LOG_ERROR("Only swapchain backbuffers are supported currently");
+        initialized = false;
+        return;
+    }
+
+    VkRect2D rect = {};
+    rect.offset = { info.render_area.x,     info.render_area.y };
+    rect.extent = { info.render_area.width, info.render_area.height };
+    
+    begin_info.renderArea = rect;
+
+    Array<VkClearValue> clear_values = {};
+    clear_values.reserve(info.clear_values.size());
+
+    It (info.clear_values) {
+        VkClearValue val = {};
+        
+        switch (it.format) {
+        case RHI_FORMAT_R8G8B8A8_UNORM:
+        case RHI_FORMAT_B8G8R8A8_UNORM:
+        case RHI_FORMAT_R16G16B16A16_UNORM:
+        case RHI_FORMAT_R16G16B16A16_SNORM:
+        case RHI_FORMAT_R16G16B16A16_SFLOAT:
+        case RHI_FORMAT_R32G32B32A32_SFLOAT:
+            val.color.float32[0] = it.clear_color[0];
+            val.color.float32[1] = it.clear_color[1];
+            val.color.float32[2] = it.clear_color[2];
+            val.color.float32[3] = it.clear_color[3];
+            break;
+        case RHI_FORMAT_R8G8B8A8_UINT:
+        case RHI_FORMAT_R8G8B8A8_SINT:
+        case RHI_FORMAT_R16G16B16A16_UINT:
+        case RHI_FORMAT_R16G16B16A16_SINT:
+        case RHI_FORMAT_R32G32B32A32_UINT:
+        case RHI_FORMAT_R32G32B32A32_SINT:
+            val.color.uint32[0] = (u32)it.clear_color[0];
+            val.color.uint32[1] = (u32)it.clear_color[1];
+            val.color.uint32[2] = (u32)it.clear_color[2];
+            val.color.uint32[3] = (u32)it.clear_color[3];
+            break;
+        case RHI_FORMAT_D32_SFLOAT:
+            val.depthStencil.depth = it.depth_stencil.depth;
+            break;
+        case RHI_FORMAT_D24_UNORM_S8_UINT:
+        case RHI_FORMAT_D32_SFLOAT_S8_UINT:
+            val.depthStencil.depth = it.depth_stencil.depth;
+            val.depthStencil.stencil = it.depth_stencil.stencil;
+            break;
+        default:
+            SK_LOG_ERROR("Unsopported format for clear value");
+            initialized = false;
+            return;
         }
+
+        clear_values.push_back(val);
     }
     
-    VkSubmitInfo submit_info = {};
-    submit_info.sType = VK_STRUCTURE_TYPE_SUBMIT_INFO;
-    VkPipelineStageFlags wait_stages[] = {
-        VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT
+    begin_info.clearValueCount = (u32)clear_values.size();    
+    begin_info.pClearValues = clear_values.data();
+
+    vkCmdBeginRenderPass(command_buffers[device->current_frame], &begin_info, (VkSubpassContents)contents);
+}
+
+void Vulkan_Command_List::next_subpass(Rhi_Subpass_Contents contents) {
+    CHECK();
+
+    if (active_render_pass == nullptr) {
+        SK_LOG_ERROR("There is no active render pass");
+        initialized = false;
+        return;
+    }
+
+    if (!active_render_pass->initialized) {
+        SK_LOG_ERROR("Active renderpass has error");
+        initialized = false;
+        return;
+    }
+    
+    if (subpass_index == active_render_pass->subpass_count) {
+        SK_LOG_ERROR("No more subpasses in this render pass");
+        initialized = false;
+        return;
+    }
+
+    vkCmdNextSubpass(command_buffers[device->current_frame], (VkSubpassContents)contents);
+}
+
+void Vulkan_Command_List::end_render_pass() {
+    CHECK();
+    
+    vkCmdEndRenderPass(command_buffers[device->current_frame]);
+    
+    active_render_pass = nullptr;
+}
+
+void Vulkan_Command_List::render_imgui_draw_data(ImDrawData *data) {
+    ImGui_ImplVulkan_RenderDrawData(data, command_buffers[device->current_frame]);
+}
+
+Vulkan_Sync_Object::Vulkan_Sync_Object(Vulkan_Device *dev, Rhi_Pipeline_Stage_Mask s) {
+    CHECK_CONTEXT();
+
+    if (s == 0)
+        SK_LOG_ERROR("Invalid pipeline stage");
+    
+    device = dev;
+    stages = s;
+    
+    VkSemaphoreCreateInfo semaphore_info = {};
+    semaphore_info.sType = VK_STRUCTURE_TYPE_SEMAPHORE_CREATE_INFO;
+
+    It (semaphores) {
+        VkResult err = vkCreateSemaphore(device->device, &semaphore_info, nullptr, &it);
+        if (err != VK_SUCCESS) {
+            SK_LOG_ERROR("Failed to create semaphore: {}", get_err_string(err));
+            return;
+        }
+    }   
+
+    initialized = true;
+
+    device->syncs.insert(this);
+}
+
+Vulkan_Sync_Object::~Vulkan_Sync_Object() {
+    if (initialized)
+        manual_shutdown();
+}
+
+void Vulkan_Sync_Object::manual_shutdown() {
+    CHECK();
+
+    It (semaphores)
+        vkDestroySemaphore(device->device, it, nullptr);
+
+    initialized = false;
+    
+    device->syncs.erase(this);
+}
+
+Vulkan_Render_Pass::Vulkan_Render_Pass(Vulkan_Device *dev, const Rhi_Render_Pass_Description &desc) {
+    CHECK_CONTEXT();
+
+    device = dev;
+    subpass_count = (u32)desc.subpasses.size();
+
+    VkRenderPassCreateInfo info = {};
+    info.sType = VK_STRUCTURE_TYPE_RENDER_PASS_CREATE_INFO;
+
+    Array<VkAttachmentDescription> attachments = {};
+    Array<VkSubpassDescription> subpasses = {};
+    Array<VkSubpassDependency> deps = {};
+    
+    Array<Array<VkAttachmentReference>> input_refs = {};
+    Array<Array<VkAttachmentReference>> color_refs = {};
+    Array<Array<VkAttachmentReference>> resolve_refs = {};
+    Array<VkAttachmentReference> depth_stencil_refs = {};
+
+    It (desc.attachments) {
+        VkAttachmentDescription attachment = {};
+        
+        if (it.may_alias)
+            attachment.flags = VK_ATTACHMENT_DESCRIPTION_MAY_ALIAS_BIT;
+
+        attachment.format = (VkFormat)it.format;
+        attachment.samples = (VkSampleCountFlagBits)it.samples;
+        attachment.loadOp = (VkAttachmentLoadOp)it.load_op;
+        attachment.storeOp = (VkAttachmentStoreOp)it.store_op;
+        attachment.stencilLoadOp = (VkAttachmentLoadOp)it.stencil_load_op;
+        attachment.stencilStoreOp = (VkAttachmentStoreOp)it.stencil_store_op;
+        attachment.initialLayout = (VkImageLayout)it.initial_layout;
+        attachment.finalLayout = (VkImageLayout)it.final_layout;
+
+        attachments.push_back(attachment);
+    }
+
+    For (desc.subpasses.size()) {
+        input_refs.push_back({});
+        color_refs.push_back({});
+        resolve_refs.push_back({});
+        
+        const Rhi_Subpass &it = desc.subpasses[i];
+        
+        VkSubpassDescription subpass = {};
+
+        subpass.pipelineBindPoint = (VkPipelineBindPoint)it.pipeline_bind_point;
+        
+        It (it.input_attachments) {
+            VkAttachmentReference ref = {};
+
+            ref.attachment = it.attachment;
+            ref.layout = (VkImageLayout)it.layout;
+
+            input_refs[i].push_back(ref);
+        }
+        
+        subpass.inputAttachmentCount = (u32)input_refs[i].size();
+        subpass.pInputAttachments = input_refs[i].data();
+
+        It (it.color_attachments) {
+            VkAttachmentReference ref = {};
+
+            ref.attachment = it.attachment;
+            ref.layout = (VkImageLayout)it.layout;
+
+            color_refs[i].push_back(ref);
+        }
+
+        subpass.colorAttachmentCount = (u32)color_refs[i].size();
+        subpass.pColorAttachments = color_refs[i].data();
+
+        It (it.resolve_attachments) {
+            VkAttachmentReference ref = {};
+
+            ref.attachment = it.attachment;
+            ref.layout = (VkImageLayout)it.layout;
+
+            resolve_refs[i].push_back(ref);
+        }
+
+        subpass.pResolveAttachments = resolve_refs[i].data();
+
+        if (it.depth_stencil_attachment.has_value()) {
+            Rhi_Attachment_Ref ref = it.depth_stencil_attachment.value();
+            VkAttachmentReference vkref = {};
+            
+            vkref.attachment = ref.attachment;
+            vkref.layout = (VkImageLayout)ref.layout;
+
+            depth_stencil_refs.push_back(vkref);
+            
+            subpass.pDepthStencilAttachment = &depth_stencil_refs.back();
+        } else {
+            // NOTE: Push empty ref to maintain correct index
+            depth_stencil_refs.push_back({});
+        }
+
+        subpass.preserveAttachmentCount = (u32)it.preserve_attachments.size();
+        subpass.pPreserveAttachments = it.preserve_attachments.data();
+
+        subpasses.push_back(subpass);
+    }
+
+    It (desc.deps) {
+        VkSubpassDependency dep = {};
+
+        dep.srcSubpass = it.src_subpass;
+        dep.dstSubpass = it.dst_subpass;
+        dep.srcStageMask = (VkPipelineStageFlags)it.src_stages;
+        dep.dstStageMask = (VkPipelineStageFlags)it.dst_stages;
+        dep.srcAccessMask = (VkAccessFlags)it.src_access;
+        dep.dstAccessMask = (VkAccessFlags)it.dst_access;
+
+        deps.push_back(dep);
+    }
+
+    info.attachmentCount = (u32)attachments.size();
+    info.pAttachments = attachments.data();
+
+    info.subpassCount = (u32)subpasses.size();
+    info.pSubpasses = subpasses.data();
+
+    info.dependencyCount = (u32)deps.size();
+    info.pDependencies = deps.data();
+
+    VkResult err = vkCreateRenderPass(device->device, &info, nullptr, &render_pass);
+    if (err != VK_SUCCESS) {
+        SK_LOG_ERROR("Failed to create render pass: {}", get_err_string(err));
+        return;
+    }
+
+    initialized = true;
+    device->passes.insert(this);
+}
+
+Vulkan_Render_Pass::~Vulkan_Render_Pass() {
+    if (initialized)
+        manual_shutdown();
+}
+
+void Vulkan_Render_Pass::manual_shutdown() {
+    CHECK();
+
+    vkDestroyRenderPass(device->device, render_pass, nullptr);
+    initialized = false;
+
+    device->passes.erase(this);
+}
+
+
+Vulkan_Render_Target::Vulkan_Render_Target(Vulkan_Device *dev, const Rhi_Render_Target_Description &desc, Ref<Rhi_Render_Pass> pass) {
+    CHECK_CONTEXT();
+
+    if (pass == nullptr) {
+        SK_LOG_ERROR("No render pass given to render target");
+        return;
+    }
+
+    active_pass = ptr_cast<Vulkan_Render_Pass>(pass);
+
+    if (!active_pass->initialized) {
+        SK_LOG_ERROR("Cannot create render target with uninitialized render pass");
+        return;
+    }
+    
+    device = dev;
+    
+    if (!desc.is_swapchain_target) {
+        SK_LOG_ERROR("Non swapchain render targets are not supported");
+    } else {
+        is_swapchain_backbuffer = true;
+        create_swapchain_framebuffers();
+    }
+}
+
+Vulkan_Render_Target::~Vulkan_Render_Target() {
+    if (initialized)
+        manual_shutdown();
+}
+
+void Vulkan_Render_Target::destroy_framebuffers() {
+    CHECK();
+    
+    It (framebuffers)
+        vkDestroyFramebuffer(device->device, it, nullptr);
+
+    initialized = false;
+}
+
+void Vulkan_Render_Target::create_swapchain_framebuffers() {    
+    if (!active_pass->initialized) {
+        SK_LOG_ERROR("Cannot recreate render target with uninitialized render pass");
+        initialized = false;
+        return;
+    }
+    
+    if (initialized) {
+        destroy_framebuffers();
+    }
+
+    framebuffers.resize(device->swapchain_images.size());
+    
+    For (device->swapchain_images.size()) {
+        VkFramebufferCreateInfo info = {};
+        info.sType = VK_STRUCTURE_TYPE_FRAMEBUFFER_CREATE_INFO;
+
+        info.renderPass = active_pass->render_pass;
+        info.attachmentCount = 1;
+        info.pAttachments = &device->swapchain_image_views[i];
+        info.width = device->extent.width;
+        info.height = device->extent.height;
+        info.layers = 1;
+        
+        VkResult err = vkCreateFramebuffer(device->device, &info, nullptr, &framebuffers[i]);
+        if (err != VK_SUCCESS) {
+            SK_LOG_ERROR("Failed to create swapchain render target");
+            return;
+        }
+    }
+
+    initialized = true;
+    device->backbuffers.insert(this);
+}
+
+void Vulkan_Render_Target::manual_shutdown() {
+    CHECK();
+
+    destroy_framebuffers();
+
+    if (!is_swapchain_backbuffer) {
+        // TODO:
+        device->targets.erase(this);
+    } else {
+        device->backbuffers.erase(this);
+    }
+
+    active_pass = nullptr;
+    
+    initialized = false;
+}
+
+Ref<Rhi_Device> create_vulkan_device(Window *window) {
+    auto device = create_ref<Vulkan_Device>(window);
+    return device;
+}
+
+void init_imgui_vulkan(Ref<Window> window, Ref<Rhi_Render_Pass> render_pass) {
+    ImGui_ImplGlfw_InitForVulkan(ptr_cast<Glfw_Window>(window)->handle, true);
+
+    auto device = ptr_cast<Vulkan_Device>(window->get_device());
+    
+    ImGui_ImplVulkan_InitInfo init_info = {};
+    init_info.Instance = context.instance;
+    init_info.PhysicalDevice = device->gpu;
+    init_info.Device = device->device;
+    init_info.QueueFamily = device->graphics_queue_index;
+    init_info.Queue = device->graphics_queue;
+    init_info.RenderPass = ptr_cast<Vulkan_Render_Pass>(render_pass)->render_pass;
+    init_info.MinImageCount = (u32)device->swapchain_images.size();
+    init_info.ImageCount = (u32)device->swapchain_images.size();
+    init_info.MSAASamples = VK_SAMPLE_COUNT_1_BIT;
+    init_info.DescriptorPoolSize = 4000;
+    init_info.CheckVkResultFn = [](VkResult err) {
+        if (err != VK_SUCCESS)
+            SK_LOG_ERROR("ImGui Vulkan Error: {}", get_err_string(err));
     };
-    submit_info.waitSemaphoreCount = 1;
-    submit_info.pWaitSemaphores = &device->image_available_semaphores[device->current_frame];
-    submit_info.pWaitDstStageMask = wait_stages;
-    submit_info.signalSemaphoreCount = 1;
-    submit_info.pSignalSemaphores = &device->render_finished_semaphores[device->current_frame];
-    submit_info.commandBufferCount = (u32)command_buffers.size();
-    submit_info.pCommandBuffers = command_buffers.data();
+    init_info.MinAllocationSize = 1024 * 1024;
     
-    if (vkQueueSubmit(device->graphics_queue, 1, &submit_info, device->in_flight_fences[device->current_frame]) != VK_SUCCESS) {
-        SK_LOG_ERROR("Failed to submit to graphics queue");
-    }
-    
-    VkPresentInfoKHR present_info = {};
-    present_info.sType = VK_STRUCTURE_TYPE_PRESENT_INFO_KHR;
-    present_info.swapchainCount = 1;
-    present_info.pSwapchains = &device->swapchain;
-    present_info.waitSemaphoreCount = 1;
-    present_info.pWaitSemaphores = &device->render_finished_semaphores[device->current_frame];
-    present_info.pImageIndices = &device->image_index;
-    VkResult err = vkQueuePresentKHR(device->present_queue, &present_info);	
-  
-    if (err == VK_ERROR_OUT_OF_DATE_KHR || err == VK_SUBOPTIMAL_KHR || device->framebuffer_resized) {
-        device->framebuffer_resized = false;
-        recreate_swapchain(device);
-    }
-    else if (err != VK_SUCCESS) {
-        SK_LOG_ERROR("Failed to present");
-    }
-    
-    device->current_frame = (device->current_frame + 1) % MAX_FRAMES_IN_FLIGHT;
-
-    delete frame_data;
+    ImGui_ImplVulkan_Init(&init_info);
 }
 
-void Vulkan::wait_for_device(void *d) {
-    auto device = (Device *)d;
-    
-    vkDeviceWaitIdle(device->device);
+void shutdown_imgui_vulkan() {
+    ImGui_ImplVulkan_Shutdown();
+    ImGui_ImplGlfw_Shutdown();
+}
+
+void new_imgui_frame_vulkan() {
+    ImGui_ImplVulkan_NewFrame();
+    ImGui_ImplGlfw_NewFrame();
 }
