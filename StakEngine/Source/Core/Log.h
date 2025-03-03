@@ -4,16 +4,16 @@
 
 #include "Types.h"
 
-class FLog final {
+class FLog {
 public:
-  static void Init();
+    static void Init();
 
-  inline static TRef<spdlog::logger> &GetCoreLogger() { return sCoreLogger; }
-  inline static TRef<spdlog::logger> &GetClientLogger() { return sClientLogger;  }
+    inline static TRef<spdlog::logger> &GetCoreLogger() { return CoreLogger; }
+    inline static TRef<spdlog::logger> &GetClientLogger() { return ClientLogger;  }
 
 private:
-  static TRef<spdlog::logger> sCoreLogger;
-  static TRef<spdlog::logger> sClientLogger;
+    static TRef<spdlog::logger> CoreLogger;
+    static TRef<spdlog::logger> ClientLogger;
 };
 
 #define SK_LOG_TRACE(...)     ::FLog::GetCoreLogger()->trace(__VA_ARGS__)

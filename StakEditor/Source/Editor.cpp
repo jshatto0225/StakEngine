@@ -3,13 +3,14 @@
 #include "EditorLayer.h"
 
 FApplication *CreateApplication() {
-  FApplicationSpec Spec = {};
-  Spec.WindowWidth = 1920;
-  Spec.WindowHeight = 1080;
-  Spec.WindowTitle = "Stak Editor";
+    FApplicationSpec Spec = {};
+    Spec.WindowWidth = 1920;
+    Spec.WindowHeight = 1080;
+    Spec.WindowTitle = "Stak Editor";
+    Spec.AppName = "StakEditor";
 
-  FApplication *Editor = new FApplication(Spec);
-  Editor->AddLayer(new FEditorLayer());
+    FApplication *Editor = new FApplication(Spec);
+    Editor->AddLayer(new FEditorLayer());
 
-  return Editor;
+    return Editor;
 }

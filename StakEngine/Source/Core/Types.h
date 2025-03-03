@@ -23,13 +23,13 @@ typedef FUInt64 FOpaqueHandle;
 template <typename TType> using TScope = std::unique_ptr<TType>;
 template <typename TType, typename... Args>
 constexpr TScope<TType> TCreateScope(Args &&...args) {
-  return std::make_unique<TType>(std::forward<Args>(args)...);
+    return std::make_unique<TType>(std::forward<Args>(args)...);
 }
 
 template <typename TType> using TRef = std::shared_ptr<TType>;
 template <typename TType, typename... Args>
 constexpr TRef<TType> TCreateRef(Args &&...args) {
-  return std::make_shared<TType>(std::forward<Args>(args)...);
+    return std::make_shared<TType>(std::forward<Args>(args)...);
 }
 
 #define BIT(x) (1 << x)

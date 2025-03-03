@@ -1,9 +1,9 @@
 #pragma once
 
-#include "FInput.h"
+#include "Input.h"
 
 #include <GLFW/glfw3.h>
 
-void GLFWEnableRawInput();
-void GLFWDisableRawInput();
-void GLFWSetCursorVisibility(ECursorVisibility Visibility);
+void GLFWEnableRawInput(TRef<IWindow> Window);
+void GLFWDisableRawInput(TRef<IWindow> Window);
+void GLFWSetCursorVisibility(TRef<IWindow> Window, ECursorVisibility Visibility);

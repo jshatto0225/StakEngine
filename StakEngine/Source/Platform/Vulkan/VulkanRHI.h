@@ -1,123 +1,90 @@
 #pragma once
 
 #include "RHI.h"
+#include "Log.h"
+#include "RHIResource.h"
+#include "RHIDescriptorSetLayout.h"
+#include "RHIShader.h"
+#include "RHIPipeline.h"
 
 #include <vulkan/vulkan.h>
 #include <vector>
 #include <optional>
 
-class FVulkanRHICommandContext;
+#define CHECK_VK_ERR(Err, Message)              \
+    if (Err != VK_SUCCESS) {                    \
+        SK_LOG_ERROR(Message);                  \
+    }
 
-class FVulkanRHI final : public FRHI {
-public:
-  FVulkanRHI();
-  ~FVulkanRHI() override;
+#define MAX_FRAMES_IN_FLIGHT 2
 
-  FRHISamplerStateRef CreateSamplerState(const FRHISamplerStateInitializer &Initializer) override;
-  FRHIRasterizerStateRef CreateRasterizerState(const FRHIRasterizerStateInitializer &Initializer) override;
-  FRHIDepthStencilStateRef CreateDepthStencilState(const FRHIDepthStencilStateInitializer &Initializer) override;
-  FRHIBlendStateRef CreateBlendState(const FRHIBlendStateInitializer &Initializer) override;
-  FRHIVertexDeclarationRef CreateVertexDeclaration(const FRHIVertexDeclarationElementList &Elements) override;
+const std::vector<const char*> VALIDATION_LAYERS = {
+    "VK_LAYER_KHRONOS_validation"
+};
 
-  FRHIPixelShaderRef CreatePixelShader() override;
-  FRHIVertexShaderRef CreateVertexShader() override;
-  FRHIGeometryShaderRef CreateGeometryShader() override;
+const std::vector<const char*> DEVICE_EXTENSIONS = {
+    VK_KHR_SWAPCHAIN_EXTENSION_NAME
+};
 
-  FRHIBufferRef CreateBuffer(const FRHIBufferDescription &Description, ERHIAccess Access) override;
-  FRHIUniformBufferRef CreateUniformBuffer(const void *InitialContents, const FRHIUniformBufferLayout &Layout, ERHIUniformBufferUsage Usage) override;
-  FRHIStagingBufferRef CreateStagingBuffer() override;
+#ifdef SK_DEBUG
+const FBool ENABLE_VALIDATION_LAYERS = true;
+#else
+const FBool ENABLE_VALIDATION_LAYERS = false;
+#endif
 
-  FRHITextureRef CreateTexture(const FRHITextureDescription &Description) override;
-
-  FRHIGraphicsPipelineStateRef CreateGraphicsPipelineState(const FRHIGraphicsPipelineStateInitializer &Initializer) override;
-
-  FRHIShaderResourceViewRef CreateShaderResourceView(FRHIViewableResourceRef Resource, const FRHIViewDescription &Description) override;
-  FRHIUnorderedAccessViewRef CreateUnorderedAccessView(FRHIViewableResourceRef Resource, const FRHIViewDescription &Description) override;
-
-  void InitImGui() override;
-  void ShutdownImGui() override;
-  void ImGuiNewFrame() override;
-  void SubmitImGuiDrawData(ImDrawData *DrawData) override;
-  
-  inline void FramebufferResized() override { mFramebufferResized = true; }
-
-  void BeginDrawing() override;
-  void EndDrawing() override;
-
-  void WaitForGPUIdle() override;
-  
-  IRHICommandContext *GetCommandContext() override;
-  
-public:
-  inline VkSwapchainKHR GetVkSwapchain() const { return mSwapchain; }
-  inline VkSemaphore GetVkRenderFinishedSemaphore() const { return mRenderFinishedSemaphores[mCurrentFrame]; }
-  inline VkQueue GetVkPresentQueue() const { return mPresentQueue; }
-
-private:
-  struct VulkanQueueFamilies {
+struct VulkanQueueFamilies {
     std::optional<FUInt32> GraphicsFamily;
     std::optional<FUInt32> PresentFamily;
-  };
+};
 
-  VulkanQueueFamilies FindQueueFamilies(VkPhysicalDevice Device);
-
-  struct VulkanSwapchainSupport {
+struct VulkanSwapchainSupport {
     VkSurfaceCapabilitiesKHR Capabilities;
     std::vector<VkSurfaceFormatKHR> Formats;
     std::vector<VkPresentModeKHR> PresentModes;
-  };
+};
 
-  VulkanSwapchainSupport GetSwapchainSupport(VkPhysicalDevice Device);
+VulkanSwapchainSupport GetSwapchainSupport(VkPhysicalDevice Device, VkSurfaceKHR Surface);
 
-  void CreateSwapchain();
-  void RecreateSwapchain();
-  void CreateImageViews();
-  VkImageView CreateImageView(VkImage Image, VkFormat Format);
-  void CreateSyncObjects();
-  
+VulkanQueueFamilies FindQueueFamilies(VkPhysicalDevice Device, VkSurfaceKHR Surface);
+
+VkImageView VulkanCreateImageView(VkDevice Device, VkImage Image, VkFormat Format);
+
+VkIndexType GetVulkanIndexType(ERHIFormat Format);
+
+VkDescriptorType GetVulkanDescriptorType(ERHIDescriptorType Type);
+
+VkShaderStageFlags GetVulkanShaderStageFlags(std::vector<ERHIShaderType> Types);
+
+VkShaderStageFlagBits GetVulkanShaderStage(ERHIShaderType Type);
+
+VkVertexInputRate GetVulkanVertexInputRate(ERHIVertexInputRate InputRate);
+
+VkFormat GetVulkanFormat(ERHIFormat Format);
+VkFormat GetVulkanDepthFormat(ERHIFormat Format);
+VkFormat GetVulkanStencilFormat(ERHIFormat Format);
+
+enum class EVulkanQueue {
+    GRAPHICS,
+    PRESENT,
+    ANY,
+};
+
+VkAccessFlags GetVulkanAccessMask(ERHIResourceState State);
+VkImageLayout GetVulkanImageLayout(ERHIResourceState State);
+EVulkanQueue GetVulkanQueue(ERHIResourceState State);
+VkPipelineStageFlags GetVulkanPipelineStageMask(ERHIResourceState State);
+
+class FVulkanRHI : public FRHI {
+public:
+    FVulkanRHI();
+    ~FVulkanRHI();
+
+    TRef<IRHIDevice> CreateDevice(TRef<IWindow> Window) override;
+
 private:
-  FVulkanRHICommandContext *mCommandContext;
-
-private:
-  VkInstance mInstance = VK_NULL_HANDLE;
-  VkDevice mDevice = VK_NULL_HANDLE;
-  VkPhysicalDevice mGPU = VK_NULL_HANDLE;
-  VkQueue mPresentQueue = VK_NULL_HANDLE;
-  FUInt32 mPresentQueueIndex = UINT32_MAX;
-  VkQueue mGraphicsQueue = VK_NULL_HANDLE;
-  FUInt32 mGraphicsQueueIndex = UINT32_MAX;
-  std::vector<VkCommandBuffer> mCommandBuffers;
-  std::vector<VkImage> mSwapchainImages;
-  VkDebugUtilsMessengerEXT mDebugMessenger = VK_NULL_HANDLE;
-  VkSurfaceKHR mSurface = VK_NULL_HANDLE;
-  VkExtent2D mSwapchainExtent = {};
-  VkSurfaceFormatKHR mSwapchainImageFormat = {};
-  VkSwapchainKHR mSwapchain = VK_NULL_HANDLE;
-  std::vector<VkImageView> mSwapchainImageViews;
-  std::vector<VkSemaphore> mRenderFinishedSemaphores;
-  std::vector<VkSemaphore> mImageAvailableSemaphores;
-  std::vector<VkFence> mInFlightFences;
-  VkDescriptorPool mImGuiPool = VK_NULL_HANDLE;
-  VkCommandPool mCommandPool = VK_NULL_HANDLE;
-  FUInt32 mCurrentFrame = 0;
-  // TODO
-  FUInt32 mImageIndex = 0;
-  FBool mFramebufferResized = false;
-
-private:
-  const std::vector<const char *> VALIDATION_LAYERS = {
-    "VK_LAYER_KHRONOS_validation"
-  };
-
-  const std::vector<const char *> DEVICE_EXTENSIONS = {
-    VK_KHR_SWAPCHAIN_EXTENSION_NAME
-  };
-
-  const FUInt32 MAX_FRAMES_IN_FLIGHT = 2;
-
-#ifdef SK_DEBUG
-  const FBool ENABLE_VALIDATION_LAYERS = true;
-#else
-  const FBool ENABLE_VALIDATION_LAYERS = false;
-#endif
+    VkInstance Instance = VK_NULL_HANDLE;
+    VkDevice Device = VK_NULL_HANDLE;
+    VkPhysicalDevice GPU = VK_NULL_HANDLE;
+    VkDebugUtilsMessengerEXT DebugMessenger = VK_NULL_HANDLE;
+    VkDescriptorPool ImGuiPool = VK_NULL_HANDLE;
 };

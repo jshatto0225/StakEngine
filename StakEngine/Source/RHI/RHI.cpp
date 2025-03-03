@@ -1,35 +1,33 @@
 #include "RHI.h"
 
 #include "Asserts.h"
-#include "RHICommandList.h"
+
+#include "RHIDevice.h"
 
 #ifdef SK_VULKAN
 #include "VulkanRHI.h"
 using FPlatformRHI = FVulkanRHI;
 #endif
 
-FRHI::FRHI() {
-  ASSERT(!sInstance);
+static FRHI *GRHI;
 
-  sInstance = this;
+void RHIInit() {
+    GRHI = new FPlatformRHI();
 }
 
-FRHI::~FRHI() {
-  sInstance = NULL;
+void RHIShutdown() {
+    if (GRHI) {
+        delete GRHI;
+        GRHI = nullptr;
+    }
 }
 
-static FRHI *gRHI;
-
-void FRHI::Init() {
-  gRHI = new FPlatformRHI();
+FRHIDevice RHICreateDevice(TRef<IWindow> Window) {
+    assert(GRHI);
+    return FRHIDevice(Window);
 }
 
-void FRHI::Shutdown() {
-  ASSERT(gRHI);
-  delete gRHI;
-}
-
-
-void FRHI::Submit(FRHICommandList &CommandList) {
-  CommandList.Execute();
+TRef<IRHIDevice> RHICreateDeviceImpl(TRef<IWindow> Window) {
+    assert(GRHI);
+    return GRHI->CreateDevice(Window);
 }

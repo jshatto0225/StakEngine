@@ -1,0 +1,57 @@
+#pragma once
+
+#include <vector>
+#include <string>
+
+#include "ApplicationLayer.h"
+#include "Events.h"
+#include "Renderer.h"
+#include "Input.h"
+#include "ImGuiLayer.h"
+
+struct FApplicationSpec {
+    const char *WindowTitle;
+    const char* AppName;
+    FSInt32 WindowWidth;
+    FSInt32 WindowHeight;
+};
+
+class FApplication {
+public:
+    FApplication(const FApplicationSpec &Spec);
+    ~FApplication();
+
+    void Run();
+    void AddLayer(IApplicationLayer *layer);
+    void Close();
+  
+    inline const char *GetName() const { return Name; }
+    inline TRef<IWindow> GetWindow() { return Window; }
+    inline FRenderer &GetRenderer() { return Renderer; }
+    inline TRef<FInput> GetInput() { return Input; }
+
+private:
+    void OnWindowClose();
+    void OnWindowResize(const FWindowResizeEvent &Event);
+    void OnKeyEvent(const FKeyEvent &Event);
+    void OnMouseButtonEvent(const FMouseButtonEvent &Event);
+    void OnMouseMoveEvent(const FMouseMoveEvent &Event);
+
+private:
+    TRef<IWindow> Window;
+    FRenderer Renderer;
+    TRef<FInput> Input;
+    FLayerStack LayerStack;
+    FBool Running;
+    FImGuiLayer *ImGuiLayer;
+    const char *Name;
+};
+
+void AppRun();
+void AppAddLayer(IApplicationLayer* Layer);
+void AppClose();
+
+const char* AppGetName();
+const TRef<IWindow> AppGetWindow();
+FRenderer &AppGetRenderer();
+const TRef<FInput> AppGetInput();

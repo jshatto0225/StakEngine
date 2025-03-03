@@ -1,22 +1,26 @@
 #pragma once
 
-#include "FApplication.h"
-#include "FLog.h"
+#include "Application.h"
+#include "Log.h"
 #include "Types.h"
 
 extern FApplication *CreateApplication();
 
+extern FApplication *GApplication;
+
 inline FSInt32 StakMain() {
-  FLog::Init();
+    FLog::Init();
 
-  FApplication *App = CreateApplication();
-  App->Run();
-  delete App;
+    auto App = CreateApplication();
 
-  return 0;
+    AppRun();
+
+    delete App;
+
+    return 0;
 }
 
 int main(int argc, char **argv) {
-  return StakMain();
+    return StakMain();
 }
 

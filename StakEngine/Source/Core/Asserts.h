@@ -1,9 +1,7 @@
 #pragma once
 
-#include <cassert>
-
 #ifdef SK_DEBUG
-    #define ASSERT(x) assert(x);
+#include <cassert>
 #else
-    #define ASSERT(x) x
+#define assert(x) x
 #endif

@@ -6,8 +6,8 @@
 
 class FEditorLayer final : public IApplicationLayer {
 public:
-  FEditorLayer();
+    FEditorLayer();
 
-  void Update() override;
-  void OnImGuiRender() override;
+    void Update() override;
+    void OnImGuiRender() override;
 };
