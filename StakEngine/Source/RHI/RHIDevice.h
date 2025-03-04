@@ -34,7 +34,7 @@ public:
 
     virtual TRef<IRHIDescriptorSetLayout> CreateDescriptorSetLayout(const FRHIDescriptorSetLayoutDescription &Description) = 0;
 
-    virtual TRef<IRHIPipeline> CreatePipeline(const FRHIPipelineStateDescription &Description) = 0;
+    virtual TRef<IRHIPipeline> CreatePipeline(const FRHIGraphicsPipelineStateDescription &Description) = 0;
 
     virtual FRHITexture &GetBackbuffer() = 0;
 
@@ -72,7 +72,7 @@ public:
 
     FRHIDescriptorSetLayout CreateDescriptorSetLayout(const FRHIDescriptorSetLayoutDescription &Description);
 
-    FRHIPipeline CreatePipeline(const FRHIPipelineStateDescription &Description);
+    FRHIPipeline CreatePipeline(const FRHIGraphicsPipelineStateDescription &Description);
 
     FRHITexture &GetBackbuffer();
 

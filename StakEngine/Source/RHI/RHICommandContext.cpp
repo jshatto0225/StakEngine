@@ -46,3 +46,19 @@ void FRHICommandContext::BindIndexBuffer(FRHIBuffer &Buffer) {
 void FRHICommandContext::DrawIndexed(FUInt32 IndexCount, FUInt32 InstanceCount, FUInt32 FirstIndex, FSInt32 VertexOffset, FUInt32 FirstInstance) {
     Impl->DrawIndexed(IndexCount, InstanceCount, FirstIndex, VertexOffset, FirstInstance);
 }
+
+void FRHICommandContext::BindPipeline(FRHIPipeline &Pipeline) {
+    Impl->BindPipeline(Pipeline);
+}
+
+void FRHICommandContext::DrawInstanced(FUInt32 VertexCount, FUInt32 InstanceCount, FUInt32 FirstVertex, FUInt32 FirstInstance) {
+    Impl->DrawInstanced(VertexCount, InstanceCount, FirstVertex, FirstInstance);
+}
+
+void FRHICommandContext::SetViewport(const FRHIViewport &Viewport) {
+    Impl->SetViewport(Viewport);
+}
+
+void FRHICommandContext::SetScissor(const FRHIScissor &Scissor) {
+    Impl->SetScissor(Scissor);
+}

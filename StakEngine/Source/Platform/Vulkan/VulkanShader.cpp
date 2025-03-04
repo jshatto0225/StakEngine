@@ -3,8 +3,8 @@
 #include <fstream>
 
 FVulkanShader::FVulkanShader(FVulkanDevice &Device, const FRHIShaderDescription &Description) : Type(Description.Type), Device(Device) {
-    std::string Path = "Assets/Shaders/" + Description.Name;
-    std::ifstream File(Path);
+    std::string Path = "Assets/Shaders/" + Description.Name + ".spv";
+    std::ifstream File(Path, std::ios::ate | std::ios::binary);
     
     if (!File.is_open()) {
         SK_LOG_ERROR("Failed to open shader file");

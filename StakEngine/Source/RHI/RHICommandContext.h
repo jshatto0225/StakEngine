@@ -26,6 +26,12 @@ public:
     virtual void BindIndexBuffer(FRHIBuffer &Buffer) = 0;
     
     virtual void DrawIndexed(FUInt32 IndexCount, FUInt32 InstanceCount, FUInt32 FirstIndex, FSInt32 VertexOffset, FUInt32 FirstInstance) = 0;
+    virtual void DrawInstanced(FUInt32 VertexCount, FUInt32 InstanceCount, FUInt32 FirstVertex, FUInt32 FirstInstance) = 0;
+
+	virtual void SetViewport(const FRHIViewport &Viewport) = 0;
+	virtual void SetScissor(const FRHIScissor &Scissor) = 0;
+
+    virtual void BindPipeline(FRHIPipeline &Pipeline) = 0;
 
     virtual void Shutdown() = 0;
 };
@@ -52,7 +58,13 @@ public:
     void BindVertexBuffer(FRHIBuffer &Buffer, FUInt32 FirstVertex);
     void BindIndexBuffer(FRHIBuffer &Buffer);
 
-    void DrawIndexed(FUInt32 IndexCount, FUInt32 InstanceCount, FUInt32 FirstIndex, FSInt32 VertexOffset, FUInt32 FirstInstance);
+	void DrawIndexed(FUInt32 IndexCount, FUInt32 InstanceCount, FUInt32 FirstIndex, FSInt32 VertexOffset, FUInt32 FirstInstance);
+	void DrawInstanced(FUInt32 VertexCount, FUInt32 InstanceCount, FUInt32 FirstVertex, FUInt32 FirstInstance);
+
+	void SetViewport(const FRHIViewport &Viewport);
+	void SetScissor(const FRHIScissor &Scissor);
+
+	void BindPipeline(FRHIPipeline &Pipeline);
 
     void Shutdown();
 

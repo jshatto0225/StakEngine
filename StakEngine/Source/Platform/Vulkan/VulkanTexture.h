@@ -14,6 +14,8 @@ public:
 
     inline FRHIRenderArea GetRenderArea() override { return { 1, 0, 0, Extent.width, Extent.height }; }
 
+    ERHIFormat GetFormat() override { return RHIFormat; }
+
     void Shutdown() override;
 
 public:
@@ -30,9 +32,10 @@ private:
 
     bool Backbuffer = false;
 
-    std::vector<VkImage> Images = {};
-    std::vector<VkImageView> ImageViews = {};
-    std::vector<VkImageSubresourceRange> SubresourceRanges = {};
+    std::vector<VkImage> Images;
+    std::vector<VkImageView> ImageViews;
+    std::vector<VkImageSubresourceRange> SubresourceRanges;
     VkFormat Format = VK_FORMAT_UNDEFINED;
+    ERHIFormat RHIFormat = ERHIFormat::UNDEFINED;
     VkExtent2D Extent = {};
 };

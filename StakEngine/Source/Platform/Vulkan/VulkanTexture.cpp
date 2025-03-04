@@ -3,6 +3,8 @@
 #include "VulkanDevice.h"
 
 FVulkanTexture::FVulkanTexture(FVulkanDevice &Device, VkSwapchainKHR Swapchain, FUInt32 ImageCount, VkExtent2D Extent, VkFormat Format) : Device(Device), Format(Format), Extent(Extent), Backbuffer(true) {
+    RHIFormat = GetRHIFormat(Format);
+    
     Images.resize(ImageCount);
 
     vkGetSwapchainImagesKHR(Device.GetVulkanDevice(), Swapchain, &ImageCount, Images.data());

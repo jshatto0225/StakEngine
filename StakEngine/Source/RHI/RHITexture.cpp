@@ -16,3 +16,7 @@ bool FRHITexture::IsBackbuffer() {
 FRHIRenderArea FRHITexture::GetRenderArea() const {
     return std::static_pointer_cast<IRHITexture>(Impl)->GetRenderArea();
 }
+
+ERHIFormat FRHITexture::GetFormat() {
+    return std::static_pointer_cast<IRHITexture>(Impl)->GetFormat();
+}

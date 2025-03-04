@@ -12,6 +12,8 @@ void FRenderer::Init(TRef<IWindow> Window) {
     Device = RHICreateDevice(Window);
     CommandContext = Device.CreateCommandContext();
 
+    Backbuffer = Device.GetBackbuffer();
+
     FRHIShaderDescription VertexShaderDescription = {};
     VertexShaderDescription.Name = "BasicShader.vert";
     VertexShaderDescription.Type = ERHIShaderType::VERTEX;
@@ -19,24 +21,30 @@ void FRenderer::Init(TRef<IWindow> Window) {
 
     FRHIShaderDescription FragmentShaderDescription = {};
     FragmentShaderDescription.Name = "BasicShader.frag";
-    FragmentShaderDescription.Type = ERHIShaderType::VERTEX;
+    FragmentShaderDescription.Type = ERHIShaderType::FRAGMENT;
     FRHIShader FragmentShader = Device.CreateShader(FragmentShaderDescription);
 
     FRHIPipelineLayoutDescription PipelineLyaoutDescription = {};
-    FRHIPipelineLayout PipelineLayout = Device.CreatePipelineLayout(PipelineLyaoutDescription);
+    PipelineLayout = Device.CreatePipelineLayout(PipelineLyaoutDescription);
 
-    FRHIPipelineStateDescription PipelineDescription = {};
-    PipelineDescription.ColorFormats = { ERHIFormat::UNDEFINED };
+    FRHIGraphicsPipelineStateDescription PipelineDescription = {};
+    PipelineDescription.ColorFormats = { Backbuffer.GetFormat() };
     PipelineDescription.DepthStencilFormat = { ERHIFormat::UNDEFINED };
     PipelineDescription.Layout = &PipelineLayout;
     PipelineDescription.Shaders = { &VertexShader, &FragmentShader };
     PipelineDescription.VertexInputAttributes = {};
     PipelineDescription.VertexInputBindings = {};
 
-    FRHIPipeline Pipeline = Device.CreatePipeline(PipelineDescription);
+    Pipeline = Device.CreatePipeline(PipelineDescription);
+
+    VertexShader.Shutdown();
+    FragmentShader.Shutdown();
 }
 
 void FRenderer::Shutdown() {
+    PipelineLayout.Shutdown();
+    Pipeline.Shutdown();
+
     Device.WaitForGPUIdle();
     CommandContext.Shutdown();
     Device.Shutdown();
@@ -47,8 +55,6 @@ void FRenderer::Render() {
 
     CommandContext.Begin();
     {
-        const FRHITexture &Backbuffer = Device.GetBackbuffer();
-
         FRHIResourceBarrier RenderTargetBarrier = {
             ERHIBarrierType::TRANSITION,
 
@@ -61,6 +67,31 @@ void FRenderer::Render() {
         CommandContext.ResourceBarrier(RenderTargetBarrier);
 
         CommandContext.SetRenderTarget(Backbuffer, Backbuffer.GetRenderArea());
+
+        CommandContext.BindPipeline(Pipeline);
+
+        auto [LayerCount, X, Y, Width, Height] = Backbuffer.GetRenderArea();
+        FRHIViewport Viewport = {
+            static_cast<FFloat>(X),
+            static_cast<FFloat>(Y),
+            static_cast<FFloat>(Width),
+            static_cast<FFloat>(Height),
+            0.0f,
+            1.0f
+        };
+
+        CommandContext.SetViewport(Viewport);
+
+        FRHIScissor Scissor = {
+            static_cast<FSInt32>(X),
+            static_cast<FSInt32>(Y),
+            Width,
+            Height
+        };
+
+        CommandContext.SetScissor(Scissor);
+
+        CommandContext.DrawInstanced(3, 1, 0, 0);
 
         for (auto Proxy : RenderProxies) {
             Proxy->Render(CommandContext);

@@ -8,6 +8,8 @@ public:
 
     virtual bool IsBackbuffer() = 0;
 
+    virtual ERHIFormat GetFormat() = 0;
+
     virtual FRHIRenderArea GetRenderArea() = 0;
 };
 
@@ -22,6 +24,8 @@ public:
     bool IsBackbuffer();
 
     FRHIRenderArea GetRenderArea() const;
+
+    ERHIFormat GetFormat();
     
     inline ERHIResourceType GetType() const override {
         return ERHIResourceType::TEXTURE;

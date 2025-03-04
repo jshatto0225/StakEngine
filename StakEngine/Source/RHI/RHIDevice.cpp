@@ -75,6 +75,6 @@ FRHIDescriptorSetLayout FRHIDevice::CreateDescriptorSetLayout(const FRHIDescript
     return Impl->CreateDescriptorSetLayout(Description);
 }
 
-FRHIPipeline FRHIDevice::CreatePipeline(const FRHIPipelineStateDescription &Description) {
+FRHIPipeline FRHIDevice::CreatePipeline(const FRHIGraphicsPipelineStateDescription &Description) {
     return Impl->CreatePipeline(Description);
 }

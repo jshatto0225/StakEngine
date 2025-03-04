@@ -63,6 +63,8 @@ VkFormat GetVulkanFormat(ERHIFormat Format);
 VkFormat GetVulkanDepthFormat(ERHIFormat Format);
 VkFormat GetVulkanStencilFormat(ERHIFormat Format);
 
+ERHIFormat GetRHIFormat(VkFormat Format);
+
 enum class EVulkanQueue {
     GRAPHICS,
     PRESENT,

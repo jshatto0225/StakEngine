@@ -306,11 +306,10 @@ VkVertexInputRate GetVulkanVertexInputRate(ERHIVertexInputRate InputRate) {
 
 VkFormat GetVulkanFormat(ERHIFormat Format) {
     switch (Format) {
-    case ERHIFormat::UNDEFINED:
-        return VK_FORMAT_UNDEFINED;
+    case ERHIFormat::B8G8R8A8_SRGB:
+        return VK_FORMAT_B8G8R8A8_SRGB;
     default:
-        SK_LOG_ERROR("Invalid format");
-        return static_cast<VkFormat>(0);
+        return VK_FORMAT_UNDEFINED;
     }
 }
 
@@ -319,8 +318,17 @@ VkFormat GetVulkanDepthFormat(ERHIFormat Format) {
     case ERHIFormat::UNDEFINED:
         return VK_FORMAT_UNDEFINED;
     default:
-        SK_LOG_ERROR("Invalid depth format");
         return static_cast<VkFormat>(0);
+    }
+}
+
+ERHIFormat GetRHIFormat(VkFormat Format) {
+    switch (Format) {
+    case VK_FORMAT_B8G8R8A8_SRGB:
+        return ERHIFormat::B8G8R8A8_SRGB;
+    default:
+        SK_LOG_ERROR("Invalid vulkan format");
+        return ERHIFormat::UNDEFINED;
     }
 }
 

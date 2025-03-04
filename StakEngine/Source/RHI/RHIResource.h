@@ -47,6 +47,7 @@ enum class ERHIBarrierType {
 
 enum class ERHIFormat {
     UNDEFINED,
+    B8G8R8A8_SRGB,
 };
 
 struct FRHIResourceBarrier {
@@ -72,6 +73,22 @@ struct FRHIRenderArea {
     FUInt32 Y;
     FUInt32 Width;
     FUInt32 Height;
+};
+
+struct FRHIViewport {
+	FFloat X;
+	FFloat Y;
+	FFloat Width;
+	FFloat Height;
+	FFloat MinDepth;
+	FFloat MaxDepth;
+};
+
+struct FRHIScissor {
+	FSInt32 X;
+	FSInt32 Y;
+	FUInt32 Width;
+	FUInt32 Height;
 };
 
 class IRHIResource {

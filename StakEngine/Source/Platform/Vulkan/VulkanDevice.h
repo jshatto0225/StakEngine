@@ -37,7 +37,7 @@ public:
 
     TRef<IRHIDescriptorSetLayout> CreateDescriptorSetLayout(const FRHIDescriptorSetLayoutDescription &Description) override;
 
-    TRef<IRHIPipeline> CreatePipeline(const FRHIPipelineStateDescription &Description) override;
+    TRef<IRHIPipeline> CreatePipeline(const FRHIGraphicsPipelineStateDescription &Description) override;
 
     FRHITexture &GetBackbuffer() override;
 

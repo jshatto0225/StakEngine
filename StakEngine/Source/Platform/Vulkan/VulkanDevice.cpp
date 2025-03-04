@@ -538,6 +538,6 @@ TRef<IRHIDescriptorSetLayout> FVulkanDevice::CreateDescriptorSetLayout(const FRH
     return TCreateRef<FVulkanDescriptorSetLayout>(*this, Description);
 }
 
-TRef<IRHIPipeline> FVulkanDevice::CreatePipeline(const FRHIPipelineStateDescription &Description) {
+TRef<IRHIPipeline> FVulkanDevice::CreatePipeline(const FRHIGraphicsPipelineStateDescription &Description) {
     return TCreateRef<FVulkanPipeline>(*this, Description);
 }

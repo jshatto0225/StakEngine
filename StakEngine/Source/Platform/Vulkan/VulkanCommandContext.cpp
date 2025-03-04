@@ -3,6 +3,7 @@
 #include "VulkanTexture.h"
 #include "VulkanBuffer.h"
 #include "VulkanRHI.h"
+#include "VulkanPipeline.h"
 
 #include <backends/imgui_impl_vulkan.h>
 
@@ -184,4 +185,32 @@ void FVulkanCommandContext::BindIndexBuffer(FRHIBuffer &Buffer) {
 
 void FVulkanCommandContext::DrawIndexed(FUInt32 IndexCount, FUInt32 InstanceCount, FUInt32 FirstIndex, FSInt32 VertexOffset, FUInt32 FirstInstance) {
     vkCmdDrawIndexed(MainCommandBuffers[Device.GetCurrentFrameIndex()], IndexCount, InstanceCount, FirstIndex, VertexOffset, FirstInstance);
+}
+
+void FVulkanCommandContext::BindPipeline(FRHIPipeline &Pipeline) {
+    auto Impl = std::static_pointer_cast<FVulkanPipeline>(Pipeline.GetImpl());
+    vkCmdBindPipeline(MainCommandBuffers[Device.GetCurrentFrameIndex()], Impl->GetVulkanBindPoint(), Impl->GetVulkanPipeline());
+}
+
+void FVulkanCommandContext::DrawInstanced(FUInt32 VertexCount, FUInt32 InstanceCount, FUInt32 FirstVertex, FUInt32 FirstInstance) {
+    vkCmdDraw(MainCommandBuffers[Device.GetCurrentFrameIndex()], VertexCount, InstanceCount, FirstVertex, FirstInstance);
+}
+
+void FVulkanCommandContext::SetViewport(const FRHIViewport &Viewport) {
+    VkViewport VulkanViewport = {};
+	VulkanViewport.x = Viewport.X;
+	VulkanViewport.y = Viewport.Y;
+	VulkanViewport.width = Viewport.Width;
+	VulkanViewport.height = Viewport.Height;
+	VulkanViewport.minDepth = Viewport.MinDepth;
+	VulkanViewport.maxDepth = Viewport.MaxDepth;
+    vkCmdSetViewport(MainCommandBuffers[Device.GetCurrentFrameIndex()], 0, 1, &VulkanViewport);
+}
+
+void FVulkanCommandContext::SetScissor(const FRHIScissor &Scissor) {
+    VkRect2D VulkanScissor = {};
+    VulkanScissor.offset = { Scissor.X, Scissor.Y };
+    VulkanScissor.extent = { Scissor.Width, Scissor.Height };
+
+    vkCmdSetScissor(MainCommandBuffers[Device.GetCurrentFrameIndex()], 0, 1, &VulkanScissor);
 }

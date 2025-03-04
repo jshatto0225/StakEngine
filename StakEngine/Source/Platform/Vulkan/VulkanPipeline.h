@@ -20,15 +20,18 @@ private:
 
 class FVulkanPipeline : public IRHIPipeline {
 public:
-    FVulkanPipeline(FVulkanDevice &Device, const FRHIPipelineStateDescription &Description);
+    FVulkanPipeline(FVulkanDevice &Device, const FRHIGraphicsPipelineStateDescription &Description);
     
     void Shutdown() override;
     
 public:
     inline VkPipeline GetVulkanPipeline() { return Pipeline; }
+    inline VkPipelineBindPoint GetVulkanBindPoint() { return BindPoint; }
     
 private:
     FVulkanDevice &Device;
+
+    VkPipelineBindPoint BindPoint;
     
     VkPipeline Pipeline = VK_NULL_HANDLE;    
 };

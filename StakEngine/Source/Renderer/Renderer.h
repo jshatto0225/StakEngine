@@ -4,6 +4,7 @@
 
 #include "RHICommandContext.h"
 #include "RHIDevice.h"
+#include "RHITexture.h"
 #include "Window.h"
 
 class FRenderProxy {
@@ -41,4 +42,8 @@ private:
     FRHICommandContext CommandContext;
     FRHIDevice Device;
     TRef<IWindow> Window;
+    FRHITexture Backbuffer;
+
+    FRHIPipelineLayout PipelineLayout;
+    FRHIPipeline Pipeline;
 };

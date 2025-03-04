@@ -27,7 +27,13 @@ public:
     void BindVertexBuffer(FRHIBuffer &Buffer, FUInt32 FirstVertex) override;
     void BindIndexBuffer(FRHIBuffer &Buffer) override;
 
-    void DrawIndexed(FUInt32 IndexCount, FUInt32 InstanceCount, FUInt32 FirstIndex, FSInt32 VertexOffset, FUInt32 FirstInstance) override;
+	void DrawIndexed(FUInt32 IndexCount, FUInt32 InstanceCount, FUInt32 FirstIndex, FSInt32 VertexOffset, FUInt32 FirstInstance) override;
+	void DrawInstanced(FUInt32 VertexCount, FUInt32 InstanceCount, FUInt32 FirstVertex, FUInt32 FirstInstance) override;
+
+	void SetViewport(const FRHIViewport &Viewport) override;
+	void SetScissor(const FRHIScissor &Scissor) override;
+
+	void BindPipeline(FRHIPipeline &Pipeline) override;
 
     void RenderImGuiDrawData(ImDrawData *DrawData) override;
 
