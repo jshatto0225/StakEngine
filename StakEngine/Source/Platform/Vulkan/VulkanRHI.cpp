@@ -97,7 +97,6 @@ VulkanSwapchainSupport GetSwapchainSupport(VkPhysicalDevice Device, VkSurfaceKHR
 }
 
 FVulkanRHI::FVulkanRHI() {
-    // INSTANCE
     FBool ExtensionsSupported = true;
     FUInt32 LayerCount = 0;
     vkEnumerateInstanceLayerProperties(&LayerCount, nullptr);
@@ -157,7 +156,7 @@ FVulkanRHI::FVulkanRHI() {
 
     std::vector<const char *> Extensions(GlfwExtensions, GlfwExtensions + GlfwExtensionCount);
 #else
-    std::vector<const char *> extensions;
+    std::vector<const char *> Extensions;
 #endif
 
     if (ENABLE_VALIDATION_LAYERS) {

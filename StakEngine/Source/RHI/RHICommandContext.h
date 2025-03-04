@@ -28,8 +28,8 @@ public:
     virtual void DrawIndexed(FUInt32 IndexCount, FUInt32 InstanceCount, FUInt32 FirstIndex, FSInt32 VertexOffset, FUInt32 FirstInstance) = 0;
     virtual void DrawInstanced(FUInt32 VertexCount, FUInt32 InstanceCount, FUInt32 FirstVertex, FUInt32 FirstInstance) = 0;
 
-	virtual void SetViewport(const FRHIViewport &Viewport) = 0;
-	virtual void SetScissor(const FRHIScissor &Scissor) = 0;
+    virtual void SetViewport(FFloat X, FFloat Y, FFloat Width, FFloat Height, FFloat MinDepth, FFloat MaxDepth) = 0;
+    virtual void SetScissor(FSInt32 X, FSInt32 Y, FUInt32 Width, FUInt32 Height) = 0;
 
     virtual void BindPipeline(FRHIPipeline &Pipeline) = 0;
 
@@ -58,13 +58,13 @@ public:
     void BindVertexBuffer(FRHIBuffer &Buffer, FUInt32 FirstVertex);
     void BindIndexBuffer(FRHIBuffer &Buffer);
 
-	void DrawIndexed(FUInt32 IndexCount, FUInt32 InstanceCount, FUInt32 FirstIndex, FSInt32 VertexOffset, FUInt32 FirstInstance);
-	void DrawInstanced(FUInt32 VertexCount, FUInt32 InstanceCount, FUInt32 FirstVertex, FUInt32 FirstInstance);
+    void DrawIndexed(FUInt32 IndexCount, FUInt32 InstanceCount, FUInt32 FirstIndex, FSInt32 VertexOffset, FUInt32 FirstInstance);
+    void DrawInstanced(FUInt32 VertexCount, FUInt32 InstanceCount, FUInt32 FirstVertex, FUInt32 FirstInstance);
 
-	void SetViewport(const FRHIViewport &Viewport);
-	void SetScissor(const FRHIScissor &Scissor);
+    void SetViewport(FFloat X, FFloat Y, FFloat Width, FFloat Height, FFloat MinDepth, FFloat MaxDepth);
+    void SetScissor(FSInt32 X, FSInt32 Y, FUInt32 Width, FUInt32 Height);
 
-	void BindPipeline(FRHIPipeline &Pipeline);
+    void BindPipeline(FRHIPipeline &Pipeline);
 
     void Shutdown();
 

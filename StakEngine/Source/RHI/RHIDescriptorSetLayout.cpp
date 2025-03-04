@@ -1,13 +1,13 @@
 #include "RHIDescriptorSetLayout.h"
 
 FRHIDescriptorSetLayout::FRHIDescriptorSetLayout(TRef<IRHIDescriptorSetLayout> Layout) {
-	Impl = Layout;
+    Impl = Layout;
 }
 
 TRef<IRHIDescriptorSetLayout> FRHIDescriptorSetLayout::GetImpl() const {
-	return Impl;
+    return Impl;
 }
 
 void FRHIDescriptorSetLayout::Shutdown() {
-	Impl->Shutdown();
+    Impl->Shutdown();
 }

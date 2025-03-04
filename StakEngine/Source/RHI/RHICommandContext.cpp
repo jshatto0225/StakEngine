@@ -55,10 +55,10 @@ void FRHICommandContext::DrawInstanced(FUInt32 VertexCount, FUInt32 InstanceCoun
     Impl->DrawInstanced(VertexCount, InstanceCount, FirstVertex, FirstInstance);
 }
 
-void FRHICommandContext::SetViewport(const FRHIViewport &Viewport) {
-    Impl->SetViewport(Viewport);
+void FRHICommandContext::SetViewport(FFloat X, FFloat Y, FFloat Width, FFloat Height, FFloat MinDepth, FFloat MaxDepth) {
+    Impl->SetViewport(X, Y, Width, Height, MinDepth, MaxDepth);
 }
 
-void FRHICommandContext::SetScissor(const FRHIScissor &Scissor) {
-    Impl->SetScissor(Scissor);
+void FRHICommandContext::SetScissor(FSInt32 X, FSInt32 Y, FUInt32 Width, FUInt32 Height) {
+    Impl->SetScissor(X, Y, Width, Height);
 }

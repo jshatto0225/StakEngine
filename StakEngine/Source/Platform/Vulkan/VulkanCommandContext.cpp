@@ -196,21 +196,24 @@ void FVulkanCommandContext::DrawInstanced(FUInt32 VertexCount, FUInt32 InstanceC
     vkCmdDraw(MainCommandBuffers[Device.GetCurrentFrameIndex()], VertexCount, InstanceCount, FirstVertex, FirstInstance);
 }
 
-void FVulkanCommandContext::SetViewport(const FRHIViewport &Viewport) {
-    VkViewport VulkanViewport = {};
-	VulkanViewport.x = Viewport.X;
-	VulkanViewport.y = Viewport.Y;
-	VulkanViewport.width = Viewport.Width;
-	VulkanViewport.height = Viewport.Height;
-	VulkanViewport.minDepth = Viewport.MinDepth;
-	VulkanViewport.maxDepth = Viewport.MaxDepth;
+void FVulkanCommandContext::SetViewport(FFloat X, FFloat Y, FFloat Width, FFloat Height, FFloat MinDepth, FFloat MaxDepth) {
+    VkViewport VulkanViewport = {
+        X,
+        Y,
+        Width,
+        Height,
+        MinDepth,
+        MaxDepth
+    };
+
     vkCmdSetViewport(MainCommandBuffers[Device.GetCurrentFrameIndex()], 0, 1, &VulkanViewport);
 }
 
-void FVulkanCommandContext::SetScissor(const FRHIScissor &Scissor) {
-    VkRect2D VulkanScissor = {};
-    VulkanScissor.offset = { Scissor.X, Scissor.Y };
-    VulkanScissor.extent = { Scissor.Width, Scissor.Height };
+void FVulkanCommandContext::SetScissor(FSInt32 X, FSInt32 Y, FUInt32 Width, FUInt32 Height) {
+    VkRect2D VulkanScissor = {
+        { X,     Y      },
+        { Width, Height }
+    };
 
     vkCmdSetScissor(MainCommandBuffers[Device.GetCurrentFrameIndex()], 0, 1, &VulkanScissor);
 }

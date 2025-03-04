@@ -71,25 +71,9 @@ void FRenderer::Render() {
         CommandContext.BindPipeline(Pipeline);
 
         auto [LayerCount, X, Y, Width, Height] = Backbuffer.GetRenderArea();
-        FRHIViewport Viewport = {
-            static_cast<FFloat>(X),
-            static_cast<FFloat>(Y),
-            static_cast<FFloat>(Width),
-            static_cast<FFloat>(Height),
-            0.0f,
-            1.0f
-        };
 
-        CommandContext.SetViewport(Viewport);
-
-        FRHIScissor Scissor = {
-            static_cast<FSInt32>(X),
-            static_cast<FSInt32>(Y),
-            Width,
-            Height
-        };
-
-        CommandContext.SetScissor(Scissor);
+        CommandContext.SetViewport(static_cast<FFloat>(X), static_cast<FFloat>(Y), Width, Height, 0.0f, 1.0f);
+        CommandContext.SetScissor(static_cast<FSInt32>(X), static_cast<FSInt32>(Y), Width, Height);
 
         CommandContext.DrawInstanced(3, 1, 0, 0);
 

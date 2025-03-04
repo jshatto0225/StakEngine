@@ -27,4 +27,3 @@ FVulkanDescriptorSetLayout::FVulkanDescriptorSetLayout(FVulkanDevice &Device, co
 void FVulkanDescriptorSetLayout::Shutdown() {
     vkDestroyDescriptorSetLayout(Device.GetVulkanDevice(), Layout, nullptr);
 }
-    

@@ -30,7 +30,7 @@ private:
 };
 
 enum class ERHIPipelineType {
-	GRAPHICS
+    GRAPHICS
 };
 
 enum class ERHIVertexInputRate {
