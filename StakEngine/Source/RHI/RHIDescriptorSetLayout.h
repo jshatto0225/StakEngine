@@ -23,15 +23,3 @@ class IRHIDescriptorSetLayout {
 public:
     virtual void Shutdown() = 0;
 };
-
-class FRHIDescriptorSetLayout {
-public:
-    FRHIDescriptorSetLayout(TRef<IRHIDescriptorSetLayout> Layout);
-
-    TRef<IRHIDescriptorSetLayout> GetImpl() const;
-
-    void Shutdown();
-
-private:
-    TRef<IRHIDescriptorSetLayout> Impl = nullptr;
-};

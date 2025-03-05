@@ -33,6 +33,6 @@ void FImGuiLayer::EndFrame() {
     }
 }
 
-void FImGuiLayer::Render(FRHICommandContext &CommandContext) {
-    CommandContext.RenderImGuiDrawData(DrawData);
+void FImGuiLayer::Render(TRef<IRHICommandContext> CommandContext) {
+    CommandContext->RenderImGuiDrawData(DrawData);
 }

@@ -15,7 +15,7 @@ public:
     void BeginFrame();
     void EndFrame();
 
-    void Render(FRHICommandContext &Context) override;
+    void Render(TRef<IRHICommandContext> Context) override;
 
 private:
     ImDrawData *DrawData;

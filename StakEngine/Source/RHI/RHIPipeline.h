@@ -6,27 +6,12 @@
 #include "RHIShader.h"
 
 struct FRHIPipelineLayoutDescription {
-    std::vector<FRHIDescriptorSetLayout> DescriptorSetLayouts;
+    std::vector<TRef<IRHIDescriptorSetLayout>> DescriptorSetLayouts;
 };
 
 class IRHIPipelineLayout {
 public:
     virtual void Shutdown() = 0;
-};
-
-class FRHIPipelineLayout {
-public:
-    FRHIPipelineLayout() = default;
-
-public:
-    FRHIPipelineLayout(TRef<IRHIPipelineLayout> Layout);
-    
-    TRef<IRHIPipelineLayout> GetImpl() const { return Impl; }
-    
-    void Shutdown();
-    
-private:
-    TRef<IRHIPipelineLayout> Impl;
 };
 
 enum class ERHIPipelineType {
@@ -47,28 +32,13 @@ struct FRHIVertexInputBinding {
 struct FRHIGraphicsPipelineStateDescription {
     std::vector<ERHIFormat> ColorFormats;
     ERHIFormat DepthStencilFormat;
-    std::vector<FRHIShader *> Shaders;
+    std::vector<TRef<IRHIShader>> Shaders;
     std::vector<FRHIVertexInputBinding> VertexInputBindings;
     std::vector<FRHIBufferElement> VertexInputAttributes;
-    FRHIPipelineLayout *Layout;
+    TRef<IRHIPipelineLayout> Layout;
 };
 
 class IRHIPipeline {
 public:
     virtual void Shutdown() = 0;
-};
-
-class FRHIPipeline {
-public:
-    FRHIPipeline() = default;
-
-public:
-    FRHIPipeline(TRef<IRHIPipeline> Pipeline);
-
-    inline TRef<IRHIPipeline> GetImpl() const { return Impl; }
-    
-    void Shutdown();
-    
-private:
-    TRef<IRHIPipeline> Impl = nullptr;
 };

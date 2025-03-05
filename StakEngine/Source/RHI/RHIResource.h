@@ -24,19 +24,19 @@ enum class ERHITransitionType {
 };
 
 struct FRHITransitionBarrier {
-    FRHIResource *Resource;
+    TRef<IRHIResource> Resource;
     ERHIResourceState StateBefore;
     ERHIResourceState StateAfter;
     FUInt32 Subresource;
 };
 
 struct FRHIUAVBarrier {
-    FRHIResource *Resource;
+    TRef<IRHIResource> Resource;
 };
 
 struct FRHIAliasingBarrier {
-    FRHIResource *ResourceBefore;
-    FRHIResource *ResourceAfter;
+    TRef<IRHIResource> ResourceBefore;
+    TRef<IRHIResource> ResourceAfter;
 };
 
 enum class ERHIBarrierType {
@@ -79,27 +79,9 @@ class IRHIResource {
 public:
     virtual ~IRHIResource() = default;
 
-    virtual void Shutdown() = 0;
-};
-
-class FRHIResource {
-public:
-    FRHIResource() = default;
-    virtual ~FRHIResource() = default;
+    virtual ERHIResourceType GetType() = 0;
 
     virtual void Shutdown() = 0;
-
-    inline TRef<IRHIResource> GetImpl() const { 
-        return Impl;
-    }
-
-public:
-    virtual ERHIResourceType GetType() const = 0;
-
-protected:
-    // NOTE: This will never be set by a generic FRHIResource, it should
-    // be set by what ever actual resource is created i.e. FRHITexture, FRHIBuffer, ...
-    TRef<IRHIResource> Impl = nullptr;
 };
 
 ERHITransitionType RHIGetTransitionType(ERHIResourceState Before, ERHIResourceState After);

@@ -9,7 +9,7 @@
 using FPlatformRHI = FVulkanRHI;
 #endif
 
-static FRHI *GRHI;
+static IRHI *GRHI;
 
 void RHIInit() {
     GRHI = new FPlatformRHI();
@@ -22,9 +22,9 @@ void RHIShutdown() {
     }
 }
 
-FRHIDevice RHICreateDevice(TRef<IWindow> Window) {
+TRef<IRHIDevice> RHICreateDevice(TRef<IWindow> Window) {
     assert(GRHI);
-    return FRHIDevice(Window);
+    return GRHI->CreateDevice(Window);
 }
 
 TRef<IRHIDevice> RHICreateDeviceImpl(TRef<IWindow> Window) {

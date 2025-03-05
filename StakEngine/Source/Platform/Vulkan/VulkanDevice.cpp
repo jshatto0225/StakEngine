@@ -249,7 +249,6 @@ void FVulkanDevice::CreateSwapchain() {
     CHECK_VK_ERR(vkCreateSwapchainKHR(Device, &SwapchainInfo, nullptr, &Swapchain), "Failed to create swapchian");
 
     Backbuffer = TCreateRef<FVulkanTexture>(this, Swapchain, ImageCount, SwapchainExtent, Format.format);
-    BackbufferTexture = FRHITexture(Backbuffer);
 
     VkCommandPoolCreateInfo CommandPoolInfo = {};
 
@@ -315,7 +314,7 @@ void FVulkanDevice::Shutdown() {
     
     vkDestroyCommandPool(Device, CommandPool, nullptr);
 
-    BackbufferTexture.Shutdown();
+    Backbuffer->Shutdown();
 
     vkDestroySwapchainKHR(Device, Swapchain, nullptr);
 
@@ -326,9 +325,9 @@ void FVulkanDevice::Shutdown() {
     Initialized = false;
 }
 
-void FVulkanDevice::Submit(FRHICommandContext &CommandContext) {
+void FVulkanDevice::Submit(TRef<IRHICommandContext> CommandContext) {
     // TODO: Allow a command context to have multiple command buffers
-    auto Context = std::static_pointer_cast<FVulkanCommandContext>(CommandContext.GetImpl());
+    auto Context = std::static_pointer_cast<FVulkanCommandContext>(CommandContext);
     VkCommandBuffer CommandBuffer = Context->GetMainCommandBuffer();
 
     VkSubmitInfo SubmitInfo = {};
@@ -437,8 +436,8 @@ FUInt32 FVulkanDevice::GetCurrentImageIndex() {
     return ImageIndex;
 }
 
-FRHITexture *FVulkanDevice::GetBackbuffer() {
-    return &BackbufferTexture;
+TRef<IRHITexture> FVulkanDevice::GetBackbuffer() {
+    return Backbuffer;
 }
 
 TRef<IRHIBuffer> FVulkanDevice::CreateBuffer(const FRHIBufferDescription &Description) {

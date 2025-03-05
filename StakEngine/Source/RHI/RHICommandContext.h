@@ -18,12 +18,12 @@ public:
     virtual void ResourceBarrier(const FRHIResourceBarrier &Barrier) = 0;
 
     // TODO: Allow multiple render targets
-    virtual void SetRenderTarget(const FRHITexture &Target, const FRHIRenderArea &RenderArea) = 0;
+    virtual void SetRenderTarget(TRef<IRHITexture> Target, const FRHIRenderArea &RenderArea) = 0;
     virtual void UnsetRenderTarget() = 0;
 
     // TODO: Bind multiple buffer at once
-    virtual void BindVertexBuffer(FRHIBuffer &Buffer, FUInt32 FirstVertex) = 0;
-    virtual void BindIndexBuffer(FRHIBuffer &Buffer) = 0;
+    virtual void BindVertexBuffer(TRef<IRHIBuffer> Buffer, FUInt32 FirstVertex) = 0;
+    virtual void BindIndexBuffer(TRef<IRHIBuffer> Buffer) = 0;
     
     virtual void DrawIndexed(FUInt32 IndexCount, FUInt32 InstanceCount, FUInt32 FirstIndex, FSInt32 VertexOffset, FUInt32 FirstInstance) = 0;
     virtual void DrawInstanced(FUInt32 VertexCount, FUInt32 InstanceCount, FUInt32 FirstVertex, FUInt32 FirstInstance) = 0;
@@ -31,45 +31,7 @@ public:
     virtual void SetViewport(FFloat X, FFloat Y, FFloat Width, FFloat Height, FFloat MinDepth, FFloat MaxDepth) = 0;
     virtual void SetScissor(FSInt32 X, FSInt32 Y, FUInt32 Width, FUInt32 Height) = 0;
 
-    virtual void BindPipeline(FRHIPipeline &Pipeline) = 0;
+    virtual void BindPipeline(TRef<IRHIPipeline> Pipeline) = 0;
 
     virtual void Shutdown() = 0;
-};
-
-class FRHICommandContext {
-public:
-    FRHICommandContext() = default;
-
-public:
-    FRHICommandContext(TRef<IRHICommandContext> Impl);
-
-    void Begin();
-    void End();
-
-    void RenderImGuiDrawData(ImDrawData* DrawData);
-
-    void ResourceBarrier(const FRHIResourceBarrier &Barrier);
-
-    // TODO: Allow multiple render targets
-    void SetRenderTarget(const FRHITexture &Target, const FRHIRenderArea &RenderArea);
-    void UnsetRenderTarget();
-
-    // TODO: Bind multiple vertex buffers at once
-    void BindVertexBuffer(FRHIBuffer &Buffer, FUInt32 FirstVertex);
-    void BindIndexBuffer(FRHIBuffer &Buffer);
-
-    void DrawIndexed(FUInt32 IndexCount, FUInt32 InstanceCount, FUInt32 FirstIndex, FSInt32 VertexOffset, FUInt32 FirstInstance);
-    void DrawInstanced(FUInt32 VertexCount, FUInt32 InstanceCount, FUInt32 FirstVertex, FUInt32 FirstInstance);
-
-    void SetViewport(FFloat X, FFloat Y, FFloat Width, FFloat Height, FFloat MinDepth, FFloat MaxDepth);
-    void SetScissor(FSInt32 X, FSInt32 Y, FUInt32 Width, FUInt32 Height);
-
-    void BindPipeline(FRHIPipeline &Pipeline);
-
-    void Shutdown();
-
-    inline TRef<IRHICommandContext> GetImpl() { return Impl; }
-
-private:
-    TRef<IRHICommandContext> Impl = nullptr;
 };

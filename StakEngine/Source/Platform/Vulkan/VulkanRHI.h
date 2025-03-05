@@ -76,7 +76,7 @@ VkImageLayout GetVulkanImageLayout(ERHIResourceState State);
 EVulkanQueue GetVulkanQueue(ERHIResourceState State);
 VkPipelineStageFlags GetVulkanPipelineStageMask(ERHIResourceState State);
 
-class FVulkanRHI : public FRHI {
+class FVulkanRHI : public IRHI {
 public:
     FVulkanRHI();
     ~FVulkanRHI();

@@ -23,17 +23,3 @@ public:
     
     virtual void Shutdown() = 0;
 };
-
-class FRHIShader {
-public:
-    FRHIShader(TRef<IRHIShader> Shader);
-    
-    ERHIShaderType GetType();
-    
-    inline TRef<IRHIShader> GetImpl() const { return Impl; }
-    
-    void Shutdown();
-    
-private:
-    TRef<IRHIShader> Impl = nullptr;
-};

@@ -22,7 +22,7 @@ public:
     virtual FUInt32 GetGraphicsQueueIndex() = 0;
     virtual FUInt32 GetPresentQueueIndex() = 0;
 
-    virtual void Submit(FRHICommandContext &Context) = 0;
+    virtual void Submit(TRef<IRHICommandContext> Context) = 0;
 
     virtual TRef<IRHICommandContext> CreateCommandContext() = 0;
 
@@ -36,48 +36,7 @@ public:
 
     virtual TRef<IRHIPipeline> CreatePipeline(const FRHIGraphicsPipelineStateDescription &Description) = 0;
 
-    virtual FRHITexture *GetBackbuffer() = 0;
+    virtual TRef<IRHITexture> GetBackbuffer() = 0;
 
     virtual void Shutdown() = 0;
-};
-
-class FRHIDevice {
-public:
-    FRHIDevice() = default;
-
-public:
-    FRHIDevice(TRef<IWindow> Window);
-
-    void PrepareFrame();
-    void PresentFrame();
-
-    void ImGuiNewFrame();
-    void ShutdownImGui();
-    void InitImGui();
-
-    void WaitForGPUIdle();
-
-    FUInt32 GetGraphicsQueueIndex();
-    FUInt32 GetPresentQueueIndex();
-
-    void Submit(FRHICommandContext& Context);
-
-    FRHICommandContext CreateCommandContext();
-
-    FRHIBuffer CreateBuffer(const FRHIBufferDescription &Description);
-
-    FRHIShader CreateShader(const FRHIShaderDescription &Description);
-
-    FRHIPipelineLayout CreatePipelineLayout(const FRHIPipelineLayoutDescription &Description);
-
-    FRHIDescriptorSetLayout CreateDescriptorSetLayout(const FRHIDescriptorSetLayoutDescription &Description);
-
-    FRHIPipeline CreatePipeline(const FRHIGraphicsPipelineStateDescription &Description);
-
-    FRHITexture *GetBackbuffer();
-
-    void Shutdown();
-
-private:
-    TRef<IRHIDevice> Impl = nullptr;
 };

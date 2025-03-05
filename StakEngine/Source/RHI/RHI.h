@@ -6,12 +6,12 @@
 
 #include <imgui.h>
 
-class FRHI {
+class IRHI {
 public:
-    FRHI() = default;
+    IRHI() = default;
 
-    FRHI(FRHI &) = delete;
-    FRHI &operator=(FRHI &) = delete;
+    IRHI(IRHI &) = delete;
+    IRHI &operator=(IRHI &) = delete;
 
 public:
     virtual TRef<IRHIDevice> CreateDevice(TRef<IWindow> Window) = 0;
@@ -20,4 +20,4 @@ public:
 void RHIInit();
 void RHIShutdown();
 TRef<IRHIDevice> RHICreateDeviceImpl(TRef<IWindow> Window);
-FRHIDevice RHICreateDevice(TRef<IWindow> Window);
+TRef<IRHIDevice> RHICreateDevice(TRef<IWindow> Window);

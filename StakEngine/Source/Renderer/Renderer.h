@@ -11,7 +11,7 @@ class FRenderProxy {
 public:
     virtual ~FRenderProxy() = default;
 
-    virtual void Render(FRHICommandContext &CommandContext) {}
+    virtual void Render(TRef<IRHICommandContext> CommandContext) {}
 };
 
 class FRenderer {
@@ -39,11 +39,11 @@ public:
 private:
     std::vector<FRenderProxy *> RenderProxies;
     FRenderProxy *PostRenderProxy = nullptr;
-    FRHICommandContext CommandContext;
-    FRHIDevice Device;
+    TRef<IRHICommandContext> CommandContext;
+    TRef<IRHIDevice> Device;
     TRef<IWindow> Window;
-    FRHITexture *Backbuffer;
+    TRef<IRHITexture> Backbuffer;
 
-    FRHIPipelineLayout PipelineLayout;
-    FRHIPipeline Pipeline;
+    TRef<IRHIPipelineLayout> PipelineLayout;
+    TRef<IRHIPipeline> Pipeline;
 };

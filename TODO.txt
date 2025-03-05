@@ -6,10 +6,6 @@ Update Renderer to to use global VkDevice on vulkan,
 This will remove the RHIDevice module and create a
   RHIViewport module that will now handle its own render targets.
 
-Remove FRHI... and just use TRef<IRHI...>, switching of graphics
-  apis should require a restart, otherwise the complexity might be
-  unucessarily high.
-
 With the removal of RHIDevice and addition of RHIViewport, the
   renderer can now be a global state, since it is not dependant
   on the main windows existance.

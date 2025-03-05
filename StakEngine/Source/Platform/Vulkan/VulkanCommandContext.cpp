@@ -91,7 +91,7 @@ void FVulkanCommandContext::TransitionBarrier(const FRHITransitionBarrier& Barri
             return;
         }
 
-        auto Texture = std::static_pointer_cast<FVulkanTexture>(Barrier.Resource->GetImpl());
+        auto Texture = std::static_pointer_cast<FVulkanTexture>(Barrier.Resource);
 
         VkImageMemoryBarrier ImageBarrier = {};
         ImageBarrier.sType = VK_STRUCTURE_TYPE_IMAGE_MEMORY_BARRIER;
@@ -138,8 +138,8 @@ void FVulkanCommandContext::TransitionBarrier(const FRHITransitionBarrier& Barri
     }
 }
 
-void FVulkanCommandContext::SetRenderTarget(const FRHITexture &Target, const FRHIRenderArea &RenderArea) {
-    auto VulkanTarget = std::static_pointer_cast<FVulkanTexture>(Target.GetImpl());
+void FVulkanCommandContext::SetRenderTarget(const TRef<IRHITexture> Target, const FRHIRenderArea &RenderArea) {
+    auto VulkanTarget = std::static_pointer_cast<FVulkanTexture>(Target);
 
     VkRenderingAttachmentInfo AttachmentInfo = {};
     AttachmentInfo.sType = VK_STRUCTURE_TYPE_RENDERING_ATTACHMENT_INFO;
@@ -171,24 +171,24 @@ void FVulkanCommandContext::UnsetRenderTarget() {
     vkCmdEndRendering(MainCommandBuffers[Device->GetCurrentFrameIndex()]);
 }
 
-void FVulkanCommandContext::BindVertexBuffer(FRHIBuffer &Buffer, FUInt32 FirstVertex) {
-    auto Impl = std::static_pointer_cast<FVulkanBuffer>(Buffer.GetImpl());
+void FVulkanCommandContext::BindVertexBuffer(TRef<IRHIBuffer> Buffer, FUInt32 FirstVertex) {
+    auto Impl = std::static_pointer_cast<FVulkanBuffer>(Buffer);
     VkDeviceSize Offset = 0;
     VkBuffer Buffers[] = { Impl->GetVulkanBuffer() };
     vkCmdBindVertexBuffers(MainCommandBuffers[Device->GetCurrentFrameIndex()], FirstVertex, 1, Buffers, &Offset);
 }
 
-void FVulkanCommandContext::BindIndexBuffer(FRHIBuffer &Buffer) {
-    auto Impl = std::static_pointer_cast<FVulkanBuffer>(Buffer.GetImpl());
-    vkCmdBindIndexBuffer(MainCommandBuffers[Device->GetCurrentFrameIndex()], Impl->GetVulkanBuffer(), 0, GetVulkanIndexType(Buffer.GetLayout().Elements[0].Format));
+void FVulkanCommandContext::BindIndexBuffer(TRef<IRHIBuffer> Buffer) {
+    auto Impl = std::static_pointer_cast<FVulkanBuffer>(Buffer);
+    vkCmdBindIndexBuffer(MainCommandBuffers[Device->GetCurrentFrameIndex()], Impl->GetVulkanBuffer(), 0, GetVulkanIndexType(Buffer->GetLayout().Elements[0].Format));
 }
 
 void FVulkanCommandContext::DrawIndexed(FUInt32 IndexCount, FUInt32 InstanceCount, FUInt32 FirstIndex, FSInt32 VertexOffset, FUInt32 FirstInstance) {
     vkCmdDrawIndexed(MainCommandBuffers[Device->GetCurrentFrameIndex()], IndexCount, InstanceCount, FirstIndex, VertexOffset, FirstInstance);
 }
 
-void FVulkanCommandContext::BindPipeline(FRHIPipeline &Pipeline) {
-    auto Impl = std::static_pointer_cast<FVulkanPipeline>(Pipeline.GetImpl());
+void FVulkanCommandContext::BindPipeline(TRef<IRHIPipeline> Pipeline) {
+    auto Impl = std::static_pointer_cast<FVulkanPipeline>(Pipeline);
     vkCmdBindPipeline(MainCommandBuffers[Device->GetCurrentFrameIndex()], Impl->GetVulkanBindPoint(), Impl->GetVulkanPipeline());
 }
 

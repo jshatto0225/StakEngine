@@ -10,26 +10,7 @@ public:
 
     virtual ERHIFormat GetFormat() = 0;
 
+    inline ERHIResourceType GetType() override { return ERHIResourceType::TEXTURE; }
+
     virtual FRHIRenderArea GetRenderArea() = 0;
-};
-
-class FRHITexture : public FRHIResource {
-public:
-    FRHITexture() = default;
-
-public:
-    // NOTE: To be used for swapchain images created by a device
-    FRHITexture(TRef<IRHITexture> Texture);
-
-    bool IsBackbuffer();
-
-    FRHIRenderArea GetRenderArea() const;
-
-    ERHIFormat GetFormat();
-    
-    inline ERHIResourceType GetType() const override {
-        return ERHIResourceType::TEXTURE;
-    }
-
-    void Shutdown() override;
 };

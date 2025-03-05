@@ -11,7 +11,7 @@ FVulkanPipelineLayout::FVulkanPipelineLayout(FVulkanDevice *Device, const FRHIPi
     Layouts.reserve(Description.DescriptorSetLayouts.size());
 
     for (auto &It : Description.DescriptorSetLayouts) {
-        Layouts.push_back(std::static_pointer_cast<FVulkanDescriptorSetLayout>(It.GetImpl())->GetLayout());
+        Layouts.push_back(std::static_pointer_cast<FVulkanDescriptorSetLayout>(It)->GetLayout());
     }
 
     Info.setLayoutCount = static_cast<FUInt32>(Layouts.size());
@@ -46,7 +46,7 @@ FVulkanPipeline::FVulkanPipeline(FVulkanDevice *Device, const FRHIGraphicsPipeli
         VkPipelineShaderStageCreateInfo Info = {};
         Info.sType = VK_STRUCTURE_TYPE_PIPELINE_SHADER_STAGE_CREATE_INFO;
         Info.stage = GetVulkanShaderStage(It->GetType());
-        Info.module = std::static_pointer_cast<FVulkanShader>(It->GetImpl())->GetVulkanShader();
+        Info.module = std::static_pointer_cast<FVulkanShader>(It)->GetVulkanShader();
         Info.pName = "main";
 
         ShaderStages.push_back(Info);
@@ -147,7 +147,7 @@ FVulkanPipeline::FVulkanPipeline(FVulkanDevice *Device, const FRHIGraphicsPipeli
     Info.pDepthStencilState = nullptr;
     Info.pColorBlendState = &ColorBlending;
     Info.pDynamicState = &DynamicState;
-    Info.layout = std::static_pointer_cast<FVulkanPipelineLayout>(Description.Layout->GetImpl())->GetLayout();
+    Info.layout = std::static_pointer_cast<FVulkanPipelineLayout>(Description.Layout)->GetLayout();
 
     CHECK_VK_ERR(vkCreateGraphicsPipelines(Device->GetVulkanDevice(), VK_NULL_HANDLE, 1, &Info, nullptr, &Pipeline), "Failed to create vulkan pipeline");
 }

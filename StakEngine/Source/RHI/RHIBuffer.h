@@ -3,6 +3,8 @@
 #include "RHIResource.h"
 #include <vector>
 
+#include "Log.h"
+
 struct FRHIBufferElement {
     FUInt32 Location = 0;
     FUInt32 Binding = 0;
@@ -13,9 +15,22 @@ struct FRHIBufferElement {
 struct FRHIBufferLayout {
     FRHIBufferLayout() = default;
 
-    FRHIBufferLayout(const std::vector<FRHIBufferElement> &Elements);
+    FRHIBufferLayout(const std::vector<FRHIBufferElement> &Elements) {
+        for (auto &Element : Elements) {
+            if (Element.Offset > Stride) {
+                Stride = Element.Offset;
+            }
+
+            switch (Element.Format) {
+            case ERHIFormat::B8G8R8A8_SRGB:
+                Stride += 4;
+            default:
+                SK_LOG_ERROR("Unsupported buffer element format");
+            }
+        }
+    }
     
-    std::vector<FRHIBufferElement> Elements = {};
+    std::vector<FRHIBufferElement> Elements;
     FUInt32 Stride = 0;
 };
 
@@ -46,23 +61,7 @@ public:
     
     void Shutdown() override = 0;
     
+    inline ERHIResourceType GetType() override { return ERHIResourceType::BUFFER; }
+
     virtual ERHIBufferType GetBufferType() = 0;
-};
-
-class FRHIBuffer : public FRHIResource {
-public:
-    FRHIBuffer(TRef<IRHIBuffer> Impl);
-
-    void SetData(void *Data, FUInt32 DataSize);
-    void *GetMappedBuffer();
-
-    FUInt32 GetElementCount();
-
-    FRHIBufferLayout GetLayout();
-
-    void Shutdown() override;
-
-    ERHIBufferType GetBufferType();
-    
-    inline ERHIResourceType GetType() const override { return ERHIResourceType::BUFFER; }
 };

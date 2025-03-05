@@ -14,7 +14,7 @@ class FVulkanDevice : public IRHIDevice {
 public:
     FVulkanDevice(TRef<IWindow> Window, VkInstance Instance);
 
-    void Submit(FRHICommandContext &CommandContext) override;
+    void Submit(TRef<IRHICommandContext> CommandContext) override;
 
     void ImGuiNewFrame() override;
     void ShutdownImGui() override;
@@ -39,7 +39,7 @@ public:
 
     TRef<IRHIPipeline> CreatePipeline(const FRHIGraphicsPipelineStateDescription &Description) override;
 
-    FRHITexture *GetBackbuffer() override;
+    TRef<IRHITexture> GetBackbuffer() override;
 
     void Shutdown() override;
 
@@ -81,7 +81,6 @@ private:
     VkDescriptorPool ImGuiPool = VK_NULL_HANDLE;
 
     TRef<FVulkanTexture> Backbuffer = nullptr;
-    FRHITexture BackbufferTexture;
 
     // NOTE: For one time commands
     VkCommandPool CommandPool = VK_NULL_HANDLE;
