@@ -2,17 +2,17 @@
 
 #include "VulkanDevice.h"
 
-FVulkanTexture::FVulkanTexture(FVulkanDevice &Device, VkSwapchainKHR Swapchain, FUInt32 ImageCount, VkExtent2D Extent, VkFormat Format) : Device(Device), Format(Format), Extent(Extent), Backbuffer(true) {
+FVulkanTexture::FVulkanTexture(FVulkanDevice *Device, VkSwapchainKHR Swapchain, FUInt32 ImageCount, VkExtent2D Extent, VkFormat Format) : Device(Device), Format(Format), Extent(Extent), Backbuffer(true) {
     RHIFormat = GetRHIFormat(Format);
     
     Images.resize(ImageCount);
 
-    vkGetSwapchainImagesKHR(Device.GetVulkanDevice(), Swapchain, &ImageCount, Images.data());
+    vkGetSwapchainImagesKHR(Device->GetVulkanDevice(), Swapchain, &ImageCount, Images.data());
 
     ImageViews.resize(Images.size());
 
     for (FUInt32 ImageViewIndex = 0; ImageViewIndex < Images.size(); ImageViewIndex++) {
-        ImageViews[ImageViewIndex] = VulkanCreateImageView(Device.GetVulkanDevice(), Images[ImageViewIndex], Format);
+        ImageViews[ImageViewIndex] = VulkanCreateImageView(Device->GetVulkanDevice(), Images[ImageViewIndex], Format);
     }
 
     SubresourceRanges.emplace_back(VK_IMAGE_ASPECT_COLOR_BIT, 0, 1, 0, 1);
@@ -26,7 +26,7 @@ FVulkanTexture::~FVulkanTexture() {
 
 void FVulkanTexture::Shutdown() {
     for (FUInt32 ImageIndex = 0; ImageIndex < Images.size(); ImageIndex++) {
-        vkDestroyImageView(Device.GetVulkanDevice(), ImageViews[ImageIndex], nullptr);
+        vkDestroyImageView(Device->GetVulkanDevice(), ImageViews[ImageIndex], nullptr);
     }
 
     Initialized = false;

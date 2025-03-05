@@ -5,7 +5,7 @@
 
 class FVulkanPipelineLayout : public IRHIPipelineLayout {
 public:
-    FVulkanPipelineLayout(FVulkanDevice &Device, const FRHIPipelineLayoutDescription &Description);
+    FVulkanPipelineLayout(FVulkanDevice *Device, const FRHIPipelineLayoutDescription &Description);
     
     void Shutdown() override;
     
@@ -13,14 +13,14 @@ public:
     VkPipelineLayout GetLayout() { return Layout; }
     
 private:
-    FVulkanDevice &Device;
+    FVulkanDevice *Device;
     
     VkPipelineLayout Layout = VK_NULL_HANDLE;
 };
 
 class FVulkanPipeline : public IRHIPipeline {
 public:
-    FVulkanPipeline(FVulkanDevice &Device, const FRHIGraphicsPipelineStateDescription &Description);
+    FVulkanPipeline(FVulkanDevice *Device, const FRHIGraphicsPipelineStateDescription &Description);
     
     void Shutdown() override;
     
@@ -29,7 +29,7 @@ public:
     inline VkPipelineBindPoint GetVulkanBindPoint() { return BindPoint; }
     
 private:
-    FVulkanDevice &Device;
+    FVulkanDevice *Device;
 
     VkPipelineBindPoint BindPoint;
     

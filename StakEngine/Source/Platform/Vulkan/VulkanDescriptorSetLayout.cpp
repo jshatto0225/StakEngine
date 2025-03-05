@@ -2,7 +2,7 @@
 
 #include "VulkanRHI.h"
 
-FVulkanDescriptorSetLayout::FVulkanDescriptorSetLayout(FVulkanDevice &Device, const FRHIDescriptorSetLayoutDescription &Description) : Device(Device) {
+FVulkanDescriptorSetLayout::FVulkanDescriptorSetLayout(FVulkanDevice *Device, const FRHIDescriptorSetLayoutDescription &Description) : Device(Device) {
     VkDescriptorSetLayoutCreateInfo Info = {};
     Info.sType = VK_STRUCTURE_TYPE_DESCRIPTOR_SET_LAYOUT_CREATE_INFO;
     
@@ -21,9 +21,9 @@ FVulkanDescriptorSetLayout::FVulkanDescriptorSetLayout(FVulkanDevice &Device, co
     Info.bindingCount = static_cast<FUInt32>(Bindings.size());
     Info.pBindings = Bindings.data();
         
-    CHECK_VK_ERR(vkCreateDescriptorSetLayout(Device.GetVulkanDevice(), &Info, nullptr, &Layout), "Failed to create descriptor set layout");
+    CHECK_VK_ERR(vkCreateDescriptorSetLayout(Device->GetVulkanDevice(), &Info, nullptr, &Layout), "Failed to create descriptor set layout");
 }
 
 void FVulkanDescriptorSetLayout::Shutdown() {
-    vkDestroyDescriptorSetLayout(Device.GetVulkanDevice(), Layout, nullptr);
+    vkDestroyDescriptorSetLayout(Device->GetVulkanDevice(), Layout, nullptr);
 }

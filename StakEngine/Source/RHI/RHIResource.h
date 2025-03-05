@@ -24,19 +24,19 @@ enum class ERHITransitionType {
 };
 
 struct FRHITransitionBarrier {
-    const FRHIResource &Resource;
+    FRHIResource *Resource;
     ERHIResourceState StateBefore;
     ERHIResourceState StateAfter;
     FUInt32 Subresource;
 };
 
 struct FRHIUAVBarrier {
-    const FRHIResource &Resource;
+    FRHIResource *Resource;
 };
 
 struct FRHIAliasingBarrier {
-    const FRHIResource &ResourceBefore;
-    const FRHIResource &ResourceAfter;
+    FRHIResource *ResourceBefore;
+    FRHIResource *ResourceAfter;
 };
 
 enum class ERHIBarrierType {

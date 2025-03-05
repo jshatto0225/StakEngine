@@ -39,7 +39,7 @@ public:
 
     TRef<IRHIPipeline> CreatePipeline(const FRHIGraphicsPipelineStateDescription &Description) override;
 
-    FRHITexture &GetBackbuffer() override;
+    FRHITexture *GetBackbuffer() override;
 
     void Shutdown() override;
 

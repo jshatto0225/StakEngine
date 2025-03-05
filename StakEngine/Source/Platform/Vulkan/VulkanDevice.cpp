@@ -248,7 +248,7 @@ void FVulkanDevice::CreateSwapchain() {
     SwapchainInfo.oldSwapchain = VK_NULL_HANDLE;
     CHECK_VK_ERR(vkCreateSwapchainKHR(Device, &SwapchainInfo, nullptr, &Swapchain), "Failed to create swapchian");
 
-    Backbuffer = TCreateRef<FVulkanTexture>(*this, Swapchain, ImageCount, SwapchainExtent, Format.format);
+    Backbuffer = TCreateRef<FVulkanTexture>(this, Swapchain, ImageCount, SwapchainExtent, Format.format);
     BackbufferTexture = FRHITexture(Backbuffer);
 
     VkCommandPoolCreateInfo CommandPoolInfo = {};
@@ -414,7 +414,7 @@ void FVulkanDevice::InitImGui() {
 }
 
 TRef<IRHICommandContext> FVulkanDevice::CreateCommandContext() {
-    return TCreateRef<FVulkanCommandContext>(*this);
+    return TCreateRef<FVulkanCommandContext>(this);
 }
 
 FUInt32 FVulkanDevice::GetCurrentFrameIndex() {
@@ -437,12 +437,12 @@ FUInt32 FVulkanDevice::GetCurrentImageIndex() {
     return ImageIndex;
 }
 
-FRHITexture &FVulkanDevice::GetBackbuffer() {
-    return BackbufferTexture;
+FRHITexture *FVulkanDevice::GetBackbuffer() {
+    return &BackbufferTexture;
 }
 
 TRef<IRHIBuffer> FVulkanDevice::CreateBuffer(const FRHIBufferDescription &Description) {
-    return TCreateRef<FVulkanBuffer>(*this, Description);
+    return TCreateRef<FVulkanBuffer>(this, Description);
 }
 
 VkCommandBuffer FVulkanDevice::BeginOneTimeVulkanCommandBuffer() {
@@ -527,17 +527,17 @@ FUInt32 FVulkanDevice::FindVulkanMemoryType(FUInt32 Filter, VkMemoryPropertyFlag
 }
 
 TRef<IRHIShader> FVulkanDevice::CreateShader(const FRHIShaderDescription &Description) {
-    return TCreateRef<FVulkanShader>(*this, Description);
+    return TCreateRef<FVulkanShader>(this, Description);
 }
 
 TRef<IRHIPipelineLayout> FVulkanDevice::CreatePipelineLayout(const FRHIPipelineLayoutDescription &Description) {
-    return TCreateRef<FVulkanPipelineLayout>(*this, Description);
+    return TCreateRef<FVulkanPipelineLayout>(this, Description);
 }
 
 TRef<IRHIDescriptorSetLayout> FVulkanDevice::CreateDescriptorSetLayout(const FRHIDescriptorSetLayoutDescription &Description) {
-    return TCreateRef<FVulkanDescriptorSetLayout>(*this, Description);
+    return TCreateRef<FVulkanDescriptorSetLayout>(this, Description);
 }
 
 TRef<IRHIPipeline> FVulkanDevice::CreatePipeline(const FRHIGraphicsPipelineStateDescription &Description) {
-    return TCreateRef<FVulkanPipeline>(*this, Description);
+    return TCreateRef<FVulkanPipeline>(this, Description);
 }

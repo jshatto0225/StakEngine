@@ -4,7 +4,7 @@
 
 class FVulkanBuffer : public IRHIBuffer {
 public:
-    FVulkanBuffer(FVulkanDevice &Device, const FRHIBufferDescription &Description);
+    FVulkanBuffer(FVulkanDevice *Device, const FRHIBufferDescription &Description);
 
     void SetData(void *Data, FUInt32 DataSize) override;
     void *GetMappedBuffer() override;
@@ -21,7 +21,7 @@ public:
     inline VkBuffer GetVulkanBuffer() { return Buffer; }
     
 private:
-    FVulkanDevice &Device;
+    FVulkanDevice *Device;
     
     bool UseStagingBuffer = false;
     

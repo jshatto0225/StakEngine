@@ -28,7 +28,7 @@ void FRenderer::Init(TRef<IWindow> Window) {
     PipelineLayout = Device.CreatePipelineLayout(PipelineLyaoutDescription);
 
     FRHIGraphicsPipelineStateDescription PipelineDescription = {};
-    PipelineDescription.ColorFormats = { Backbuffer.GetFormat() };
+    PipelineDescription.ColorFormats = { Backbuffer->GetFormat() };
     PipelineDescription.DepthStencilFormat = { ERHIFormat::UNDEFINED };
     PipelineDescription.Layout = &PipelineLayout;
     PipelineDescription.Shaders = { &VertexShader, &FragmentShader };
@@ -66,11 +66,11 @@ void FRenderer::Render() {
 
         CommandContext.ResourceBarrier(RenderTargetBarrier);
 
-        CommandContext.SetRenderTarget(Backbuffer, Backbuffer.GetRenderArea());
+        CommandContext.SetRenderTarget(*Backbuffer, Backbuffer->GetRenderArea());
 
         CommandContext.BindPipeline(Pipeline);
-        auto [LayerCount, X, Y, Width, Height] = Backbuffer.GetRenderArea();
-        CommandContext.SetViewport(static_cast<FFloat>(X), static_cast<FFloat>(Y), Width, Height, 0.0f, 1.0f);
+        auto [LayerCount, X, Y, Width, Height] = Backbuffer->GetRenderArea();
+        CommandContext.SetViewport(static_cast<FFloat>(X), static_cast<FFloat>(Y), static_cast<FFloat>(Width), static_cast<FFloat>(Height), 0.0f, 1.0f);
         CommandContext.SetScissor(static_cast<FSInt32>(X), static_cast<FSInt32>(Y), Width, Height);
         CommandContext.DrawInstanced(3, 1, 0, 0);
 

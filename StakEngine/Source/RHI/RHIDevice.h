@@ -36,7 +36,7 @@ public:
 
     virtual TRef<IRHIPipeline> CreatePipeline(const FRHIGraphicsPipelineStateDescription &Description) = 0;
 
-    virtual FRHITexture &GetBackbuffer() = 0;
+    virtual FRHITexture *GetBackbuffer() = 0;
 
     virtual void Shutdown() = 0;
 };
@@ -74,7 +74,7 @@ public:
 
     FRHIPipeline CreatePipeline(const FRHIGraphicsPipelineStateDescription &Description);
 
-    FRHITexture &GetBackbuffer();
+    FRHITexture *GetBackbuffer();
 
     void Shutdown();
 

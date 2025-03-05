@@ -42,7 +42,7 @@ private:
     FRHICommandContext CommandContext;
     FRHIDevice Device;
     TRef<IWindow> Window;
-    FRHITexture Backbuffer;
+    FRHITexture *Backbuffer;
 
     FRHIPipelineLayout PipelineLayout;
     FRHIPipeline Pipeline;

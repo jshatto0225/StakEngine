@@ -6,7 +6,7 @@
 
 class FVulkanShader : public IRHIShader {
 public:
-    FVulkanShader(FVulkanDevice &Device, const FRHIShaderDescription &Description);
+    FVulkanShader(FVulkanDevice *Device, const FRHIShaderDescription &Description);
     
     void Shutdown() override;
     
@@ -16,7 +16,7 @@ public:
     inline VkShaderModule GetVulkanShader() { return Shader; }
     
 private:
-    FVulkanDevice &Device;
+    FVulkanDevice *Device;
     
     VkShaderModule Shader = VK_NULL_HANDLE;
     ERHIShaderType Type = ERHIShaderType::VERTEX;

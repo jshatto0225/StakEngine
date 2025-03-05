@@ -55,7 +55,7 @@ FUInt32 FRHIDevice::GetPresentQueueIndex() {
     return Impl->GetPresentQueueIndex();
 }
 
-FRHITexture &FRHIDevice::GetBackbuffer() {
+FRHITexture *FRHIDevice::GetBackbuffer() {
     return Impl->GetBackbuffer();
 }
 
