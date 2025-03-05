@@ -1,0 +1,44 @@
+Update Renderer to to use global VkDevice on vulkan,
+  Check for initial window support, but then assume
+  any window openned after is supporte (Or maybe dont
+  open a new one if it cant be rendered to).
+
+This will remove the RHIDevice module and create a
+  RHIViewport module that will now handle its own render targets.
+
+Remove FRHI... and just use TRef<IRHI...>, switching of graphics
+  apis should require a restart, otherwise the complexity might be
+  unucessarily high.
+
+With the removal of RHIDevice and addition of RHIViewport, the
+  renderer can now be a global state, since it is not dependant
+  on the main windows existance.
+
+Allow game objects to have new viewports assigned to them to
+  read input from different windows, while still not needing
+  to call AppGetWindow() every time input needs to be read.
+
+Create a high level FViewport class that contains a
+  FRHIViewport, and other things like an input state
+
+Stop using references as class/struct members,
+  use pointers/smart pointers.
+
+RHI objects should not use destructors. Constructors should only
+  be used for setting members, or allocating memory, not for
+  any initialization.
+
+As long as the RHI is shutdown last the order of shutdowns
+  of resources in the renderer should no longer be a concern,
+  since now the device is in the RHI.
+
+*** Summary ***
++ FViewport
++ FRenderer GRenderer
++ FRHI GRHI
+- RHIDevice
++ GApplication->Viewport // NOTE: Public member
+// NOTE: Both will implicitly have references
+// to the engine and its main systems (Viewport, ...)
++ SGame
++ SEditor

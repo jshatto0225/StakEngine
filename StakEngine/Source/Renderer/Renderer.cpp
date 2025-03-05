@@ -69,12 +69,9 @@ void FRenderer::Render() {
         CommandContext.SetRenderTarget(Backbuffer, Backbuffer.GetRenderArea());
 
         CommandContext.BindPipeline(Pipeline);
-
         auto [LayerCount, X, Y, Width, Height] = Backbuffer.GetRenderArea();
-
         CommandContext.SetViewport(static_cast<FFloat>(X), static_cast<FFloat>(Y), Width, Height, 0.0f, 1.0f);
         CommandContext.SetScissor(static_cast<FSInt32>(X), static_cast<FSInt32>(Y), Width, Height);
-
         CommandContext.DrawInstanced(3, 1, 0, 0);
 
         for (auto Proxy : RenderProxies) {
