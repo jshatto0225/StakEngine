@@ -21,9 +21,6 @@ Allow game objects to have new viewports assigned to them to
 Create a high level FViewport class that contains a
   FRHIViewport, and other things like an input state
 
-Stop using references as class/struct members,
-  use pointers/smart pointers.
-
 RHI objects should not use destructors. Constructors should only
   be used for setting members, or allocating memory, not for
   any initialization.
