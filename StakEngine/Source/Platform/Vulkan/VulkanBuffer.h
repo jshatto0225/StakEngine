@@ -1,10 +1,10 @@
 #include "RHIBuffer.h"
 
-#include "VulkanDevice.h"
+#include "VulkanRHI.h"
 
 class FVulkanBuffer : public IRHIBuffer {
 public:
-    FVulkanBuffer(FVulkanDevice *Device, const FRHIBufferDescription &Description);
+    FVulkanBuffer(VkDevice Device, const FRHIBufferDescription &Description);
 
     void SetData(void *Data, FUInt32 DataSize) override;
     void *GetMappedBuffer() override;
@@ -21,7 +21,7 @@ public:
     inline VkBuffer GetVulkanBuffer() { return Buffer; }
     
 private:
-    FVulkanDevice *Device;
+    VkDevice Device;
     
     bool UseStagingBuffer = false;
     

@@ -7,7 +7,7 @@
 #include "Window.h"
 #include "Events.h"
 
-#include "RHIDevice.h"
+class IRHIViewport;
 
 class FGLFWWindow final : public IWindow {
 public:
@@ -29,25 +29,29 @@ public:
 
     FWindowSizeData GetFramebufferSize() override;
 
+    TRef<IRHIViewport> GetRHIViewport() override;
+
 public:
     inline GLFWwindow *GetGLFWWindow() { return NativeHandle; }
 
 private:
     struct FWindowData {
-        FWindowCloseEventFn WindowCloseEventFn;
-        FWindowResizeEventFn WindowResizeEventFn;
-        FKeyEventFn KeyEventFn;
-        FMouseButtonEventFn MouseButtonEventFn;
-        FMouseMoveEventFn MouseMoveEventFn;
-        FSInt32 X;
-        FSInt32 Y;
-        FSInt32 Width;
-        FSInt32 Height;
-        FSInt32 FramebufferWidth;
-        FSInt32 FramebufferHeight;
+        FWindowCloseEventFn WindowCloseEventFn = nullptr;
+        FWindowResizeEventFn WindowResizeEventFn = nullptr;
+        FKeyEventFn KeyEventFn = nullptr;
+        FMouseButtonEventFn MouseButtonEventFn = nullptr;
+        FMouseMoveEventFn MouseMoveEventFn = nullptr;
+        FSInt32 X = 0;
+        FSInt32 Y = 0;
+        FSInt32 Width = 0;
+        FSInt32 Height = 0;
+        FSInt32 FramebufferWidth = 0;
+        FSInt32 FramebufferHeight = 0;
         std::string Title;
     };
 
-    FWindowData Data;
-    GLFWwindow *NativeHandle = NULL;
+    FWindowData Data = {};
+    GLFWwindow *NativeHandle = nullptr;
+
+    TRef<IRHIViewport> Viewport = nullptr;
 };

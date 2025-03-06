@@ -1,11 +1,11 @@
 #pragma once
 
 #include "RHIDescriptorSetLayout.h"
-#include "VulkanDevice.h"
+#include "VulkanRHI.h"
 
 class FVulkanDescriptorSetLayout : public IRHIDescriptorSetLayout {
 public:
-    FVulkanDescriptorSetLayout(FVulkanDevice *Device, const FRHIDescriptorSetLayoutDescription &Description);
+    FVulkanDescriptorSetLayout(VkDevice Device, const FRHIDescriptorSetLayoutDescription &Description);
     
     void Shutdown() override;
     
@@ -13,7 +13,7 @@ public:
     inline VkDescriptorSetLayout GetLayout() const { return Layout; }
     
 private:
-    FVulkanDevice *Device;
+    VkDevice Device;
     
     VkDescriptorSetLayout Layout = VK_NULL_HANDLE;
 };

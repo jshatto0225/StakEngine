@@ -2,7 +2,7 @@
 
 #include <fstream>
 
-FVulkanShader::FVulkanShader(FVulkanDevice *Device, const FRHIShaderDescription &Description) : Type(Description.Type), Device(Device) {
+FVulkanShader::FVulkanShader(VkDevice Device, const FRHIShaderDescription &Description) : Type(Description.Type), Device(Device) {
     std::string Path = "Assets/Shaders/" + Description.Name + ".spv";
     std::ifstream File(Path, std::ios::ate | std::ios::binary);
     
@@ -22,9 +22,9 @@ FVulkanShader::FVulkanShader(FVulkanDevice *Device, const FRHIShaderDescription 
     Info.codeSize = static_cast<FUInt32>(ShaderCode.size());
     Info.pCode = reinterpret_cast<const FUInt32 *>(ShaderCode.data());
     
-    CHECK_VK_ERR(vkCreateShaderModule(Device->GetVulkanDevice(), &Info, nullptr, &Shader), "Failed to create shader module");
+    CHECK_VK_ERR(vkCreateShaderModule(Device, &Info, nullptr, &Shader), "Failed to create shader module");
 }
 
 void FVulkanShader::Shutdown() {
-    vkDestroyShaderModule(Device->GetVulkanDevice(), Shader, nullptr);
+    vkDestroyShaderModule(Device, Shader, nullptr);
 }

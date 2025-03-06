@@ -32,6 +32,8 @@ FApplication::FApplication(const FApplicationSpec &Spec) {
 
     Name = Spec.AppName;
 
+    RHIInit();
+
     FWindowConfig Cfg = {
         Spec.WindowWidth,
         Spec.WindowHeight,
@@ -61,8 +63,6 @@ FApplication::FApplication(const FApplicationSpec &Spec) {
     });
 
     Input = TCreateRef<FInput>(Window);
-
-    RHIInit();
 
     Renderer.Init(Window);
 

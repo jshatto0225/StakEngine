@@ -7,14 +7,17 @@
 
 #include <backends/imgui_impl_vulkan.h>
 
-FVulkanCommandContext::FVulkanCommandContext(FVulkanDevice *Device) : Device(Device) {
+extern IRHI *GRHI;
+
+FVulkanCommandContext::FVulkanCommandContext(VkDevice Device) : Device(Device) {
     VkCommandPoolCreateInfo CommandPoolInfo = {};
     
     CommandPoolInfo.sType = VK_STRUCTURE_TYPE_COMMAND_POOL_CREATE_INFO;
     CommandPoolInfo.flags = VK_COMMAND_POOL_CREATE_RESET_COMMAND_BUFFER_BIT;
-    CommandPoolInfo.queueFamilyIndex = Device->GetGraphicsQueueIndex();
+    auto RHI = reinterpret_cast<FVulkanRHI *>(GRHI);
+    CommandPoolInfo.queueFamilyIndex = RHI->GetGraphicsQueueIndex();
     
-    CHECK_VK_ERR(vkCreateCommandPool(Device->GetVulkanDevice(), &CommandPoolInfo, nullptr, &CommandPool), "Failed to create vulkan command pool");
+    CHECK_VK_ERR(vkCreateCommandPool(Device, &CommandPoolInfo, nullptr, &CommandPool), "Failed to create vulkan command pool");
     
     VkCommandBufferAllocateInfo AllocInfo = {};
     AllocInfo.sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_ALLOCATE_INFO;
@@ -23,12 +26,12 @@ FVulkanCommandContext::FVulkanCommandContext(FVulkanDevice *Device) : Device(Dev
     AllocInfo.commandBufferCount = MAX_FRAMES_IN_FLIGHT;
     
     MainCommandBuffers.resize(MAX_FRAMES_IN_FLIGHT);
-    CHECK_VK_ERR(vkAllocateCommandBuffers(Device->GetVulkanDevice(), &AllocInfo, MainCommandBuffers.data()), "Failed to allocate vulkan command buffers");
+    CHECK_VK_ERR(vkAllocateCommandBuffers(Device, &AllocInfo, MainCommandBuffers.data()), "Failed to allocate vulkan command buffers");
 }
 
 void FVulkanCommandContext::Shutdown() {
-    vkFreeCommandBuffers(Device->GetVulkanDevice(), CommandPool, static_cast<FUInt32>(MainCommandBuffers.size()), MainCommandBuffers.data());
-    vkDestroyCommandPool(Device->GetVulkanDevice(), CommandPool, nullptr);
+    vkFreeCommandBuffers(Device, CommandPool, static_cast<FUInt32>(MainCommandBuffers.size()), MainCommandBuffers.data());
+    vkDestroyCommandPool(Device, CommandPool, nullptr);
 
     Initialized = false;
 }
@@ -40,12 +43,12 @@ void FVulkanCommandContext::Begin() {
     }
 
     Active = true;
-
-    vkResetCommandBuffer(MainCommandBuffers[Device->GetCurrentFrameIndex()], 0);
+    auto RHI = reinterpret_cast<FVulkanRHI *>(GRHI);
+    vkResetCommandBuffer(MainCommandBuffers[RHI->GetCurrentFrameIndex()], 0);
 
     VkCommandBufferBeginInfo BeginInfo = {};
     BeginInfo.sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_BEGIN_INFO;
-    CHECK_VK_ERR(vkBeginCommandBuffer(MainCommandBuffers[Device->GetCurrentFrameIndex()], &BeginInfo), "Failed to begin command buffer");
+    CHECK_VK_ERR(vkBeginCommandBuffer(MainCommandBuffers[RHI->GetCurrentFrameIndex()], &BeginInfo), "Failed to begin command buffer");
 }
 
 void FVulkanCommandContext::End() {
@@ -54,7 +57,8 @@ void FVulkanCommandContext::End() {
         return;
     }
 
-    vkEndCommandBuffer(MainCommandBuffers[Device->GetCurrentFrameIndex()]);
+    auto RHI = reinterpret_cast<FVulkanRHI *>(GRHI);
+    vkEndCommandBuffer(MainCommandBuffers[RHI->GetCurrentFrameIndex()]);
 
     Active = false;
 }
@@ -65,11 +69,13 @@ void FVulkanCommandContext::RenderImGuiDrawData(ImDrawData* DrawData) {
         return;
     }
 
-    ImGui_ImplVulkan_RenderDrawData(DrawData, MainCommandBuffers[Device->GetCurrentFrameIndex()]);
+    auto RHI = reinterpret_cast<FVulkanRHI *>(GRHI);
+    ImGui_ImplVulkan_RenderDrawData(DrawData, MainCommandBuffers[RHI->GetCurrentFrameIndex()]);
 }
 
 VkCommandBuffer FVulkanCommandContext::GetMainCommandBuffer() {
-    return MainCommandBuffers[Device->GetCurrentFrameIndex()];
+    auto RHI = reinterpret_cast<FVulkanRHI *>(GRHI);
+    return MainCommandBuffers[RHI->GetCurrentFrameIndex()];
 }
 
 void FVulkanCommandContext::ResourceBarrier(const FRHIResourceBarrier &Barrier) {
@@ -91,6 +97,8 @@ void FVulkanCommandContext::TransitionBarrier(const FRHITransitionBarrier& Barri
             return;
         }
 
+        auto RHI = reinterpret_cast<FVulkanRHI *>(GRHI);
+
         auto Texture = std::static_pointer_cast<FVulkanTexture>(Barrier.Resource);
 
         VkImageMemoryBarrier ImageBarrier = {};
@@ -103,9 +111,9 @@ void FVulkanCommandContext::TransitionBarrier(const FRHITransitionBarrier& Barri
         if (SrcQueue == EVulkanQueue::ANY) {
             ImageBarrier.srcQueueFamilyIndex = VK_QUEUE_FAMILY_IGNORED;
         } else if (SrcQueue == EVulkanQueue::GRAPHICS) {
-            ImageBarrier.srcQueueFamilyIndex = Device->GetGraphicsQueueIndex();
+            ImageBarrier.srcQueueFamilyIndex = RHI->GetGraphicsQueueIndex();
         } else if (SrcQueue == EVulkanQueue::PRESENT) {
-            ImageBarrier.srcQueueFamilyIndex = Device->GetPresentQueueIndex();
+            ImageBarrier.srcQueueFamilyIndex = RHI->GetActivePresentQueueIndex();
         } else {
             SK_LOG_ERROR("Unsupported source queue");
             return;
@@ -114,22 +122,22 @@ void FVulkanCommandContext::TransitionBarrier(const FRHITransitionBarrier& Barri
         if (DstQueue == EVulkanQueue::ANY) {
             ImageBarrier.dstQueueFamilyIndex = VK_QUEUE_FAMILY_IGNORED;
         } else if (DstQueue == EVulkanQueue::GRAPHICS) {
-            ImageBarrier.dstQueueFamilyIndex = Device->GetGraphicsQueueIndex();
+            ImageBarrier.dstQueueFamilyIndex = RHI->GetGraphicsQueueIndex();
         } else if (DstQueue == EVulkanQueue::PRESENT) {
-            ImageBarrier.dstQueueFamilyIndex = Device->GetPresentQueueIndex();
+            ImageBarrier.dstQueueFamilyIndex = RHI->GetActivePresentQueueIndex();
         } else {
             SK_LOG_ERROR("Unsupported destination queue");
             return;
         }
         if (Texture->IsBackbuffer()) {
-            ImageBarrier.image = Texture->GetVulkanImage(Device->GetCurrentImageIndex());
+            ImageBarrier.image = Texture->GetVulkanImage(RHI->GetCurrentImageIndex());
         } else {
-            ImageBarrier.image = Texture->GetVulkanImage(Device->GetCurrentFrameIndex());
+            ImageBarrier.image = Texture->GetVulkanImage(RHI->GetCurrentFrameIndex());
         }
         ImageBarrier.subresourceRange = Texture->GetVulkanSubresourceRange(Barrier.Subresource);
 
         // TODO: Batch pipeline barrier calls
-        vkCmdPipelineBarrier(MainCommandBuffers[Device->GetCurrentFrameIndex()], GetVulkanPipelineStageMask(Barrier.StateBefore), GetVulkanPipelineStageMask(Barrier.StateAfter), 0 /* TODO: Dependency Flags */, 0, nullptr, 0, nullptr, 1, &ImageBarrier);
+        vkCmdPipelineBarrier(MainCommandBuffers[RHI->GetCurrentFrameIndex()], GetVulkanPipelineStageMask(Barrier.StateBefore), GetVulkanPipelineStageMask(Barrier.StateAfter), 0 /* TODO: Dependency Flags */, 0, nullptr, 0, nullptr, 1, &ImageBarrier);
         break;
     }
     default:
@@ -141,6 +149,8 @@ void FVulkanCommandContext::TransitionBarrier(const FRHITransitionBarrier& Barri
 void FVulkanCommandContext::SetRenderTarget(const TRef<IRHITexture> Target, const FRHIRenderArea &RenderArea) {
     auto VulkanTarget = std::static_pointer_cast<FVulkanTexture>(Target);
 
+    auto RHI = reinterpret_cast<FVulkanRHI *>(GRHI);
+
     VkRenderingAttachmentInfo AttachmentInfo = {};
     AttachmentInfo.sType = VK_STRUCTURE_TYPE_RENDERING_ATTACHMENT_INFO;
     AttachmentInfo.clearValue.color.float32[0] = 1.0f;
@@ -148,9 +158,9 @@ void FVulkanCommandContext::SetRenderTarget(const TRef<IRHITexture> Target, cons
     AttachmentInfo.clearValue.color.float32[2] = 1.0f;
     AttachmentInfo.clearValue.color.float32[3] = 1.0f;
     if (VulkanTarget->IsBackbuffer()) {
-        AttachmentInfo.imageView = VulkanTarget->GetVulkanImageView(Device->GetCurrentImageIndex());
+        AttachmentInfo.imageView = VulkanTarget->GetVulkanImageView(RHI->GetCurrentImageIndex());
     } else {
-        AttachmentInfo.imageView = VulkanTarget->GetVulkanImageView(Device->GetCurrentFrameIndex());
+        AttachmentInfo.imageView = VulkanTarget->GetVulkanImageView(RHI->GetCurrentFrameIndex());
     }
     AttachmentInfo.imageLayout = VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL;
     AttachmentInfo.loadOp = VK_ATTACHMENT_LOAD_OP_CLEAR;
@@ -164,39 +174,46 @@ void FVulkanCommandContext::SetRenderTarget(const TRef<IRHITexture> Target, cons
     RenderingInfo.layerCount = RenderArea.LayerCount;
     RenderingInfo.renderArea.extent = { RenderArea.X, RenderArea.Y };
     RenderingInfo.renderArea.extent = { RenderArea.Width, RenderArea.Height };
-    vkCmdBeginRendering(MainCommandBuffers[Device->GetCurrentFrameIndex()], &RenderingInfo);
+    vkCmdBeginRendering(MainCommandBuffers[RHI->GetCurrentFrameIndex()], &RenderingInfo);
 }
 
 void FVulkanCommandContext::UnsetRenderTarget() {
-    vkCmdEndRendering(MainCommandBuffers[Device->GetCurrentFrameIndex()]);
+    auto RHI = reinterpret_cast<FVulkanRHI *>(GRHI);
+    vkCmdEndRendering(MainCommandBuffers[RHI->GetCurrentFrameIndex()]);
 }
 
 void FVulkanCommandContext::BindVertexBuffer(TRef<IRHIBuffer> Buffer, FUInt32 FirstVertex) {
     auto Impl = std::static_pointer_cast<FVulkanBuffer>(Buffer);
+    auto RHI = reinterpret_cast<FVulkanRHI *>(GRHI);
     VkDeviceSize Offset = 0;
     VkBuffer Buffers[] = { Impl->GetVulkanBuffer() };
-    vkCmdBindVertexBuffers(MainCommandBuffers[Device->GetCurrentFrameIndex()], FirstVertex, 1, Buffers, &Offset);
+    vkCmdBindVertexBuffers(MainCommandBuffers[RHI->GetCurrentFrameIndex()], FirstVertex, 1, Buffers, &Offset);
 }
 
 void FVulkanCommandContext::BindIndexBuffer(TRef<IRHIBuffer> Buffer) {
     auto Impl = std::static_pointer_cast<FVulkanBuffer>(Buffer);
-    vkCmdBindIndexBuffer(MainCommandBuffers[Device->GetCurrentFrameIndex()], Impl->GetVulkanBuffer(), 0, GetVulkanIndexType(Buffer->GetLayout().Elements[0].Format));
+    auto RHI = reinterpret_cast<FVulkanRHI *>(GRHI);
+    vkCmdBindIndexBuffer(MainCommandBuffers[RHI->GetCurrentFrameIndex()], Impl->GetVulkanBuffer(), 0, GetVulkanIndexType(Buffer->GetLayout().Elements[0].Format));
 }
 
 void FVulkanCommandContext::DrawIndexed(FUInt32 IndexCount, FUInt32 InstanceCount, FUInt32 FirstIndex, FSInt32 VertexOffset, FUInt32 FirstInstance) {
-    vkCmdDrawIndexed(MainCommandBuffers[Device->GetCurrentFrameIndex()], IndexCount, InstanceCount, FirstIndex, VertexOffset, FirstInstance);
+    auto RHI = reinterpret_cast<FVulkanRHI *>(GRHI);
+    vkCmdDrawIndexed(MainCommandBuffers[RHI->GetCurrentFrameIndex()], IndexCount, InstanceCount, FirstIndex, VertexOffset, FirstInstance);
 }
 
 void FVulkanCommandContext::BindPipeline(TRef<IRHIPipeline> Pipeline) {
+    auto RHI = reinterpret_cast<FVulkanRHI *>(GRHI);
     auto Impl = std::static_pointer_cast<FVulkanPipeline>(Pipeline);
-    vkCmdBindPipeline(MainCommandBuffers[Device->GetCurrentFrameIndex()], Impl->GetVulkanBindPoint(), Impl->GetVulkanPipeline());
+    vkCmdBindPipeline(MainCommandBuffers[RHI->GetCurrentFrameIndex()], Impl->GetVulkanBindPoint(), Impl->GetVulkanPipeline());
 }
 
 void FVulkanCommandContext::DrawInstanced(FUInt32 VertexCount, FUInt32 InstanceCount, FUInt32 FirstVertex, FUInt32 FirstInstance) {
-    vkCmdDraw(MainCommandBuffers[Device->GetCurrentFrameIndex()], VertexCount, InstanceCount, FirstVertex, FirstInstance);
+    auto RHI = reinterpret_cast<FVulkanRHI *>(GRHI);
+    vkCmdDraw(MainCommandBuffers[RHI->GetCurrentFrameIndex()], VertexCount, InstanceCount, FirstVertex, FirstInstance);
 }
 
 void FVulkanCommandContext::SetViewport(FFloat X, FFloat Y, FFloat Width, FFloat Height, FFloat MinDepth, FFloat MaxDepth) {
+    auto RHI = reinterpret_cast<FVulkanRHI *>(GRHI);
     VkViewport VulkanViewport = {
         X,
         Y,
@@ -206,14 +223,15 @@ void FVulkanCommandContext::SetViewport(FFloat X, FFloat Y, FFloat Width, FFloat
         MaxDepth
     };
 
-    vkCmdSetViewport(MainCommandBuffers[Device->GetCurrentFrameIndex()], 0, 1, &VulkanViewport);
+    vkCmdSetViewport(MainCommandBuffers[RHI->GetCurrentFrameIndex()], 0, 1, &VulkanViewport);
 }
 
 void FVulkanCommandContext::SetScissor(FSInt32 X, FSInt32 Y, FUInt32 Width, FUInt32 Height) {
+    auto RHI = reinterpret_cast<FVulkanRHI *>(GRHI);
     VkRect2D VulkanScissor = {
         { X,     Y      },
         { Width, Height }
     };
 
-    vkCmdSetScissor(MainCommandBuffers[Device->GetCurrentFrameIndex()], 0, 1, &VulkanScissor);
+    vkCmdSetScissor(MainCommandBuffers[RHI->GetCurrentFrameIndex()], 0, 1, &VulkanScissor);
 }

@@ -2,14 +2,11 @@
 
 #include "RHIForward.h"
 #include "RHIResource.h"
-#include "RHIDevice.h"
 
 #include <imgui.h>
 
 class IRHICommandContext {
 public:
-    virtual ~IRHICommandContext() = default;
-
     virtual void Begin() = 0;
     virtual void End() = 0;
 
@@ -34,4 +31,7 @@ public:
     virtual void BindPipeline(TRef<IRHIPipeline> Pipeline) = 0;
 
     virtual void Shutdown() = 0;
+
+protected:
+    ~IRHICommandContext() = default;
 };

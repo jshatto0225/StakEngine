@@ -3,7 +3,6 @@
 #include <imgui.h>
 
 #include "RHICommandContext.h"
-#include "RHIDevice.h"
 #include "RHITexture.h"
 #include "Window.h"
 
@@ -40,10 +39,9 @@ private:
     std::vector<FRenderProxy *> RenderProxies;
     FRenderProxy *PostRenderProxy = nullptr;
     TRef<IRHICommandContext> CommandContext;
-    TRef<IRHIDevice> Device;
-    TRef<IWindow> Window;
-    TRef<IRHITexture> Backbuffer;
+    TRef<IWindow> Window = nullptr;
+    TRef<IRHITexture> Backbuffer = nullptr;
 
-    TRef<IRHIPipelineLayout> PipelineLayout;
-    TRef<IRHIPipeline> Pipeline;
+    TRef<IRHIPipelineLayout> PipelineLayout = nullptr;
+    TRef<IRHIPipeline> Pipeline = nullptr;
 };

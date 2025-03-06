@@ -9,23 +9,23 @@
 
 void FRenderer::Init(TRef<IWindow> Window) {
     this->Window = Window;
-    Device = RHICreateDevice(Window);
-    CommandContext = Device->CreateCommandContext();
 
-    Backbuffer = Device->GetBackbuffer();
+    RHISetActiveViewport(Window->GetRHIViewport());
+    Backbuffer = Window->GetRHIViewport()->GetBackbuffer();
+    CommandContext = RHICreateCommandContext();
 
     FRHIShaderDescription VertexShaderDescription = {};
     VertexShaderDescription.Name = "BasicShader.vert";
     VertexShaderDescription.Type = ERHIShaderType::VERTEX;
-    TRef<IRHIShader> VertexShader = Device->CreateShader(VertexShaderDescription);
+    TRef<IRHIShader> VertexShader = RHICreateShader(VertexShaderDescription);
 
     FRHIShaderDescription FragmentShaderDescription = {};
     FragmentShaderDescription.Name = "BasicShader.frag";
     FragmentShaderDescription.Type = ERHIShaderType::FRAGMENT;
-    TRef<IRHIShader> FragmentShader = Device->CreateShader(FragmentShaderDescription);
+    TRef<IRHIShader> FragmentShader = RHICreateShader(FragmentShaderDescription);
 
     FRHIPipelineLayoutDescription PipelineLyaoutDescription = {};
-    PipelineLayout = Device->CreatePipelineLayout(PipelineLyaoutDescription);
+    PipelineLayout = RHICreatePipelineLayout(PipelineLyaoutDescription);
 
     FRHIGraphicsPipelineStateDescription PipelineDescription = {};
     PipelineDescription.ColorFormats = { Backbuffer->GetFormat() };
@@ -35,7 +35,7 @@ void FRenderer::Init(TRef<IWindow> Window) {
     PipelineDescription.VertexInputAttributes = {};
     PipelineDescription.VertexInputBindings = {};
 
-    Pipeline = Device->CreatePipeline(PipelineDescription);
+    Pipeline = RHICreatePipeline(PipelineDescription);
 
     VertexShader->Shutdown();
     FragmentShader->Shutdown();
@@ -45,13 +45,16 @@ void FRenderer::Shutdown() {
     PipelineLayout->Shutdown();
     Pipeline->Shutdown();
 
-    Device->WaitForGPUIdle();
+    RHIWaitForGPUIdle();
     CommandContext->Shutdown();
-    Device->Shutdown();
+    RHIShutdown();
 }
 
 void FRenderer::Render() {
-    Device->PrepareFrame();
+    RHIPrepareFrame();
+
+    // NOTE: Assume backbuffer will not change
+    // TODO: Handle backbuffer changes
 
     CommandContext->Begin();
     {
@@ -97,24 +100,24 @@ void FRenderer::Render() {
     }
     CommandContext->End();
 
-    Device->Submit(CommandContext);
+    RHISubmit(CommandContext);
 
-    Device->PresentFrame();
+    RHIPresentFrame();
 }
 
 void FRenderer::InitImGui() {
     Window->InitImGui();
-    Device->InitImGui();
+    RHIInitImGui();
 }
 
 void FRenderer::ImGuiNewFrame() {
     Window->ImGuiNewFrame();
-    Device->ImGuiNewFrame();
+    RHIImGuiNewFrame();
 }
 
 void FRenderer::ShutdownImGui() {
-    Device->WaitForGPUIdle();
-    Device->ShutdownImGui();
+    RHIWaitForGPUIdle();
+    RHIShutdownImGui();
     Window->ShutdownImGui();
 }
 

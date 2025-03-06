@@ -3,7 +3,7 @@
 #include "VulkanDescriptorSetLayout.h"
 #include "VulkanShader.h"
 
-FVulkanPipelineLayout::FVulkanPipelineLayout(FVulkanDevice *Device, const FRHIPipelineLayoutDescription &Description) : Device(Device) {
+FVulkanPipelineLayout::FVulkanPipelineLayout(VkDevice Device, const FRHIPipelineLayoutDescription &Description) : Device(Device) {
     VkPipelineLayoutCreateInfo Info = {};
     Info.sType = VK_STRUCTURE_TYPE_PIPELINE_LAYOUT_CREATE_INFO;
 
@@ -17,14 +17,14 @@ FVulkanPipelineLayout::FVulkanPipelineLayout(FVulkanDevice *Device, const FRHIPi
     Info.setLayoutCount = static_cast<FUInt32>(Layouts.size());
     Info.pSetLayouts = Layouts.data();
 
-    CHECK_VK_ERR(vkCreatePipelineLayout(Device->GetVulkanDevice(), &Info, nullptr, &Layout), "Failed to create pipeline layout");
+    CHECK_VK_ERR(vkCreatePipelineLayout(Device, &Info, nullptr, &Layout), "Failed to create pipeline layout");
 }
 
 void FVulkanPipelineLayout::Shutdown() {
-    vkDestroyPipelineLayout(Device->GetVulkanDevice(), Layout, nullptr);
+    vkDestroyPipelineLayout(Device, Layout, nullptr);
 }
 
-FVulkanPipeline::FVulkanPipeline(FVulkanDevice *Device, const FRHIGraphicsPipelineStateDescription &Description) : Device(Device), BindPoint(VK_PIPELINE_BIND_POINT_GRAPHICS) {
+FVulkanPipeline::FVulkanPipeline(VkDevice Device, const FRHIGraphicsPipelineStateDescription &Description) : Device(Device), BindPoint(VK_PIPELINE_BIND_POINT_GRAPHICS) {
     std::vector<VkFormat> ColorFormats;
     ColorFormats.reserve(Description.ColorFormats.size());
 
@@ -149,9 +149,9 @@ FVulkanPipeline::FVulkanPipeline(FVulkanDevice *Device, const FRHIGraphicsPipeli
     Info.pDynamicState = &DynamicState;
     Info.layout = std::static_pointer_cast<FVulkanPipelineLayout>(Description.Layout)->GetLayout();
 
-    CHECK_VK_ERR(vkCreateGraphicsPipelines(Device->GetVulkanDevice(), VK_NULL_HANDLE, 1, &Info, nullptr, &Pipeline), "Failed to create vulkan pipeline");
+    CHECK_VK_ERR(vkCreateGraphicsPipelines(Device, VK_NULL_HANDLE, 1, &Info, nullptr, &Pipeline), "Failed to create vulkan pipeline");
 }
 
 void FVulkanPipeline::Shutdown() {
-    vkDestroyPipeline(Device->GetVulkanDevice(), Pipeline, nullptr);
+    vkDestroyPipeline(Device, Pipeline, nullptr);
 }

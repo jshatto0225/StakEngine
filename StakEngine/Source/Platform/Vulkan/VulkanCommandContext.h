@@ -6,15 +6,11 @@
 #include "Log.h"
 #include "Types.h"
 
-#include "VulkanDevice.h"
-
 #include <vector>
-
-extern IRHI *GRHI;
 
 class FVulkanCommandContext : public IRHICommandContext {
 public:
-    FVulkanCommandContext(FVulkanDevice *Device);
+    FVulkanCommandContext(VkDevice Device);
 
     void Begin() override;
     void End() override;
@@ -48,7 +44,7 @@ public:
 private:
     bool Initialized = true;
 
-    FVulkanDevice *Device;
+    VkDevice Device;
 
     bool Active = false;
     VkCommandPool CommandPool = VK_NULL_HANDLE;

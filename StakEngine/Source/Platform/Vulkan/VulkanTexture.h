@@ -7,7 +7,7 @@ class FVulkanDevice;
 
 class FVulkanTexture : public IRHITexture {
 public:
-    FVulkanTexture(FVulkanDevice *Device, VkSwapchainKHR Swapchain, FUInt32 ImageCount, VkExtent2D Extent, VkFormat Format);
+    FVulkanTexture(VkDevice Device, VkSwapchainKHR Swapchain, FUInt32 ImageCount, VkExtent2D Extent, VkFormat Format);
     ~FVulkanTexture();
 
     inline bool IsBackbuffer() override { return Backbuffer; }
@@ -28,7 +28,7 @@ public:
 private:
     bool Initialized = true;
 
-    FVulkanDevice *Device;
+    VkDevice Device;
 
     bool Backbuffer = false;
 

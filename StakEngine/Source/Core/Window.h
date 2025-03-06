@@ -4,6 +4,7 @@
 
 #include "Events.h"
 #include "Types.h"
+#include "RHIViewport.h"
 
 class FRHIDevice;
 
@@ -27,7 +28,7 @@ class IWindow {
 public:
 
     IWindow() = default;
-    virtual ~IWindow() {}
+    virtual ~IWindow() = default;
 
     virtual FWindowSizeData GetSize() = 0;
     virtual FWindowPosData GetPos() = 0;
@@ -49,6 +50,8 @@ public:
     virtual void ShutdownImGui() = 0;
 
     virtual FWindowSizeData GetFramebufferSize() = 0;
+
+    virtual TRef<IRHIViewport> GetRHIViewport() = 0;
 
     static TScope<IWindow> Create(const FWindowConfig &Cfg);
 };

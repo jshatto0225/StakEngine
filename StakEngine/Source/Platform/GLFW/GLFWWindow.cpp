@@ -3,10 +3,13 @@
 #include <imgui.h>
 #include <backends/imgui_impl_glfw.h>
 
+#include "RHIViewport.h"
+#include "RHI.h"
+
 static bool GLFWInitialized = false;
 
 FGLFWWindow::FGLFWWindow(const FWindowConfig &Cfg) {
-    Data = { NULL, NULL, NULL, NULL, NULL, 0, 0, Cfg.Width, Cfg.Height, 0, 0, Cfg.Title };
+    Data = { nullptr, nullptr, nullptr, nullptr, nullptr, 0, 0, Cfg.Width, Cfg.Height, 0, 0, Cfg.Title };
 
     if (!GLFWInitialized) {
         if (!glfwInit()) {
@@ -16,7 +19,7 @@ FGLFWWindow::FGLFWWindow(const FWindowConfig &Cfg) {
     }
 
     glfwWindowHint(GLFW_CLIENT_API, GLFW_NO_API);
-    NativeHandle = glfwCreateWindow(Cfg.Width, Cfg.Height, Cfg.Title, NULL, NULL);
+    NativeHandle = glfwCreateWindow(Cfg.Width, Cfg.Height, Cfg.Title, nullptr, nullptr);
     glfwSetWindowUserPointer(NativeHandle, static_cast<void *>(&Data));
     glfwGetFramebufferSize(NativeHandle, &Data.FramebufferWidth, &Data.FramebufferHeight);
 
@@ -104,11 +107,12 @@ FGLFWWindow::FGLFWWindow(const FWindowConfig &Cfg) {
         FMouseMoveEvent E(static_cast<FFloat>(X), static_cast<FFloat>(Y));
         Data->MouseMoveEventFn(E);
     });
+
+    Viewport = RHICreateViewport(NativeHandle);
 }
 
 FGLFWWindow::~FGLFWWindow() {
     glfwDestroyWindow(NativeHandle);
-    NativeHandle = NULL;
 }
 
 void FGLFWWindow::InitImGui() {
@@ -155,4 +159,8 @@ void FGLFWWindow::SetMouseMoveEventFn(const FMouseMoveEventFn &Func) {
 
 FWindowSizeData FGLFWWindow::GetFramebufferSize() {
     return { Data.FramebufferWidth, Data.FramebufferHeight };
+}
+
+TRef<IRHIViewport> FGLFWWindow::GetRHIViewport() {
+    return Viewport;
 }

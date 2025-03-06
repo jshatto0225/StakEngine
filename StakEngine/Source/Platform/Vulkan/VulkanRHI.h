@@ -1,5 +1,6 @@
 #pragma once
 
+#include "Types.h"
 #include "RHI.h"
 #include "Log.h"
 #include "RHIResource.h"
@@ -10,6 +11,8 @@
 #include <vulkan/vulkan.h>
 #include <vector>
 #include <optional>
+
+class FVulkanViewport;
 
 #define CHECK_VK_ERR(Err, Message)              \
     if (Err != VK_SUCCESS) {                    \
@@ -45,8 +48,6 @@ struct VulkanSwapchainSupport {
 
 VulkanSwapchainSupport GetSwapchainSupport(VkPhysicalDevice Device, VkSurfaceKHR Surface);
 
-VulkanQueueFamilies FindQueueFamilies(VkPhysicalDevice Device, VkSurfaceKHR Surface);
-
 VkImageView VulkanCreateImageView(VkDevice Device, VkImage Image, VkFormat Format);
 
 VkIndexType GetVulkanIndexType(ERHIFormat Format);
@@ -75,18 +76,57 @@ VkAccessFlags GetVulkanAccessMask(ERHIResourceState State);
 VkImageLayout GetVulkanImageLayout(ERHIResourceState State);
 EVulkanQueue GetVulkanQueue(ERHIResourceState State);
 VkPipelineStageFlags GetVulkanPipelineStageMask(ERHIResourceState State);
+FSInt32 FindPresentQueueIndex(VkPhysicalDevice GPU, VkSurfaceKHR Surface);
 
 class FVulkanRHI : public IRHI {
 public:
     FVulkanRHI();
     ~FVulkanRHI();
 
-    TRef<IRHIDevice> CreateDevice(TRef<IWindow> Window) override;
+    void ImGuiNewFrame() override;
+    void ShutdownImGui() override;
+    void InitImGui() override;
+    void WaitForGPUIdle() override;
+    void Submit(TRef<IRHICommandContext> Context) override;
+    TRef<IRHICommandContext> CreateCommandContext() override;
+    TRef<IRHIShader> CreateShader(const FRHIShaderDescription &Description) override;
+    TRef<IRHIBuffer> CreateBuffer(const FRHIBufferDescription &Description) override;
+    TRef<IRHIPipelineLayout> CreatePipelineLayout(const FRHIPipelineLayoutDescription &Description) override;
+    TRef<IRHIDescriptorSetLayout> CreateDescriptorSetLayout(const FRHIDescriptorSetLayoutDescription &Description) override;
+    TRef<IRHIPipeline> CreatePipeline(const FRHIGraphicsPipelineStateDescription &Description) override;
+    void PrepareFrame() override;
+    void PresentFrame() override;
+    void SetActiveViewport(TRef<IRHIViewport> Viewport) override;
+    TRef<IRHITexture> GetCurrentBackbuffer() override;
+    TRef<IRHIViewport> CreateViewport(void *WindowHandle) override;
+
+public:
+    VkCommandBuffer BeginOneTimeCommandBuffer();
+    void EndOneTimeCommandBuffer(VkCommandBuffer CommandBuffer);
+    void CopyBuffer(VkBuffer Src, VkBuffer Dst, FUInt32 Size);
+    void CreateBuffer(FUInt32 Size, VkBufferUsageFlags Usage, VkMemoryPropertyFlags Properties, VkBuffer *Buffer, VkDeviceMemory *Memory);
+    FUInt32 FindMemoryType(FUInt32 Filter, VkMemoryPropertyFlags Flags);
+    FUInt32 GetCurrentFrameIndex();
+    FUInt32 GetGraphicsQueueIndex() { return static_cast<FUInt32>(GraphicsQueueIndex); }
+    FUInt32 GetCurrentImageIndex();
+    FUInt32 GetActivePresentQueueIndex();
 
 private:
-    VkInstance Instance = VK_NULL_HANDLE;
-    VkDevice Device = VK_NULL_HANDLE;
-    VkPhysicalDevice GPU = VK_NULL_HANDLE;
-    VkDebugUtilsMessengerEXT DebugMessenger = VK_NULL_HANDLE;
-    VkDescriptorPool ImGuiPool = VK_NULL_HANDLE;
+    VkInstance Instance = nullptr;
+    VkDevice Device = nullptr;
+    VkPhysicalDevice GPU = nullptr;
+    VkDebugUtilsMessengerEXT DebugMessenger = nullptr;
+
+    VkQueue GraphicsQueue = nullptr;
+    FSInt32 GraphicsQueueIndex = -1;
+
+    FUInt32 CurrentFrame = 0;
+
+    VkCommandPool CommandPool = nullptr;
+
+    VkFence InFlightFences[MAX_FRAMES_IN_FLIGHT] = {};
+
+    VkDescriptorPool ImGuiPool = nullptr;
+
+    TRef<FVulkanViewport> ActiveViewport;
 };
