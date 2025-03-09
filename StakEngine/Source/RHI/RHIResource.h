@@ -5,15 +5,8 @@
 
 enum class ERHIResourceState {
     UNDEFINED,
-//    GENERAL,
     RENDER_TARGET,
-//    DEPTH_STENCIL,
-//    INDEX_BUFFER,
-//    VERTEX_BUFFER,
-//    UNORDERED_ACCESS,
-//    SHADER_RESOURCE,
-//    COPY_SOURCE,
-//    COPY_DEST,
+    SHADER_RESOURCE,
     PRESENT,
 };
 

@@ -48,17 +48,21 @@ struct VulkanSwapchainSupport {
 
 bool GetSwapchainSupport(VulkanSwapchainSupport *Out, VkPhysicalDevice Device, VkSurfaceKHR Surface);
 
+// TODO: Move into texture
 bool VulkanCreateImageView(VkImageView *Out, VkDevice Device, VkImage Image, VkFormat Format);
+bool VulkanCreateImage(VkDevice Device, VkPhysicalDevice GPU, FUInt32 Width, FUInt32 Height, VkFormat Format, VkImageTiling Tiling, VkImageUsageFlags Flags, VkMemoryPropertyFlags Properties, VkImage *OutImage, VkDeviceMemory *OutImageMemory);
+FUInt32 VulkanFindMemoryType(VkPhysicalDevice GPU, FUInt32 Filter, VkMemoryPropertyFlags Flags);
+bool VulkanCreateTextureSampler(VkSampler *Out, VkDevice Device, VkPhysicalDevice GPU);
 
-VkIndexType GetVulkanIndexType(ERHIFormat Format);
-VkDescriptorType GetVulkanDescriptorType(ERHIDescriptorType Type);
-VkShaderStageFlags GetVulkanShaderStageFlags(std::vector<ERHIShaderType> Types);
-VkShaderStageFlagBits GetVulkanShaderStage(ERHIShaderType Type);
-VkVertexInputRate GetVulkanVertexInputRate(ERHIVertexInputRate InputRate);
-VkFormat GetVulkanFormat(ERHIFormat Format);
-VkFormat GetVulkanDepthFormat(ERHIFormat Format);
-VkFormat GetVulkanStencilFormat(ERHIFormat Format);
-ERHIFormat GetRHIFormat(VkFormat Format);
+VkIndexType VulkanGetIndexType(ERHIFormat Format);
+VkDescriptorType VulkanGetDescriptorType(ERHIDescriptorType Type);
+VkShaderStageFlags VulkanGetShaderStageFlags(std::vector<ERHIShaderType> Types);
+VkShaderStageFlagBits VulkanGetShaderStage(ERHIShaderType Type);
+VkVertexInputRate VulkanGetVertexInputRate(ERHIVertexInputRate InputRate);
+VkFormat VulkanGetFormat(ERHIFormat Format);
+VkFormat VulkanGetDepthFormat(ERHIFormat Format);
+VkFormat VulkanGetStencilFormat(ERHIFormat Format);
+ERHIFormat VulkanGetRHIFormat(VkFormat Format);
 
 enum class EVulkanQueue {
     GRAPHICS,
@@ -92,6 +96,8 @@ public:
     bool SetActiveViewport(TRef<IRHIViewport> Viewport) override;
     TRef<IRHITexture> GetCurrentBackbuffer() override;
     TRef<IRHIViewport> CreateViewport(void *WindowHandle) override;
+    TRef<IRHITexture> CreateTexture() override;
+    void AddBackbufferToImGuiWindow(TRef<IRHITexture> Backbuffer) override;
 
 public:
     VkCommandBuffer BeginOneTimeCommandBuffer();

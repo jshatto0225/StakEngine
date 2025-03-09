@@ -13,9 +13,9 @@ VkDescriptorSetLayoutCreateInfo Info = {};
     for (auto &It : Description.Bindings) {
         VkDescriptorSetLayoutBinding Binding = {};
         Binding.binding = It.Binding;
-        Binding.descriptorType = GetVulkanDescriptorType(It.Type);
+        Binding.descriptorType = VulkanGetDescriptorType(It.Type);
         Binding.descriptorCount = It.Count;
-        Binding.stageFlags = GetVulkanShaderStageFlags(It.ShaderStages);
+        Binding.stageFlags = VulkanGetShaderStageFlags(It.ShaderStages);
 
         Bindings.push_back(Binding);
     }

@@ -22,6 +22,16 @@ void RHIShutdown() {
     delete GRHI;
 }
 
+TRef<IRHITexture> RHICreateTexture() {
+    assert(GRHI);
+    return GRHI->CreateTexture();
+}
+
+void RHIAddBackbufferToImGuiWindow(TRef<IRHITexture> Backbuffer) {
+    assert(GRHI);
+    GRHI->AddBackbufferToImGuiWindow(Backbuffer);
+}
+
 void RHIImGuiNewFrame() {
     assert(GRHI);
     return GRHI->ImGuiNewFrame();

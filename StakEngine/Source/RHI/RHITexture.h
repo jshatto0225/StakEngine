@@ -2,9 +2,16 @@
 
 #include "RHIResource.h"
 
+struct FRHIOffscreenRenderTargetDescription {
+    FUInt32 Width;
+    FUInt32 Height;
+    ERHIFormat Format;
+    bool UseForImGui;
+};
+
 class IRHITexture : public IRHIResource {
 public:
-    virtual bool Init() = 0;
+    virtual bool Init(const FRHIOffscreenRenderTargetDescription &Description) = 0;
 
     void Shutdown() override = 0;
 

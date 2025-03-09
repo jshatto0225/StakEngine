@@ -74,15 +74,18 @@ bool FApplication::Init(const FApplicationSpec &Spec) {
 
     Input = TCreateRef<FInput>(Window);
 
-    if (!Renderer.Init(Window)) {
+    if (!Renderer.Init(Window, Spec.RenderToOffscreenBuffer)) {
         SK_LOG_ERROR("Failed to initialize renderer");
         return false;
     }
 
     ImGuiLayer = new FImGuiLayer();
 
-    Renderer.InitImGui();
     Renderer.SetPostProxy(ImGuiLayer);
+    if (!Renderer.InitImGui()) {
+        SK_LOG_ERROR("Failed to initialize renderer for imgui");
+        return false;
+    }
 
     AddLayer(ImGuiLayer);
 

@@ -128,6 +128,8 @@ VkAccessFlags GetVulkanAccessMask(ERHIResourceState State) {
         return VK_ACCESS_COLOR_ATTACHMENT_READ_BIT | VK_ACCESS_COLOR_ATTACHMENT_WRITE_BIT;
     case ERHIResourceState::PRESENT:
         return 0;
+    case ERHIResourceState::SHADER_RESOURCE:
+        return VK_ACCESS_SHADER_READ_BIT;
     default:
         return 0;
     }
@@ -139,6 +141,8 @@ VkImageLayout GetVulkanImageLayout(ERHIResourceState State) {
         return VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL;
     case ERHIResourceState::PRESENT:
         return VK_IMAGE_LAYOUT_PRESENT_SRC_KHR;
+    case ERHIResourceState::SHADER_RESOURCE:
+        return VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL;
     default:
         return VK_IMAGE_LAYOUT_UNDEFINED;
     }
@@ -161,12 +165,14 @@ VkPipelineStageFlags GetVulkanPipelineStageMask(ERHIResourceState State) {
         return VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT;
     case ERHIResourceState::PRESENT:
         return VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT;
+    case ERHIResourceState::SHADER_RESOURCE:
+        return VK_PIPELINE_STAGE_FRAGMENT_SHADER_BIT;
     default:
         return VK_PIPELINE_STAGE_TOP_OF_PIPE_BIT;
     }
 }
 
-VkIndexType GetVulkanIndexType(ERHIFormat Format) {
+VkIndexType VulkanGetIndexType(ERHIFormat Format) {
     switch (Format) {
     case ERHIFormat::UNDEFINED:
     default:
@@ -175,7 +181,7 @@ VkIndexType GetVulkanIndexType(ERHIFormat Format) {
     }
 }
 
-VkDescriptorType GetVulkanDescriptorType(ERHIDescriptorType Type) {
+VkDescriptorType VulkanGetDescriptorType(ERHIDescriptorType Type) {
     switch (Type) {
     case ERHIDescriptorType::UNIFORM_BUFFER:
         return VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER;
@@ -187,7 +193,7 @@ VkDescriptorType GetVulkanDescriptorType(ERHIDescriptorType Type) {
     }
 }
 
-VkShaderStageFlags GetVulkanShaderStageFlags(std::vector<ERHIShaderType> Types) {
+VkShaderStageFlags VulkanGetShaderStageFlags(std::vector<ERHIShaderType> Types) {
     VkShaderStageFlags Flags = 0;
     for (auto Type : Types) {
         switch (Type) {
@@ -203,7 +209,7 @@ VkShaderStageFlags GetVulkanShaderStageFlags(std::vector<ERHIShaderType> Types) 
     return Flags;
 }
 
-VkShaderStageFlagBits GetVulkanShaderStage(ERHIShaderType Type) {
+VkShaderStageFlagBits VulkanGetShaderStage(ERHIShaderType Type) {
     switch (Type) {
     case ERHIShaderType::VERTEX:
         return VK_SHADER_STAGE_VERTEX_BIT;
@@ -215,7 +221,7 @@ VkShaderStageFlagBits GetVulkanShaderStage(ERHIShaderType Type) {
     }
 }
 
-VkVertexInputRate GetVulkanVertexInputRate(ERHIVertexInputRate InputRate) {
+VkVertexInputRate VulkanGetVertexInputRate(ERHIVertexInputRate InputRate) {
     switch (InputRate) {
     case ERHIVertexInputRate::PER_VERTEX:
         return VK_VERTEX_INPUT_RATE_VERTEX;
@@ -227,7 +233,7 @@ VkVertexInputRate GetVulkanVertexInputRate(ERHIVertexInputRate InputRate) {
     }
 }
 
-VkFormat GetVulkanFormat(ERHIFormat Format) {
+VkFormat VulkanGetFormat(ERHIFormat Format) {
     switch (Format) {
     case ERHIFormat::B8G8R8A8_SRGB:
         return VK_FORMAT_B8G8R8A8_SRGB;
@@ -236,7 +242,7 @@ VkFormat GetVulkanFormat(ERHIFormat Format) {
     }
 }
 
-VkFormat GetVulkanDepthFormat(ERHIFormat Format) {
+VkFormat VulkanGetDepthFormat(ERHIFormat Format) {
     switch (Format) {
     case ERHIFormat::UNDEFINED:
         return VK_FORMAT_UNDEFINED;
@@ -245,7 +251,7 @@ VkFormat GetVulkanDepthFormat(ERHIFormat Format) {
     }
 }
 
-ERHIFormat GetRHIFormat(VkFormat Format) {
+ERHIFormat VulkanGetRHIFormat(VkFormat Format) {
     switch (Format) {
     case VK_FORMAT_B8G8R8A8_SRGB:
         return ERHIFormat::B8G8R8A8_SRGB;
@@ -255,7 +261,7 @@ ERHIFormat GetRHIFormat(VkFormat Format) {
     }
 }
 
-VkFormat GetVulkanStencilFormat(ERHIFormat Format) {
+VkFormat VulkanGetStencilFormat(ERHIFormat Format) {
     switch (Format) {
     case ERHIFormat::UNDEFINED:
         return VK_FORMAT_UNDEFINED;
@@ -280,6 +286,90 @@ FSInt32 FindPresentQueueIndex(VkPhysicalDevice GPU, VkSurfaceKHR Surface) {
     }
 
     return -1;
+}
+
+FUInt32 VulkanFindMemoryType(VkPhysicalDevice GPU, FUInt32 Filter, VkMemoryPropertyFlags Flags) {
+    VkPhysicalDeviceMemoryProperties MemProps = {};
+    vkGetPhysicalDeviceMemoryProperties(GPU, &MemProps);
+
+    for (FUInt32 Index = 0; Index < MemProps.memoryTypeCount; Index++) {
+        if ((Filter & (1 << Index)) && ((MemProps.memoryTypes[Index].propertyFlags & Flags) == Flags)) {
+            return Index;
+        }
+    }
+
+    SK_LOG_ERROR("Failed to get memory type\n");
+    return static_cast<FUInt32>(-1);
+}
+
+bool VulkanCreateTextureSampler(VkSampler *OutSampler, VkDevice Device, VkPhysicalDevice GPU) {
+    VkSamplerCreateInfo SamplerInfo = {};
+    SamplerInfo.sType = VK_STRUCTURE_TYPE_SAMPLER_CREATE_INFO;
+    SamplerInfo.magFilter = VK_FILTER_LINEAR;
+    SamplerInfo.minFilter = VK_FILTER_LINEAR;
+    SamplerInfo.addressModeU = VK_SAMPLER_ADDRESS_MODE_REPEAT;
+    SamplerInfo.addressModeV = VK_SAMPLER_ADDRESS_MODE_REPEAT;
+    SamplerInfo.addressModeW = VK_SAMPLER_ADDRESS_MODE_REPEAT;
+    SamplerInfo.anisotropyEnable = VK_TRUE;
+
+    VkPhysicalDeviceProperties Properties = { 0 };
+    vkGetPhysicalDeviceProperties(GPU, &Properties);
+    SamplerInfo.maxAnisotropy = Properties.limits.maxSamplerAnisotropy;
+
+    SamplerInfo.borderColor = VK_BORDER_COLOR_INT_OPAQUE_BLACK;
+    SamplerInfo.unnormalizedCoordinates = VK_FALSE;
+    SamplerInfo.compareEnable = VK_FALSE;
+    SamplerInfo.compareOp = VK_COMPARE_OP_ALWAYS;
+    SamplerInfo.mipmapMode = VK_SAMPLER_MIPMAP_MODE_LINEAR;
+    SamplerInfo.mipLodBias = 0.0f;
+    SamplerInfo.minLod = 0.0f;
+    SamplerInfo.maxLod = 0.0f;
+
+    if (vkCreateSampler(Device, &SamplerInfo, nullptr, OutSampler) != VK_SUCCESS) {
+        SK_LOG_ERROR("Failed to create image sampler");
+        return false;
+    }
+
+    return true;
+}
+
+bool VulkanCreateImage(VkDevice Device, VkPhysicalDevice GPU, FUInt32 Width, FUInt32 Height, VkFormat Format, VkImageTiling Tiling, VkImageUsageFlags Flags, VkMemoryPropertyFlags Properties, VkImage *OutImage, VkDeviceMemory *OutImageMemory) {
+    VkImageCreateInfo ImageInfo = {};
+    ImageInfo.sType = VK_STRUCTURE_TYPE_IMAGE_CREATE_INFO;
+    ImageInfo.imageType = VK_IMAGE_TYPE_2D;
+    ImageInfo.extent.width = Width;
+    ImageInfo.extent.height = Height;
+    ImageInfo.extent.depth = 1;
+    ImageInfo.mipLevels = 1;
+    ImageInfo.arrayLayers = 1;
+    ImageInfo.format = Format;
+    ImageInfo.tiling = Tiling;
+    ImageInfo.initialLayout = VK_IMAGE_LAYOUT_UNDEFINED;
+    ImageInfo.usage = Flags;
+    ImageInfo.sharingMode = VK_SHARING_MODE_EXCLUSIVE;
+    ImageInfo.samples = VK_SAMPLE_COUNT_1_BIT;
+
+    if (vkCreateImage(Device, &ImageInfo, nullptr, OutImage) != VK_SUCCESS) {
+        SK_LOG_ERROR("Failed to create image");
+        return false;
+    }
+
+    VkMemoryRequirements MemReqs = {};
+    vkGetImageMemoryRequirements(Device, *OutImage, &MemReqs);
+
+    VkMemoryAllocateInfo AllocInfo = {};
+    AllocInfo.sType = VK_STRUCTURE_TYPE_MEMORY_ALLOCATE_INFO;
+    AllocInfo.allocationSize = MemReqs.size;
+    AllocInfo.memoryTypeIndex = VulkanFindMemoryType(GPU, MemReqs.memoryTypeBits, Properties);
+
+    if (vkAllocateMemory(Device, &AllocInfo, nullptr, OutImageMemory) != VK_SUCCESS) {
+        SK_LOG_ERROR("Failed to allocate image memory");
+        return false;
+    }
+
+    vkBindImageMemory(Device, *OutImage, *OutImageMemory, 0);
+
+    return true;
 }
 
 bool FVulkanRHI::Init() {
@@ -494,7 +584,7 @@ void FVulkanRHI::ShutdownImGui() {
 }
 
 void FVulkanRHI::InitImGui() {
-    VkFormat Formats[] = { GetVulkanFormat(ActiveViewport->GetBackbuffer()->GetFormat()) };
+    VkFormat Formats[] = { VulkanGetFormat(ActiveViewport->GetBackbuffer()->GetFormat()) };
     
     VkPipelineRenderingCreateInfo PipelineInfo = {};
     PipelineInfo.sType = VK_STRUCTURE_TYPE_PIPELINE_RENDERING_CREATE_INFO;
@@ -769,4 +859,35 @@ FUInt32 FVulkanRHI::GetCurrentImageIndex() {
 
 FUInt32 FVulkanRHI::GetActivePresentQueueIndex() {
     return ActiveViewport->GetPresentQueueIndex();
+}
+
+TRef<IRHITexture> FVulkanRHI::CreateTexture() {
+    return TCreateRef<FVulkanTexture>(Device, GPU);
+}
+
+void FVulkanRHI::AddBackbufferToImGuiWindow(TRef<IRHITexture> Backbuffer) {
+    ImVec2 ViewportPanelSize = ImGui::GetContentRegionAvail();
+
+    // Keep aspect ratio
+    auto [Layers, X, Y, Width, Height] = Backbuffer->GetRenderArea();
+    FFloat Aspect = static_cast<FFloat>(Width) / static_cast<FFloat>(Height);
+    ImVec2 ImageSize;
+    if (ViewportPanelSize.x / Aspect <= ViewportPanelSize.y) {
+        ImageSize.x = ViewportPanelSize.x;
+        ImageSize.y = ViewportPanelSize.x / Aspect;
+    } else {
+        ImageSize.y = ViewportPanelSize.y;
+        ImageSize.x = ViewportPanelSize.y * Aspect;
+    }
+
+    // Center Image
+    ImVec2 Offset = { (ViewportPanelSize.x - ImageSize.x) * 0.5f, (ViewportPanelSize.y - ImageSize.y) * 0.5f };
+    Offset.x = (Offset.x > 0) ? Offset.x : 0;
+    Offset.y = (Offset.y > 0) ? Offset.y : 0;
+    ImVec2 CursorPos = ImGui::GetCursorPos();
+    CursorPos.x += Offset.x;
+    CursorPos.y += Offset.y;
+    ImGui::SetCursorPos(CursorPos);
+
+    ImGui::Image(std::static_pointer_cast<FVulkanTexture>(Backbuffer)->GetImGuiImageHandle(CurrentFrame), ImageSize);
 }

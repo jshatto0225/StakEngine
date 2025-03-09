@@ -18,10 +18,10 @@ public:
     FRenderer() = default;
 
 public:
-    bool Init(TRef<IWindow> Window);
+    bool Init(TRef<IWindow> Window, bool RenderToOffscreenBuffer);
     void Shutdown();
 
-    void InitImGui();
+    bool InitImGui();
     void ImGuiNewFrame();
     void ShutdownImGui();
     bool Render();
@@ -32,6 +32,8 @@ public:
     void SetPostProxy(FRenderProxy *Proxy);
     void UnsetPostProxy();
 
+    void AddSceneToImGuiWindow();
+
     FRenderer(FRenderer &) = delete;
     FRenderer &operator=(FRenderer &) = delete;
 
@@ -40,8 +42,11 @@ private:
     FRenderProxy *PostRenderProxy = nullptr;
     TRef<IRHICommandContext> CommandContext;
     TRef<IWindow> Window = nullptr;
-    TRef<IRHITexture> Backbuffer = nullptr;
+    TRef<IRHITexture> SwapchainBackbuffer = nullptr;
+    TRef<IRHITexture> OffscreenBackbuffer = nullptr;
 
+    bool UseOffscreenBuffer = false;
+    
     TRef<IRHIPipelineLayout> PipelineLayout = nullptr;
     TRef<IRHIPipeline> Pipeline = nullptr;
 };

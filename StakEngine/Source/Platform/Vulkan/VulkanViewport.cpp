@@ -124,7 +124,7 @@ bool FVulkanViewport::CreateSwapchain() {
     }
 
     if (Backbuffer == nullptr) {
-        Backbuffer = TCreateRef<FVulkanTexture>(Device);
+        Backbuffer = TCreateRef<FVulkanTexture>(Device, GPU);
     }
 
     if (!Backbuffer->Init(Swapchain, ImageCount, SwapchainExtent, Format.format)) {

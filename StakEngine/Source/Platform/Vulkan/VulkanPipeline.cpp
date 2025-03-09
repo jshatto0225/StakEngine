@@ -38,15 +38,15 @@ bool FVulkanPipeline::Init(const FRHIGraphicsPipelineStateDescription &Descripti
     ColorFormats.reserve(Description.ColorFormats.size());
 
     for (auto &It : Description.ColorFormats) {
-        ColorFormats.push_back(GetVulkanFormat(It));
+        ColorFormats.push_back(VulkanGetFormat(It));
     }
 
     VkPipelineRenderingCreateInfo RenderingInfo = {};
     RenderingInfo.sType = VK_STRUCTURE_TYPE_PIPELINE_RENDERING_CREATE_INFO;
     RenderingInfo.colorAttachmentCount = static_cast<FUInt32>(ColorFormats.size());
     RenderingInfo.pColorAttachmentFormats = ColorFormats.data();
-    RenderingInfo.depthAttachmentFormat = GetVulkanDepthFormat(Description.DepthStencilFormat);
-    RenderingInfo.stencilAttachmentFormat = GetVulkanStencilFormat(Description.DepthStencilFormat);
+    RenderingInfo.depthAttachmentFormat = VulkanGetDepthFormat(Description.DepthStencilFormat);
+    RenderingInfo.stencilAttachmentFormat = VulkanGetStencilFormat(Description.DepthStencilFormat);
     RenderingInfo.viewMask = 0x01;
 
     std::vector<VkPipelineShaderStageCreateInfo> ShaderStages = {};
@@ -54,7 +54,7 @@ bool FVulkanPipeline::Init(const FRHIGraphicsPipelineStateDescription &Descripti
     for (auto &It : Description.Shaders) {
         VkPipelineShaderStageCreateInfo Info = {};
         Info.sType = VK_STRUCTURE_TYPE_PIPELINE_SHADER_STAGE_CREATE_INFO;
-        Info.stage = GetVulkanShaderStage(It->GetType());
+        Info.stage = VulkanGetShaderStage(It->GetType());
         Info.module = std::static_pointer_cast<FVulkanShader>(It)->GetVulkanShader();
         Info.pName = "main";
 
@@ -67,7 +67,7 @@ bool FVulkanPipeline::Init(const FRHIGraphicsPipelineStateDescription &Descripti
         VkVertexInputBindingDescription Binding = {};
         Binding.binding = It.Binding;
         Binding.stride = It.Stride;
-        Binding.inputRate = GetVulkanVertexInputRate(It.InputRate);
+        Binding.inputRate = VulkanGetVertexInputRate(It.InputRate);
         VertexBindings.push_back(Binding);
     }
 
@@ -77,7 +77,7 @@ bool FVulkanPipeline::Init(const FRHIGraphicsPipelineStateDescription &Descripti
         VkVertexInputAttributeDescription Attribute = {};
         Attribute.location = It.Location;
         Attribute.binding = It.Binding;
-        Attribute.format = GetVulkanFormat(It.Format);
+        Attribute.format = VulkanGetFormat(It.Format);
         Attribute.offset = It.Offset;
 
         VertexAttributes.push_back(Attribute);

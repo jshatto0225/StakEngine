@@ -86,7 +86,7 @@ void FEditorLayer::OnImGuiRender() {
 
         ImGui::Begin("Scene View");
         {
-
+            AppGetRenderer().AddSceneToImGuiWindow();
         }
         ImGui::End();
     }

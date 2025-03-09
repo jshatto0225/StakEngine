@@ -14,6 +14,7 @@ struct FApplicationSpec {
     const char* AppName;
     FSInt32 WindowWidth;
     FSInt32 WindowHeight;
+    bool RenderToOffscreenBuffer;
 };
 
 class FApplication {

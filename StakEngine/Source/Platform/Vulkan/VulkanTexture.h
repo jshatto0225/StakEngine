@@ -7,7 +7,7 @@ class FVulkanDevice;
 
 class FVulkanTexture : public IRHITexture {
 public:
-    FVulkanTexture(VkDevice Device);
+    FVulkanTexture(VkDevice Device, VkPhysicalDevice GPU);
 
     inline bool IsBackbuffer() override { return Backbuffer; }
 
@@ -15,7 +15,7 @@ public:
 
     ERHIFormat GetFormat() override { return RHIFormat; }
 
-    bool Init() override;
+    bool Init(const FRHIOffscreenRenderTargetDescription &Description) override;
     void Shutdown() override;
 
 public:
@@ -26,16 +26,22 @@ public:
     VkFormat GetVulkanFormat();
     FUInt32 GetImageCount();
 
+    FUInt64 GetImGuiImageHandle(FUInt32 CurrentFrame);
+
 private:
     VkDevice Device;
+    VkPhysicalDevice GPU;
 
     bool Backbuffer = false;
     std::vector<VkImage> Images;
+    std::vector<VkDeviceMemory> ImageMemories;
     std::vector<VkImageView> ImageViews;
+    std::vector<VkSampler> Samplers;
     std::vector<VkImageSubresourceRange> SubresourceRanges;
     VkFormat Format = VK_FORMAT_UNDEFINED;
     ERHIFormat RHIFormat = ERHIFormat::UNDEFINED;
     VkExtent2D Extent = {};
     FUInt32 ImageCount = 0;
     VkSwapchainKHR Swapchain = nullptr; // NOTE: For swapchain backbuffers
+    std::vector<VkDescriptorSet> ImGuiDescriptorSets;
 };

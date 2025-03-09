@@ -8,6 +8,7 @@ bool InitializeApplication(FApplication *Editor) {
     Spec.WindowHeight = 1080;
     Spec.WindowTitle = "Stak Editor";
     Spec.AppName = "StakEditor";
+    Spec.RenderToOffscreenBuffer = true;
 
     if (!Editor->Init(Spec)) {
         LOG_ERROR("Failed to initialize application");

@@ -196,7 +196,7 @@ void FVulkanCommandContext::BindVertexBuffer(TRef<IRHIBuffer> Buffer, FUInt32 Fi
 void FVulkanCommandContext::BindIndexBuffer(TRef<IRHIBuffer> Buffer) {
     auto Impl = std::static_pointer_cast<FVulkanBuffer>(Buffer);
     auto RHI = reinterpret_cast<FVulkanRHI *>(GRHI);
-    vkCmdBindIndexBuffer(MainCommandBuffers[RHI->GetCurrentFrameIndex()], Impl->GetVulkanBuffer(), 0, GetVulkanIndexType(Buffer->GetLayout().Elements[0].Format));
+    vkCmdBindIndexBuffer(MainCommandBuffers[RHI->GetCurrentFrameIndex()], Impl->GetVulkanBuffer(), 0, VulkanGetIndexType(Buffer->GetLayout().Elements[0].Format));
 }
 
 void FVulkanCommandContext::DrawIndexed(FUInt32 IndexCount, FUInt32 InstanceCount, FUInt32 FirstIndex, FSInt32 VertexOffset, FUInt32 FirstInstance) {

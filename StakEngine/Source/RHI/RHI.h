@@ -44,6 +44,10 @@ public:
 
     virtual TRef<IRHIViewport> CreateViewport(void *WindowHandle) = 0;
 
+    virtual TRef<IRHITexture> CreateTexture() = 0;
+
+    virtual void AddBackbufferToImGuiWindow(TRef<IRHITexture> Backbuffer) = 0;
+
 public:
     virtual ~IRHI() = default;
 };
@@ -51,6 +55,10 @@ public:
 bool RHIInit();
 
 void RHIShutdown();
+
+TRef<IRHITexture> RHICreateTexture();
+
+void RHIAddBackbufferToImGuiWindow(TRef<IRHITexture> Backbuffer);
 
 TRef<IRHIViewport> RHICreateViewport(void *WindowHandle);
 
