@@ -1,1 +1,16 @@
-RHI objects should not use constructors or destructors for initialization so failures can be checked
+Rework events to use an event struct that contains a type then cast the pointer to the correct type
+  also use a single event function
+
+Remove applciation layers, just allow the user to specify some function pointers to their code
+  in the application init function
+
+Move the add image to imgui window to the IRHITexture
+
+Convert classes to structs, most of the getters being used are unecessary
+
+Move vulkan image creation into FVulkanTexture
+
+Move imgui renderer initilization into the imgui layer
+
+The RHI can probably initialize the objects it creates and return nullptr on failure
+  this allows for failures to be checked but makes the renderer code less verbose

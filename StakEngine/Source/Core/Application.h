@@ -39,7 +39,7 @@ private:
 
 private:
     TRef<IWindow> Window = nullptr;
-    FRenderer Renderer = {};
+    FRenderer Renderer;
     TRef<FInput> Input = nullptr;
     FLayerStack LayerStack = {};
     FBool Running = false;
