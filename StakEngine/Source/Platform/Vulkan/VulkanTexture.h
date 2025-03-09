@@ -7,8 +7,7 @@ class FVulkanDevice;
 
 class FVulkanTexture : public IRHITexture {
 public:
-    FVulkanTexture(VkDevice Device, VkSwapchainKHR Swapchain, FUInt32 ImageCount, VkExtent2D Extent, VkFormat Format);
-    ~FVulkanTexture();
+    FVulkanTexture(VkDevice Device);
 
     inline bool IsBackbuffer() override { return Backbuffer; }
 
@@ -16,9 +15,11 @@ public:
 
     ERHIFormat GetFormat() override { return RHIFormat; }
 
+    bool Init() override;
     void Shutdown() override;
 
 public:
+    bool Init(VkSwapchainKHR NewSwapchain, FUInt32 NewImageCount, VkExtent2D NewExtent, VkFormat NewFormat); // NOTE: For swapchain backbuffers
     VkImage GetVulkanImage(FUInt32 ImageIndex);
     VkImageView GetVulkanImageView(FUInt32 ImageIndex);
     VkImageSubresourceRange GetVulkanSubresourceRange(FUInt32 Index);
@@ -26,16 +27,15 @@ public:
     FUInt32 GetImageCount();
 
 private:
-    bool Initialized = true;
-
     VkDevice Device;
 
     bool Backbuffer = false;
-
     std::vector<VkImage> Images;
     std::vector<VkImageView> ImageViews;
     std::vector<VkImageSubresourceRange> SubresourceRanges;
     VkFormat Format = VK_FORMAT_UNDEFINED;
     ERHIFormat RHIFormat = ERHIFormat::UNDEFINED;
     VkExtent2D Extent = {};
+    FUInt32 ImageCount = 0;
+    VkSwapchainKHR Swapchain = nullptr; // NOTE: For swapchain backbuffers
 };

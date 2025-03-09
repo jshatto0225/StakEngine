@@ -7,8 +7,8 @@
 
 class IRHICommandContext {
 public:
-    virtual void Begin() = 0;
-    virtual void End() = 0;
+    virtual bool Begin() = 0;
+    virtual bool End() = 0;
 
     virtual void RenderImGuiDrawData(ImDrawData *DrawData) = 0;
 
@@ -21,7 +21,7 @@ public:
     // TODO: Bind multiple buffer at once
     virtual void BindVertexBuffer(TRef<IRHIBuffer> Buffer, FUInt32 FirstVertex) = 0;
     virtual void BindIndexBuffer(TRef<IRHIBuffer> Buffer) = 0;
-    
+
     virtual void DrawIndexed(FUInt32 IndexCount, FUInt32 InstanceCount, FUInt32 FirstIndex, FSInt32 VertexOffset, FUInt32 FirstInstance) = 0;
     virtual void DrawInstanced(FUInt32 VertexCount, FUInt32 InstanceCount, FUInt32 FirstVertex, FUInt32 FirstInstance) = 0;
 
@@ -30,8 +30,8 @@ public:
 
     virtual void BindPipeline(TRef<IRHIPipeline> Pipeline) = 0;
 
+    virtual bool Init() = 0;
     virtual void Shutdown() = 0;
 
-protected:
-    ~IRHICommandContext() = default;
+    virtual ~IRHICommandContext() = default;
 };

@@ -6,9 +6,9 @@
 
 #include "Log.h"
 
-TScope<IWindow> IWindow::Create(const FWindowConfig &Cfg) {
+TRef<IWindow> IWindow::Create() {
 #if defined(SK_WINDOWS) or defined(SK_LINUX)
-    return TCreateScope<FGLFWWindow>(Cfg);
+    return TCreateRef<FGLFWWindow>();
 #else
     SK_LOG_CRITICAL("Window Platform Not Supported");
     return NULL;

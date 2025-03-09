@@ -9,66 +9,69 @@
 
 extern IRHI *GRHI;
 
-FVulkanCommandContext::FVulkanCommandContext(VkDevice Device) : Device(Device) {
+FVulkanCommandContext::FVulkanCommandContext(VkDevice Device) : Device(Device) {}
+
+void FVulkanCommandContext::Shutdown() {
+    vkFreeCommandBuffers(Device, CommandPool, static_cast<FUInt32>(MainCommandBuffers.size()), MainCommandBuffers.data());
+    vkDestroyCommandPool(Device, CommandPool, nullptr);
+}
+
+bool FVulkanCommandContext::Init() {
     VkCommandPoolCreateInfo CommandPoolInfo = {};
-    
+
     CommandPoolInfo.sType = VK_STRUCTURE_TYPE_COMMAND_POOL_CREATE_INFO;
     CommandPoolInfo.flags = VK_COMMAND_POOL_CREATE_RESET_COMMAND_BUFFER_BIT;
     auto RHI = reinterpret_cast<FVulkanRHI *>(GRHI);
     CommandPoolInfo.queueFamilyIndex = RHI->GetGraphicsQueueIndex();
-    
-    CHECK_VK_ERR(vkCreateCommandPool(Device, &CommandPoolInfo, nullptr, &CommandPool), "Failed to create vulkan command pool");
-    
+
+    if (vkCreateCommandPool(Device, &CommandPoolInfo, nullptr, &CommandPool) != VK_SUCCESS) {
+        SK_LOG_ERROR("Failed to create vulkan command pool");
+        return false;
+    }
+
     VkCommandBufferAllocateInfo AllocInfo = {};
     AllocInfo.sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_ALLOCATE_INFO;
     AllocInfo.commandPool = CommandPool;
     AllocInfo.level = VK_COMMAND_BUFFER_LEVEL_PRIMARY;
     AllocInfo.commandBufferCount = MAX_FRAMES_IN_FLIGHT;
-    
+
     MainCommandBuffers.resize(MAX_FRAMES_IN_FLIGHT);
-    CHECK_VK_ERR(vkAllocateCommandBuffers(Device, &AllocInfo, MainCommandBuffers.data()), "Failed to allocate vulkan command buffers");
-}
-
-void FVulkanCommandContext::Shutdown() {
-    vkFreeCommandBuffers(Device, CommandPool, static_cast<FUInt32>(MainCommandBuffers.size()), MainCommandBuffers.data());
-    vkDestroyCommandPool(Device, CommandPool, nullptr);
-
-    Initialized = false;
-}
-
-void FVulkanCommandContext::Begin() {
-    if (Active) {
-        SK_LOG_WARN("Command context has already begun");
-        return;
+    if (vkAllocateCommandBuffers(Device, &AllocInfo, MainCommandBuffers.data()) != VK_SUCCESS) {
+        SK_LOG_ERROR("Failed to allocate vulkan command buffers");
+        return false;
     }
 
-    Active = true;
+    return true;
+}
+
+bool FVulkanCommandContext::Begin() {
     auto RHI = reinterpret_cast<FVulkanRHI *>(GRHI);
-    vkResetCommandBuffer(MainCommandBuffers[RHI->GetCurrentFrameIndex()], 0);
+    if (vkResetCommandBuffer(MainCommandBuffers[RHI->GetCurrentFrameIndex()], 0) != VK_SUCCESS) {
+        SK_LOG_ERROR("Failed to reset command buffer");
+        return false;
+    }
 
     VkCommandBufferBeginInfo BeginInfo = {};
     BeginInfo.sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_BEGIN_INFO;
-    CHECK_VK_ERR(vkBeginCommandBuffer(MainCommandBuffers[RHI->GetCurrentFrameIndex()], &BeginInfo), "Failed to begin command buffer");
-}
-
-void FVulkanCommandContext::End() {
-    if (!Active) {
-        SK_LOG_WARN("Command context not started");
-        return;
+    if (vkBeginCommandBuffer(MainCommandBuffers[RHI->GetCurrentFrameIndex()], &BeginInfo) != VK_SUCCESS) {
+        SK_LOG_ERROR("Failed to begin command buffer");
+        return false;
     }
 
-    auto RHI = reinterpret_cast<FVulkanRHI *>(GRHI);
-    vkEndCommandBuffer(MainCommandBuffers[RHI->GetCurrentFrameIndex()]);
+    return true;
+}
 
-    Active = false;
+bool FVulkanCommandContext::End() {
+    auto RHI = reinterpret_cast<FVulkanRHI *>(GRHI);
+    if (vkEndCommandBuffer(MainCommandBuffers[RHI->GetCurrentFrameIndex()]) != VK_SUCCESS) {
+        SK_LOG_ERROR("Failed to end command buffer");
+        return false;
+    }
+
+    return true;
 }
 
 void FVulkanCommandContext::RenderImGuiDrawData(ImDrawData* DrawData) {
-    if (!Active) {
-        SK_LOG_WARN("Command context is not active");
-        return;
-    }
-
     auto RHI = reinterpret_cast<FVulkanRHI *>(GRHI);
     ImGui_ImplVulkan_RenderDrawData(DrawData, MainCommandBuffers[RHI->GetCurrentFrameIndex()]);
 }

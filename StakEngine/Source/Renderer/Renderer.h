@@ -18,13 +18,13 @@ public:
     FRenderer() = default;
 
 public:
-    void Init(TRef<IWindow> Window);
+    bool Init(TRef<IWindow> Window);
     void Shutdown();
 
     void InitImGui();
     void ImGuiNewFrame();
     void ShutdownImGui();
-    void Render();
+    bool Render();
 
     void AddProxy(FRenderProxy *Proxy);
     void RemoveProxy(FRenderProxy *Proxy);

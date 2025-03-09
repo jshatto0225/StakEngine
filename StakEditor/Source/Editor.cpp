@@ -9,7 +9,13 @@ FApplication *CreateApplication() {
     Spec.WindowTitle = "Stak Editor";
     Spec.AppName = "StakEditor";
 
-    FApplication *Editor = new FApplication(Spec);
+    auto Editor = new FApplication();
+
+    if (!Editor->Init(Spec)) {
+        LOG_ERROR("Failed to initialize application");
+        return nullptr;
+    }
+
     Editor->AddLayer(new FEditorLayer());
 
     return Editor;

@@ -26,9 +26,8 @@ struct FWindowPosData {
 
 class IWindow {
 public:
-
-    IWindow() = default;
-    virtual ~IWindow() = default;
+    virtual bool Init(const FWindowConfig &Cfg) = 0;
+    virtual void Shutdown() = 0;
 
     virtual FWindowSizeData GetSize() = 0;
     virtual FWindowPosData GetPos() = 0;
@@ -53,5 +52,5 @@ public:
 
     virtual TRef<IRHIViewport> GetRHIViewport() = 0;
 
-    static TScope<IWindow> Create(const FWindowConfig &Cfg);
+    static TRef<IWindow> Create();
 };

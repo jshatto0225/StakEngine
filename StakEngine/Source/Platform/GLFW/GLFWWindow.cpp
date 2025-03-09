@@ -8,12 +8,12 @@
 
 static bool GLFWInitialized = false;
 
-FGLFWWindow::FGLFWWindow(const FWindowConfig &Cfg) {
+bool FGLFWWindow::Init(const FWindowConfig &Cfg) {
     Data = { nullptr, nullptr, nullptr, nullptr, nullptr, 0, 0, Cfg.Width, Cfg.Height, 0, 0, Cfg.Title };
 
     if (!GLFWInitialized) {
         if (!glfwInit()) {
-            return;
+            return false;
         }
         GLFWInitialized = true;
     }
@@ -26,12 +26,7 @@ FGLFWWindow::FGLFWWindow(const FWindowConfig &Cfg) {
     glfwSetFramebufferSizeCallback(NativeHandle, [](GLFWwindow* Window, FSInt32 Width, FSInt32 Height) {
         auto* Data = static_cast<FWindowData*>(glfwGetWindowUserPointer(Window));
 
-        Data->FramebufferWidth = Width;
-        Data->FramebufferHeight = Height;
-    });
-
-    glfwSetFramebufferSizeCallback(NativeHandle, [](GLFWwindow* Window, FSInt32 Width, FSInt32 Height) {
-        auto* Data = static_cast<FWindowData*>(glfwGetWindowUserPointer(Window));
+        Data->Viewport->OnFramebufferResize();
 
         Data->FramebufferWidth = Width;
         Data->FramebufferHeight = Height;
@@ -108,10 +103,16 @@ FGLFWWindow::FGLFWWindow(const FWindowConfig &Cfg) {
         Data->MouseMoveEventFn(E);
     });
 
-    Viewport = RHICreateViewport(NativeHandle);
+    Data.Viewport = RHICreateViewport(NativeHandle);
+    if (!Data.Viewport->Init()) {
+        SK_LOG_ERROR("Failed to create viewport for window");
+        return false;
+    }
+
+    return true;
 }
 
-FGLFWWindow::~FGLFWWindow() {
+void FGLFWWindow::Shutdown() {
     glfwDestroyWindow(NativeHandle);
 }
 
@@ -162,5 +163,5 @@ FWindowSizeData FGLFWWindow::GetFramebufferSize() {
 }
 
 TRef<IRHIViewport> FGLFWWindow::GetRHIViewport() {
-    return Viewport;
+    return Data.Viewport;
 }

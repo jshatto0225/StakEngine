@@ -12,8 +12,8 @@ class FVulkanCommandContext : public IRHICommandContext {
 public:
     FVulkanCommandContext(VkDevice Device);
 
-    void Begin() override;
-    void End() override;
+    bool Begin() override;
+    bool End() override;
 
     void ResourceBarrier(const FRHIResourceBarrier& Barrier) override;
 
@@ -33,6 +33,7 @@ public:
 
     void RenderImGuiDrawData(ImDrawData *DrawData) override;
 
+    bool Init() override;
     void Shutdown() override;
 
 public:
@@ -42,11 +43,8 @@ public:
     VkCommandBuffer GetMainCommandBuffer();
 
 private:
-    bool Initialized = true;
-
     VkDevice Device;
 
-    bool Active = false;
     VkCommandPool CommandPool = VK_NULL_HANDLE;
     std::vector<VkCommandBuffer> MainCommandBuffers = {};
 };

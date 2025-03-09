@@ -46,24 +46,18 @@ struct VulkanSwapchainSupport {
     std::vector<VkPresentModeKHR> PresentModes;
 };
 
-VulkanSwapchainSupport GetSwapchainSupport(VkPhysicalDevice Device, VkSurfaceKHR Surface);
+bool GetSwapchainSupport(VulkanSwapchainSupport *Out, VkPhysicalDevice Device, VkSurfaceKHR Surface);
 
-VkImageView VulkanCreateImageView(VkDevice Device, VkImage Image, VkFormat Format);
+bool VulkanCreateImageView(VkImageView *Out, VkDevice Device, VkImage Image, VkFormat Format);
 
 VkIndexType GetVulkanIndexType(ERHIFormat Format);
-
 VkDescriptorType GetVulkanDescriptorType(ERHIDescriptorType Type);
-
 VkShaderStageFlags GetVulkanShaderStageFlags(std::vector<ERHIShaderType> Types);
-
 VkShaderStageFlagBits GetVulkanShaderStage(ERHIShaderType Type);
-
 VkVertexInputRate GetVulkanVertexInputRate(ERHIVertexInputRate InputRate);
-
 VkFormat GetVulkanFormat(ERHIFormat Format);
 VkFormat GetVulkanDepthFormat(ERHIFormat Format);
 VkFormat GetVulkanStencilFormat(ERHIFormat Format);
-
 ERHIFormat GetRHIFormat(VkFormat Format);
 
 enum class EVulkanQueue {
@@ -80,34 +74,33 @@ FSInt32 FindPresentQueueIndex(VkPhysicalDevice GPU, VkSurfaceKHR Surface);
 
 class FVulkanRHI : public IRHI {
 public:
-    FVulkanRHI();
-    ~FVulkanRHI();
-
+    bool Init() override;
+    void Shutdown() override;
     void ImGuiNewFrame() override;
     void ShutdownImGui() override;
-    void InitImGui() override;
-    void WaitForGPUIdle() override;
-    void Submit(TRef<IRHICommandContext> Context) override;
+    bool InitImGui() override;
+    bool WaitForGPUIdle() override;
+    bool Submit(TRef<IRHICommandContext> Context) override;
     TRef<IRHICommandContext> CreateCommandContext() override;
-    TRef<IRHIShader> CreateShader(const FRHIShaderDescription &Description) override;
-    TRef<IRHIBuffer> CreateBuffer(const FRHIBufferDescription &Description) override;
-    TRef<IRHIPipelineLayout> CreatePipelineLayout(const FRHIPipelineLayoutDescription &Description) override;
-    TRef<IRHIDescriptorSetLayout> CreateDescriptorSetLayout(const FRHIDescriptorSetLayoutDescription &Description) override;
-    TRef<IRHIPipeline> CreatePipeline(const FRHIGraphicsPipelineStateDescription &Description) override;
-    void PrepareFrame() override;
-    void PresentFrame() override;
-    void SetActiveViewport(TRef<IRHIViewport> Viewport) override;
+    TRef<IRHIShader> CreateShader() override;
+    TRef<IRHIBuffer> CreateBuffer() override;
+    TRef<IRHIPipelineLayout> CreatePipelineLayout() override;
+    TRef<IRHIDescriptorSetLayout> CreateDescriptorSetLayout() override;
+    TRef<IRHIPipeline> CreatePipeline() override;
+    bool PrepareFrame() override;
+    bool PresentFrame() override;
+    bool SetActiveViewport(TRef<IRHIViewport> Viewport) override;
     TRef<IRHITexture> GetCurrentBackbuffer() override;
     TRef<IRHIViewport> CreateViewport(void *WindowHandle) override;
 
 public:
     VkCommandBuffer BeginOneTimeCommandBuffer();
-    void EndOneTimeCommandBuffer(VkCommandBuffer CommandBuffer);
-    void CopyBuffer(VkBuffer Src, VkBuffer Dst, FUInt32 Size);
-    void CreateBuffer(FUInt32 Size, VkBufferUsageFlags Usage, VkMemoryPropertyFlags Properties, VkBuffer *Buffer, VkDeviceMemory *Memory);
+    bool EndOneTimeCommandBuffer(VkCommandBuffer CommandBuffer);
+    bool CopyBuffer(VkBuffer Src, VkBuffer Dst, FUInt32 Size);
+    bool CreateBuffer(FUInt32 Size, VkBufferUsageFlags Usage, VkMemoryPropertyFlags Properties, VkBuffer *Buffer, VkDeviceMemory *Memory);
     FUInt32 FindMemoryType(FUInt32 Filter, VkMemoryPropertyFlags Flags);
     FUInt32 GetCurrentFrameIndex();
-    FUInt32 GetGraphicsQueueIndex() { return static_cast<FUInt32>(GraphicsQueueIndex); }
+    inline FUInt32 GetGraphicsQueueIndex() { return static_cast<FUInt32>(GraphicsQueueIndex); }
     FUInt32 GetCurrentImageIndex();
     FUInt32 GetActivePresentQueueIndex();
 

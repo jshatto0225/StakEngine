@@ -10,26 +10,46 @@
 
 extern IRHI *GRHI;
 
-FVulkanViewport::FVulkanViewport(VkInstance Instance, VkPhysicalDevice GPU, VkDevice Device, void *WindowHandle) : Instance(Instance), GPU(GPU), Device(Device), WindowHandle(WindowHandle) {
+FVulkanViewport::FVulkanViewport(VkInstance Instance, VkPhysicalDevice GPU, VkDevice Device, void *WindowHandle) : Device(Device), Instance(Instance), GPU(GPU), WindowHandle(WindowHandle) {}
+
+bool FVulkanViewport::Init() {
 #ifdef SK_GLFW
-    glfwCreateWindowSurface(Instance, (GLFWwindow *) WindowHandle, nullptr, &Surface);
+    if (glfwCreateWindowSurface(Instance, (GLFWwindow *) WindowHandle, nullptr, &Surface) != VK_SUCCESS) {
+        SK_LOG_ERROR("Failed to create window surface");
+        return false;
+    }
 #endif
 
     VkSemaphoreCreateInfo SemaphoreInfo = {};
     SemaphoreInfo.sType = VK_STRUCTURE_TYPE_SEMAPHORE_CREATE_INFO;
 
     for (FUInt32 Index = 0; Index < MAX_FRAMES_IN_FLIGHT; Index++) {
-        CHECK_VK_ERR(vkCreateSemaphore(Device, &SemaphoreInfo, nullptr, &ImageAvailableSemaphores[Index]), "Failed to create vulkan semaphore");
-        CHECK_VK_ERR(vkCreateSemaphore(Device, &SemaphoreInfo, nullptr, &RenderFinishedSemaphores[Index]), "Failed to create vulkan semaphore");
+        if (vkCreateSemaphore(Device, &SemaphoreInfo, nullptr, &ImageAvailableSemaphores[Index]) != VK_SUCCESS) {
+            SK_LOG_ERROR("Failed to create vulkan semaphore");
+            return false;
+        }
+        if (vkCreateSemaphore(Device, &SemaphoreInfo, nullptr, &RenderFinishedSemaphores[Index]) != VK_SUCCESS) {
+            SK_LOG_ERROR("Failed to create vulkan semaphore");
+            return false;
+        }
     }
 
-    CreateSwapchain();
+    if (!CreateSwapchain()) {
+        SK_LOG_ERROR("Failed to create swapchain");
+        return false;
+    }
 
     vkGetDeviceQueue(Device, PresentQueueIndex, 0, &PresentQueue);
+
+    return true;
 }
 
-void FVulkanViewport::CreateSwapchain() {
-    VulkanSwapchainSupport Support = GetSwapchainSupport(GPU, Surface);
+bool FVulkanViewport::CreateSwapchain() {
+    VulkanSwapchainSupport Support;
+    if (!GetSwapchainSupport(&Support, GPU, Surface)) {
+        SK_LOG_ERROR("Failed to get swapchain support");
+        return false;
+    }
 
     VkSurfaceFormatKHR Format = {};
     for (auto &F : Support.Formats) {
@@ -69,7 +89,7 @@ void FVulkanViewport::CreateSwapchain() {
         SwapchainExtent = Extent;
     }
 
-    ImageCount = Support.Capabilities.maxImageCount + 1;
+    ImageCount = Support.Capabilities.minImageCount + 1;
 
     if (Support.Capabilities.maxImageCount > 0 && ImageCount > Support.Capabilities.maxImageCount) {
         ImageCount = Support.Capabilities.maxImageCount;
@@ -86,7 +106,7 @@ void FVulkanViewport::CreateSwapchain() {
     SwapchainInfo.imageUsage = VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT;
 
     MinImageCount = ImageCount;
-    
+
     PresentQueueIndex = FindPresentQueueIndex(GPU, Surface);
 
     auto RHI = reinterpret_cast<FVulkanRHI *>(GRHI);
@@ -98,25 +118,43 @@ void FVulkanViewport::CreateSwapchain() {
     SwapchainInfo.presentMode = PresentMode;
     SwapchainInfo.clipped = VK_TRUE;
     SwapchainInfo.oldSwapchain = VK_NULL_HANDLE;
-    CHECK_VK_ERR(vkCreateSwapchainKHR(Device, &SwapchainInfo, nullptr, &Swapchain), "Failed to create swapchian");
+    if (vkCreateSwapchainKHR(Device, &SwapchainInfo, nullptr, &Swapchain) != VK_SUCCESS) {
+        SK_LOG_ERROR("Failed to create swapchian");
+        return false;
+    }
 
     if (Backbuffer == nullptr) {
-        Backbuffer = TCreateRef<FVulkanTexture>(Device, Swapchain, ImageCount, SwapchainExtent, Format.format);
+        Backbuffer = TCreateRef<FVulkanTexture>(Device);
     }
+
+    if (!Backbuffer->Init(Swapchain, ImageCount, SwapchainExtent, Format.format)) {
+        SK_LOG_ERROR("Failed to initialize backbuffer");
+        return false;
+    }
+
+    return true;
 }
 
-void FVulkanViewport::PrepareFrame(FUInt32 FrameIndex) {
+bool FVulkanViewport::PrepareFrame(FUInt32 FrameIndex) {
     VkResult Err = vkAcquireNextImageKHR(Device, Swapchain, UINT64_MAX, ImageAvailableSemaphores[FrameIndex], VK_NULL_HANDLE, &ImageIndex);
 
     if (Err == VK_ERROR_OUT_OF_DATE_KHR) {
-        RecreateSwapchain();
-        PrepareFrame(FrameIndex);
-    } else if (Err != VK_SUCCESS && Err != VK_SUBOPTIMAL_KHR) {
+        if (!RecreateSwapchain()) {
+            SK_LOG_ERROR("Failed to recreate swapchain");
+            return false;
+        }
+        return PrepareFrame(FrameIndex);
+    } 
+    
+    if (Err != VK_SUCCESS && Err != VK_SUBOPTIMAL_KHR) {
         SK_LOG_ERROR("Failed to get next swapchain image");
+        return false;
     }
+
+    return true;
 }
 
-void FVulkanViewport::PresentFrame(FUInt32 FrameIndex) {
+bool FVulkanViewport::PresentFrame(FUInt32 FrameIndex) {
     VkPresentInfoKHR PresentInfo = {};
     PresentInfo.sType = VK_STRUCTURE_TYPE_PRESENT_INFO_KHR;
     PresentInfo.swapchainCount = 1;
@@ -127,10 +165,16 @@ void FVulkanViewport::PresentFrame(FUInt32 FrameIndex) {
     VkResult Err = vkQueuePresentKHR(PresentQueue, &PresentInfo);
 
     if (Err == VK_ERROR_OUT_OF_DATE_KHR || Err == VK_SUBOPTIMAL_KHR || FramebufferResized) {
-        RecreateSwapchain();
+        if (!RecreateSwapchain()) {
+            SK_LOG_ERROR("Failed to recreate swapchian");
+            return false;
+        }
     } else if (Err != VK_SUCCESS) {
         SK_LOG_ERROR("Failed to present");
+        return false;
     }
+
+    return true;
 }
 
 TRef<IRHITexture> FVulkanViewport::GetBackbuffer() {
@@ -149,16 +193,37 @@ void FVulkanViewport::Shutdown() {
     }
 }
 
-void FVulkanViewport::RecreateSwapchain() {
-    RHIWaitForGPUIdle();
+bool FVulkanViewport::RecreateSwapchain() {
+#ifdef SK_GLFW
+    FSInt32 Width = 0;
+    FSInt32 Height = 0;
+    auto Window = (GLFWwindow *) WindowHandle;
+
+    glfwGetFramebufferSize(Window, &Width, &Height);
+
+    while (Width == 0 || Height == 0) {
+        glfwPollEvents();
+        glfwGetFramebufferSize(Window, &Width, &Height);
+    }
+#endif
+
+    if (!RHIWaitForGPUIdle()) {
+        SK_LOG_ERROR("Failed to wait for gpu before swapchain recreate");
+        return false;
+    }
 
     Backbuffer->Shutdown();
 
     vkDestroySwapchainKHR(Device, Swapchain, nullptr);
 
-    CreateSwapchain();
+    if (!CreateSwapchain()) {
+        SK_LOG_ERROR("Failed to crate swapchain");
+        return false;
+    }
 
     FramebufferResized = false;
+
+    return true;
 }
 
 void FVulkanViewport::OnFramebufferResize() {

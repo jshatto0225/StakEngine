@@ -3,8 +3,10 @@
 #include "VulkanDescriptorSetLayout.h"
 #include "VulkanShader.h"
 
-FVulkanPipelineLayout::FVulkanPipelineLayout(VkDevice Device, const FRHIPipelineLayoutDescription &Description) : Device(Device) {
-    VkPipelineLayoutCreateInfo Info = {};
+FVulkanPipelineLayout::FVulkanPipelineLayout(VkDevice Device) : Device(Device) {}
+
+bool FVulkanPipelineLayout::Init(const FRHIPipelineLayoutDescription &Description) {
+VkPipelineLayoutCreateInfo Info = {};
     Info.sType = VK_STRUCTURE_TYPE_PIPELINE_LAYOUT_CREATE_INFO;
 
     std::vector<VkDescriptorSetLayout> Layouts = {};
@@ -17,14 +19,21 @@ FVulkanPipelineLayout::FVulkanPipelineLayout(VkDevice Device, const FRHIPipeline
     Info.setLayoutCount = static_cast<FUInt32>(Layouts.size());
     Info.pSetLayouts = Layouts.data();
 
-    CHECK_VK_ERR(vkCreatePipelineLayout(Device, &Info, nullptr, &Layout), "Failed to create pipeline layout");
+    if (vkCreatePipelineLayout(Device, &Info, nullptr, &Layout) != VK_SUCCESS) {
+        SK_LOG_ERROR("Failed to create pipeline layout");
+        return false;
+    }
+
+    return true;
 }
 
 void FVulkanPipelineLayout::Shutdown() {
     vkDestroyPipelineLayout(Device, Layout, nullptr);
 }
 
-FVulkanPipeline::FVulkanPipeline(VkDevice Device, const FRHIGraphicsPipelineStateDescription &Description) : Device(Device), BindPoint(VK_PIPELINE_BIND_POINT_GRAPHICS) {
+FVulkanPipeline::FVulkanPipeline(VkDevice Device) : Device(Device), BindPoint(VK_PIPELINE_BIND_POINT_GRAPHICS) {}
+
+bool FVulkanPipeline::Init(const FRHIGraphicsPipelineStateDescription &Description) {
     std::vector<VkFormat> ColorFormats;
     ColorFormats.reserve(Description.ColorFormats.size());
 
@@ -149,7 +158,12 @@ FVulkanPipeline::FVulkanPipeline(VkDevice Device, const FRHIGraphicsPipelineStat
     Info.pDynamicState = &DynamicState;
     Info.layout = std::static_pointer_cast<FVulkanPipelineLayout>(Description.Layout)->GetLayout();
 
-    CHECK_VK_ERR(vkCreateGraphicsPipelines(Device, VK_NULL_HANDLE, 1, &Info, nullptr, &Pipeline), "Failed to create vulkan pipeline");
+    if (vkCreateGraphicsPipelines(Device, VK_NULL_HANDLE, 1, &Info, nullptr, &Pipeline) != VK_SUCCESS) {
+        SK_LOG_ERROR("Failed to create vulkan pipeline");
+        return false;
+    }
+
+    return true;
 }
 
 void FVulkanPipeline::Shutdown() {

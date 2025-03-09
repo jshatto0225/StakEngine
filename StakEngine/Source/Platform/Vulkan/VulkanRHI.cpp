@@ -69,27 +69,40 @@ FSInt32 FindGraphicsQueueFamiliy(VkPhysicalDevice GPU) {
     return -1;
 }
 
-VulkanSwapchainSupport GetSwapchainSupport(VkPhysicalDevice Device, VkSurfaceKHR Surface) {
-    VulkanSwapchainSupport Support = {};
-
-    vkGetPhysicalDeviceSurfaceCapabilitiesKHR(Device, Surface, &Support.Capabilities);
+bool GetSwapchainSupport(VulkanSwapchainSupport *Out, VkPhysicalDevice Device, VkSurfaceKHR Surface) {
+    if (vkGetPhysicalDeviceSurfaceCapabilitiesKHR(Device, Surface, &Out->Capabilities) != VK_SUCCESS) {
+        SK_LOG_ERROR("Failed to get surface capabilities");
+        return false;
+    }
 
     FUInt32 FormatCount = 0;
-    vkGetPhysicalDeviceSurfaceFormatsKHR(Device, Surface, &FormatCount, nullptr);
-    Support.Formats.resize(FormatCount);
+    if (vkGetPhysicalDeviceSurfaceFormatsKHR(Device, Surface, &FormatCount, nullptr) != VK_SUCCESS) {
+        SK_LOG_ERROR("Failed to get surface format count");
+        return false;
+    }
+    Out->Formats.resize(FormatCount);
 
-    vkGetPhysicalDeviceSurfaceFormatsKHR(Device, Surface, &FormatCount, Support.Formats.data());
+    if (vkGetPhysicalDeviceSurfaceFormatsKHR(Device, Surface, &FormatCount, Out->Formats.data()) != VK_SUCCESS) {
+        SK_LOG_ERROR("Failed to get surface formats");
+        return false;
+    }
 
     FUInt32 PresentModeCount = 0;
-    vkGetPhysicalDeviceSurfacePresentModesKHR(Device, Surface, &PresentModeCount, nullptr);
-    Support.PresentModes.resize(PresentModeCount);
+    if (vkGetPhysicalDeviceSurfacePresentModesKHR(Device, Surface, &PresentModeCount, nullptr) != VK_SUCCESS) {
+        SK_LOG_ERROR("Failed to get surface present mode count");
+        return false;
+    }
+    Out->PresentModes.resize(PresentModeCount);
 
-    vkGetPhysicalDeviceSurfacePresentModesKHR(Device, Surface, &PresentModeCount, Support.PresentModes.data());
+    if (vkGetPhysicalDeviceSurfacePresentModesKHR(Device, Surface, &PresentModeCount, Out->PresentModes.data()) != VK_SUCCESS) {
+        SK_LOG_ERROR("Failed to get surface present modes");
+        return false;
+    }
 
-    return Support;
+    return true;
 }
 
-VkImageView VulkanCreateImageView(VkDevice Device, VkImage Image, VkFormat Format) {
+bool VulkanCreateImageView(VkImageView *Out, VkDevice Device, VkImage Image, VkFormat Format) {
     VkImageViewCreateInfo ViewInfo = {};
     ViewInfo.sType = VK_STRUCTURE_TYPE_IMAGE_VIEW_CREATE_INFO;
     ViewInfo.image = Image;
@@ -101,10 +114,12 @@ VkImageView VulkanCreateImageView(VkDevice Device, VkImage Image, VkFormat Forma
     ViewInfo.subresourceRange.baseArrayLayer = 0;
     ViewInfo.subresourceRange.layerCount = 1;
 
-    VkImageView ImageView;
-    CHECK_VK_ERR(vkCreateImageView(Device, &ViewInfo, nullptr, &ImageView), "Failed to create image view");
+    if (vkCreateImageView(Device, &ViewInfo, nullptr, Out) != VK_SUCCESS) {
+        SK_LOG_ERROR("Failed to create image view");
+        return false;
+    }
 
-    return ImageView;
+    return true;
 }
 
 VkAccessFlags GetVulkanAccessMask(ERHIResourceState State) {
@@ -267,7 +282,7 @@ FSInt32 FindPresentQueueIndex(VkPhysicalDevice GPU, VkSurfaceKHR Surface) {
     return -1;
 }
 
-FVulkanRHI::FVulkanRHI() {
+bool FVulkanRHI::Init() {
     FBool ExtensionsSupported = true;
     FUInt32 LayerCount = 0;
     vkEnumerateInstanceLayerProperties(&LayerCount, nullptr);
@@ -292,6 +307,7 @@ FVulkanRHI::FVulkanRHI() {
 
     if (ENABLE_VALIDATION_LAYERS && !ExtensionsSupported) {
         SK_LOG_ERROR("Validation layers not supported");
+        return false;
     }
 
     VkApplicationInfo AppInfo = {};
@@ -378,6 +394,7 @@ FVulkanRHI::FVulkanRHI() {
 
     if (!DeviceFound) {
         SK_LOG_ERROR("Failed to find suitable physical device");
+        return false;
     }
 
     FFloat QueuePriority = 1.0f;
@@ -421,7 +438,10 @@ FVulkanRHI::FVulkanRHI() {
         DeviceInfo.ppEnabledLayerNames = VALIDATION_LAYERS.data();
     }
 
-    CHECK_VK_ERR(vkCreateDevice(GPU, &DeviceInfo, nullptr, &Device), "Failed to create vulkan device");
+    if (vkCreateDevice(GPU, &DeviceInfo, nullptr, &Device) != VK_SUCCESS) {
+        SK_LOG_ERROR("Failed to create vulkan device");
+        return false;
+    }
 
     vkGetDeviceQueue(Device, GraphicsQueueIndex, 0, &GraphicsQueue);
 
@@ -430,7 +450,10 @@ FVulkanRHI::FVulkanRHI() {
     FenceInfo.flags = VK_FENCE_CREATE_SIGNALED_BIT;
 
     for (auto &Fence : InFlightFences) {
-        CHECK_VK_ERR(vkCreateFence(Device, &FenceInfo, nullptr, &Fence), "Failed to create vulkan fence");
+        if (vkCreateFence(Device, &FenceInfo, nullptr, &Fence) != VK_SUCCESS) {
+            SK_LOG_ERROR("Failed to create vulkan fence");
+            return false;
+        }
     }
 
     VkCommandPoolCreateInfo CommandPoolInfo = {};
@@ -439,10 +462,15 @@ FVulkanRHI::FVulkanRHI() {
     CommandPoolInfo.flags = VK_COMMAND_POOL_CREATE_RESET_COMMAND_BUFFER_BIT;
     CommandPoolInfo.queueFamilyIndex = GraphicsQueueIndex;
 
-    CHECK_VK_ERR(vkCreateCommandPool(Device, &CommandPoolInfo, nullptr, &CommandPool), "Failed to create vulkan command pool");
+    if (vkCreateCommandPool(Device, &CommandPoolInfo, nullptr, &CommandPool) != VK_SUCCESS) {
+        SK_LOG_ERROR("Failed to create vulkan command pool");
+        return false;
+    }
+
+    return true;
 }
 
-FVulkanRHI::~FVulkanRHI() {
+void FVulkanRHI::Shutdown() {
     DestroyDebugMessenger(Instance, DebugMessenger, nullptr);
 
     vkDestroyInstance(Instance, nullptr);
@@ -465,7 +493,7 @@ void FVulkanRHI::ShutdownImGui() {
     vkDestroyDescriptorPool(Device, ImGuiPool, nullptr);
 }
 
-void FVulkanRHI::InitImGui() {
+bool FVulkanRHI::InitImGui() {
     VkDescriptorPoolSize PoolSizes[] = {
         { VK_DESCRIPTOR_TYPE_SAMPLER, 1000 },
         { VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, 1000 },
@@ -487,7 +515,10 @@ void FVulkanRHI::InitImGui() {
     PoolInfo.poolSizeCount = static_cast<FUInt32>(std::size(PoolSizes));
     PoolInfo.pPoolSizes = PoolSizes;
 
-    CHECK_VK_ERR(vkCreateDescriptorPool(Device, &PoolInfo, nullptr, &ImGuiPool), "Failed to create imgui descriptor pool");
+    if (vkCreateDescriptorPool(Device, &PoolInfo, nullptr, &ImGuiPool) != VK_SUCCESS) {
+        SK_LOG_ERROR("Failed to create imgui descriptor pool");
+        return false;
+    }
 
     ImGui_ImplVulkan_InitInfo InitInfo = {};
     InitInfo.Allocator = nullptr;
@@ -519,13 +550,16 @@ void FVulkanRHI::InitImGui() {
     InitInfo.UseDynamicRendering = true;
 
     ImGui_ImplVulkan_Init(&InitInfo);
+
+    return true;
 }
 
-void FVulkanRHI::WaitForGPUIdle() {
-    vkDeviceWaitIdle(Device);
+bool FVulkanRHI::WaitForGPUIdle() {
+    if (vkDeviceWaitIdle(Device) != VK_SUCCESS) return false;
+    return true;
 }
 
-void FVulkanRHI::Submit(TRef<IRHICommandContext> Context) {
+bool FVulkanRHI::Submit(TRef<IRHICommandContext> Context) {
     auto VulkanContext = std::static_pointer_cast<FVulkanCommandContext>(Context);
     VkCommandBuffer CommandBuffer = VulkanContext->GetMainCommandBuffer();
 
@@ -542,33 +576,41 @@ void FVulkanRHI::Submit(TRef<IRHICommandContext> Context) {
     SubmitInfo.commandBufferCount = 1;
     SubmitInfo.pCommandBuffers = &CommandBuffer;
 
-    vkResetFences(Device, 1, &InFlightFences[CurrentFrame]);
-    
-    CHECK_VK_ERR(vkQueueSubmit(GraphicsQueue, 1, &SubmitInfo, InFlightFences[CurrentFrame]), "Failed to submit to graphics queue");
+    if (vkResetFences(Device, 1, &InFlightFences[CurrentFrame]) != VK_SUCCESS) {
+        SK_LOG_ERROR("Failed to reset fencecs");
+        return false;
+    }
+
+    if (vkQueueSubmit(GraphicsQueue, 1, &SubmitInfo, InFlightFences[CurrentFrame]) != VK_SUCCESS) {
+        SK_LOG_ERROR("Failed to submit to graphics queue");
+        return false;
+    }
+
+    return true;
 }
 
 TRef<IRHICommandContext> FVulkanRHI::CreateCommandContext() {
     return TCreateRef<FVulkanCommandContext>(Device);
 }
 
-TRef<IRHIShader> FVulkanRHI::CreateShader(const FRHIShaderDescription &Description) {
-    return TCreateRef<FVulkanShader>(Device, Description);
+TRef<IRHIShader> FVulkanRHI::CreateShader() {
+    return TCreateRef<FVulkanShader>(Device);
 }
 
-TRef<IRHIBuffer> FVulkanRHI::CreateBuffer(const FRHIBufferDescription &Description) {
-    return TCreateRef<FVulkanBuffer>(Device, Description);
+TRef<IRHIBuffer> FVulkanRHI::CreateBuffer() {
+    return TCreateRef<FVulkanBuffer>(Device);
 }
 
-TRef<IRHIPipelineLayout> FVulkanRHI::CreatePipelineLayout(const FRHIPipelineLayoutDescription &Description) {
-    return TCreateRef<FVulkanPipelineLayout>(Device, Description);
+TRef<IRHIPipelineLayout> FVulkanRHI::CreatePipelineLayout() {
+    return TCreateRef<FVulkanPipelineLayout>(Device);
 }
 
-TRef<IRHIDescriptorSetLayout> FVulkanRHI::CreateDescriptorSetLayout(const FRHIDescriptorSetLayoutDescription &Description) {
-    return TCreateRef<FVulkanDescriptorSetLayout>(Device, Description);
+TRef<IRHIDescriptorSetLayout> FVulkanRHI::CreateDescriptorSetLayout() {
+    return TCreateRef<FVulkanDescriptorSetLayout>(Device);
 }
 
-TRef<IRHIPipeline> FVulkanRHI::CreatePipeline(const FRHIGraphicsPipelineStateDescription &Description) {
-    return TCreateRef<FVulkanPipeline>(Device, Description);
+TRef<IRHIPipeline> FVulkanRHI::CreatePipeline() {
+    return TCreateRef<FVulkanPipeline>(Device);
 }
 
 VkCommandBuffer FVulkanRHI::BeginOneTimeCommandBuffer() {
@@ -579,18 +621,30 @@ VkCommandBuffer FVulkanRHI::BeginOneTimeCommandBuffer() {
     AllocInfo.commandBufferCount = 1;
 
     VkCommandBuffer CommandBuffer;
-    vkAllocateCommandBuffers(Device, &AllocInfo, &CommandBuffer);
+    if (vkAllocateCommandBuffers(Device, &AllocInfo, &CommandBuffer) != VK_SUCCESS) {
+        SK_LOG_ERROR("Failed to allocate one time command buffer");
+        return nullptr;
+    }
 
     VkCommandBufferBeginInfo BeginInfo = {};
     BeginInfo.sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_BEGIN_INFO;
     BeginInfo.flags = VK_COMMAND_BUFFER_USAGE_ONE_TIME_SUBMIT_BIT;
 
-    vkBeginCommandBuffer(CommandBuffer, &BeginInfo);
+    if (vkBeginCommandBuffer(CommandBuffer, &BeginInfo) != VK_SUCCESS) {
+        SK_LOG_ERROR("Failed to begin one time command buffer");
+        vkFreeCommandBuffers(Device, CommandPool, 1, &CommandBuffer);
+        return nullptr;
+    }
 
     return CommandBuffer;
 }
 
-void FVulkanRHI::EndOneTimeCommandBuffer(VkCommandBuffer CommandBuffer) {
+bool FVulkanRHI::EndOneTimeCommandBuffer(VkCommandBuffer CommandBuffer) {
+    if (CommandBuffer == nullptr) {
+        SK_LOG_ERROR("Invalid command buffer provided");
+        return false;
+    }
+
     vkEndCommandBuffer(CommandBuffer);
 
     VkSubmitInfo SubmitInfo = {};
@@ -598,14 +652,29 @@ void FVulkanRHI::EndOneTimeCommandBuffer(VkCommandBuffer CommandBuffer) {
     SubmitInfo.commandBufferCount = 1;
     SubmitInfo.pCommandBuffers = &CommandBuffer;
 
-    vkQueueSubmit(GraphicsQueue, 1, &SubmitInfo, VK_NULL_HANDLE);
-    vkQueueWaitIdle(GraphicsQueue);
+    if (vkQueueSubmit(GraphicsQueue, 1, &SubmitInfo, VK_NULL_HANDLE) != VK_SUCCESS) {
+        SK_LOG_ERROR("Failed to submit one time command buffer");
+        vkFreeCommandBuffers(Device, CommandPool, 1, &CommandBuffer);
+        return false;
+    }
+    if (vkQueueWaitIdle(GraphicsQueue) != VK_SUCCESS) {
+        SK_LOG_ERROR("Failed to wait for queue");
+        vkFreeCommandBuffers(Device, CommandPool, 1, &CommandBuffer);
+        return false;
+    }
 
     vkFreeCommandBuffers(Device, CommandPool, 1, &CommandBuffer);
+
+    return true;
 }
 
-void FVulkanRHI::CopyBuffer(VkBuffer Src, VkBuffer Dst, FUInt32 Size) {
+bool FVulkanRHI::CopyBuffer(VkBuffer Src, VkBuffer Dst, FUInt32 Size) {
     VkCommandBuffer CommandBuffer = BeginOneTimeCommandBuffer();
+
+    if (CommandBuffer == nullptr) {
+        SK_LOG_ERROR("Failed to get command buffer for buffer copy");
+        return false;
+    }
 
     VkBufferCopy CopyRegion = {};
     CopyRegion.srcOffset = 0;
@@ -614,17 +683,25 @@ void FVulkanRHI::CopyBuffer(VkBuffer Src, VkBuffer Dst, FUInt32 Size) {
 
     vkCmdCopyBuffer(CommandBuffer, Src, Dst, 1, &CopyRegion);
 
-    EndOneTimeCommandBuffer(CommandBuffer);
+    if (!EndOneTimeCommandBuffer(CommandBuffer)) {
+        SK_LOG_ERROR("Failed to submit command buffer for buffer copy");
+        return false;
+    }
+
+    return true;
 }
 
-void FVulkanRHI::CreateBuffer(FUInt32 Size, VkBufferUsageFlags Usage, VkMemoryPropertyFlags Properties, VkBuffer *Buffer, VkDeviceMemory *Memory) {
+bool FVulkanRHI::CreateBuffer(FUInt32 Size, VkBufferUsageFlags Usage, VkMemoryPropertyFlags Properties, VkBuffer *Buffer, VkDeviceMemory *Memory) {
     VkBufferCreateInfo BufferInfo = {};
     BufferInfo.sType = VK_STRUCTURE_TYPE_BUFFER_CREATE_INFO;
     BufferInfo.size = Size;
     BufferInfo.usage = Usage;
     BufferInfo.sharingMode = VK_SHARING_MODE_EXCLUSIVE;
 
-    CHECK_VK_ERR(vkCreateBuffer(Device, &BufferInfo, nullptr, Buffer), "Failed to create buffer");
+    if (vkCreateBuffer(Device, &BufferInfo, nullptr, Buffer) != VK_SUCCESS) {
+        SK_LOG_ERROR("Failed to create buffer");
+        return false;
+    }
 
     VkMemoryRequirements MemReqs = {};
     vkGetBufferMemoryRequirements(Device, *Buffer, &MemReqs);
@@ -634,8 +711,17 @@ void FVulkanRHI::CreateBuffer(FUInt32 Size, VkBufferUsageFlags Usage, VkMemoryPr
     AllocInfo.allocationSize = MemReqs.size;
     AllocInfo.memoryTypeIndex = FindMemoryType(MemReqs.memoryTypeBits, Properties);
 
-    CHECK_VK_ERR(vkAllocateMemory(Device, &AllocInfo, nullptr, Memory), "Failed to allocate memory");
-    vkBindBufferMemory(Device, *Buffer, *Memory, 0);
+    if (vkAllocateMemory(Device, &AllocInfo, nullptr, Memory) != VK_SUCCESS) {
+        SK_LOG_ERROR("Failed to allocate buffer memory");
+        return false;
+    }
+
+    if (vkBindBufferMemory(Device, *Buffer, *Memory, 0) != VK_SUCCESS) {
+        SK_LOG_ERROR("Failed to bind buffer memory");
+        return false;
+    }
+
+    return true;
 }
 
 FUInt32 FVulkanRHI::FindMemoryType(FUInt32 Filter, VkMemoryPropertyFlags Flags) {
@@ -656,30 +742,44 @@ FUInt32 FVulkanRHI::GetCurrentFrameIndex() {
     return CurrentFrame;
 }
 
-void FVulkanRHI::PrepareFrame() {
+bool FVulkanRHI::PrepareFrame() {
     if (ActiveViewport == nullptr) {
         SK_LOG_WARN("No viewport set for rendering");
-        return;
+        return false;
     }
 
-    ActiveViewport->PrepareFrame(CurrentFrame);
+    if (!ActiveViewport->PrepareFrame(CurrentFrame)) {
+        SK_LOG_ERROR("Viewport failed to prepare frame");
+        return false;
+    }
+
+    return true;
 }
 
-void FVulkanRHI::PresentFrame() {
+bool FVulkanRHI::PresentFrame() {
     if (ActiveViewport == nullptr) {
         SK_LOG_WARN("No viewport set for rendering");
-        return;
+        return false;
     }
 
-    ActiveViewport->PresentFrame(CurrentFrame);
+    if (!ActiveViewport->PresentFrame(CurrentFrame)) {
+        SK_LOG_ERROR("Viewport failed to present frame");
+        return false;
+    }
 
     CurrentFrame = (CurrentFrame + 1) % MAX_FRAMES_IN_FLIGHT;
 
-    vkWaitForFences(Device, 1, &InFlightFences[CurrentFrame], VK_TRUE, UINT64_MAX);
+    if (vkWaitForFences(Device, 1, &InFlightFences[CurrentFrame], VK_TRUE, UINT64_MAX) != VK_SUCCESS) {
+        SK_LOG_ERROR("Failed to wait for fences");
+        return false;
+    }
+
+    return true;
 }
 
-void FVulkanRHI::SetActiveViewport(TRef<IRHIViewport> Viewport) {
+bool FVulkanRHI::SetActiveViewport(TRef<IRHIViewport> Viewport) {
     ActiveViewport = std::static_pointer_cast<FVulkanViewport>(Viewport);
+    return true;
 }
 
 

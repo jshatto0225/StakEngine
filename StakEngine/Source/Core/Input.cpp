@@ -147,60 +147,197 @@ FInput::FInput(TRef<IWindow> Win) {
     CursorVisibility = ECursorVisibility::NORMAL;
 }
 
-void FInput::AddKeyStateCallback(EInputState State, EKeyCode Key, std::function<void()> Func) {
-    switch (State) {
-    case EInputState::DOWN:
-        KeyPressCallbacks[Key].push_back(Func);
-        break;
-    case EInputState::UP:
-        KeyReleaseCallbacks[Key].push_back(Func);
-        break;
-    }
+FInputCallbackInfo FInput::AddKeyPressCallback(EKeyCode Key, std::function<void()> Func) {
+    KeyPressCallbacks[Key][KeyPressId] = Func;
+
+    FInputCallbackInfo Info = {};
+
+    Info.Type = ECallbackType::KEY;
+    Info.Key = Key;
+    Info.Action = EInputState::DOWN;
+    Info.Id = KeyPressId;
+
+    KeyPressId++;
+
+    return Info;
 }
 
-void FInput::AddGenericKeyStateCallback(EInputState State, std::function<void(EKeyCode)> Func) {
-    switch (State) {
-    case EInputState::DOWN:
-        GenericKeyPressCallbacks.push_back(Func);
-        break;
-    case EInputState::UP:
-        GenericKeyReleaseCallbacks.push_back(Func);
-        break;
-    }
+FInputCallbackInfo FInput::AddKeyReleaseCallback(EKeyCode Key, std::function<void()> Func) {
+    KeyReleaseCallbacks[Key][KeyReleaseId] = Func;
+
+    FInputCallbackInfo Info = {};
+
+    Info.Type = ECallbackType::KEY;
+    Info.Key = Key;
+    Info.Action = EInputState::UP;
+    Info.Id = KeyReleaseId;
+
+    KeyReleaseId++;
+
+    return Info;
 }
 
-void FInput::AddGenericKeyCallback(std::function<void(EInputState, EKeyCode)> Func) {
-    GenericKeyCallbacks.push_back(Func);
+FInputCallbackInfo FInput::AddAnyKeyPressCallback(std::function<void(EKeyCode)> Func) {
+    AnyKeyPressCallbacks[AnyKeyPressId] = Func;
+
+    FInputCallbackInfo Info = {};
+
+    Info.Type = ECallbackType::KEY;
+    Info.Action = EInputState::DOWN;
+    Info.IsAnyCode = true;
+    Info.Id = AnyKeyPressId;
+
+    AnyKeyPressId++;
+
+    return Info;
 }
 
-void FInput::AddMouseButtonStateCallback(EInputState State, EMouseCode Button, std::function<void()> Func) {
-    switch (State) {
-    case EInputState::DOWN:
-        MouseButtonPressCallbacks[Button].push_back(Func);
-        break;
-    case EInputState::UP:
-        MouseButtonReleaseCallbacks[Button].push_back(Func);
-        break;
-    }
+FInputCallbackInfo FInput::AddAnyKeyReleaseCallback(std::function<void(EKeyCode)> Func) {
+    AnyKeyReleaseCallbacks[AnyKeyReleaseId] = Func;
+
+    FInputCallbackInfo Info = {};
+
+    Info.Type = ECallbackType::KEY;
+    Info.Action = EInputState::UP;
+    Info.IsAnyCode = true;
+    Info.Id = AnyKeyReleaseId;
+
+    AnyKeyReleaseId++;
+
+    return Info;
 }
 
-void FInput::AddGenericMouseButtonStateCallback(EInputState State, std::function<void(EMouseCode)> Func) {
-    switch (State) {
-    case EInputState::DOWN:
-        GenericMouseButtonPressCallbacks.push_back(Func);
-        break;
-    case EInputState::UP:
-        GenericMouseButtonReleaseCallbacks.push_back(Func);
-        break;
-    }
+FInputCallbackInfo FInput::AddKeyAnyActionCallback(EKeyCode Key, std::function<void(EInputState)> Func) {
+    KeyAnyActionCallbacks[Key][KeyAnyActionId] = Func;
+
+    FInputCallbackInfo Info = {};
+
+    Info.Type = ECallbackType::KEY;
+    Info.IsAnyCode = true;
+    Info.Key = Key;
+    Info.Id = KeyAnyActionId;
+
+    KeyAnyActionId++;
+
+    return Info;
 }
 
-void FInput::AddGenericMouseButtonCallback(std::function<void(EInputState, EMouseCode)> Func) {
-    GenericMouseButtonCallbacks.push_back(Func);
+FInputCallbackInfo FInput::AddAnyKeyAnyActionCallback(std::function<void(EInputState, EKeyCode)> Func) {
+    AnyKeyAnyActionCallbacks[AnyKeyAnyActionId] = Func;
+
+    FInputCallbackInfo Info = {};
+
+    Info.Type = ECallbackType::KEY;
+    Info.IsAnyCode = true;
+    Info.IsAnyAction = true;
+    Info.Id = AnyKeyAnyActionId;
+
+    AnyKeyAnyActionId++;
+
+    return Info;
 }
 
-void FInput::AddMouseMoveCallback(std::function<void(FFloat, FFloat)> Func) {
-    MouseMoveCallbacks.push_back(Func);
+FInputCallbackInfo FInput::AddMouseButtonPressCallback(EMouseCode Button, std::function<void()> Func) {
+    MouseButtonPressCallbacks[Button][MouseButtonPressId] = Func;
+
+    FInputCallbackInfo Info = {};
+
+    Info.Type = ECallbackType::MOUSE_BUTTON;
+    Info.Button = Button;
+    Info.Action = EInputState::DOWN;
+    Info.Id = MouseButtonPressId;
+
+    MouseButtonPressId++;
+
+    return Info;
+}
+
+FInputCallbackInfo FInput::AddMouseButtonReleaseCallback(EMouseCode Button, std::function<void()> Func) {
+    MouseButtonReleaseCallbacks[Button][MouseButtonReleaseId] = Func;
+
+    FInputCallbackInfo Info = {};
+
+    Info.Type = ECallbackType::MOUSE_BUTTON;
+    Info.Button = Button;
+    Info.Action = EInputState::UP;
+    Info.Id = MouseButtonReleaseId;
+
+    MouseButtonReleaseId++;
+
+    return Info;
+}
+
+FInputCallbackInfo FInput::AddAnyMouseButtonPressCallback(std::function<void(EMouseCode)> Func) {
+    AnyMouseButtonPressCallbacks[AnyMouseButtonPressId] = Func;
+
+    FInputCallbackInfo Info = {};
+
+    Info.Type = ECallbackType::MOUSE_BUTTON;
+    Info.Action = EInputState::DOWN;
+    Info.IsAnyCode = true;
+    Info.Id = AnyMouseButtonPressId;
+
+    AnyMouseButtonPressId++;
+
+    return Info;
+}
+
+FInputCallbackInfo FInput::AddAnyMouseButtonReleaseCallback(std::function<void(EMouseCode)> Func) {
+    AnyMouseButtonReleaseCallbacks[AnyMouseButtonReleaseId] = Func;
+
+    FInputCallbackInfo Info = {};
+
+    Info.Type = ECallbackType::MOUSE_BUTTON;
+    Info.Action = EInputState::UP;
+    Info.IsAnyCode = true;
+    Info.Id = AnyMouseButtonReleaseId;
+
+    AnyMouseButtonReleaseId++;
+
+    return Info;
+}
+
+FInputCallbackInfo FInput::AddMouseButtonAnyActionCallback(EMouseCode Button, std::function<void(EInputState)> Func) {
+    MouseButtonAnyActionCallbacks[Button][MouseButtonAnyActionId] = Func;
+
+    FInputCallbackInfo Info = {};
+
+    Info.Type = ECallbackType::MOUSE_BUTTON;
+    Info.IsAnyAction = true;
+    Info.Button = Button;
+    Info.Id = MouseButtonAnyActionId;
+
+    MouseButtonAnyActionId++;
+
+    return Info;
+}
+
+FInputCallbackInfo FInput::AddAnyMouseButtonAnyActionCallback(std::function<void(EInputState, EMouseCode)> Func) {
+    AnyMouseButtonAnyActionCallbacks[AnyMouseButtonAnyActionId] = Func;
+
+    FInputCallbackInfo Info = {};
+
+    Info.Type = ECallbackType::MOUSE_BUTTON;
+    Info.IsAnyAction = true;
+    Info.IsAnyCode = true;
+    Info.Id = AnyMouseButtonAnyActionId;
+
+    AnyMouseButtonAnyActionId++;
+
+    return Info;
+}
+
+FInputCallbackInfo FInput::AddMouseMoveCallback(std::function<void(FFloat, FFloat)> Func) {
+    MouseMoveCallbacks[MouseMoveId] = Func;
+
+    FInputCallbackInfo Info = {};
+
+    Info.Type = ECallbackType::MOUSE_MOVE;
+    Info.Id = MouseMoveId;
+
+    MouseMoveId++;
+
+    return Info;
 }
 
 void FInput::SetKey(EKeyCode Key, EInputState State) {
@@ -208,25 +345,28 @@ void FInput::SetKey(EKeyCode Key, EInputState State) {
 
     switch (State) {
     case EInputState::DOWN:
-        for (const auto &Func : KeyPressCallbacks[Key]) {
-            Func();
+        for (auto &It : KeyPressCallbacks[Key]) {
+            It.second();
         }
-        for (const auto &Func : GenericKeyPressCallbacks) {
-            Func(Key);
+        for (auto &It : AnyKeyPressCallbacks) {
+            It.second(Key);
         }
         break;
     case EInputState::UP:
-        for (const auto &Func : KeyReleaseCallbacks[Key]) {
-            Func();
+        for (auto &It : KeyReleaseCallbacks[Key]) {
+            It.second();
         }
-        for (const auto &Func : GenericKeyReleaseCallbacks) {
-            Func(Key);
+        for (auto &It : AnyKeyReleaseCallbacks) {
+            It.second(Key);
         }
         break;
     }
 
-    for (const auto &Func : GenericKeyCallbacks) {
-        Func(State, Key);
+    for (auto &It : KeyAnyActionCallbacks[Key]) {
+        It.second(State);
+    }
+    for (auto &It : AnyKeyAnyActionCallbacks) {
+        It.second(State, Key);
     }
 }
 
@@ -235,33 +375,94 @@ void FInput::SetMouseButton(EMouseCode Button, EInputState State) {
 
     switch (State) {
     case EInputState::DOWN:
-        for (const auto &Func : MouseButtonPressCallbacks[Button]) {
-            Func();
+        for (auto &It : MouseButtonPressCallbacks[Button]) {
+            It.second();
         }
-        for (const auto &Func : GenericMouseButtonPressCallbacks) {
-            Func(Button);
+        for (auto &It : AnyMouseButtonPressCallbacks) {
+            It.second(Button);
         }
         break;
     case EInputState::UP:
-        for (const auto &Func : MouseButtonReleaseCallbacks[Button]) {
-            Func();
+        for (auto &It : MouseButtonReleaseCallbacks[Button]) {
+            It.second();
         }
-        for (const auto &Func : GenericMouseButtonReleaseCallbacks) {
-            Func(Button);
+        for (auto &It : AnyMouseButtonReleaseCallbacks) {
+            It.second(Button);
         }
         break;
     }
 
-    for (const auto &Func : GenericMouseButtonCallbacks) {
-        Func(State, Button);
+    for (auto &It : MouseButtonAnyActionCallbacks[Button]) {
+        It.second(State);
+    }
+    for (const auto &It : AnyMouseButtonAnyActionCallbacks) {
+        It.second(State, Button);
     }
 }
 
 void FInput::SetMousePos(FFloat X, FFloat Y) {
     MousePos = { X, Y };
 
-    for (const auto &Func : MouseMoveCallbacks) {
-        Func(X, Y);
+    for (auto &It : MouseMoveCallbacks) {
+        It.second(X, Y);
+    }
+}
+
+void FInput::RemoveCallback(const FInputCallbackInfo &Info) {
+    switch (Info.Type) {
+    case ECallbackType::KEY:
+        if (Info.IsAnyAction && Info.IsAnyCode) {
+            AnyKeyAnyActionCallbacks.erase(Info.Id);
+        } else if (Info.IsAnyAction) {
+            KeyAnyActionCallbacks[Info.Key].erase(Info.Id);
+        } else if (Info.IsAnyCode) {
+            switch (Info.Action) {
+            case EInputState::UP:
+                AnyKeyReleaseCallbacks.erase(Info.Id);
+                break;
+            case EInputState::DOWN:
+                AnyKeyPressCallbacks.erase(Info.Id);
+                break;
+            }
+        } else {
+            switch (Info.Action) {
+            case EInputState::UP:
+                KeyReleaseCallbacks[Info.Key].erase(Info.Id);
+                break;
+            case EInputState::DOWN:
+                KeyPressCallbacks[Info.Key].erase(Info.Id);
+                break;
+            }
+        }
+        break;
+    case ECallbackType::MOUSE_BUTTON:
+        if (Info.IsAnyAction && Info.IsAnyCode) {
+            AnyMouseButtonAnyActionCallbacks.erase(Info.Id);
+        } else if (Info.IsAnyAction) {
+            MouseButtonAnyActionCallbacks[Info.Button].erase(Info.Id);
+        } else if (Info.IsAnyCode) {
+            switch (Info.Action) {
+            case EInputState::UP:
+                AnyMouseButtonReleaseCallbacks.erase(Info.Id);
+                break;
+            case EInputState::DOWN:
+                AnyMouseButtonPressCallbacks.erase(Info.Id);
+                break;
+            }
+        } else {
+            switch (Info.Action) {
+            case EInputState::UP:
+                MouseButtonReleaseCallbacks[Info.Button].erase(Info.Id);
+                break;
+            case EInputState::DOWN:
+                MouseButtonPressCallbacks[Info.Button].erase(Info.Id);
+                break;
+            }
+        }
+        break;
+    case ECallbackType::MOUSE_MOVE:
+        MouseMoveCallbacks.erase(Info.Id);
+        break;
     }
 }
 

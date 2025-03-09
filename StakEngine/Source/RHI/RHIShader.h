@@ -18,8 +18,10 @@ struct FRHIShaderDescription {
 class IRHIShader {
 public:
     virtual ~IRHIShader() = default;
-    
+
     virtual ERHIShaderType GetType() = 0;
-    
+
+    virtual bool Init(const FRHIShaderDescription &Description) = 0;
+
     virtual void Shutdown() = 0;
 };

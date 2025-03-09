@@ -13,26 +13,32 @@ void FApplication::AddLayer(IApplicationLayer *Layer) {
     LayerStack.Push(Layer);
 }
 
-FApplication::~FApplication() {
+void FApplication::Shutdown() {
     Renderer.ShutdownImGui();
     LayerStack.Clear();
 
     Renderer.Shutdown();
+
+    Window->Shutdown();
+
     RHIShutdown();
 
     if (GApplication == this) {
-        GApplication = NULL;
+        GApplication = nullptr;
     }
 }
 
-FApplication::FApplication(const FApplicationSpec &Spec) {
+bool FApplication::Init(const FApplicationSpec &Spec) {
     if (!GApplication) {
         GApplication = this;
     }
 
     Name = Spec.AppName;
 
-    RHIInit();
+    if (!RHIInit()) {
+        SK_LOG_ERROR("Failed to initialize RHI");
+        return false;
+    }
 
     FWindowConfig Cfg = {
         Spec.WindowWidth,
@@ -40,14 +46,18 @@ FApplication::FApplication(const FApplicationSpec &Spec) {
         Spec.WindowTitle
     };
 
-    Window = IWindow::Create(Cfg);
+    Window = IWindow::Create();
+    if (!Window->Init(Cfg)) {
+        SK_LOG_ERROR("Failed to create window");
+        return false;
+    }
 
-    Window->SetResizeEventFn([this](const FWindowResizeEvent &Event) { 
-        this->OnWindowResize(Event); 
+    Window->SetResizeEventFn([this](const FWindowResizeEvent &Event) {
+        this->OnWindowResize(Event);
     });
 
-    Window->SetCloseEventFn([this]() { 
-        this->OnWindowClose(); 
+    Window->SetCloseEventFn([this]() {
+        this->OnWindowClose();
     });
 
     Window->SetKeyEventFn([this](const FKeyEvent &Event) {
@@ -64,7 +74,10 @@ FApplication::FApplication(const FApplicationSpec &Spec) {
 
     Input = TCreateRef<FInput>(Window);
 
-    Renderer.Init(Window);
+    if (!Renderer.Init(Window)) {
+        SK_LOG_ERROR("Failed to initialize renderer");
+        return false;
+    }
 
     ImGuiLayer = new FImGuiLayer();
 
@@ -74,6 +87,8 @@ FApplication::FApplication(const FApplicationSpec &Spec) {
     AddLayer(ImGuiLayer);
 
     Running = true;
+
+    return true;
 }
 
 void FApplication::Run() {
@@ -127,7 +142,7 @@ void AppRun() {
     GApplication->Run();
 }
 
-void AppAddLayer(IApplicationLayer* layer) {
+void AppAddLayer(IApplicationLayer *layer) {
     GApplication->AddLayer(layer);
 }
 
@@ -135,7 +150,7 @@ void AppClose() {
     GApplication->Close();
 }
 
-const char* AppGetName() {
+const char *AppGetName() {
     return GApplication->GetName();
 }
 

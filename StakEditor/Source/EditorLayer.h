@@ -6,8 +6,12 @@
 
 class FEditorLayer final : public IApplicationLayer {
 public:
-    FEditorLayer();
-
+    void OnDetach() override;
+    void OnAttach() override;
     void Update() override;
     void OnImGuiRender() override;
+
+private:
+    FInputCallbackInfo EscapePressedCallbackInfo;
+    FInputCallbackInfo WPressedCallbackInfo;
 };

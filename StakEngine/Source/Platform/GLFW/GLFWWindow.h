@@ -11,8 +11,8 @@ class IRHIViewport;
 
 class FGLFWWindow final : public IWindow {
 public:
-    FGLFWWindow(const FWindowConfig &Cfg);
-    ~FGLFWWindow() override;
+    bool Init(const FWindowConfig &Cfg) override;
+    void Shutdown() override;
 
     FWindowSizeData GetSize() override;
     FWindowPosData GetPos() override;
@@ -48,10 +48,9 @@ private:
         FSInt32 FramebufferWidth = 0;
         FSInt32 FramebufferHeight = 0;
         std::string Title;
+        TRef<IRHIViewport> Viewport = nullptr;
     };
 
     FWindowData Data = {};
     GLFWwindow *NativeHandle = nullptr;
-
-    TRef<IRHIViewport> Viewport = nullptr;
 };

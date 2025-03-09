@@ -29,7 +29,7 @@ struct FRHIBufferLayout {
             }
         }
     }
-    
+
     std::vector<FRHIBufferElement> Elements;
     FUInt32 Stride = 0;
 };
@@ -51,16 +51,18 @@ struct FRHIBufferDescription {
 class IRHIBuffer : public IRHIResource {
 public:
     virtual ~IRHIBuffer() = default;
-    
-    virtual void SetData(void *Data, FUInt32 DataSize) = 0;
+
+    virtual bool SetData(void *Data, FUInt32 DataSize) = 0;
     virtual void *GetMappedBuffer() = 0;
 
     virtual FUInt32 GetElementCount() = 0;
 
     virtual FRHIBufferLayout GetLayout() = 0;
-    
+
+    virtual bool Init(const FRHIBufferDescription &Description) = 0;
+
     void Shutdown() override = 0;
-    
+
     inline ERHIResourceType GetType() override { return ERHIResourceType::BUFFER; }
 
     virtual ERHIBufferType GetBufferType() = 0;

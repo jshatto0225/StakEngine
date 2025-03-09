@@ -7,7 +7,7 @@
 #include "Application.h"
 
 FImGuiLayer::FImGuiLayer() {
-    DrawData = NULL;
+    DrawData = nullptr;
 
     ImGui::CreateContext();
     ImGuiIO &io = ImGui::GetIO();

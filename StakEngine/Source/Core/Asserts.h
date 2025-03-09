@@ -3,5 +3,5 @@
 #ifdef SK_DEBUG
 #include <cassert>
 #else
-#define assert(x) x
+#define assert(x)
 #endif

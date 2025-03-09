@@ -8,46 +8,47 @@
 
 class IRHI {
 public:
-    IRHI() = default;
+    virtual bool Init() = 0;
 
-    IRHI(IRHI &) = delete;
-    IRHI &operator=(IRHI &) = delete;
+    virtual void Shutdown() = 0;
 
-public:
     virtual void ImGuiNewFrame() = 0;
 
     virtual void ShutdownImGui() = 0;
 
-    virtual void InitImGui() = 0;
+    virtual bool InitImGui() = 0;
 
-    virtual void WaitForGPUIdle() = 0;
+    virtual bool WaitForGPUIdle() = 0;
 
-    virtual void Submit(TRef<IRHICommandContext> Context) = 0;
+    virtual bool Submit(TRef<IRHICommandContext> Context) = 0;
 
     virtual TRef<IRHICommandContext> CreateCommandContext() = 0;
 
-    virtual TRef<IRHIShader> CreateShader(const FRHIShaderDescription &Description) = 0;
+    virtual TRef<IRHIShader> CreateShader() = 0;
 
-    virtual TRef<IRHIBuffer> CreateBuffer(const FRHIBufferDescription &Description) = 0;
+    virtual TRef<IRHIBuffer> CreateBuffer() = 0;
 
-    virtual TRef<IRHIPipelineLayout> CreatePipelineLayout(const FRHIPipelineLayoutDescription &Description) = 0;
+    virtual TRef<IRHIPipelineLayout> CreatePipelineLayout() = 0;
 
-    virtual TRef<IRHIDescriptorSetLayout> CreateDescriptorSetLayout(const FRHIDescriptorSetLayoutDescription &Description) = 0;
+    virtual TRef<IRHIDescriptorSetLayout> CreateDescriptorSetLayout() = 0;
 
-    virtual TRef<IRHIPipeline> CreatePipeline(const FRHIGraphicsPipelineStateDescription &Description) = 0;
+    virtual TRef<IRHIPipeline> CreatePipeline() = 0;
 
-    virtual void PrepareFrame() = 0;
+    virtual bool PrepareFrame() = 0;
 
-    virtual void PresentFrame() = 0;
+    virtual bool PresentFrame() = 0;
 
-    virtual void SetActiveViewport(TRef<IRHIViewport> Viewport) = 0;
+    virtual bool SetActiveViewport(TRef<IRHIViewport> Viewport) = 0;
 
     virtual TRef<IRHITexture> GetCurrentBackbuffer() = 0;
 
     virtual TRef<IRHIViewport> CreateViewport(void *WindowHandle) = 0;
+
+public:
+    virtual ~IRHI() = default;
 };
 
-void RHIInit();
+bool RHIInit();
 
 void RHIShutdown();
 
@@ -55,30 +56,30 @@ TRef<IRHIViewport> RHICreateViewport(void *WindowHandle);
 
 TRef<IRHITexture> RHIGetCurrentBackbuffer();
 
-void RHISetActiveViewport(TRef<IRHIViewport> Viewport);
+bool RHISetActiveViewport(TRef<IRHIViewport> Viewport);
 
 void RHIImGuiNewFrame();
 
 void RHIShutdownImGui();
 
-void RHIInitImGui();
+bool RHIInitImGui();
 
-void RHIWaitForGPUIdle();
+bool RHIWaitForGPUIdle();
 
-void RHISubmit(TRef<IRHICommandContext> Context);
+bool RHISubmit(TRef<IRHICommandContext> Context);
 
 TRef<IRHICommandContext> RHICreateCommandContext();
 
-TRef<IRHIShader> RHICreateShader(const FRHIShaderDescription &Description);
+TRef<IRHIShader> RHICreateShader();
 
-TRef<IRHIBuffer> RHICreateBuffer(const FRHIBufferDescription &Description);
+TRef<IRHIBuffer> RHICreateBuffer();
 
-TRef<IRHIPipelineLayout> RHICreatePipelineLayout(const FRHIPipelineLayoutDescription &Description);
+TRef<IRHIPipelineLayout> RHICreatePipelineLayout();
 
-TRef<IRHIDescriptorSetLayout> RHICreateDescriptorSetLayout(const FRHIDescriptorSetLayoutDescription &Description);
+TRef<IRHIDescriptorSetLayout> RHICreateDescriptorSetLayout();
 
-TRef<IRHIPipeline> RHICreatePipeline(const FRHIGraphicsPipelineStateDescription &Description);
+TRef<IRHIPipeline> RHICreatePipeline();
 
-void RHIPrepareFrame();
+bool RHIPrepareFrame();
 
-void RHIPresentFrame();
+bool RHIPresentFrame();

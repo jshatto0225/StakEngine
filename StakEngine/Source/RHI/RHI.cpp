@@ -1,7 +1,6 @@
 #include "RHI.h"
 
 #include "Asserts.h"
-
 #include "RHIViewport.h"
 
 #ifdef SK_VULKAN
@@ -11,40 +10,40 @@ using FPlatformRHI = FVulkanRHI;
 
 IRHI *GRHI;
 
-void RHIInit() {
-    GRHI = new FPlatformRHI();
+bool RHIInit() {
+    GRHI = new FPlatformRHI;
+    return GRHI->Init();
 }
 
 void RHIShutdown() {
-    if (GRHI) {
-        delete GRHI;
-        GRHI = nullptr;
-    }
+    assert(GRHI);
+    GRHI->Shutdown();
+    delete GRHI;
 }
 
 void RHIImGuiNewFrame() {
     assert(GRHI);
-    GRHI->ImGuiNewFrame();
+    return GRHI->ImGuiNewFrame();
 }
 
 void RHIShutdownImGui() {
     assert(GRHI);
-    GRHI->ShutdownImGui();
+    return GRHI->ShutdownImGui();
 }
 
-void RHIInitImGui() {
+bool RHIInitImGui() {
     assert(GRHI);
-    GRHI->InitImGui();
+    return GRHI->InitImGui();
 }
 
-void RHIWaitForGPUIdle() {
+bool RHIWaitForGPUIdle() {
     assert(GRHI);
-    GRHI->WaitForGPUIdle();
+    return GRHI->WaitForGPUIdle();
 }
 
-void RHISubmit(TRef<IRHICommandContext> Context) {
+bool RHISubmit(TRef<IRHICommandContext> Context) {
     assert(GRHI);
-    GRHI->Submit(Context);
+    return GRHI->Submit(Context);
 }
 
 TRef<IRHICommandContext> RHICreateCommandContext() {
@@ -52,29 +51,29 @@ TRef<IRHICommandContext> RHICreateCommandContext() {
     return GRHI->CreateCommandContext();
 }
 
-TRef<IRHIShader> RHICreateShader(const FRHIShaderDescription &Description) {
+TRef<IRHIShader> RHICreateShader() {
     assert(GRHI);
-    return GRHI->CreateShader(Description);
+    return GRHI->CreateShader();
 }
 
-TRef<IRHIBuffer> RHICreateBuffer(const FRHIBufferDescription &Description) {
+TRef<IRHIBuffer> RHICreateBuffer() {
     assert(GRHI);
-    return GRHI->CreateBuffer(Description);
+    return GRHI->CreateBuffer();
 }
 
-TRef<IRHIPipelineLayout> RHICreatePipelineLayout(const FRHIPipelineLayoutDescription &Description) {
+TRef<IRHIPipelineLayout> RHICreatePipelineLayout() {
     assert(GRHI);
-    return GRHI->CreatePipelineLayout(Description);
+    return GRHI->CreatePipelineLayout();
 }
 
-TRef<IRHIDescriptorSetLayout> RHICreateDescriptorSetLayout(const FRHIDescriptorSetLayoutDescription &Description) {
+TRef<IRHIDescriptorSetLayout> RHICreateDescriptorSetLayout() {
     assert(GRHI);
-    return GRHI->CreateDescriptorSetLayout(Description);
+    return GRHI->CreateDescriptorSetLayout();
 }
 
-TRef<IRHIPipeline> RHICreatePipeline(const FRHIGraphicsPipelineStateDescription &Description) {
+TRef<IRHIPipeline> RHICreatePipeline() {
     assert(GRHI);
-    return GRHI->CreatePipeline(Description);
+    return GRHI->CreatePipeline();
 }
 
 TRef<IRHITexture> RHIGetCurrentBackbuffer() {
@@ -82,19 +81,19 @@ TRef<IRHITexture> RHIGetCurrentBackbuffer() {
     return GRHI->GetCurrentBackbuffer();
 }
 
-void RHISetActiveViewport(TRef<IRHIViewport> Viewport) {
+bool RHISetActiveViewport(TRef<IRHIViewport> Viewport) {
     assert(GRHI);
-    GRHI->SetActiveViewport(Viewport);
+    return GRHI->SetActiveViewport(Viewport);
 }
 
-void RHIPrepareFrame() {
+bool RHIPrepareFrame() {
     assert(GRHI);
-    GRHI->PrepareFrame();
+    return GRHI->PrepareFrame();
 }
 
-void RHIPresentFrame() {
+bool RHIPresentFrame() {
     assert(GRHI);
-    GRHI->PresentFrame();
+    return GRHI->PresentFrame();
 }
 
 TRef<IRHIViewport> RHICreateViewport(void *WindowHandle) {

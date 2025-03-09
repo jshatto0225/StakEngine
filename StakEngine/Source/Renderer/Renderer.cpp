@@ -7,25 +7,41 @@
 #include "RHITexture.h"
 #include "RHIShader.h"
 
-void FRenderer::Init(TRef<IWindow> Window) {
+bool FRenderer::Init(TRef<IWindow> Window) {
     this->Window = Window;
 
     RHISetActiveViewport(Window->GetRHIViewport());
     Backbuffer = Window->GetRHIViewport()->GetBackbuffer();
     CommandContext = RHICreateCommandContext();
+    if (!CommandContext->Init()) {
+        SK_LOG_ERROR("Failed to initialize command context");
+        return false;
+    }
 
     FRHIShaderDescription VertexShaderDescription = {};
     VertexShaderDescription.Name = "BasicShader.vert";
     VertexShaderDescription.Type = ERHIShaderType::VERTEX;
-    TRef<IRHIShader> VertexShader = RHICreateShader(VertexShaderDescription);
+    TRef<IRHIShader> VertexShader = RHICreateShader();
+    if (!VertexShader->Init(VertexShaderDescription)) {
+        SK_LOG_ERROR("Failed to initialize vertex shader");
+        return false;
+    }
 
     FRHIShaderDescription FragmentShaderDescription = {};
     FragmentShaderDescription.Name = "BasicShader.frag";
     FragmentShaderDescription.Type = ERHIShaderType::FRAGMENT;
-    TRef<IRHIShader> FragmentShader = RHICreateShader(FragmentShaderDescription);
+    TRef<IRHIShader> FragmentShader = RHICreateShader();
+    if (!FragmentShader->Init(FragmentShaderDescription)) {
+        SK_LOG_ERROR("Failed to initialize fragment shader");
+        return false;
+    }
 
-    FRHIPipelineLayoutDescription PipelineLyaoutDescription = {};
-    PipelineLayout = RHICreatePipelineLayout(PipelineLyaoutDescription);
+    FRHIPipelineLayoutDescription PipelineLayoutDescription = {};
+    PipelineLayout = RHICreatePipelineLayout();
+    if (!PipelineLayout->Init(PipelineLayoutDescription)) {
+        SK_LOG_ERROR("Failed to initialize pipeline layout");
+        return false;
+    }
 
     FRHIGraphicsPipelineStateDescription PipelineDescription = {};
     PipelineDescription.ColorFormats = { Backbuffer->GetFormat() };
@@ -35,10 +51,16 @@ void FRenderer::Init(TRef<IWindow> Window) {
     PipelineDescription.VertexInputAttributes = {};
     PipelineDescription.VertexInputBindings = {};
 
-    Pipeline = RHICreatePipeline(PipelineDescription);
+    Pipeline = RHICreatePipeline();
+    if (!Pipeline->Init(PipelineDescription)) {
+        SK_LOG_ERROR("Failed to initialize pipeline");
+        return false;
+    }
 
     VertexShader->Shutdown();
     FragmentShader->Shutdown();
+
+    return true;
 }
 
 void FRenderer::Shutdown() {
@@ -50,13 +72,16 @@ void FRenderer::Shutdown() {
     RHIShutdown();
 }
 
-void FRenderer::Render() {
+bool FRenderer::Render() {
     RHIPrepareFrame();
 
     // NOTE: Assume backbuffer will not change
     // TODO: Handle backbuffer changes
 
-    CommandContext->Begin();
+    if (!CommandContext->Begin()) {
+        SK_LOG_ERROR("Failed to begin command context");
+        return false;
+    }
     {
         FRHIResourceBarrier RenderTargetBarrier = {
             ERHIBarrierType::TRANSITION,
@@ -98,11 +123,22 @@ void FRenderer::Render() {
 
         CommandContext->ResourceBarrier(PresentBarrier);
     }
-    CommandContext->End();
+    if (!CommandContext->End()) {
+        SK_LOG_ERROR("Failed to end command context");
+        return false;
+    }
 
-    RHISubmit(CommandContext);
+    if (!RHISubmit(CommandContext)) {
+        SK_LOG_ERROR("Failed to submit commands");
+        return false;
+    }
 
-    RHIPresentFrame();
+    if (!RHIPresentFrame()) {
+        SK_LOG_ERROR("Failed to present");
+        return false;
+    }
+
+    return true;
 }
 
 void FRenderer::InitImGui() {

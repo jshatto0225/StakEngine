@@ -18,8 +18,8 @@ struct FApplicationSpec {
 
 class FApplication {
 public:
-    FApplication(const FApplicationSpec &Spec);
-    ~FApplication();
+    bool Init(const FApplicationSpec &Spec);
+    void Shutdown();
 
     void Run();
     void AddLayer(IApplicationLayer *layer);
@@ -38,12 +38,12 @@ private:
     void OnMouseMoveEvent(const FMouseMoveEvent &Event);
 
 private:
-    TRef<IWindow> Window;
-    FRenderer Renderer;
-    TRef<FInput> Input;
-    FLayerStack LayerStack;
-    FBool Running;
-    FImGuiLayer *ImGuiLayer;
+    TRef<IWindow> Window = nullptr;
+    FRenderer Renderer = {};
+    TRef<FInput> Input = nullptr;
+    FLayerStack LayerStack = {};
+    FBool Running = false;
+    FImGuiLayer *ImGuiLayer = nullptr;
     const char *Name;
 };
 

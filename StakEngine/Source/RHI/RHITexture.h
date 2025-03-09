@@ -4,6 +4,8 @@
 
 class IRHITexture : public IRHIResource {
 public:
+    virtual bool Init() = 0;
+
     void Shutdown() override = 0;
 
     virtual bool IsBackbuffer() = 0;

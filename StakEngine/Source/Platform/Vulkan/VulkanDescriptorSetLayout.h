@@ -5,15 +5,16 @@
 
 class FVulkanDescriptorSetLayout : public IRHIDescriptorSetLayout {
 public:
-    FVulkanDescriptorSetLayout(VkDevice Device, const FRHIDescriptorSetLayoutDescription &Description);
-    
+    FVulkanDescriptorSetLayout(VkDevice Device);
+
+    bool Init(const FRHIDescriptorSetLayoutDescription &Description) override;
     void Shutdown() override;
-    
+
 public:
     inline VkDescriptorSetLayout GetLayout() const { return Layout; }
-    
+
 private:
     VkDevice Device;
-    
+
     VkDescriptorSetLayout Layout = VK_NULL_HANDLE;
 };

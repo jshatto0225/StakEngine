@@ -18,10 +18,6 @@ public:
 
 class FLayerStack {
 public:
-    ~FLayerStack() {
-        Clear();
-    }
-
     inline void Clear() {
         while (!mLayers.empty()) {
             delete Pop();

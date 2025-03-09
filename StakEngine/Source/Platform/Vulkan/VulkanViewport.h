@@ -12,15 +12,16 @@ public:
 
     TRef<IRHITexture> GetBackbuffer() override;
 
+    bool Init() override;
     void Shutdown() override;
 
     void OnFramebufferResize() override;
 
 public:
-    void PrepareFrame(FUInt32 FrameIndex);
-    void PresentFrame(FUInt32 FrameIndex);
-    void CreateSwapchain();
-    void RecreateSwapchain();
+    bool PrepareFrame(FUInt32 FrameIndex);
+    bool PresentFrame(FUInt32 FrameIndex);
+    bool CreateSwapchain();
+    bool RecreateSwapchain();
     FUInt32 GetCurrentImageIndex() { return ImageIndex; }
     FUInt32 GetPresentQueueIndex() { return PresentQueueIndex; }
     FUInt32 GetMinImageCount() { return MinImageCount; }

@@ -11,6 +11,7 @@ struct FRHIPipelineLayoutDescription {
 
 class IRHIPipelineLayout {
 public:
+    virtual bool Init(const FRHIPipelineLayoutDescription &Description) = 0;
     virtual void Shutdown() = 0;
 };
 
@@ -40,5 +41,6 @@ struct FRHIGraphicsPipelineStateDescription {
 
 class IRHIPipeline {
 public:
+    virtual bool Init(const FRHIGraphicsPipelineStateDescription &Description) = 0;
     virtual void Shutdown() = 0;
 };
