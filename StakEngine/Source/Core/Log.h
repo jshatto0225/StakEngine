@@ -1,5 +1,7 @@
 #pragma once
 
+// TODO:? For now unicode is not supported
+#define FMT_UNICODE 0
 #include <spdlog/spdlog.h>
 
 #include "Types.h"
