@@ -12,6 +12,7 @@ IRHI *GRHI;
 
 bool RHIInit() {
     GRHI = new FPlatformRHI;
+    assert(GRHI);
     return GRHI->Init();
 }
 

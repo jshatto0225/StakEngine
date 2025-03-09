@@ -4,16 +4,21 @@
 #include "Log.h"
 #include "Types.h"
 
-extern FApplication *CreateApplication();
+extern bool InitializeApplication(FApplication *App);
 
 extern FApplication *GApplication;
 
 inline FSInt32 StakMain() {
     FLog::Init();
 
-    auto App = CreateApplication();
+    auto App = new FApplication;
 
-    AppRun();
+    if (!InitializeApplication(App)) {
+        SK_LOG_ERROR("Failed to initialize application");
+        return -1;
+    }
+
+    App->Run();
 
     delete App;
 

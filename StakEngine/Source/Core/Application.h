@@ -31,7 +31,6 @@ public:
     inline TRef<FInput> GetInput() { return Input; }
 
 private:
-    void OnWindowClose();
     void OnWindowResize(const FWindowResizeEvent &Event);
     void OnKeyEvent(const FKeyEvent &Event);
     void OnMouseButtonEvent(const FMouseButtonEvent &Event);

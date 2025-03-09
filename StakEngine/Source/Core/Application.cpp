@@ -57,7 +57,7 @@ bool FApplication::Init(const FApplicationSpec &Spec) {
     });
 
     Window->SetCloseEventFn([this]() {
-        this->OnWindowClose();
+        this->Close();
     });
 
     Window->SetKeyEventFn([this](const FKeyEvent &Event) {
@@ -108,7 +108,9 @@ void FApplication::Run() {
         }
         ImGuiLayer->EndFrame();
 
-        Renderer.Render();
+        if (!Renderer.Render()) {
+            SK_LOG_ERROR("Failed to render");
+        }
     }
 }
 
@@ -116,10 +118,6 @@ void FApplication::OnWindowResize(const FWindowResizeEvent &Event) {
     for (IApplicationLayer *Layer : LayerStack) {
         Layer->OnWindowResize(Event);
     }
-}
-
-void FApplication::OnWindowClose() {
-    Close();
 }
 
 void FApplication::OnKeyEvent(const FKeyEvent &Event) {

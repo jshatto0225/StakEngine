@@ -2,21 +2,19 @@
 
 #include "EditorLayer.h"
 
-FApplication *CreateApplication() {
+bool InitializeApplication(FApplication *Editor) {
     FApplicationSpec Spec = {};
     Spec.WindowWidth = 1920;
     Spec.WindowHeight = 1080;
     Spec.WindowTitle = "Stak Editor";
     Spec.AppName = "StakEditor";
 
-    auto Editor = new FApplication();
-
     if (!Editor->Init(Spec)) {
         LOG_ERROR("Failed to initialize application");
-        return nullptr;
+        return false;
     }
 
     Editor->AddLayer(new FEditorLayer());
 
-    return Editor;
+    return true;
 }
