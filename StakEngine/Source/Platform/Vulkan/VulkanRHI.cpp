@@ -493,65 +493,37 @@ void FVulkanRHI::ShutdownImGui() {
     vkDestroyDescriptorPool(Device, ImGuiPool, nullptr);
 }
 
-bool FVulkanRHI::InitImGui() {
-    VkDescriptorPoolSize PoolSizes[] = {
-        { VK_DESCRIPTOR_TYPE_SAMPLER, 1000 },
-        { VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, 1000 },
-        { VK_DESCRIPTOR_TYPE_SAMPLED_IMAGE, 1000 },
-        { VK_DESCRIPTOR_TYPE_STORAGE_IMAGE, 1000 },
-        { VK_DESCRIPTOR_TYPE_UNIFORM_TEXEL_BUFFER, 1000 },
-        { VK_DESCRIPTOR_TYPE_STORAGE_TEXEL_BUFFER, 1000 },
-        { VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, 1000 },
-        { VK_DESCRIPTOR_TYPE_STORAGE_BUFFER, 1000 },
-        { VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER_DYNAMIC, 1000 },
-        { VK_DESCRIPTOR_TYPE_STORAGE_BUFFER_DYNAMIC, 1000 },
-        { VK_DESCRIPTOR_TYPE_INPUT_ATTACHMENT, 1000 }
-    };
-
-    VkDescriptorPoolCreateInfo PoolInfo = {};
-    PoolInfo.sType = VK_STRUCTURE_TYPE_DESCRIPTOR_POOL_CREATE_INFO;
-    PoolInfo.flags = VK_DESCRIPTOR_POOL_CREATE_FREE_DESCRIPTOR_SET_BIT;
-    PoolInfo.maxSets = 1000;
-    PoolInfo.poolSizeCount = static_cast<FUInt32>(std::size(PoolSizes));
-    PoolInfo.pPoolSizes = PoolSizes;
-
-    if (vkCreateDescriptorPool(Device, &PoolInfo, nullptr, &ImGuiPool) != VK_SUCCESS) {
-        SK_LOG_ERROR("Failed to create imgui descriptor pool");
-        return false;
-    }
-
-    ImGui_ImplVulkan_InitInfo InitInfo = {};
-    InitInfo.Allocator = nullptr;
-    InitInfo.CheckVkResultFn = [](VkResult Err) {
-        CHECK_VK_ERR(Err, "ImGui Vulkan Error");
-    };
-    InitInfo.DescriptorPool = ImGuiPool;
-    InitInfo.Instance = Instance;
-    InitInfo.Device = Device;
-    InitInfo.ImageCount = std::static_pointer_cast<FVulkanViewport>(ActiveViewport)->GetMinImageCount();
-    InitInfo.MinImageCount = std::static_pointer_cast<FVulkanViewport>(ActiveViewport)->GetImageCount();
-    InitInfo.MinAllocationSize = 1024 * 1024;
-    InitInfo.MSAASamples = VK_SAMPLE_COUNT_1_BIT;
-    InitInfo.PhysicalDevice = GPU;
-    InitInfo.PipelineCache = nullptr;
+void FVulkanRHI::InitImGui() {
+    VkFormat Formats[] = { GetVulkanFormat(ActiveViewport->GetBackbuffer()->GetFormat()) };
+    
     VkPipelineRenderingCreateInfo PipelineInfo = {};
     PipelineInfo.sType = VK_STRUCTURE_TYPE_PIPELINE_RENDERING_CREATE_INFO;
     PipelineInfo.viewMask = 0x01;
     PipelineInfo.colorAttachmentCount = 1;
-    VkFormat Formats[] = { GetVulkanFormat(ActiveViewport->GetBackbuffer()->GetFormat()) };
     PipelineInfo.pColorAttachmentFormats = Formats;
     PipelineInfo.depthAttachmentFormat = VK_FORMAT_UNDEFINED;
     PipelineInfo.stencilAttachmentFormat = VK_FORMAT_UNDEFINED;
-    InitInfo.PipelineRenderingCreateInfo = PipelineInfo;
-    InitInfo.Queue = GraphicsQueue;
+    
+    ImGui_ImplVulkan_InitInfo InitInfo = {};
+    InitInfo.ApiVersion = VK_API_VERSION_1_3;
+    InitInfo.Instance = Instance;
+    InitInfo.PhysicalDevice = GPU;
+    InitInfo.Device = Device;
     InitInfo.QueueFamily = GraphicsQueueIndex;
-    InitInfo.RenderPass = VK_NULL_HANDLE;
-    InitInfo.Subpass = 0;
+    InitInfo.Queue = GraphicsQueue;
+    InitInfo.MinImageCount = std::static_pointer_cast<FVulkanViewport>(ActiveViewport)->GetImageCount();
+    InitInfo.ImageCount = std::static_pointer_cast<FVulkanViewport>(ActiveViewport)->GetMinImageCount();
+    InitInfo.MSAASamples = VK_SAMPLE_COUNT_1_BIT;
+    InitInfo.DescriptorPoolSize = 1000;
     InitInfo.UseDynamicRendering = true;
+    InitInfo.PipelineRenderingCreateInfo = PipelineInfo;    
+    InitInfo.Allocator = nullptr;
+    InitInfo.CheckVkResultFn = [](VkResult Err) {
+        CHECK_VK_ERR(Err, "ImGui Vulkan Error");
+    };
+    InitInfo.MinAllocationSize = 1024 * 1024;
 
     ImGui_ImplVulkan_Init(&InitInfo);
-
-    return true;
 }
 
 bool FVulkanRHI::WaitForGPUIdle() {

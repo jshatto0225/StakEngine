@@ -32,7 +32,7 @@ void RHIShutdownImGui() {
     return GRHI->ShutdownImGui();
 }
 
-bool RHIInitImGui() {
+void RHIInitImGui() {
     assert(GRHI);
     return GRHI->InitImGui();
 }

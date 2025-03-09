@@ -95,7 +95,7 @@ bool FRenderer::Render() {
         CommandContext->ResourceBarrier(RenderTargetBarrier);
 
         CommandContext->SetRenderTarget(Backbuffer, Backbuffer->GetRenderArea());
-
+/*
         CommandContext->BindPipeline(Pipeline);
         auto [LayerCount, X, Y, Width, Height] = Backbuffer->GetRenderArea();
         CommandContext->SetViewport(static_cast<FFloat>(X), static_cast<FFloat>(Y), static_cast<FFloat>(Width), static_cast<FFloat>(Height), 0.0f, 1.0f);
@@ -105,7 +105,7 @@ bool FRenderer::Render() {
         for (auto Proxy : RenderProxies) {
             Proxy->Render(CommandContext);
         }
-
+*/
         if (PostRenderProxy) {
             PostRenderProxy->Render(CommandContext);
         }
@@ -127,12 +127,10 @@ bool FRenderer::Render() {
         SK_LOG_ERROR("Failed to end command context");
         return false;
     }
-
     if (!RHISubmit(CommandContext)) {
         SK_LOG_ERROR("Failed to submit commands");
         return false;
     }
-
     if (!RHIPresentFrame()) {
         SK_LOG_ERROR("Failed to present");
         return false;

@@ -78,7 +78,7 @@ public:
     void Shutdown() override;
     void ImGuiNewFrame() override;
     void ShutdownImGui() override;
-    bool InitImGui() override;
+    void InitImGui() override;
     bool WaitForGPUIdle() override;
     bool Submit(TRef<IRHICommandContext> Context) override;
     TRef<IRHICommandContext> CreateCommandContext() override;

@@ -16,7 +16,7 @@ public:
 
     virtual void ShutdownImGui() = 0;
 
-    virtual bool InitImGui() = 0;
+    virtual void InitImGui() = 0;
 
     virtual bool WaitForGPUIdle() = 0;
 
@@ -62,7 +62,7 @@ void RHIImGuiNewFrame();
 
 void RHIShutdownImGui();
 
-bool RHIInitImGui();
+void RHIInitImGui();
 
 bool RHIWaitForGPUIdle();
 

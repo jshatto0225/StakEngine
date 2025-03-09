@@ -19,3 +19,4 @@ bin
 bin-int
 *.user
 Makefile
+imgui.ini
