@@ -9,7 +9,7 @@ bool FVulkanTexture::Init(const FRHIOffscreenRenderTargetDescription &Descriptio
     Format = VulkanGetFormat(RHIFormat);
     Extent = { Description.Width, Description.Height };
     ImageCount = MAX_FRAMES_IN_FLIGHT;
-    
+
     Images.resize(ImageCount);
     ImageViews.resize(ImageCount);
     Samplers.resize(ImageCount);
@@ -17,17 +17,17 @@ bool FVulkanTexture::Init(const FRHIOffscreenRenderTargetDescription &Descriptio
     ImGuiDescriptorSets.resize(ImageCount);
 
     for (FUInt32 ImageIndex = 0; ImageIndex < ImageCount; ImageIndex++) {
-        if (!VulkanCreateImage(Device, GPU, Extent.width, Extent.height, Format, VK_IMAGE_TILING_OPTIMAL, VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT | VK_IMAGE_USAGE_SAMPLED_BIT, VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT, &Images[ImageIndex], &ImageMemories[ImageIndex])) {
+        if (!CreateImage(Device, GPU, Extent.width, Extent.height, Format, VK_IMAGE_TILING_OPTIMAL, VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT | VK_IMAGE_USAGE_SAMPLED_BIT, VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT, &Images[ImageIndex], &ImageMemories[ImageIndex])) {
             SK_LOG_ERROR("Failed to create offscreen render target image");
             return false;
         }
 
-        if (!VulkanCreateImageView(&ImageViews[ImageIndex], Device, Images[ImageIndex], Format)) {
+        if (!CreateImageView(&ImageViews[ImageIndex], Device, Images[ImageIndex], Format)) {
             SK_LOG_ERROR("Failed to create image view for offscreen buffer");
             return false;
         }
 
-        if (!VulkanCreateTextureSampler(&Samplers[ImageIndex], Device, GPU)) {
+        if (!CreateTextureSampler(&Samplers[ImageIndex], Device, GPU)) {
             SK_LOG_ERROR("Failed to create sampler for offscreen backbuffer");
             return false;
         }
@@ -36,6 +36,97 @@ bool FVulkanTexture::Init(const FRHIOffscreenRenderTargetDescription &Descriptio
     }
 
     SubresourceRanges.emplace_back(VK_IMAGE_ASPECT_COLOR_BIT, 0, 1, 0, 1);
+
+    return true;
+}
+
+bool FVulkanTexture::CreateImageView(VkImageView *Out, VkDevice Device, VkImage Image, VkFormat Format) {
+    VkImageViewCreateInfo ViewInfo = {};
+    ViewInfo.sType = VK_STRUCTURE_TYPE_IMAGE_VIEW_CREATE_INFO;
+    ViewInfo.image = Image;
+    ViewInfo.viewType = VK_IMAGE_VIEW_TYPE_2D;
+    ViewInfo.format = Format;
+    ViewInfo.subresourceRange.aspectMask = VK_IMAGE_ASPECT_COLOR_BIT;
+    ViewInfo.subresourceRange.baseMipLevel = 0;
+    ViewInfo.subresourceRange.levelCount = 1;
+    ViewInfo.subresourceRange.baseArrayLayer = 0;
+    ViewInfo.subresourceRange.layerCount = 1;
+
+    if (vkCreateImageView(Device, &ViewInfo, nullptr, Out) != VK_SUCCESS) {
+        SK_LOG_ERROR("Failed to create image view");
+        return false;
+    }
+
+    return true;
+}
+
+
+bool FVulkanTexture::CreateTextureSampler(VkSampler *OutSampler, VkDevice Device, VkPhysicalDevice GPU) {
+    VkSamplerCreateInfo SamplerInfo = {};
+    SamplerInfo.sType = VK_STRUCTURE_TYPE_SAMPLER_CREATE_INFO;
+    SamplerInfo.magFilter = VK_FILTER_LINEAR;
+    SamplerInfo.minFilter = VK_FILTER_LINEAR;
+    SamplerInfo.addressModeU = VK_SAMPLER_ADDRESS_MODE_REPEAT;
+    SamplerInfo.addressModeV = VK_SAMPLER_ADDRESS_MODE_REPEAT;
+    SamplerInfo.addressModeW = VK_SAMPLER_ADDRESS_MODE_REPEAT;
+    SamplerInfo.anisotropyEnable = VK_TRUE;
+
+    VkPhysicalDeviceProperties Properties = { 0 };
+    vkGetPhysicalDeviceProperties(GPU, &Properties);
+    SamplerInfo.maxAnisotropy = Properties.limits.maxSamplerAnisotropy;
+
+    SamplerInfo.borderColor = VK_BORDER_COLOR_INT_OPAQUE_BLACK;
+    SamplerInfo.unnormalizedCoordinates = VK_FALSE;
+    SamplerInfo.compareEnable = VK_FALSE;
+    SamplerInfo.compareOp = VK_COMPARE_OP_ALWAYS;
+    SamplerInfo.mipmapMode = VK_SAMPLER_MIPMAP_MODE_LINEAR;
+    SamplerInfo.mipLodBias = 0.0f;
+    SamplerInfo.minLod = 0.0f;
+    SamplerInfo.maxLod = 0.0f;
+
+    if (vkCreateSampler(Device, &SamplerInfo, nullptr, OutSampler) != VK_SUCCESS) {
+        SK_LOG_ERROR("Failed to create image sampler");
+        return false;
+    }
+
+    return true;
+}
+
+bool FVulkanTexture::CreateImage(VkDevice Device, VkPhysicalDevice GPU, FUInt32 Width, FUInt32 Height, VkFormat Format, VkImageTiling Tiling, VkImageUsageFlags Flags, VkMemoryPropertyFlags Properties, VkImage *OutImage, VkDeviceMemory *OutImageMemory) {
+    VkImageCreateInfo ImageInfo = {};
+    ImageInfo.sType = VK_STRUCTURE_TYPE_IMAGE_CREATE_INFO;
+    ImageInfo.imageType = VK_IMAGE_TYPE_2D;
+    ImageInfo.extent.width = Width;
+    ImageInfo.extent.height = Height;
+    ImageInfo.extent.depth = 1;
+    ImageInfo.mipLevels = 1;
+    ImageInfo.arrayLayers = 1;
+    ImageInfo.format = Format;
+    ImageInfo.tiling = Tiling;
+    ImageInfo.initialLayout = VK_IMAGE_LAYOUT_UNDEFINED;
+    ImageInfo.usage = Flags;
+    ImageInfo.sharingMode = VK_SHARING_MODE_EXCLUSIVE;
+    ImageInfo.samples = VK_SAMPLE_COUNT_1_BIT;
+
+    if (vkCreateImage(Device, &ImageInfo, nullptr, OutImage) != VK_SUCCESS) {
+        SK_LOG_ERROR("Failed to create image");
+        return false;
+    }
+
+    VkMemoryRequirements MemReqs = {};
+    vkGetImageMemoryRequirements(Device, *OutImage, &MemReqs);
+
+    VkMemoryAllocateInfo AllocInfo = {};
+    AllocInfo.sType = VK_STRUCTURE_TYPE_MEMORY_ALLOCATE_INFO;
+    AllocInfo.allocationSize = MemReqs.size;
+    AllocInfo.memoryTypeIndex = VulkanFindMemoryType(GPU, MemReqs.memoryTypeBits, Properties);
+
+    if (vkAllocateMemory(Device, &AllocInfo, nullptr, OutImageMemory) != VK_SUCCESS) {
+        SK_LOG_ERROR("Failed to allocate image memory");
+        return false;
+    }
+
+    vkBindImageMemory(Device, *OutImage, *OutImageMemory, 0);
 
     return true;
 }
@@ -59,7 +150,7 @@ bool FVulkanTexture::Init(VkSwapchainKHR NewSwapchain, FUInt32 NewImageCount, Vk
     ImageViews.resize(Images.size());
 
     for (FUInt32 ImageViewIndex = 0; ImageViewIndex < Images.size(); ImageViewIndex++) {
-        if (!VulkanCreateImageView(&ImageViews[ImageViewIndex], Device, Images[ImageViewIndex], Format)) {
+        if (!CreateImageView(&ImageViews[ImageViewIndex], Device, Images[ImageViewIndex], Format)) {
             SK_LOG_ERROR("Failed to create image view");
             return false;
         }
@@ -70,10 +161,16 @@ bool FVulkanTexture::Init(VkSwapchainKHR NewSwapchain, FUInt32 NewImageCount, Vk
     return true;
 }
 
-// TODO: 
+// TODO:
 void FVulkanTexture::Shutdown() {
     for (FUInt32 ImageIndex = 0; ImageIndex < Images.size(); ImageIndex++) {
         vkDestroyImageView(Device, ImageViews[ImageIndex], nullptr);
+        if (!Backbuffer) {
+            vkFreeMemory(Device, ImageMemories[ImageIndex], nullptr);
+            vkDestroyImage(Device, Images[ImageIndex], nullptr);
+            vkDestroySampler(Device, Samplers[ImageIndex], nullptr);
+            ImGui_ImplVulkan_RemoveTexture(ImGuiDescriptorSets[ImageIndex]);
+        }
     }
 }
 

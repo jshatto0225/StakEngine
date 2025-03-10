@@ -8,8 +8,6 @@ Move the add image to imgui window to the IRHITexture
 
 Convert classes to structs, most of the getters being used are unecessary
 
-Move vulkan image creation into FVulkanTexture
-
 Move imgui renderer initilization into the imgui layer
 
 The RHI can probably initialize the objects it creates and return nullptr on failure

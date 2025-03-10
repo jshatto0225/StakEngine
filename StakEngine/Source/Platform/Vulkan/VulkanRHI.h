@@ -48,11 +48,7 @@ struct VulkanSwapchainSupport {
 
 bool GetSwapchainSupport(VulkanSwapchainSupport *Out, VkPhysicalDevice Device, VkSurfaceKHR Surface);
 
-// TODO: Move into texture
-bool VulkanCreateImageView(VkImageView *Out, VkDevice Device, VkImage Image, VkFormat Format);
-bool VulkanCreateImage(VkDevice Device, VkPhysicalDevice GPU, FUInt32 Width, FUInt32 Height, VkFormat Format, VkImageTiling Tiling, VkImageUsageFlags Flags, VkMemoryPropertyFlags Properties, VkImage *OutImage, VkDeviceMemory *OutImageMemory);
 FUInt32 VulkanFindMemoryType(VkPhysicalDevice GPU, FUInt32 Filter, VkMemoryPropertyFlags Flags);
-bool VulkanCreateTextureSampler(VkSampler *Out, VkDevice Device, VkPhysicalDevice GPU);
 
 VkIndexType VulkanGetIndexType(ERHIFormat Format);
 VkDescriptorType VulkanGetDescriptorType(ERHIDescriptorType Type);

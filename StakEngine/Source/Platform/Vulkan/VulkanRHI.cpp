@@ -102,26 +102,6 @@ bool GetSwapchainSupport(VulkanSwapchainSupport *Out, VkPhysicalDevice Device, V
     return true;
 }
 
-bool VulkanCreateImageView(VkImageView *Out, VkDevice Device, VkImage Image, VkFormat Format) {
-    VkImageViewCreateInfo ViewInfo = {};
-    ViewInfo.sType = VK_STRUCTURE_TYPE_IMAGE_VIEW_CREATE_INFO;
-    ViewInfo.image = Image;
-    ViewInfo.viewType = VK_IMAGE_VIEW_TYPE_2D;
-    ViewInfo.format = Format;
-    ViewInfo.subresourceRange.aspectMask = VK_IMAGE_ASPECT_COLOR_BIT;
-    ViewInfo.subresourceRange.baseMipLevel = 0;
-    ViewInfo.subresourceRange.levelCount = 1;
-    ViewInfo.subresourceRange.baseArrayLayer = 0;
-    ViewInfo.subresourceRange.layerCount = 1;
-
-    if (vkCreateImageView(Device, &ViewInfo, nullptr, Out) != VK_SUCCESS) {
-        SK_LOG_ERROR("Failed to create image view");
-        return false;
-    }
-
-    return true;
-}
-
 VkAccessFlags GetVulkanAccessMask(ERHIResourceState State) {
     switch (State) {
     case ERHIResourceState::RENDER_TARGET:
@@ -300,76 +280,6 @@ FUInt32 VulkanFindMemoryType(VkPhysicalDevice GPU, FUInt32 Filter, VkMemoryPrope
 
     SK_LOG_ERROR("Failed to get memory type\n");
     return static_cast<FUInt32>(-1);
-}
-
-bool VulkanCreateTextureSampler(VkSampler *OutSampler, VkDevice Device, VkPhysicalDevice GPU) {
-    VkSamplerCreateInfo SamplerInfo = {};
-    SamplerInfo.sType = VK_STRUCTURE_TYPE_SAMPLER_CREATE_INFO;
-    SamplerInfo.magFilter = VK_FILTER_LINEAR;
-    SamplerInfo.minFilter = VK_FILTER_LINEAR;
-    SamplerInfo.addressModeU = VK_SAMPLER_ADDRESS_MODE_REPEAT;
-    SamplerInfo.addressModeV = VK_SAMPLER_ADDRESS_MODE_REPEAT;
-    SamplerInfo.addressModeW = VK_SAMPLER_ADDRESS_MODE_REPEAT;
-    SamplerInfo.anisotropyEnable = VK_TRUE;
-
-    VkPhysicalDeviceProperties Properties = { 0 };
-    vkGetPhysicalDeviceProperties(GPU, &Properties);
-    SamplerInfo.maxAnisotropy = Properties.limits.maxSamplerAnisotropy;
-
-    SamplerInfo.borderColor = VK_BORDER_COLOR_INT_OPAQUE_BLACK;
-    SamplerInfo.unnormalizedCoordinates = VK_FALSE;
-    SamplerInfo.compareEnable = VK_FALSE;
-    SamplerInfo.compareOp = VK_COMPARE_OP_ALWAYS;
-    SamplerInfo.mipmapMode = VK_SAMPLER_MIPMAP_MODE_LINEAR;
-    SamplerInfo.mipLodBias = 0.0f;
-    SamplerInfo.minLod = 0.0f;
-    SamplerInfo.maxLod = 0.0f;
-
-    if (vkCreateSampler(Device, &SamplerInfo, nullptr, OutSampler) != VK_SUCCESS) {
-        SK_LOG_ERROR("Failed to create image sampler");
-        return false;
-    }
-
-    return true;
-}
-
-bool VulkanCreateImage(VkDevice Device, VkPhysicalDevice GPU, FUInt32 Width, FUInt32 Height, VkFormat Format, VkImageTiling Tiling, VkImageUsageFlags Flags, VkMemoryPropertyFlags Properties, VkImage *OutImage, VkDeviceMemory *OutImageMemory) {
-    VkImageCreateInfo ImageInfo = {};
-    ImageInfo.sType = VK_STRUCTURE_TYPE_IMAGE_CREATE_INFO;
-    ImageInfo.imageType = VK_IMAGE_TYPE_2D;
-    ImageInfo.extent.width = Width;
-    ImageInfo.extent.height = Height;
-    ImageInfo.extent.depth = 1;
-    ImageInfo.mipLevels = 1;
-    ImageInfo.arrayLayers = 1;
-    ImageInfo.format = Format;
-    ImageInfo.tiling = Tiling;
-    ImageInfo.initialLayout = VK_IMAGE_LAYOUT_UNDEFINED;
-    ImageInfo.usage = Flags;
-    ImageInfo.sharingMode = VK_SHARING_MODE_EXCLUSIVE;
-    ImageInfo.samples = VK_SAMPLE_COUNT_1_BIT;
-
-    if (vkCreateImage(Device, &ImageInfo, nullptr, OutImage) != VK_SUCCESS) {
-        SK_LOG_ERROR("Failed to create image");
-        return false;
-    }
-
-    VkMemoryRequirements MemReqs = {};
-    vkGetImageMemoryRequirements(Device, *OutImage, &MemReqs);
-
-    VkMemoryAllocateInfo AllocInfo = {};
-    AllocInfo.sType = VK_STRUCTURE_TYPE_MEMORY_ALLOCATE_INFO;
-    AllocInfo.allocationSize = MemReqs.size;
-    AllocInfo.memoryTypeIndex = VulkanFindMemoryType(GPU, MemReqs.memoryTypeBits, Properties);
-
-    if (vkAllocateMemory(Device, &AllocInfo, nullptr, OutImageMemory) != VK_SUCCESS) {
-        SK_LOG_ERROR("Failed to allocate image memory");
-        return false;
-    }
-
-    vkBindImageMemory(Device, *OutImage, *OutImageMemory, 0);
-
-    return true;
 }
 
 bool FVulkanRHI::Init() {
@@ -585,7 +495,7 @@ void FVulkanRHI::ShutdownImGui() {
 
 void FVulkanRHI::InitImGui() {
     VkFormat Formats[] = { VulkanGetFormat(ActiveViewport->GetBackbuffer()->GetFormat()) };
-    
+
     VkPipelineRenderingCreateInfo PipelineInfo = {};
     PipelineInfo.sType = VK_STRUCTURE_TYPE_PIPELINE_RENDERING_CREATE_INFO;
     PipelineInfo.viewMask = 0x01;
@@ -593,7 +503,7 @@ void FVulkanRHI::InitImGui() {
     PipelineInfo.pColorAttachmentFormats = Formats;
     PipelineInfo.depthAttachmentFormat = VK_FORMAT_UNDEFINED;
     PipelineInfo.stencilAttachmentFormat = VK_FORMAT_UNDEFINED;
-    
+
     ImGui_ImplVulkan_InitInfo InitInfo = {};
     InitInfo.ApiVersion = VK_API_VERSION_1_3;
     InitInfo.Instance = Instance;
@@ -606,7 +516,7 @@ void FVulkanRHI::InitImGui() {
     InitInfo.MSAASamples = VK_SAMPLE_COUNT_1_BIT;
     InitInfo.DescriptorPoolSize = 1000;
     InitInfo.UseDynamicRendering = true;
-    InitInfo.PipelineRenderingCreateInfo = PipelineInfo;    
+    InitInfo.PipelineRenderingCreateInfo = PipelineInfo;
     InitInfo.Allocator = nullptr;
     InitInfo.CheckVkResultFn = [](VkResult Err) {
         CHECK_VK_ERR(Err, "ImGui Vulkan Error");

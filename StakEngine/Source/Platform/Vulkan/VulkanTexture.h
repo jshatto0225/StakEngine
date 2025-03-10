@@ -28,6 +28,10 @@ public:
 
     FUInt64 GetImGuiImageHandle(FUInt32 CurrentFrame);
 
+    bool CreateImageView(VkImageView *Out, VkDevice Device, VkImage Image, VkFormat Format);
+    bool CreateImage(VkDevice Device, VkPhysicalDevice GPU, FUInt32 Width, FUInt32 Height, VkFormat Format, VkImageTiling Tiling, VkImageUsageFlags Flags, VkMemoryPropertyFlags Properties, VkImage *OutImage, VkDeviceMemory *OutImageMemory);
+    bool CreateTextureSampler(VkSampler *Out, VkDevice Device, VkPhysicalDevice GPU);
+
 private:
     VkDevice Device;
     VkPhysicalDevice GPU;
