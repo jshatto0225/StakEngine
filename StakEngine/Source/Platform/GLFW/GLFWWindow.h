@@ -21,11 +21,7 @@ public:
     void ImGuiNewFrame() override;
     void ShutdownImGui() override;
 
-    void SetResizeEventFn(const FWindowResizeEventFn &Func) override;
-    void SetCloseEventFn(const FWindowCloseEventFn &Func) override;
-    void SetKeyEventFn(const FKeyEventFn &Func) override;
-    void SetMouseButtonEventFn(const FMouseButtonEventFn &Func) override;
-    void SetMouseMoveEventFn(const FMouseMoveEventFn &Func) override;
+    void SetEventFn(const FEventFn &Func) override;
 
     FWindowSizeData GetFramebufferSize() override;
 
@@ -36,11 +32,7 @@ public:
 
 private:
     struct FWindowData {
-        FWindowCloseEventFn WindowCloseEventFn = nullptr;
-        FWindowResizeEventFn WindowResizeEventFn = nullptr;
-        FKeyEventFn KeyEventFn = nullptr;
-        FMouseButtonEventFn MouseButtonEventFn = nullptr;
-        FMouseMoveEventFn MouseMoveEventFn = nullptr;
+        FEventFn EventFn = nullptr;
         FSInt32 X = 0;
         FSInt32 Y = 0;
         FSInt32 Width = 0;

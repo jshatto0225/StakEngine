@@ -6,21 +6,39 @@
 class IWindow;
 
 struct FWindowResizeEvent {
-    const FSInt32 WIDTH;
-    const FSInt32 HEIGHT;
+    FSInt32 Width;
+    FSInt32 Height;
 };
 
 struct FKeyEvent {
-    const EKeyCode Key;
-    const EInputState State;
+    EKeyCode Key;
+    EInputState State;
 };
 
 struct FMouseButtonEvent {
-    const EMouseCode Button;
-    const EInputState State;
+    EMouseCode Button;
+    EInputState State;
 };
 
 struct FMouseMoveEvent {
-    const FFloat X;
-    const FFloat Y;
+    FFloat X;
+    FFloat Y;
+};
+
+enum class EEventType {
+    WINDOW_RESIZE,
+    KEY,
+    MOUSE_BUTTON,
+    MOUSE_MOVE,
+    WINDOW_CLOSE,
+};
+
+struct FEvent {
+    EEventType Type;
+    union {
+        FWindowResizeEvent WRE;
+        FKeyEvent KE;
+        FMouseButtonEvent MBE;
+        FMouseMoveEvent MME;
+    };
 };

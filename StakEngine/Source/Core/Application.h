@@ -32,10 +32,7 @@ public:
     inline TRef<FInput> GetInput() { return Input; }
 
 private:
-    void OnWindowResize(const FWindowResizeEvent &Event);
-    void OnKeyEvent(const FKeyEvent &Event);
-    void OnMouseButtonEvent(const FMouseButtonEvent &Event);
-    void OnMouseMoveEvent(const FMouseMoveEvent &Event);
+    void OnEvent(const FEvent &Event);
 
 private:
     TRef<IWindow> Window = nullptr;

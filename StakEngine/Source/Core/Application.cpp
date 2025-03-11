@@ -51,24 +51,8 @@ bool FApplication::Init(const FApplicationSpec &Spec) {
         return false;
     }
 
-    Window->SetResizeEventFn([this](const FWindowResizeEvent &Event) {
-        this->OnWindowResize(Event);
-    });
-
-    Window->SetCloseEventFn([this]() {
-        this->Close();
-    });
-
-    Window->SetKeyEventFn([this](const FKeyEvent &Event) {
-        this->OnKeyEvent(Event);
-    });
-
-    Window->SetMouseButtonEventFn([this](const FMouseButtonEvent &Event) {
-        this->OnMouseButtonEvent(Event);
-    });
-
-    Window->SetMouseMoveEventFn([this](const FMouseMoveEvent &Event) {
-        this->OnMouseMoveEvent(Event);
+    Window->SetEventFn([this](const FEvent &Event) {
+        this->OnEvent(Event);
     });
 
     Input = TCreateRef<FInput>(Window);
@@ -110,22 +94,16 @@ void FApplication::Run() {
     }
 }
 
-void FApplication::OnWindowResize(const FWindowResizeEvent &Event) {
-    for (IApplicationLayer *Layer : LayerStack) {
-        Layer->OnWindowResize(Event);
+void FApplication::OnEvent(const FEvent &Event) {
+    switch (Event.Type) {
+    case EEventType::WINDOW_CLOSE:
+        Running = false;
+        break;
+    default:
+        break;
     }
-}
 
-void FApplication::OnKeyEvent(const FKeyEvent &Event) {
-    Input->SetKey(Event.Key, Event.State);
-}
 
-void FApplication::OnMouseButtonEvent(const FMouseButtonEvent &Event) {
-    Input->SetMouseButton(Event.Button, Event.State);
-}
-
-void FApplication::OnMouseMoveEvent(const FMouseMoveEvent &Event) {
-    Input->SetMousePos(Event.X, Event.Y);
 }
 
 void FApplication::Close() {
