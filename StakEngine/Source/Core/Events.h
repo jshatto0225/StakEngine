@@ -3,8 +3,6 @@
 #include "Types.h"
 #include "Input.h"
 
-class IWindow;
-
 struct FWindowResizeEvent {
     FSInt32 Width;
     FSInt32 Height;

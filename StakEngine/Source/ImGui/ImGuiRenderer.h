@@ -6,8 +6,7 @@
 #include "Window.h"
 #include "Renderer.h"
 
-class FImGuiRenderer final : public FRenderProxy {
-public:
+struct FImGuiRenderer final : public FRenderProxy {
     void BeginFrame();
     void EndFrame();
 
@@ -16,7 +15,6 @@ public:
 
     void Render(TRef<IRHICommandContext> Context) override;
 
-private:
     ImDrawData *DrawData;
     FRenderer *Renderer;
 };

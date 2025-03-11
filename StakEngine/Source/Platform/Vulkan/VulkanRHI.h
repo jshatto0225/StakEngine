@@ -12,7 +12,7 @@
 #include <vector>
 #include <optional>
 
-class FVulkanViewport;
+struct FVulkanViewport;
 
 #define CHECK_VK_ERR(Err, Message)              \
     if (Err != VK_SUCCESS) {                    \
@@ -72,8 +72,7 @@ EVulkanQueue GetVulkanQueue(ERHIResourceState State);
 VkPipelineStageFlags GetVulkanPipelineStageMask(ERHIResourceState State);
 FSInt32 FindPresentQueueIndex(VkPhysicalDevice GPU, VkSurfaceKHR Surface);
 
-class FVulkanRHI : public IRHI {
-public:
+struct FVulkanRHI : public IRHI {
     bool Init() override;
     void Shutdown() override;
     void ImGuiNewFrame() override;
@@ -90,37 +89,24 @@ public:
     bool PrepareFrame() override;
     bool PresentFrame() override;
     bool SetActiveViewport(TRef<IRHIViewport> Viewport) override;
-    TRef<IRHITexture> GetCurrentBackbuffer() override;
     TRef<IRHIViewport> CreateViewport(void *WindowHandle) override;
     TRef<IRHITexture> CreateTexture() override;
 
-public:
     VkCommandBuffer BeginOneTimeCommandBuffer();
     bool EndOneTimeCommandBuffer(VkCommandBuffer CommandBuffer);
     bool CopyBuffer(VkBuffer Src, VkBuffer Dst, FUInt32 Size);
     bool CreateBuffer(FUInt32 Size, VkBufferUsageFlags Usage, VkMemoryPropertyFlags Properties, VkBuffer *Buffer, VkDeviceMemory *Memory);
     FUInt32 FindMemoryType(FUInt32 Filter, VkMemoryPropertyFlags Flags);
-    FUInt32 GetCurrentFrameIndex();
-    inline FUInt32 GetGraphicsQueueIndex() { return static_cast<FUInt32>(GraphicsQueueIndex); }
-    FUInt32 GetCurrentImageIndex();
-    FUInt32 GetActivePresentQueueIndex();
 
-private:
     VkInstance Instance = nullptr;
     VkDevice Device = nullptr;
     VkPhysicalDevice GPU = nullptr;
     VkDebugUtilsMessengerEXT DebugMessenger = nullptr;
-
     VkQueue GraphicsQueue = nullptr;
     FSInt32 GraphicsQueueIndex = -1;
-
     FUInt32 CurrentFrame = 0;
-
     VkCommandPool CommandPool = nullptr;
-
     VkFence InFlightFences[MAX_FRAMES_IN_FLIGHT] = {};
-
     VkDescriptorPool ImGuiPool = nullptr;
-
     TRef<FVulkanViewport> ActiveViewport;
 };

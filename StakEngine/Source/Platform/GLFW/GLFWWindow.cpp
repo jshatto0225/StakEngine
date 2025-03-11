@@ -26,7 +26,7 @@ bool FGLFWWindow::Init(const FWindowConfig &Cfg) {
     glfwSetFramebufferSizeCallback(NativeHandle, [](GLFWwindow* Window, FSInt32 Width, FSInt32 Height) {
         auto* Data = static_cast<FWindowData*>(glfwGetWindowUserPointer(Window));
 
-        Data->Viewport->OnFramebufferResize();
+        Data->Viewport->FramebufferResized = true;
 
         Data->FramebufferWidth = Width;
         Data->FramebufferHeight = Height;
@@ -143,24 +143,4 @@ void FGLFWWindow::ShutdownImGui() {
 // TODO: Move to Platform
 void FGLFWWindow::ImGuiNewFrame() {
     ImGui_ImplGlfw_NewFrame();
-}
-
-FWindowSizeData FGLFWWindow::GetSize() {
-    return { Data.Width, Data.Height };
-}
-
-FWindowPosData FGLFWWindow::GetPos() {
-    return { Data.X, Data.Y };
-}
-
-void FGLFWWindow::SetEventFn(FEventFn Func) {
-    Data.EventFn = Func;
-}
-
-FWindowSizeData FGLFWWindow::GetFramebufferSize() {
-    return { Data.FramebufferWidth, Data.FramebufferHeight };
-}
-
-TRef<IRHIViewport> FGLFWWindow::GetRHIViewport() {
-    return Data.Viewport;
 }

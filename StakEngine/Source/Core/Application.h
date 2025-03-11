@@ -16,6 +16,8 @@ struct FEngineSpecification {
     bool RenderToOffscreenBuffer;
 };
 
+struct FEngine;
+
 struct FApplication {
     bool (*Init)(FEngine *, FApplication *App);
     void (*Shutdown)(FEngine *, FApplication *App);
@@ -26,8 +28,7 @@ struct FApplication {
     void *UserData;
 };
 
-class FEngine {
-public:
+struct FEngine {
     bool Init(FEngineSpecification *Spec, FApplication *AppImpl);
     void Shutdown();
 
@@ -40,7 +41,6 @@ public:
     inline TRef<FInput> GetInput() { return Input; }
     void OnEvent(FEvent *Event);
 
-public:
     FApplication *App = nullptr;
     TRef<IWindow> Window = nullptr;
     FRenderer Renderer;

@@ -8,8 +8,7 @@
 
 #include <vector>
 
-class FVulkanCommandContext : public IRHICommandContext {
-public:
+struct FVulkanCommandContext : public IRHICommandContext {
     FVulkanCommandContext(VkDevice Device);
 
     bool Begin() override;
@@ -36,15 +35,9 @@ public:
     bool Init() override;
     void Shutdown() override;
 
-public:
     void TransitionBarrier(FRHITransitionBarrier *Barrier);
 
-public:
-    VkCommandBuffer GetMainCommandBuffer();
-
-private:
     VkDevice Device;
-
     VkCommandPool CommandPool = VK_NULL_HANDLE;
     std::vector<VkCommandBuffer> MainCommandBuffers;
 };

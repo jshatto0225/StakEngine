@@ -1,9 +1,3 @@
-Rework events to use an event struct that contains a type then cast the pointer to the correct type
-  also use a single event function
-
-Remove applciation layers, just allow the user to specify some function pointers to their code
-  in the application init function
-
 Remove knowledge of current frame index from RHI, let the renderer handle it
   This is going to probably involve making a new command buffer/list abstraction to replace the command context
   This may also require more work on sync objects

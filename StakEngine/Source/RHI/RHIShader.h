@@ -15,13 +15,12 @@ struct FRHIShaderDescription {
     ERHIShaderType Type;
 };
 
-class IRHIShader {
-public:
+struct IRHIShader {
     virtual ~IRHIShader() = default;
-
-    virtual ERHIShaderType GetType() = 0;
 
     virtual bool Init(FRHIShaderDescription *Description) = 0;
 
     virtual void Shutdown() = 0;
+
+    ERHIShaderType Type = ERHIShaderType::VERTEX;
 };

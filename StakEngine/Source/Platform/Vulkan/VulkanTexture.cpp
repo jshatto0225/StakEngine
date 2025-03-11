@@ -2,19 +2,22 @@
 
 #include <backends/imgui_impl_vulkan.h>
 
-FVulkanTexture::FVulkanTexture(VkDevice Device, VkPhysicalDevice GPU) : Device(Device), GPU(GPU) {}
+FVulkanTexture::FVulkanTexture(VkDevice Device, VkPhysicalDevice GPU) : Device(Device), GPU(GPU) {
+    Type = ERHIResourceType::TEXTURE;
+}
 
 bool FVulkanTexture::Init(FRHIOffscreenRenderTargetDescription *Description) {
-    RHIFormat = Description->Format;
-    Format = VulkanGetFormat(RHIFormat);
+    Format = Description->Format;
+    VulkanFormat = VulkanGetFormat(Format);
     Extent = { Description->Width, Description->Height };
+    RenderArea = { 1, 0, 0, Description->Width, Description->Height };
 
-    if (!CreateImage(Device, GPU, Extent.width, Extent.height, Format, VK_IMAGE_TILING_OPTIMAL, VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT | VK_IMAGE_USAGE_SAMPLED_BIT, VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT, &Image, &ImageMemory)) {
+    if (!CreateImage(Device, GPU, Extent.width, Extent.height, VulkanFormat, VK_IMAGE_TILING_OPTIMAL, VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT | VK_IMAGE_USAGE_SAMPLED_BIT, VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT, &Image, &ImageMemory)) {
         SK_LOG_ERROR("Failed to create offscreen render target image");
         return false;
     }
 
-    if (!CreateImageView(&ImageView, Device, Image, Format)) {
+    if (!CreateImageView(&ImageView, Device, Image, VulkanFormat)) {
         SK_LOG_ERROR("Failed to create image view for offscreen buffer");
         return false;
     }
@@ -125,11 +128,12 @@ bool FVulkanTexture::CreateImage(VkDevice Device, VkPhysicalDevice GPU, FUInt32 
 bool FVulkanTexture::Init(VkImage SwapchainImage, VkExtent2D SwapchainExtent, VkFormat SwapchainFormat) {
     SwapchainBackbuffer = true;
     Extent = SwapchainExtent;
-    Format = SwapchainFormat;
-    RHIFormat = VulkanGetRHIFormat(Format);
+    VulkanFormat = SwapchainFormat;
+    Format = VulkanGetRHIFormat(VulkanFormat);
     Image = SwapchainImage;
+    RenderArea = { 1, 0, 0, Extent.width, Extent.height };
 
-    if (!CreateImageView(&ImageView, Device, Image, Format)) {
+    if (!CreateImageView(&ImageView, Device, Image, VulkanFormat)) {
         SK_LOG_ERROR("Failed to create image view");
         return false;
     }
@@ -151,30 +155,6 @@ void FVulkanTexture::Shutdown() {
         vkDestroyImage(Device, Image, nullptr);
         vkDestroySampler(Device, Sampler, nullptr);
     }
-}
-
-VkImage FVulkanTexture::GetVulkanImage() {
-    return Image;
-}
-
-VkImageView FVulkanTexture::GetVulkanImageView() {
-    return ImageView;
-}
-
-VkImageSubresourceRange FVulkanTexture::GetVulkanSubresourceRange(FUInt32 Index) {
-    if (Index > SubresourceRanges.size()) {
-        SK_LOG_ERROR("Subresource index out of range");
-        return {};
-    }
-    return SubresourceRanges[Index];
-}
-
-VkFormat FVulkanTexture::GetVulkanFormat() {
-    return Format;
-}
-
-FUInt64 FVulkanTexture::GetImGuiImageHandle() {
-    return reinterpret_cast<FUInt64>(ImGuiDescriptorSet);
 }
 
 void FVulkanTexture::AddToImGuiWindow() {

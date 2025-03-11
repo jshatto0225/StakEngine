@@ -4,6 +4,7 @@
 #include "VulkanBuffer.h"
 #include "VulkanRHI.h"
 #include "VulkanPipeline.h"
+#include "VulkanViewport.h"
 
 #include <backends/imgui_impl_vulkan.h>
 
@@ -22,7 +23,7 @@ bool FVulkanCommandContext::Init() {
     CommandPoolInfo.sType = VK_STRUCTURE_TYPE_COMMAND_POOL_CREATE_INFO;
     CommandPoolInfo.flags = VK_COMMAND_POOL_CREATE_RESET_COMMAND_BUFFER_BIT;
     auto RHI = reinterpret_cast<FVulkanRHI *>(GRHI);
-    CommandPoolInfo.queueFamilyIndex = RHI->GetGraphicsQueueIndex();
+    CommandPoolInfo.queueFamilyIndex = RHI->GraphicsQueueIndex;
 
     if (vkCreateCommandPool(Device, &CommandPoolInfo, nullptr, &CommandPool) != VK_SUCCESS) {
         SK_LOG_ERROR("Failed to create vulkan command pool");
@@ -46,14 +47,14 @@ bool FVulkanCommandContext::Init() {
 
 bool FVulkanCommandContext::Begin() {
     auto RHI = reinterpret_cast<FVulkanRHI *>(GRHI);
-    if (vkResetCommandBuffer(MainCommandBuffers[RHI->GetCurrentFrameIndex()], 0) != VK_SUCCESS) {
+    if (vkResetCommandBuffer(MainCommandBuffers[RHI->CurrentFrame], 0) != VK_SUCCESS) {
         SK_LOG_ERROR("Failed to reset command buffer");
         return false;
     }
 
     VkCommandBufferBeginInfo BeginInfo = {};
     BeginInfo.sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_BEGIN_INFO;
-    if (vkBeginCommandBuffer(MainCommandBuffers[RHI->GetCurrentFrameIndex()], &BeginInfo) != VK_SUCCESS) {
+    if (vkBeginCommandBuffer(MainCommandBuffers[RHI->CurrentFrame], &BeginInfo) != VK_SUCCESS) {
         SK_LOG_ERROR("Failed to begin command buffer");
         return false;
     }
@@ -63,7 +64,7 @@ bool FVulkanCommandContext::Begin() {
 
 bool FVulkanCommandContext::End() {
     auto RHI = reinterpret_cast<FVulkanRHI *>(GRHI);
-    if (vkEndCommandBuffer(MainCommandBuffers[RHI->GetCurrentFrameIndex()]) != VK_SUCCESS) {
+    if (vkEndCommandBuffer(MainCommandBuffers[RHI->CurrentFrame]) != VK_SUCCESS) {
         SK_LOG_ERROR("Failed to end command buffer");
         return false;
     }
@@ -73,12 +74,7 @@ bool FVulkanCommandContext::End() {
 
 void FVulkanCommandContext::RenderImGuiDrawData(ImDrawData* DrawData) {
     auto RHI = reinterpret_cast<FVulkanRHI *>(GRHI);
-    ImGui_ImplVulkan_RenderDrawData(DrawData, MainCommandBuffers[RHI->GetCurrentFrameIndex()]);
-}
-
-VkCommandBuffer FVulkanCommandContext::GetMainCommandBuffer() {
-    auto RHI = reinterpret_cast<FVulkanRHI *>(GRHI);
-    return MainCommandBuffers[RHI->GetCurrentFrameIndex()];
+    ImGui_ImplVulkan_RenderDrawData(DrawData, MainCommandBuffers[RHI->CurrentFrame]);
 }
 
 void FVulkanCommandContext::ResourceBarrier(FRHIResourceBarrier *Barrier) {
@@ -95,7 +91,7 @@ void FVulkanCommandContext::ResourceBarrier(FRHIResourceBarrier *Barrier) {
 void FVulkanCommandContext::TransitionBarrier(FRHITransitionBarrier *Barrier) {
     switch (RHIGetTransitionType(Barrier->StateBefore, Barrier->StateAfter)) {
     case ERHITransitionType::IMAGE: {
-        if (Barrier->Resource->GetType() != ERHIResourceType::TEXTURE) {
+        if (Barrier->Resource->Type != ERHIResourceType::TEXTURE) {
             SK_LOG_ERROR("Resource for image transition was not an image");
             return;
         }
@@ -114,9 +110,9 @@ void FVulkanCommandContext::TransitionBarrier(FRHITransitionBarrier *Barrier) {
         if (SrcQueue == EVulkanQueue::ANY) {
             ImageBarrier.srcQueueFamilyIndex = VK_QUEUE_FAMILY_IGNORED;
         } else if (SrcQueue == EVulkanQueue::GRAPHICS) {
-            ImageBarrier.srcQueueFamilyIndex = RHI->GetGraphicsQueueIndex();
+            ImageBarrier.srcQueueFamilyIndex = RHI->GraphicsQueueIndex;
         } else if (SrcQueue == EVulkanQueue::PRESENT) {
-            ImageBarrier.srcQueueFamilyIndex = RHI->GetActivePresentQueueIndex();
+            ImageBarrier.srcQueueFamilyIndex = RHI->ActiveViewport->PresentQueueIndex;
         } else {
             SK_LOG_ERROR("Unsupported source queue");
             return;
@@ -125,19 +121,19 @@ void FVulkanCommandContext::TransitionBarrier(FRHITransitionBarrier *Barrier) {
         if (DstQueue == EVulkanQueue::ANY) {
             ImageBarrier.dstQueueFamilyIndex = VK_QUEUE_FAMILY_IGNORED;
         } else if (DstQueue == EVulkanQueue::GRAPHICS) {
-            ImageBarrier.dstQueueFamilyIndex = RHI->GetGraphicsQueueIndex();
+            ImageBarrier.dstQueueFamilyIndex = RHI->GraphicsQueueIndex;
         } else if (DstQueue == EVulkanQueue::PRESENT) {
-            ImageBarrier.dstQueueFamilyIndex = RHI->GetActivePresentQueueIndex();
+            ImageBarrier.dstQueueFamilyIndex = RHI->ActiveViewport->PresentQueueIndex;
         } else {
             SK_LOG_ERROR("Unsupported destination queue");
             return;
         }
 
-        ImageBarrier.image = Texture->GetVulkanImage();
-        ImageBarrier.subresourceRange = Texture->GetVulkanSubresourceRange(Barrier->Subresource);
+        ImageBarrier.image = Texture->Image;
+        ImageBarrier.subresourceRange = Texture->SubresourceRanges[Barrier->Subresource];
 
         // TODO: Batch pipeline barrier calls
-        vkCmdPipelineBarrier(MainCommandBuffers[RHI->GetCurrentFrameIndex()], GetVulkanPipelineStageMask(Barrier->StateBefore), GetVulkanPipelineStageMask(Barrier->StateAfter), 0 /* TODO: Dependency Flags */, 0, nullptr, 0, nullptr, 1, &ImageBarrier);
+        vkCmdPipelineBarrier(MainCommandBuffers[RHI->CurrentFrame], GetVulkanPipelineStageMask(Barrier->StateBefore), GetVulkanPipelineStageMask(Barrier->StateAfter), 0 /* TODO: Dependency Flags */, 0, nullptr, 0, nullptr, 1, &ImageBarrier);
         break;
     }
     default:
@@ -157,7 +153,7 @@ void FVulkanCommandContext::SetRenderTarget(const TRef<IRHITexture> Target, FRHI
     AttachmentInfo.clearValue.color.float32[1] = 0.0f;
     AttachmentInfo.clearValue.color.float32[2] = 1.0f;
     AttachmentInfo.clearValue.color.float32[3] = 1.0f;
-    AttachmentInfo.imageView = VulkanTarget->GetVulkanImageView();
+    AttachmentInfo.imageView = VulkanTarget->ImageView;
     AttachmentInfo.imageLayout = VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL;
     AttachmentInfo.loadOp = VK_ATTACHMENT_LOAD_OP_CLEAR;
     AttachmentInfo.storeOp = VK_ATTACHMENT_STORE_OP_STORE;
@@ -170,42 +166,42 @@ void FVulkanCommandContext::SetRenderTarget(const TRef<IRHITexture> Target, FRHI
     RenderingInfo.layerCount = RenderArea->LayerCount;
     RenderingInfo.renderArea.extent = { RenderArea->X, RenderArea->Y };
     RenderingInfo.renderArea.extent = { RenderArea->Width, RenderArea->Height };
-    vkCmdBeginRendering(MainCommandBuffers[RHI->GetCurrentFrameIndex()], &RenderingInfo);
+    vkCmdBeginRendering(MainCommandBuffers[RHI->CurrentFrame], &RenderingInfo);
 }
 
 void FVulkanCommandContext::UnsetRenderTarget() {
     auto RHI = reinterpret_cast<FVulkanRHI *>(GRHI);
-    vkCmdEndRendering(MainCommandBuffers[RHI->GetCurrentFrameIndex()]);
+    vkCmdEndRendering(MainCommandBuffers[RHI->CurrentFrame]);
 }
 
 void FVulkanCommandContext::BindVertexBuffer(TRef<IRHIBuffer> Buffer, FUInt32 FirstVertex) {
     auto Impl = std::static_pointer_cast<FVulkanBuffer>(Buffer);
     auto RHI = reinterpret_cast<FVulkanRHI *>(GRHI);
     VkDeviceSize Offset = 0;
-    VkBuffer Buffers[] = { Impl->GetVulkanBuffer() };
-    vkCmdBindVertexBuffers(MainCommandBuffers[RHI->GetCurrentFrameIndex()], FirstVertex, 1, Buffers, &Offset);
+    VkBuffer Buffers[] = { Impl->Buffer };
+    vkCmdBindVertexBuffers(MainCommandBuffers[RHI->CurrentFrame], FirstVertex, 1, Buffers, &Offset);
 }
 
 void FVulkanCommandContext::BindIndexBuffer(TRef<IRHIBuffer> Buffer) {
     auto Impl = std::static_pointer_cast<FVulkanBuffer>(Buffer);
     auto RHI = reinterpret_cast<FVulkanRHI *>(GRHI);
-    vkCmdBindIndexBuffer(MainCommandBuffers[RHI->GetCurrentFrameIndex()], Impl->GetVulkanBuffer(), 0, VulkanGetIndexType(Buffer->GetLayout().Elements[0].Format));
+    vkCmdBindIndexBuffer(MainCommandBuffers[RHI->CurrentFrame], Impl->Buffer, 0, VulkanGetIndexType(Impl->Layout.Elements[0].Format));
 }
 
 void FVulkanCommandContext::DrawIndexed(FUInt32 IndexCount, FUInt32 InstanceCount, FUInt32 FirstIndex, FSInt32 VertexOffset, FUInt32 FirstInstance) {
     auto RHI = reinterpret_cast<FVulkanRHI *>(GRHI);
-    vkCmdDrawIndexed(MainCommandBuffers[RHI->GetCurrentFrameIndex()], IndexCount, InstanceCount, FirstIndex, VertexOffset, FirstInstance);
+    vkCmdDrawIndexed(MainCommandBuffers[RHI->CurrentFrame], IndexCount, InstanceCount, FirstIndex, VertexOffset, FirstInstance);
 }
 
 void FVulkanCommandContext::BindPipeline(TRef<IRHIPipeline> Pipeline) {
     auto RHI = reinterpret_cast<FVulkanRHI *>(GRHI);
     auto Impl = std::static_pointer_cast<FVulkanPipeline>(Pipeline);
-    vkCmdBindPipeline(MainCommandBuffers[RHI->GetCurrentFrameIndex()], Impl->GetVulkanBindPoint(), Impl->GetVulkanPipeline());
+    vkCmdBindPipeline(MainCommandBuffers[RHI->CurrentFrame], Impl->BindPoint, Impl->Pipeline);
 }
 
 void FVulkanCommandContext::DrawInstanced(FUInt32 VertexCount, FUInt32 InstanceCount, FUInt32 FirstVertex, FUInt32 FirstInstance) {
     auto RHI = reinterpret_cast<FVulkanRHI *>(GRHI);
-    vkCmdDraw(MainCommandBuffers[RHI->GetCurrentFrameIndex()], VertexCount, InstanceCount, FirstVertex, FirstInstance);
+    vkCmdDraw(MainCommandBuffers[RHI->CurrentFrame], VertexCount, InstanceCount, FirstVertex, FirstInstance);
 }
 
 void FVulkanCommandContext::SetViewport(FFloat X, FFloat Y, FFloat Width, FFloat Height, FFloat MinDepth, FFloat MaxDepth) {
@@ -219,7 +215,7 @@ void FVulkanCommandContext::SetViewport(FFloat X, FFloat Y, FFloat Width, FFloat
         MaxDepth
     };
 
-    vkCmdSetViewport(MainCommandBuffers[RHI->GetCurrentFrameIndex()], 0, 1, &VulkanViewport);
+    vkCmdSetViewport(MainCommandBuffers[RHI->CurrentFrame], 0, 1, &VulkanViewport);
 }
 
 void FVulkanCommandContext::SetScissor(FSInt32 X, FSInt32 Y, FUInt32 Width, FUInt32 Height) {
@@ -229,5 +225,5 @@ void FVulkanCommandContext::SetScissor(FSInt32 X, FSInt32 Y, FUInt32 Width, FUIn
         { Width, Height }
     };
 
-    vkCmdSetScissor(MainCommandBuffers[RHI->GetCurrentFrameIndex()], 0, 1, &VulkanScissor);
+    vkCmdSetScissor(MainCommandBuffers[RHI->CurrentFrame], 0, 1, &VulkanScissor);
 }

@@ -6,18 +6,13 @@
 #include "RHITexture.h"
 #include "Window.h"
 
-class FRenderProxy {
-public:
+struct FRenderProxy {
     virtual ~FRenderProxy() = default;
 
     virtual void Render(TRef<IRHICommandContext> CommandContext) {}
 };
 
-class FRenderer {
-public:
-    FRenderer() = default;
-
-public:
+struct FRenderer {
     bool Init(TRef<IWindow> Window, bool RenderToOffscreenBuffer);
     void Shutdown();
 
@@ -34,7 +29,6 @@ public:
 
     void AddSceneToImGuiWindow();
 
-private:
     std::vector<FRenderProxy *> RenderProxies;
     FRenderProxy *PostRenderProxy = nullptr;
     TRef<IRHICommandContext> CommandContext;

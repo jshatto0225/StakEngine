@@ -2,12 +2,11 @@
 
 #include <fstream>
 
-FVulkanShader::FVulkanShader(VkDevice Device) : Device(Device) {
-
-}
+FVulkanShader::FVulkanShader(VkDevice Device) : Device(Device) {}
 
 bool FVulkanShader::Init(FRHIShaderDescription *Description) {
     Type = Description->Type;
+
     std::string Path = "Assets/Shaders/" + Description->Name + ".spv";
     std::ifstream File(Path, std::ios::ate | std::ios::binary);
 

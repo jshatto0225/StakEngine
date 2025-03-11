@@ -68,13 +68,10 @@ struct FRHIRenderArea {
     FUInt32 Height;
 };
 
-class IRHIResource {
-public:
-    virtual ~IRHIResource() = default;
-
-    virtual ERHIResourceType GetType() = 0;
-
+struct IRHIResource {
     virtual void Shutdown() = 0;
+
+    ERHIResourceType Type = ERHIResourceType::TEXTURE;
 };
 
 ERHITransitionType RHIGetTransitionType(ERHIResourceState Before, ERHIResourceState After);

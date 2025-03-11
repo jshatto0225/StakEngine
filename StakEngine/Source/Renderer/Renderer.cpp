@@ -11,8 +11,8 @@ bool FRenderer::Init(TRef<IWindow> Win, bool RenderToOffscreenBuffer) {
     Window = Win;
     UseOffscreenBuffer = RenderToOffscreenBuffer;
 
-    RHISetActiveViewport(Window->GetRHIViewport());
-    SwapchainBackbuffer = Window->GetRHIViewport()->GetCurrentBackbuffer();
+    RHISetActiveViewport(Window->Data.Viewport);
+    SwapchainBackbuffer = Window->Data.Viewport->CurrentBackbuffer;
     
     CommandContext = RHICreateCommandContext();
     if (!CommandContext->Init()) {
@@ -47,7 +47,7 @@ bool FRenderer::Init(TRef<IWindow> Win, bool RenderToOffscreenBuffer) {
         }
 
         FRHIGraphicsPipelineStateDescription PipelineDescription = {};
-        PipelineDescription.ColorFormats = { SwapchainBackbuffer->GetFormat() };
+        PipelineDescription.ColorFormats = { SwapchainBackbuffer->Format };
         PipelineDescription.DepthStencilFormat = { ERHIFormat::UNDEFINED };
         PipelineDescription.Layout = PipelineLayout;
         PipelineDescription.Shaders = { VertexShader, FragmentShader };
@@ -79,7 +79,7 @@ bool FRenderer::Render() {
     RHIPrepareFrame();
 
     // NOTE: There will be a new backbuffer every frame
-    SwapchainBackbuffer = Window->GetRHIViewport()->GetCurrentBackbuffer();
+    SwapchainBackbuffer = Window->Data.Viewport->CurrentBackbuffer;
 
     if (!CommandContext->Begin()) {
         SK_LOG_ERROR("Failed to begin command context");
@@ -108,15 +108,15 @@ bool FRenderer::Render() {
             CommandContext->ResourceBarrier(&OffscreenBufferRenderTargetBarrier);
 
 
-            auto RenderArea = OffscreenBackbuffers[OffscreenBackbufferImageIndex]->GetRenderArea();
+            auto RenderArea = OffscreenBackbuffers[OffscreenBackbufferImageIndex]->RenderArea;
             CommandContext->SetRenderTarget(OffscreenBackbuffers[OffscreenBackbufferImageIndex], &RenderArea);
         } else {
-            auto RenderArea = SwapchainBackbuffer->GetRenderArea();
+            auto RenderArea = SwapchainBackbuffer->RenderArea;
             CommandContext->SetRenderTarget(SwapchainBackbuffer, &RenderArea);
         }
 
         CommandContext->BindPipeline(Pipeline);
-        auto [LayerCount, X, Y, Width, Height] = SwapchainBackbuffer->GetRenderArea();
+        auto [LayerCount, X, Y, Width, Height] = SwapchainBackbuffer->RenderArea;
         CommandContext->SetViewport(static_cast<FFloat>(X), static_cast<FFloat>(Y), static_cast<FFloat>(Width), static_cast<FFloat>(Height), 0.0f, 1.0f);
         CommandContext->SetScissor(static_cast<FSInt32>(X), static_cast<FSInt32>(Y), Width, Height);
         CommandContext->DrawInstanced(3, 1, 0, 0);
@@ -138,7 +138,7 @@ bool FRenderer::Render() {
 
             CommandContext->ResourceBarrier(&OffscreenBufferShaderResourceBarrier);
 
-            auto RenderArea = OffscreenBackbuffers[OffscreenBackbufferImageIndex]->GetRenderArea();
+            auto RenderArea = OffscreenBackbuffers[OffscreenBackbufferImageIndex]->RenderArea;
             CommandContext->SetRenderTarget(SwapchainBackbuffer, &RenderArea);
         }
         
@@ -178,11 +178,10 @@ bool FRenderer::InitImGui() {
     RHIInitImGui();
 
     if (UseOffscreenBuffer) {
-        auto [Width, Height] = Window->GetFramebufferSize();
         FRHIOffscreenRenderTargetDescription OffscreenBackbufferDescription = {};
         OffscreenBackbufferDescription.Format = ERHIFormat::B8G8R8A8_SRGB;
-        OffscreenBackbufferDescription.Width = Width;
-        OffscreenBackbufferDescription.Height = Height;
+        OffscreenBackbufferDescription.Width = Window->Data.FramebufferWidth;
+        OffscreenBackbufferDescription.Height = Window->Data.FramebufferHeight;
         OffscreenBackbufferDescription.UseForImGui = true;
         for (auto &Backbuffer : OffscreenBackbuffers) {
             Backbuffer = RHICreateTexture();
@@ -218,7 +217,7 @@ bool FRenderer::InitImGui() {
         }
 
         FRHIGraphicsPipelineStateDescription PipelineDescription = {};
-        PipelineDescription.ColorFormats = { OffscreenBackbuffers[OffscreenBackbufferImageIndex]->GetFormat()};
+        PipelineDescription.ColorFormats = { OffscreenBackbuffers[OffscreenBackbufferImageIndex]->Format };
         PipelineDescription.DepthStencilFormat = { ERHIFormat::UNDEFINED };
         PipelineDescription.Layout = PipelineLayout;
         PipelineDescription.Shaders = { VertexShader, FragmentShader };

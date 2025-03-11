@@ -6,8 +6,7 @@
 
 #include <imgui.h>
 
-class IRHI {
-public:
+struct IRHI {
     virtual bool Init() = 0;
 
     virtual void Shutdown() = 0;
@@ -40,14 +39,9 @@ public:
 
     virtual bool SetActiveViewport(TRef<IRHIViewport> Viewport) = 0;
 
-    virtual TRef<IRHITexture> GetCurrentBackbuffer() = 0;
-
     virtual TRef<IRHIViewport> CreateViewport(void *WindowHandle) = 0;
 
     virtual TRef<IRHITexture> CreateTexture() = 0;
-
-public:
-    virtual ~IRHI() = default;
 };
 
 bool RHIInit();
@@ -57,8 +51,6 @@ void RHIShutdown();
 TRef<IRHITexture> RHICreateTexture();
 
 TRef<IRHIViewport> RHICreateViewport(void *WindowHandle);
-
-TRef<IRHITexture> RHIGetCurrentBackbuffer();
 
 bool RHISetActiveViewport(TRef<IRHIViewport> Viewport);
 

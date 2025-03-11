@@ -2,15 +2,15 @@
 
 #include "Types.h"
 
-class IRHICommandContext;
-class IRHIResource;
-class IRHITexture;
-class IRHIBuffer;
-class IRHIShader;
-class IRHIDescriptorSetLayout;
-class IRHIPipelineLayout;
-class IRHIPipeline;
-class IRHIViewport;
+struct IRHICommandContext;
+struct IRHIResource;
+struct IRHITexture;
+struct IRHIBuffer;
+struct IRHIShader;
+struct IRHIDescriptorSetLayout;
+struct IRHIPipelineLayout;
+struct IRHIPipeline;
+struct IRHIViewport;
 
 struct FRHIBufferDescription;
 struct FRHIShaderDescription;

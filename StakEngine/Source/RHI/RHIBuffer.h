@@ -45,27 +45,21 @@ struct FRHIBufferDescription {
     ERHIBufferType Type = {};
     FRHIBufferLayout Layout;
     FUInt32 ElementCount = {};
-    void *InitialContents = {}; // NOTE: Optional
-    FUInt32 InitialContentsSize = {}; // NOTE: Optional
-    bool UseStagingBuffer = {};
+    void *InitialContents = nullptr; // NOTE: Optional
+    FUInt32 InitialContentsSize = 0; // NOTE: Optional
+    bool UseStagingBuffer = false;
 };
 
-class IRHIBuffer : public IRHIResource {
-public:
-    virtual ~IRHIBuffer() = default;
-
-    virtual bool SetData(void *Data, FUInt32 DataSize) = 0;
-    virtual void *GetMappedBuffer() = 0;
-
-    virtual FUInt32 GetElementCount() = 0;
-
-    virtual FRHIBufferLayout GetLayout() = 0;
-
+struct IRHIBuffer : public IRHIResource {
     virtual bool Init(FRHIBufferDescription *Description) = 0;
 
     void Shutdown() override = 0;
+    
+    virtual bool SendToGPU() = 0;
 
-    inline ERHIResourceType GetType() override { return ERHIResourceType::BUFFER; }
-
-    virtual ERHIBufferType GetBufferType() = 0;
+    FUInt32 ElementCount = 0;
+    FRHIBufferLayout Layout;
+    ERHIBufferType BufferType = ERHIBufferType::VERTEX;
+    void *MappedData = nullptr;
+    FUInt32 Size = 0;
 };

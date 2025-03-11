@@ -19,8 +19,7 @@ struct FRHIDescriptorSetLayoutDescription {
     std::vector<FRHIDescriptorBinding> Bindings;
 };
 
-class IRHIDescriptorSetLayout {
-public:
+struct IRHIDescriptorSetLayout {
     virtual bool Init(FRHIDescriptorSetLayoutDescription *Description) = 0;
     virtual void Shutdown() = 0;
 };

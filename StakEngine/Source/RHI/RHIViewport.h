@@ -6,13 +6,12 @@
 
 #include "RHIForward.h"
 
-class IRHIViewport {
-public:
+struct IRHIViewport {
     virtual bool Init() = 0;
 
-    virtual TRef<IRHITexture> GetCurrentBackbuffer() = 0;
-
-    virtual void OnFramebufferResize() = 0;
-
     virtual void Shutdown() = 0;
+
+    bool FramebufferResized = false;
+    TRef<IRHITexture> CurrentBackbuffer;
+    std::vector<TRef<IRHITexture>> Backbuffers;
 };

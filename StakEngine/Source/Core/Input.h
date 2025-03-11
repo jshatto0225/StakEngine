@@ -8,7 +8,7 @@
 
 #undef DELETE
 
-class IWindow;
+struct IWindow;
 
 enum class EKeyCode : FSInt16 {
     UNKNOWN       = -1,
@@ -181,8 +181,7 @@ struct FInputCallbackInfo {
     FUInt64 Id;
 };
 
-class FInput {
-public:
+struct FInput {
     FInput(TRef<IWindow> window);
 
     struct FMousePosData {
@@ -224,12 +223,10 @@ public:
 
     void RemoveCallback(const FInputCallbackInfo &Info);
 
-private:
     void SetKey(EKeyCode Key, EInputState Action);
     void SetMouseButton(EMouseCode Button, EInputState Action);
     void SetMousePos(FFloat X, FFloat Y);
 
-private:
     FBool UsingRawInput;
     ECursorVisibility CursorVisibility;
 
@@ -271,7 +268,4 @@ private:
     std::unordered_map<FUInt64, std::function<void(FFloat, FFloat)>> MouseMoveCallbacks;
 
     TRef<IWindow> Window;
-
-private:
-    friend class FEngine;
 };

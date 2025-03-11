@@ -4,10 +4,11 @@
 
 extern IRHI *GRHI;
 
-FVulkanBuffer::FVulkanBuffer(VkDevice Device) : Device(Device) {}
+FVulkanBuffer::FVulkanBuffer(VkDevice Device) : Device(Device) {
+    Type = ERHIResourceType::BUFFER;
+}
 
-bool FVulkanBuffer::SetData(void *Data, FUInt32 DataSize)  {
-    memcpy(MappedBuffer, Data, DataSize);
+bool FVulkanBuffer::SendToGPU()  {
     if (UseStagingBuffer) {
         auto RHI = reinterpret_cast<FVulkanRHI *>(GRHI);
         if (!RHI->CopyBuffer(Buffer, StagingBuffer, Size)) {
@@ -23,7 +24,7 @@ bool FVulkanBuffer::Init(FRHIBufferDescription *Description) {
     UseStagingBuffer = Description->UseStagingBuffer;
     ElementCount = Description->ElementCount;
     Size = Description->ElementCount * Description->Layout.Stride;
-    Type = Description->Type;
+    BufferType = Description->Type;
     Layout = Description->Layout;
 
     auto RHI = reinterpret_cast<FVulkanRHI *>(GRHI);
@@ -38,7 +39,7 @@ bool FVulkanBuffer::Init(FRHIBufferDescription *Description) {
             return false;
         }
 
-        if (vkMapMemory(Device, StagingBufferMemory, 0, Size, 0, &MappedBuffer) != VK_SUCCESS) {
+        if (vkMapMemory(Device, StagingBufferMemory, 0, Size, 0, &MappedData) != VK_SUCCESS) {
             SK_LOG_ERROR("Failed to map buffer memory");
             return false;
         }
@@ -48,24 +49,26 @@ bool FVulkanBuffer::Init(FRHIBufferDescription *Description) {
             return false;
         }
 
-        if (vkMapMemory(Device, BufferMemory, 0, Size, 0, &MappedBuffer) != VK_SUCCESS) {
+        if (vkMapMemory(Device, BufferMemory, 0, Size, 0, &MappedData) != VK_SUCCESS) {
             SK_LOG_ERROR("Failed to map buffer memory");
             return false;
         }
     }
 
     if (Description->InitialContents != nullptr) {
-        if (!SetData(Description->InitialContents, Description->InitialContentsSize)) {
-            SK_LOG_ERROR("Failed to set initial buffer contents");
+        if (Description->InitialContentsSize > Size) {
+            SK_LOG_WARN("Initial contents size is greater thatn buffer size");
+            return true;
+        }
+
+        memcpy(MappedData, Description->InitialContents, Description->InitialContentsSize);
+        if (!SendToGPU()) {
+            SK_LOG_ERROR("Failed to send buffer to gpu");
             return false;
         }
     }
 
     return true;
-}
-
-void *FVulkanBuffer::GetMappedBuffer() {
-    return MappedBuffer;
 }
 
 void FVulkanBuffer::Shutdown() {
@@ -76,12 +79,4 @@ void FVulkanBuffer::Shutdown() {
 
     vkFreeMemory(Device, BufferMemory, nullptr);
     vkDestroyBuffer(Device, Buffer, nullptr);
-}
-
-ERHIBufferType FVulkanBuffer::GetBufferType() {
-    return Type;
-}
-
-FRHIBufferLayout FVulkanBuffer::GetLayout() {
-    return Layout;
 }

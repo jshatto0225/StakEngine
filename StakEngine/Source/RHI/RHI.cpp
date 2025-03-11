@@ -82,11 +82,6 @@ TRef<IRHIPipeline> RHICreatePipeline() {
     return GRHI->CreatePipeline();
 }
 
-TRef<IRHITexture> RHIGetCurrentBackbuffer() {
-    assert(GRHI);
-    return GRHI->GetCurrentBackbuffer();
-}
-
 bool RHISetActiveViewport(TRef<IRHIViewport> Viewport) {
     assert(GRHI);
     return GRHI->SetActiveViewport(Viewport);

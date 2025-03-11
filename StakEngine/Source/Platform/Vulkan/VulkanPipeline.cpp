@@ -6,14 +6,14 @@
 FVulkanPipelineLayout::FVulkanPipelineLayout(VkDevice Device) : Device(Device) {}
 
 bool FVulkanPipelineLayout::Init(FRHIPipelineLayoutDescription *Description) {
-VkPipelineLayoutCreateInfo Info = {};
+    VkPipelineLayoutCreateInfo Info = {};
     Info.sType = VK_STRUCTURE_TYPE_PIPELINE_LAYOUT_CREATE_INFO;
 
     std::vector<VkDescriptorSetLayout> Layouts = {};
     Layouts.reserve(Description->DescriptorSetLayouts.size());
 
     for (auto &It : Description->DescriptorSetLayouts) {
-        Layouts.push_back(std::static_pointer_cast<FVulkanDescriptorSetLayout>(It)->GetLayout());
+        Layouts.push_back(std::static_pointer_cast<FVulkanDescriptorSetLayout>(It)->Layout);
     }
 
     Info.setLayoutCount = static_cast<FUInt32>(Layouts.size());
@@ -54,8 +54,8 @@ bool FVulkanPipeline::Init(FRHIGraphicsPipelineStateDescription *Description) {
     for (auto &It : Description->Shaders) {
         VkPipelineShaderStageCreateInfo Info = {};
         Info.sType = VK_STRUCTURE_TYPE_PIPELINE_SHADER_STAGE_CREATE_INFO;
-        Info.stage = VulkanGetShaderStage(It->GetType());
-        Info.module = std::static_pointer_cast<FVulkanShader>(It)->GetVulkanShader();
+        Info.stage = VulkanGetShaderStage(It->Type);
+        Info.module = std::static_pointer_cast<FVulkanShader>(It)->Shader;
         Info.pName = "main";
 
         ShaderStages.push_back(Info);
@@ -156,7 +156,7 @@ bool FVulkanPipeline::Init(FRHIGraphicsPipelineStateDescription *Description) {
     Info.pDepthStencilState = nullptr;
     Info.pColorBlendState = &ColorBlending;
     Info.pDynamicState = &DynamicState;
-    Info.layout = std::static_pointer_cast<FVulkanPipelineLayout>(Description->Layout)->GetLayout();
+    Info.layout = std::static_pointer_cast<FVulkanPipelineLayout>(Description->Layout)->Layout;
 
     if (vkCreateGraphicsPipelines(Device, VK_NULL_HANDLE, 1, &Info, nullptr, &Pipeline) != VK_SUCCESS) {
         SK_LOG_ERROR("Failed to create vulkan pipeline");

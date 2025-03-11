@@ -9,19 +9,13 @@ struct FRHIOffscreenRenderTargetDescription {
     bool UseForImGui;
 };
 
-class IRHITexture : public IRHIResource {
-public:
+struct IRHITexture : public IRHIResource {
     virtual bool Init(FRHIOffscreenRenderTargetDescription *Description) = 0;
 
     void Shutdown() override = 0;
 
-    virtual bool IsSwapchainBackbuffer() = 0;
-
-    virtual ERHIFormat GetFormat() = 0;
-
-    inline ERHIResourceType GetType() override { return ERHIResourceType::TEXTURE; }
-
-    virtual FRHIRenderArea GetRenderArea() = 0;
-
     virtual void AddToImGuiWindow() = 0;
+
+    ERHIFormat Format = ERHIFormat::UNDEFINED;
+    FRHIRenderArea RenderArea = {};
 };

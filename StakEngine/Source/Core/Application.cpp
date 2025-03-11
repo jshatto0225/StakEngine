@@ -39,7 +39,7 @@ bool FEngine::Init(FEngineSpecification *Spec, FApplication *AppImpl) {
         return false;
     }
 
-    Window->SetEventFn([this](FEvent *Event) {
+    Window->Data.EventFn = ([this](FEvent *Event) {
         this->OnEvent(Event);
     });
 

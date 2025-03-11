@@ -5,8 +5,7 @@
 
 #include <imgui.h>
 
-class IRHICommandContext {
-public:
+struct IRHICommandContext {
     virtual bool Begin() = 0;
     virtual bool End() = 0;
 

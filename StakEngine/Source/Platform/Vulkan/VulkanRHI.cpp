@@ -494,7 +494,7 @@ void FVulkanRHI::ShutdownImGui() {
 }
 
 void FVulkanRHI::InitImGui() {
-    VkFormat Formats[] = { VulkanGetFormat(ActiveViewport->GetCurrentBackbuffer()->GetFormat()) };
+    VkFormat Formats[] = { VulkanGetFormat(ActiveViewport->Backbuffers[ActiveViewport->ImageIndex]->Format) };
 
     VkPipelineRenderingCreateInfo PipelineInfo = {};
     PipelineInfo.sType = VK_STRUCTURE_TYPE_PIPELINE_RENDERING_CREATE_INFO;
@@ -511,8 +511,8 @@ void FVulkanRHI::InitImGui() {
     InitInfo.Device = Device;
     InitInfo.QueueFamily = GraphicsQueueIndex;
     InitInfo.Queue = GraphicsQueue;
-    InitInfo.MinImageCount = std::static_pointer_cast<FVulkanViewport>(ActiveViewport)->GetMinImageCount();
-    InitInfo.ImageCount = std::static_pointer_cast<FVulkanViewport>(ActiveViewport)->GetImageCount();
+    InitInfo.MinImageCount = std::static_pointer_cast<FVulkanViewport>(ActiveViewport)->MinImageCount;
+    InitInfo.ImageCount = std::static_pointer_cast<FVulkanViewport>(ActiveViewport)->ImageCount;
     InitInfo.MSAASamples = VK_SAMPLE_COUNT_1_BIT;
     InitInfo.DescriptorPoolSize = 1000;
     InitInfo.UseDynamicRendering = true;
@@ -533,7 +533,7 @@ bool FVulkanRHI::WaitForGPUIdle() {
 
 bool FVulkanRHI::Submit(TRef<IRHICommandContext> Context) {
     auto VulkanContext = std::static_pointer_cast<FVulkanCommandContext>(Context);
-    VkCommandBuffer CommandBuffer = VulkanContext->GetMainCommandBuffer();
+    VkCommandBuffer CommandBuffer = VulkanContext->MainCommandBuffers[CurrentFrame];
 
     VkSubmitInfo SubmitInfo = {};
     SubmitInfo.sType = VK_STRUCTURE_TYPE_SUBMIT_INFO;
@@ -710,10 +710,6 @@ FUInt32 FVulkanRHI::FindMemoryType(FUInt32 Filter, VkMemoryPropertyFlags Flags) 
     return 0;
 }
 
-FUInt32 FVulkanRHI::GetCurrentFrameIndex() {
-    return CurrentFrame;
-}
-
 bool FVulkanRHI::PrepareFrame() {
     if (ActiveViewport == nullptr) {
         SK_LOG_WARN("No viewport set for rendering");
@@ -754,20 +750,8 @@ bool FVulkanRHI::SetActiveViewport(TRef<IRHIViewport> Viewport) {
     return true;
 }
 
-TRef<IRHITexture> FVulkanRHI::GetCurrentBackbuffer() {
-    return ActiveViewport->GetCurrentBackbuffer();
-}
-
 TRef<IRHIViewport> FVulkanRHI::CreateViewport(void *WindowHandle) {
     return TCreateRef<FVulkanViewport>(Instance, GPU, Device, WindowHandle);
-}
-
-FUInt32 FVulkanRHI::GetCurrentImageIndex() {
-    return ActiveViewport->GetCurrentImageIndex();
-}
-
-FUInt32 FVulkanRHI::GetActivePresentQueueIndex() {
-    return ActiveViewport->GetPresentQueueIndex();
 }
 
 TRef<IRHITexture> FVulkanRHI::CreateTexture() {

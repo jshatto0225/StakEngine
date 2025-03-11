@@ -9,8 +9,7 @@ struct FRHIPipelineLayoutDescription {
     std::vector<TRef<IRHIDescriptorSetLayout>> DescriptorSetLayouts;
 };
 
-class IRHIPipelineLayout {
-public:
+struct IRHIPipelineLayout {
     virtual bool Init(FRHIPipelineLayoutDescription *Description) = 0;
     virtual void Shutdown() = 0;
 };
@@ -39,8 +38,7 @@ struct FRHIGraphicsPipelineStateDescription {
     TRef<IRHIPipelineLayout> Layout;
 };
 
-class IRHIPipeline {
-public:
+struct IRHIPipeline {
     virtual bool Init(FRHIGraphicsPipelineStateDescription *Description) = 0;
     virtual void Shutdown() = 0;
 };

@@ -41,6 +41,8 @@ bool FVulkanViewport::Init() {
 
     vkGetDeviceQueue(Device, PresentQueueIndex, 0, &PresentQueue);
 
+    CurrentBackbuffer = nullptr;
+
     return true;
 }
 
@@ -110,7 +112,7 @@ bool FVulkanViewport::CreateSwapchain() {
     PresentQueueIndex = FindPresentQueueIndex(GPU, Surface);
 
     auto RHI = reinterpret_cast<FVulkanRHI *>(GRHI);
-    assert(RHI->GetGraphicsQueueIndex() == PresentQueueIndex);
+    assert(RHI->GraphicsQueueIndex == PresentQueueIndex);
 
     SwapchainInfo.imageSharingMode = VK_SHARING_MODE_EXCLUSIVE;
     SwapchainInfo.preTransform = Support.Capabilities.currentTransform;
@@ -137,7 +139,8 @@ bool FVulkanViewport::CreateSwapchain() {
     }
 
     for (FUInt32 BackbufferIndex = 0; BackbufferIndex < ImageCount; BackbufferIndex++) {
-        if (!Backbuffers[BackbufferIndex]->Init(SwapchainImages[BackbufferIndex], SwapchainExtent, Format.format)) {
+        auto Backbuffer = std::static_pointer_cast<FVulkanTexture>(Backbuffers[BackbufferIndex]);
+        if (!Backbuffer->Init(SwapchainImages[BackbufferIndex], SwapchainExtent, Format.format)) {
             SK_LOG_ERROR("Failed to initialize backbuffer");
             return false;
         }
@@ -148,6 +151,8 @@ bool FVulkanViewport::CreateSwapchain() {
 
 bool FVulkanViewport::PrepareFrame(FUInt32 FrameIndex) {
     VkResult Err = vkAcquireNextImageKHR(Device, Swapchain, UINT64_MAX, ImageAvailableSemaphores[FrameIndex], VK_NULL_HANDLE, &ImageIndex);
+
+    CurrentBackbuffer = Backbuffers[ImageIndex];
 
     if (Err == VK_ERROR_OUT_OF_DATE_KHR) {
         if (!RecreateSwapchain()) {
@@ -186,10 +191,6 @@ bool FVulkanViewport::PresentFrame(FUInt32 FrameIndex) {
     }
 
     return true;
-}
-
-TRef<IRHITexture> FVulkanViewport::GetCurrentBackbuffer() {
-    return Backbuffers[ImageIndex];
 }
 
 void FVulkanViewport::Shutdown() {
@@ -239,8 +240,4 @@ bool FVulkanViewport::RecreateSwapchain() {
     FramebufferResized = false;
 
     return true;
-}
-
-void FVulkanViewport::OnFramebufferResize() {
-    FramebufferResized = true;
 }
