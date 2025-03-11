@@ -11,7 +11,7 @@ struct FRHIOffscreenRenderTargetDescription {
 
 class IRHITexture : public IRHIResource {
 public:
-    virtual bool Init(const FRHIOffscreenRenderTargetDescription &Description) = 0;
+    virtual bool Init(FRHIOffscreenRenderTargetDescription *Description) = 0;
 
     void Shutdown() override = 0;
 

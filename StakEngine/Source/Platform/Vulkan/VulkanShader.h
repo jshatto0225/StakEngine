@@ -8,7 +8,7 @@ class FVulkanShader : public IRHIShader {
 public:
     FVulkanShader(VkDevice Device);
 
-    bool Init(const FRHIShaderDescription &Description) override;
+    bool Init(FRHIShaderDescription *Description) override;
     void Shutdown() override;
 
     ERHIShaderType GetType() override { return Type; }

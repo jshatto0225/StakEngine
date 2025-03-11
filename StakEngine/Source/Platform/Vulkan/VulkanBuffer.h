@@ -13,7 +13,7 @@ public:
 
     FUInt32 GetElementCount() override { return ElementCount; }
 
-    bool Init(const FRHIBufferDescription &Description) override;
+    bool Init(FRHIBufferDescription *Description) override;
     void Shutdown() override;
 
     ERHIBufferType GetBufferType() override;

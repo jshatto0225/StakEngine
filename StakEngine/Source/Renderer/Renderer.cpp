@@ -25,7 +25,7 @@ bool FRenderer::Init(TRef<IWindow> Win, bool RenderToOffscreenBuffer) {
         VertexShaderDescription.Name = "BasicShader.vert";
         VertexShaderDescription.Type = ERHIShaderType::VERTEX;
         TRef<IRHIShader> VertexShader = RHICreateShader();
-        if (!VertexShader->Init(VertexShaderDescription)) {
+        if (!VertexShader->Init(&VertexShaderDescription)) {
             SK_LOG_ERROR("Failed to initialize vertex shader");
             return false;
         }
@@ -34,14 +34,14 @@ bool FRenderer::Init(TRef<IWindow> Win, bool RenderToOffscreenBuffer) {
         FragmentShaderDescription.Name = "BasicShader.frag";
         FragmentShaderDescription.Type = ERHIShaderType::FRAGMENT;
         TRef<IRHIShader> FragmentShader = RHICreateShader();
-        if (!FragmentShader->Init(FragmentShaderDescription)) {
+        if (!FragmentShader->Init(&FragmentShaderDescription)) {
             SK_LOG_ERROR("Failed to initialize fragment shader");
             return false;
         }
 
         FRHIPipelineLayoutDescription PipelineLayoutDescription = {};
         PipelineLayout = RHICreatePipelineLayout();
-        if (!PipelineLayout->Init(PipelineLayoutDescription)) {
+        if (!PipelineLayout->Init(&PipelineLayoutDescription)) {
             SK_LOG_ERROR("Failed to initialize pipeline layout");
             return false;
         }
@@ -55,7 +55,7 @@ bool FRenderer::Init(TRef<IWindow> Win, bool RenderToOffscreenBuffer) {
         PipelineDescription.VertexInputBindings = {};
 
         Pipeline = RHICreatePipeline();
-        if (!Pipeline->Init(PipelineDescription)) {
+        if (!Pipeline->Init(&PipelineDescription)) {
             SK_LOG_ERROR("Failed to initialize pipeline");
             return false;
         }
@@ -73,7 +73,6 @@ void FRenderer::Shutdown() {
 
     RHIWaitForGPUIdle();
     CommandContext->Shutdown();
-    RHIShutdown();
 }
 
 bool FRenderer::Render() {
@@ -95,7 +94,7 @@ bool FRenderer::Render() {
         RenderTargetBarrier.TransitionBarrier.StateAfter = ERHIResourceState::RENDER_TARGET;
         RenderTargetBarrier.TransitionBarrier.Subresource = 0;
 
-        CommandContext->ResourceBarrier(RenderTargetBarrier);
+        CommandContext->ResourceBarrier(&RenderTargetBarrier);
 
         // NOTE: Use offscreen backbuffer if requested by the config, else use swapchain backbuffer
         if (UseOffscreenBuffer) {
@@ -106,11 +105,14 @@ bool FRenderer::Render() {
             OffscreenBufferRenderTargetBarrier.TransitionBarrier.StateAfter = ERHIResourceState::RENDER_TARGET;
             OffscreenBufferRenderTargetBarrier.TransitionBarrier.Subresource = 0;
 
-            CommandContext->ResourceBarrier(OffscreenBufferRenderTargetBarrier);
+            CommandContext->ResourceBarrier(&OffscreenBufferRenderTargetBarrier);
 
-            CommandContext->SetRenderTarget(OffscreenBackbuffers[OffscreenBackbufferImageIndex], OffscreenBackbuffers[OffscreenBackbufferImageIndex]->GetRenderArea());
+
+            auto RenderArea = OffscreenBackbuffers[OffscreenBackbufferImageIndex]->GetRenderArea();
+            CommandContext->SetRenderTarget(OffscreenBackbuffers[OffscreenBackbufferImageIndex], &RenderArea);
         } else {
-            CommandContext->SetRenderTarget(SwapchainBackbuffer, SwapchainBackbuffer->GetRenderArea());
+            auto RenderArea = SwapchainBackbuffer->GetRenderArea();
+            CommandContext->SetRenderTarget(SwapchainBackbuffer, &RenderArea);
         }
 
         CommandContext->BindPipeline(Pipeline);
@@ -134,10 +136,10 @@ bool FRenderer::Render() {
             OffscreenBufferShaderResourceBarrier.TransitionBarrier.StateAfter = ERHIResourceState::SHADER_RESOURCE;
             OffscreenBufferShaderResourceBarrier.TransitionBarrier.Subresource = 0;
 
-            CommandContext->ResourceBarrier(OffscreenBufferShaderResourceBarrier);
+            CommandContext->ResourceBarrier(&OffscreenBufferShaderResourceBarrier);
 
-            // NOTE: Setup swapchain for imgui 
-            CommandContext->SetRenderTarget(SwapchainBackbuffer, SwapchainBackbuffer->GetRenderArea());
+            auto RenderArea = OffscreenBackbuffers[OffscreenBackbufferImageIndex]->GetRenderArea();
+            CommandContext->SetRenderTarget(SwapchainBackbuffer, &RenderArea);
         }
         
         if (PostRenderProxy) {
@@ -153,7 +155,7 @@ bool FRenderer::Render() {
         PresentBarrier.TransitionBarrier.StateAfter = ERHIResourceState::PRESENT;
         PresentBarrier.TransitionBarrier.Subresource = 0;
 
-        CommandContext->ResourceBarrier(PresentBarrier);
+        CommandContext->ResourceBarrier(&PresentBarrier);
     }
     if (!CommandContext->End()) {
         SK_LOG_ERROR("Failed to end command context");
@@ -184,7 +186,7 @@ bool FRenderer::InitImGui() {
         OffscreenBackbufferDescription.UseForImGui = true;
         for (auto &Backbuffer : OffscreenBackbuffers) {
             Backbuffer = RHICreateTexture();
-            if (!Backbuffer->Init(OffscreenBackbufferDescription)) {
+            if (!Backbuffer->Init(&OffscreenBackbufferDescription)) {
                 SK_LOG_ERROR("Failed to initialize offscreen backbuffer");
                 return false;
             }
@@ -194,7 +196,7 @@ bool FRenderer::InitImGui() {
         VertexShaderDescription.Name = "BasicShader.vert";
         VertexShaderDescription.Type = ERHIShaderType::VERTEX;
         TRef<IRHIShader> VertexShader = RHICreateShader();
-        if (!VertexShader->Init(VertexShaderDescription)) {
+        if (!VertexShader->Init(&VertexShaderDescription)) {
             SK_LOG_ERROR("Failed to initialize vertex shader");
             return false;
         }
@@ -203,14 +205,14 @@ bool FRenderer::InitImGui() {
         FragmentShaderDescription.Name = "BasicShader.frag";
         FragmentShaderDescription.Type = ERHIShaderType::FRAGMENT;
         TRef<IRHIShader> FragmentShader = RHICreateShader();
-        if (!FragmentShader->Init(FragmentShaderDescription)) {
+        if (!FragmentShader->Init(&FragmentShaderDescription)) {
             SK_LOG_ERROR("Failed to initialize fragment shader");
             return false;
         }
 
         FRHIPipelineLayoutDescription PipelineLayoutDescription = {};
         PipelineLayout = RHICreatePipelineLayout();
-        if (!PipelineLayout->Init(PipelineLayoutDescription)) {
+        if (!PipelineLayout->Init(&PipelineLayoutDescription)) {
             SK_LOG_ERROR("Failed to initialize pipeline layout");
             return false;
         }
@@ -224,7 +226,7 @@ bool FRenderer::InitImGui() {
         PipelineDescription.VertexInputBindings = {};
 
         Pipeline = RHICreatePipeline();
-        if (!Pipeline->Init(PipelineDescription)) {
+        if (!Pipeline->Init(&PipelineDescription)) {
             SK_LOG_ERROR("Failed to initialize pipeline");
             return false;
         }
@@ -243,6 +245,11 @@ void FRenderer::ImGuiNewFrame() {
 
 void FRenderer::ShutdownImGui() {
     RHIWaitForGPUIdle();
+
+    for (auto &Backbuffer : OffscreenBackbuffers) {
+        Backbuffer->Shutdown();
+    }
+
     RHIShutdownImGui();
     Window->ShutdownImGui();
 }

@@ -21,7 +21,7 @@ public:
     void ImGuiNewFrame() override;
     void ShutdownImGui() override;
 
-    void SetEventFn(const FEventFn &Func) override;
+    void SetEventFn(FEventFn Func) override;
 
     FWindowSizeData GetFramebufferSize() override;
 

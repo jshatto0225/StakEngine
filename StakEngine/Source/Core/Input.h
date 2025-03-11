@@ -273,5 +273,5 @@ private:
     TRef<IWindow> Window;
 
 private:
-    friend class FApplication;
+    friend class FEngine;
 };

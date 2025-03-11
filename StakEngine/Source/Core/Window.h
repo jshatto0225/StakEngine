@@ -32,8 +32,8 @@ public:
     virtual FWindowSizeData GetSize() = 0;
     virtual FWindowPosData GetPos() = 0;
 
-    using FEventFn  = std::function<void(const FEvent &)>;
-    virtual void SetEventFn(const FEventFn &Func) = 0;
+    using FEventFn  = std::function<void(FEvent *)>;
+    virtual void SetEventFn(FEventFn Func) = 0;
 
     virtual void InitImGui() = 0;
     virtual void ImGuiNewFrame() = 0;

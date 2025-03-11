@@ -19,12 +19,12 @@ bool FVulkanBuffer::SetData(void *Data, FUInt32 DataSize)  {
     return true;
 }
 
-bool FVulkanBuffer::Init(const FRHIBufferDescription &Description) {
-    UseStagingBuffer = Description.UseStagingBuffer;
-    ElementCount = Description.ElementCount;
-    Size = Description.ElementCount * Description.Layout.Stride;
-    Type = Description.Type;
-    Layout = Description.Layout;
+bool FVulkanBuffer::Init(FRHIBufferDescription *Description) {
+    UseStagingBuffer = Description->UseStagingBuffer;
+    ElementCount = Description->ElementCount;
+    Size = Description->ElementCount * Description->Layout.Stride;
+    Type = Description->Type;
+    Layout = Description->Layout;
 
     auto RHI = reinterpret_cast<FVulkanRHI *>(GRHI);
     if (UseStagingBuffer) {
@@ -54,8 +54,8 @@ bool FVulkanBuffer::Init(const FRHIBufferDescription &Description) {
         }
     }
 
-    if (Description.InitialContents != nullptr) {
-        if (!SetData(Description.InitialContents, Description.InitialContentsSize)) {
+    if (Description->InitialContents != nullptr) {
+        if (!SetData(Description->InitialContents, Description->InitialContentsSize)) {
             SK_LOG_ERROR("Failed to set initial buffer contents");
             return false;
         }

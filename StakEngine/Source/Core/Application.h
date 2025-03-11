@@ -3,52 +3,49 @@
 #include <vector>
 #include <string>
 
-#include "ApplicationLayer.h"
 #include "Events.h"
 #include "Renderer.h"
 #include "Input.h"
-#include "ImGuiLayer.h"
+#include "ImGuiRenderer.h"
 
-struct FApplicationSpec {
+struct FEngineSpecification {
     const char *WindowTitle;
-    const char* AppName;
+    const char *AppName;
     FSInt32 WindowWidth;
     FSInt32 WindowHeight;
     bool RenderToOffscreenBuffer;
 };
 
-class FApplication {
+struct FApplication {
+    bool (*Init)(FEngine *, FApplication *App);
+    void (*Shutdown)(FEngine *, FApplication *App);
+    void (*OnImGuiRender)(FEngine *, FApplication *App);
+    void (*Update)(FEngine *, FApplication *App);
+    void (*OnEvent)(FEngine *, FEvent *);
+
+    void *UserData;
+};
+
+class FEngine {
 public:
-    bool Init(const FApplicationSpec &Spec);
+    bool Init(FEngineSpecification *Spec, FApplication *AppImpl);
     void Shutdown();
 
     void Run();
-    void AddLayer(IApplicationLayer *layer);
     void Close();
   
     inline const char *GetName() const { return Name; }
     inline TRef<IWindow> GetWindow() { return Window; }
-    inline FRenderer &GetRenderer() { return Renderer; }
+    inline FRenderer *GetRenderer() { return &Renderer; }
     inline TRef<FInput> GetInput() { return Input; }
+    void OnEvent(FEvent *Event);
 
-private:
-    void OnEvent(const FEvent &Event);
-
-private:
+public:
+    FApplication *App = nullptr;
     TRef<IWindow> Window = nullptr;
     FRenderer Renderer;
     TRef<FInput> Input = nullptr;
-    FLayerStack LayerStack = {};
     FBool Running = false;
-    FImGuiLayer *ImGuiLayer = nullptr;
+    FImGuiRenderer ImGuiRenderer = {};
     const char *Name;
 };
-
-void AppRun();
-void AppAddLayer(IApplicationLayer* Layer);
-void AppClose();
-
-const char* AppGetName();
-const TRef<IWindow> AppGetWindow();
-FRenderer &AppGetRenderer();
-const TRef<FInput> AppGetInput();

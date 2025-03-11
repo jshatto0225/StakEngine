@@ -4,10 +4,10 @@
 
 FVulkanTexture::FVulkanTexture(VkDevice Device, VkPhysicalDevice GPU) : Device(Device), GPU(GPU) {}
 
-bool FVulkanTexture::Init(const FRHIOffscreenRenderTargetDescription &Description) {
-    RHIFormat = Description.Format;
+bool FVulkanTexture::Init(FRHIOffscreenRenderTargetDescription *Description) {
+    RHIFormat = Description->Format;
     Format = VulkanGetFormat(RHIFormat);
-    Extent = { Description.Width, Description.Height };
+    Extent = { Description->Width, Description->Height };
 
     if (!CreateImage(Device, GPU, Extent.width, Extent.height, Format, VK_IMAGE_TILING_OPTIMAL, VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT | VK_IMAGE_USAGE_SAMPLED_BIT, VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT, &Image, &ImageMemory)) {
         SK_LOG_ERROR("Failed to create offscreen render target image");
@@ -140,12 +140,16 @@ bool FVulkanTexture::Init(VkImage SwapchainImage, VkExtent2D SwapchainExtent, Vk
 }
 
 void FVulkanTexture::Shutdown() {
+    if (!SwapchainBackbuffer) {
+        ImGui_ImplVulkan_RemoveTexture(ImGuiDescriptorSet);
+    }
+
     vkDestroyImageView(Device, ImageView, nullptr);
+
     if (!SwapchainBackbuffer) {
         vkFreeMemory(Device, ImageMemory, nullptr);
         vkDestroyImage(Device, Image, nullptr);
         vkDestroySampler(Device, Sampler, nullptr);
-        ImGui_ImplVulkan_RemoveTexture(ImGuiDescriptorSet);
     }
 }
 

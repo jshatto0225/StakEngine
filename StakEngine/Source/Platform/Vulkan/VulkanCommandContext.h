@@ -15,9 +15,9 @@ public:
     bool Begin() override;
     bool End() override;
 
-    void ResourceBarrier(const FRHIResourceBarrier& Barrier) override;
+    void ResourceBarrier(FRHIResourceBarrier *Barrier) override;
 
-    void SetRenderTarget(const TRef<IRHITexture> Target, const FRHIRenderArea &RenderArea) override;
+    void SetRenderTarget(const TRef<IRHITexture> Target, FRHIRenderArea *RenderArea) override;
     void UnsetRenderTarget() override;
 
     void BindVertexBuffer(TRef<IRHIBuffer> Buffer, FUInt32 FirstVertex) override;
@@ -37,7 +37,7 @@ public:
     void Shutdown() override;
 
 public:
-    void TransitionBarrier(const FRHITransitionBarrier &Barrier);
+    void TransitionBarrier(FRHITransitionBarrier *Barrier);
 
 public:
     VkCommandBuffer GetMainCommandBuffer();

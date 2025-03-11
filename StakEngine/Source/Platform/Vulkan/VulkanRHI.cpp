@@ -312,7 +312,7 @@ bool FVulkanRHI::Init() {
 
     VkApplicationInfo AppInfo = {};
     AppInfo.sType = VK_STRUCTURE_TYPE_APPLICATION_INFO;
-    AppInfo.pApplicationName = AppGetName();
+    AppInfo.pApplicationName = "App Name"; // TODO:
     AppInfo.applicationVersion = VK_MAKE_VERSION(1, 0, 0);
     AppInfo.pEngineName = "StakEngine";
     AppInfo.engineVersion = VK_MAKE_VERSION(1, 0, 0);
@@ -471,17 +471,17 @@ bool FVulkanRHI::Init() {
 }
 
 void FVulkanRHI::Shutdown() {
-    DestroyDebugMessenger(Instance, DebugMessenger, nullptr);
-
-    vkDestroyInstance(Instance, nullptr);
-
-    for (VkFence Fence : InFlightFences) {
+    for (auto &Fence : InFlightFences) {
         vkDestroyFence(Device, Fence, nullptr);
     }
 
     vkDestroyCommandPool(Device, CommandPool, nullptr);
 
     vkDestroyDevice(Device, nullptr);
+
+    DestroyDebugMessenger(Instance, DebugMessenger, nullptr);
+
+    vkDestroyInstance(Instance, nullptr);
 }
 
 void FVulkanRHI::ImGuiNewFrame() {

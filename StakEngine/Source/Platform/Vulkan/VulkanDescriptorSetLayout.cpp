@@ -4,13 +4,13 @@
 
 FVulkanDescriptorSetLayout::FVulkanDescriptorSetLayout(VkDevice Device) : Device(Device) {}
 
-bool FVulkanDescriptorSetLayout::Init(const FRHIDescriptorSetLayoutDescription &Description) {
+bool FVulkanDescriptorSetLayout::Init(FRHIDescriptorSetLayoutDescription *Description) {
 VkDescriptorSetLayoutCreateInfo Info = {};
     Info.sType = VK_STRUCTURE_TYPE_DESCRIPTOR_SET_LAYOUT_CREATE_INFO;
 
     std::vector<VkDescriptorSetLayoutBinding> Bindings;
 
-    for (auto &It : Description.Bindings) {
+    for (auto &It : Description->Bindings) {
         VkDescriptorSetLayoutBinding Binding = {};
         Binding.binding = It.Binding;
         Binding.descriptorType = VulkanGetDescriptorType(It.Type);

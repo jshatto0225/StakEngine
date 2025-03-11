@@ -4,23 +4,30 @@
 #include "Log.h"
 #include "Types.h"
 
-extern bool InitializeApplication(FApplication *App);
+extern void InitializeApplication(FApplication *OutApp, FEngineSpecification *OutSpec);
+extern void DestroyApplication(FApplication *App);
 
-extern FApplication *GApplication;
+extern FEngine *GEngine;
 
 inline FSInt32 StakMain() {
     FLog::Init();
 
-    auto App = new FApplication;
+    FEngine Engine = {};
+    FApplication App = {};
+    FEngineSpecification Spec = {};
 
-    if (!InitializeApplication(App)) {
-        SK_LOG_ERROR("Failed to initialize application");
+    InitializeApplication(&App, &Spec);
+
+    if (!Engine.Init(&Spec, &App)) {
+        SK_LOG_CRITICAL("Failed to initialize engine");
         return -1;
     }
 
-    App->Run();
+    Engine.Run();
 
-    delete App;
+    Engine.Shutdown();
+
+    DestroyApplication(Engine.App);
 
     return 0;
 }

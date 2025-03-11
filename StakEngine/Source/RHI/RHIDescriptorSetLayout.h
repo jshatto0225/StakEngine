@@ -21,6 +21,6 @@ struct FRHIDescriptorSetLayoutDescription {
 
 class IRHIDescriptorSetLayout {
 public:
-    virtual bool Init(const FRHIDescriptorSetLayoutDescription &Description) = 0;
+    virtual bool Init(FRHIDescriptorSetLayoutDescription *Description) = 0;
     virtual void Shutdown() = 0;
 };

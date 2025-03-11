@@ -24,8 +24,10 @@ struct FRHIBufferLayout {
             switch (Element.Format) {
             case ERHIFormat::B8G8R8A8_SRGB:
                 Stride += 4;
+                break;
             default:
                 SK_LOG_ERROR("Unsupported buffer element format");
+                break;
             }
         }
     }
@@ -59,7 +61,7 @@ public:
 
     virtual FRHIBufferLayout GetLayout() = 0;
 
-    virtual bool Init(const FRHIBufferDescription &Description) = 0;
+    virtual bool Init(FRHIBufferDescription *Description) = 0;
 
     void Shutdown() override = 0;
 

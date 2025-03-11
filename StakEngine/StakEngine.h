@@ -1,7 +1,6 @@
 #pragma once
 
 #include "Source/Core/Types.h"
-#include "Source/Core/ApplicationLayer.h"
 #include "Source/Core/Events.h"
 #include "Source/Core/Input.h"
 #include "Source/Core/Application.h"

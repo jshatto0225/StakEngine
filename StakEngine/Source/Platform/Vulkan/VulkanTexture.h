@@ -15,7 +15,7 @@ public:
 
     ERHIFormat GetFormat() override { return RHIFormat; }
 
-    bool Init(const FRHIOffscreenRenderTargetDescription &Description) override;
+    bool Init(FRHIOffscreenRenderTargetDescription *Description) override;
     void Shutdown() override;
 
     void AddToImGuiWindow() override;

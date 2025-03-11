@@ -1,38 +1,26 @@
 #include "Application.h"
 
 #include "Log.h"
-#include "ImGuiLayer.h"
-
 #include "Asserts.h"
 #include "RHI.h"
 #include "Platform.h"
 
-FApplication *GApplication = nullptr;
+void FEngine::Shutdown() {
+    App->Shutdown(this, App);
 
-void FApplication::AddLayer(IApplicationLayer *Layer) {
-    LayerStack.Push(Layer);
-}
-
-void FApplication::Shutdown() {
-    LayerStack.Clear();
-
-    Renderer.Shutdown();
+    ImGuiRenderer.Shutdown();
 
     Window->Shutdown();
 
-    RHIShutdown();
+    Renderer.Shutdown();
 
-    if (GApplication == this) {
-        GApplication = nullptr;
-    }
+    RHIShutdown();
 }
 
-bool FApplication::Init(const FApplicationSpec &Spec) {
-    if (!GApplication) {
-        GApplication = this;
-    }
+bool FEngine::Init(FEngineSpecification *Spec, FApplication *AppImpl) {
+    App = AppImpl;
 
-    Name = Spec.AppName;
+    Name = Spec->AppName;
 
     if (!RHIInit()) {
         SK_LOG_ERROR("Failed to initialize RHI");
@@ -40,9 +28,9 @@ bool FApplication::Init(const FApplicationSpec &Spec) {
     }
 
     FWindowConfig Cfg = {
-        Spec.WindowWidth,
-        Spec.WindowHeight,
-        Spec.WindowTitle
+        Spec->WindowWidth,
+        Spec->WindowHeight,
+        Spec->WindowTitle
     };
 
     Window = IWindow::Create();
@@ -51,42 +39,35 @@ bool FApplication::Init(const FApplicationSpec &Spec) {
         return false;
     }
 
-    Window->SetEventFn([this](const FEvent &Event) {
+    Window->SetEventFn([this](FEvent *Event) {
         this->OnEvent(Event);
     });
 
     Input = TCreateRef<FInput>(Window);
 
-    if (!Renderer.Init(Window, Spec.RenderToOffscreenBuffer)) {
+    if (!Renderer.Init(Window, Spec->RenderToOffscreenBuffer)) {
         SK_LOG_ERROR("Failed to initialize renderer");
         return false;
     }
 
-    ImGuiLayer = new FImGuiLayer();
-
-    AddLayer(ImGuiLayer);
+    ImGuiRenderer.Init(&Renderer);
 
     Running = true;
+
+    if (App) App->Init(this, App);
 
     return true;
 }
 
-void FApplication::Run() {
+void FEngine::Run() {
     while (Running) {
         PlatformPollEvents();
 
-        for (IApplicationLayer *Layer : LayerStack) {
-            Layer->Update();
-        }
+        if (App->Update) App->Update(this, App);
 
-        Renderer.ImGuiNewFrame();
-        ImGuiLayer->BeginFrame();
-        {
-            for (IApplicationLayer *Layer : LayerStack) {
-                Layer->OnImGuiRender();
-            }
-        }
-        ImGuiLayer->EndFrame();
+        ImGuiRenderer.BeginFrame();
+        if (App->OnImGuiRender) App->OnImGuiRender(this, App);
+        ImGuiRenderer.EndFrame();
 
         if (!Renderer.Render()) {
             SK_LOG_ERROR("Failed to render");
@@ -94,8 +75,8 @@ void FApplication::Run() {
     }
 }
 
-void FApplication::OnEvent(const FEvent &Event) {
-    switch (Event.Type) {
+void FEngine::OnEvent(FEvent *Event) {
+    switch (Event->Type) {
     case EEventType::WINDOW_CLOSE:
         Running = false;
         break;
@@ -103,37 +84,9 @@ void FApplication::OnEvent(const FEvent &Event) {
         break;
     }
 
-
+    if (App->OnEvent) App->OnEvent(this, Event);
 }
 
-void FApplication::Close() {
+void FEngine::Close() {
     Running = false;
-}
-
-void AppRun() {
-    GApplication->Run();
-}
-
-void AppAddLayer(IApplicationLayer *layer) {
-    GApplication->AddLayer(layer);
-}
-
-void AppClose() {
-    GApplication->Close();
-}
-
-const char *AppGetName() {
-    return GApplication->GetName();
-}
-
-const TRef<IWindow> AppGetWindow() {
-    return GApplication->GetWindow();
-}
-
-FRenderer &AppGetRenderer() {
-    return GApplication->GetRenderer();
-}
-
-const TRef<FInput> AppGetInput() {
-    return GApplication->GetInput();
 }

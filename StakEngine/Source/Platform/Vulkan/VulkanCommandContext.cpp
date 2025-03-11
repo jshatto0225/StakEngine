@@ -81,10 +81,10 @@ VkCommandBuffer FVulkanCommandContext::GetMainCommandBuffer() {
     return MainCommandBuffers[RHI->GetCurrentFrameIndex()];
 }
 
-void FVulkanCommandContext::ResourceBarrier(const FRHIResourceBarrier &Barrier) {
-    switch (Barrier.Type) {
+void FVulkanCommandContext::ResourceBarrier(FRHIResourceBarrier *Barrier) {
+    switch (Barrier->Type) {
     case ERHIBarrierType::TRANSITION:
-        TransitionBarrier(Barrier.TransitionBarrier);
+        TransitionBarrier(&Barrier->TransitionBarrier);
         break;
     default:
         SK_LOG_WARN("Unsupported resource barrier type");
@@ -92,25 +92,25 @@ void FVulkanCommandContext::ResourceBarrier(const FRHIResourceBarrier &Barrier) 
     }
 }
 
-void FVulkanCommandContext::TransitionBarrier(const FRHITransitionBarrier& Barrier) {
-    switch (RHIGetTransitionType(Barrier.StateBefore, Barrier.StateAfter)) {
+void FVulkanCommandContext::TransitionBarrier(FRHITransitionBarrier *Barrier) {
+    switch (RHIGetTransitionType(Barrier->StateBefore, Barrier->StateAfter)) {
     case ERHITransitionType::IMAGE: {
-        if (Barrier.Resource->GetType() != ERHIResourceType::TEXTURE) {
+        if (Barrier->Resource->GetType() != ERHIResourceType::TEXTURE) {
             SK_LOG_ERROR("Resource for image transition was not an image");
             return;
         }
 
         auto RHI = reinterpret_cast<FVulkanRHI *>(GRHI);
 
-        auto Texture = std::static_pointer_cast<FVulkanTexture>(Barrier.Resource);
+        auto Texture = std::static_pointer_cast<FVulkanTexture>(Barrier->Resource);
 
         VkImageMemoryBarrier ImageBarrier = {};
         ImageBarrier.sType = VK_STRUCTURE_TYPE_IMAGE_MEMORY_BARRIER;
-        ImageBarrier.srcAccessMask = GetVulkanAccessMask(Barrier.StateBefore);
-        ImageBarrier.dstAccessMask = GetVulkanAccessMask(Barrier.StateAfter);
-        ImageBarrier.oldLayout = GetVulkanImageLayout(Barrier.StateBefore);
-        ImageBarrier.newLayout = GetVulkanImageLayout(Barrier.StateAfter);
-        EVulkanQueue SrcQueue = GetVulkanQueue(Barrier.StateAfter);
+        ImageBarrier.srcAccessMask = GetVulkanAccessMask(Barrier->StateBefore);
+        ImageBarrier.dstAccessMask = GetVulkanAccessMask(Barrier->StateAfter);
+        ImageBarrier.oldLayout = GetVulkanImageLayout(Barrier->StateBefore);
+        ImageBarrier.newLayout = GetVulkanImageLayout(Barrier->StateAfter);
+        EVulkanQueue SrcQueue = GetVulkanQueue(Barrier->StateAfter);
         if (SrcQueue == EVulkanQueue::ANY) {
             ImageBarrier.srcQueueFamilyIndex = VK_QUEUE_FAMILY_IGNORED;
         } else if (SrcQueue == EVulkanQueue::GRAPHICS) {
@@ -121,7 +121,7 @@ void FVulkanCommandContext::TransitionBarrier(const FRHITransitionBarrier& Barri
             SK_LOG_ERROR("Unsupported source queue");
             return;
         }
-        EVulkanQueue DstQueue = GetVulkanQueue(Barrier.StateAfter);
+        EVulkanQueue DstQueue = GetVulkanQueue(Barrier->StateAfter);
         if (DstQueue == EVulkanQueue::ANY) {
             ImageBarrier.dstQueueFamilyIndex = VK_QUEUE_FAMILY_IGNORED;
         } else if (DstQueue == EVulkanQueue::GRAPHICS) {
@@ -134,10 +134,10 @@ void FVulkanCommandContext::TransitionBarrier(const FRHITransitionBarrier& Barri
         }
 
         ImageBarrier.image = Texture->GetVulkanImage();
-        ImageBarrier.subresourceRange = Texture->GetVulkanSubresourceRange(Barrier.Subresource);
+        ImageBarrier.subresourceRange = Texture->GetVulkanSubresourceRange(Barrier->Subresource);
 
         // TODO: Batch pipeline barrier calls
-        vkCmdPipelineBarrier(MainCommandBuffers[RHI->GetCurrentFrameIndex()], GetVulkanPipelineStageMask(Barrier.StateBefore), GetVulkanPipelineStageMask(Barrier.StateAfter), 0 /* TODO: Dependency Flags */, 0, nullptr, 0, nullptr, 1, &ImageBarrier);
+        vkCmdPipelineBarrier(MainCommandBuffers[RHI->GetCurrentFrameIndex()], GetVulkanPipelineStageMask(Barrier->StateBefore), GetVulkanPipelineStageMask(Barrier->StateAfter), 0 /* TODO: Dependency Flags */, 0, nullptr, 0, nullptr, 1, &ImageBarrier);
         break;
     }
     default:
@@ -146,7 +146,7 @@ void FVulkanCommandContext::TransitionBarrier(const FRHITransitionBarrier& Barri
     }
 }
 
-void FVulkanCommandContext::SetRenderTarget(const TRef<IRHITexture> Target, const FRHIRenderArea &RenderArea) {
+void FVulkanCommandContext::SetRenderTarget(const TRef<IRHITexture> Target, FRHIRenderArea *RenderArea) {
     auto VulkanTarget = std::static_pointer_cast<FVulkanTexture>(Target);
 
     auto RHI = reinterpret_cast<FVulkanRHI *>(GRHI);
@@ -167,9 +167,9 @@ void FVulkanCommandContext::SetRenderTarget(const TRef<IRHITexture> Target, cons
     RenderingInfo.colorAttachmentCount = 1;
     RenderingInfo.pColorAttachments = &AttachmentInfo;
     RenderingInfo.viewMask = 0x01;
-    RenderingInfo.layerCount = RenderArea.LayerCount;
-    RenderingInfo.renderArea.extent = { RenderArea.X, RenderArea.Y };
-    RenderingInfo.renderArea.extent = { RenderArea.Width, RenderArea.Height };
+    RenderingInfo.layerCount = RenderArea->LayerCount;
+    RenderingInfo.renderArea.extent = { RenderArea->X, RenderArea->Y };
+    RenderingInfo.renderArea.extent = { RenderArea->Width, RenderArea->Height };
     vkCmdBeginRendering(MainCommandBuffers[RHI->GetCurrentFrameIndex()], &RenderingInfo);
 }
 

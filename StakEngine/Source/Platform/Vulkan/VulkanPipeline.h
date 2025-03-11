@@ -7,7 +7,7 @@ class FVulkanPipelineLayout : public IRHIPipelineLayout {
 public:
     FVulkanPipelineLayout(VkDevice Device);
 
-    bool Init(const FRHIPipelineLayoutDescription &Description) override;
+    bool Init(FRHIPipelineLayoutDescription *Description) override;
     void Shutdown() override;
 
 public:
@@ -23,7 +23,7 @@ class FVulkanPipeline : public IRHIPipeline {
 public:
     FVulkanPipeline(VkDevice Device);
 
-    bool Init(const FRHIGraphicsPipelineStateDescription &Description) override;
+    bool Init(FRHIGraphicsPipelineStateDescription *Description) override;
     void Shutdown() override;
 
 public:

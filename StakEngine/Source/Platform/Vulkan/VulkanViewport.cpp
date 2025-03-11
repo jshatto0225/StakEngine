@@ -201,9 +201,9 @@ void FVulkanViewport::Shutdown() {
 
     vkDestroySurfaceKHR(Instance, Surface, nullptr);
 
-    for (VkSemaphore Semaphore : ImageAvailableSemaphores) {
-        vkDestroySemaphore(Device, Semaphore, nullptr);
-    }
+    for (auto &Semaphore : ImageAvailableSemaphores) vkDestroySemaphore(Device, Semaphore, nullptr);
+
+    for (auto &Semaphore : RenderFinishedSemaphores) vkDestroySemaphore(Device, Semaphore, nullptr);
 }
 
 bool FVulkanViewport::RecreateSwapchain() {

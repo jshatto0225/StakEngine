@@ -5,14 +5,14 @@
 
 FVulkanPipelineLayout::FVulkanPipelineLayout(VkDevice Device) : Device(Device) {}
 
-bool FVulkanPipelineLayout::Init(const FRHIPipelineLayoutDescription &Description) {
+bool FVulkanPipelineLayout::Init(FRHIPipelineLayoutDescription *Description) {
 VkPipelineLayoutCreateInfo Info = {};
     Info.sType = VK_STRUCTURE_TYPE_PIPELINE_LAYOUT_CREATE_INFO;
 
     std::vector<VkDescriptorSetLayout> Layouts = {};
-    Layouts.reserve(Description.DescriptorSetLayouts.size());
+    Layouts.reserve(Description->DescriptorSetLayouts.size());
 
-    for (auto &It : Description.DescriptorSetLayouts) {
+    for (auto &It : Description->DescriptorSetLayouts) {
         Layouts.push_back(std::static_pointer_cast<FVulkanDescriptorSetLayout>(It)->GetLayout());
     }
 
@@ -33,11 +33,11 @@ void FVulkanPipelineLayout::Shutdown() {
 
 FVulkanPipeline::FVulkanPipeline(VkDevice Device) : Device(Device), BindPoint(VK_PIPELINE_BIND_POINT_GRAPHICS) {}
 
-bool FVulkanPipeline::Init(const FRHIGraphicsPipelineStateDescription &Description) {
+bool FVulkanPipeline::Init(FRHIGraphicsPipelineStateDescription *Description) {
     std::vector<VkFormat> ColorFormats;
-    ColorFormats.reserve(Description.ColorFormats.size());
+    ColorFormats.reserve(Description->ColorFormats.size());
 
-    for (auto &It : Description.ColorFormats) {
+    for (auto &It : Description->ColorFormats) {
         ColorFormats.push_back(VulkanGetFormat(It));
     }
 
@@ -45,13 +45,13 @@ bool FVulkanPipeline::Init(const FRHIGraphicsPipelineStateDescription &Descripti
     RenderingInfo.sType = VK_STRUCTURE_TYPE_PIPELINE_RENDERING_CREATE_INFO;
     RenderingInfo.colorAttachmentCount = static_cast<FUInt32>(ColorFormats.size());
     RenderingInfo.pColorAttachmentFormats = ColorFormats.data();
-    RenderingInfo.depthAttachmentFormat = VulkanGetDepthFormat(Description.DepthStencilFormat);
-    RenderingInfo.stencilAttachmentFormat = VulkanGetStencilFormat(Description.DepthStencilFormat);
+    RenderingInfo.depthAttachmentFormat = VulkanGetDepthFormat(Description->DepthStencilFormat);
+    RenderingInfo.stencilAttachmentFormat = VulkanGetStencilFormat(Description->DepthStencilFormat);
     RenderingInfo.viewMask = 0x01;
 
     std::vector<VkPipelineShaderStageCreateInfo> ShaderStages = {};
 
-    for (auto &It : Description.Shaders) {
+    for (auto &It : Description->Shaders) {
         VkPipelineShaderStageCreateInfo Info = {};
         Info.sType = VK_STRUCTURE_TYPE_PIPELINE_SHADER_STAGE_CREATE_INFO;
         Info.stage = VulkanGetShaderStage(It->GetType());
@@ -63,7 +63,7 @@ bool FVulkanPipeline::Init(const FRHIGraphicsPipelineStateDescription &Descripti
 
     std::vector<VkVertexInputBindingDescription> VertexBindings = {};
 
-    for (auto &It : Description.VertexInputBindings) {
+    for (auto &It : Description->VertexInputBindings) {
         VkVertexInputBindingDescription Binding = {};
         Binding.binding = It.Binding;
         Binding.stride = It.Stride;
@@ -73,7 +73,7 @@ bool FVulkanPipeline::Init(const FRHIGraphicsPipelineStateDescription &Descripti
 
     std::vector<VkVertexInputAttributeDescription> VertexAttributes = {};
 
-    for (auto &It : Description.VertexInputAttributes) {
+    for (auto &It : Description->VertexInputAttributes) {
         VkVertexInputAttributeDescription Attribute = {};
         Attribute.location = It.Location;
         Attribute.binding = It.Binding;
@@ -156,7 +156,7 @@ bool FVulkanPipeline::Init(const FRHIGraphicsPipelineStateDescription &Descripti
     Info.pDepthStencilState = nullptr;
     Info.pColorBlendState = &ColorBlending;
     Info.pDynamicState = &DynamicState;
-    Info.layout = std::static_pointer_cast<FVulkanPipelineLayout>(Description.Layout)->GetLayout();
+    Info.layout = std::static_pointer_cast<FVulkanPipelineLayout>(Description->Layout)->GetLayout();
 
     if (vkCreateGraphicsPipelines(Device, VK_NULL_HANDLE, 1, &Info, nullptr, &Pipeline) != VK_SUCCESS) {
         SK_LOG_ERROR("Failed to create vulkan pipeline");

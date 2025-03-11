@@ -44,7 +44,7 @@ bool FGLFWWindow::Init(const FWindowConfig &Cfg) {
         E.Type = EEventType::WINDOW_RESIZE;
         E.WRE.Width = Width;
         E.WRE.Height = Height;
-        Data->EventFn(E);
+        Data->EventFn(&E);
     });
 
     glfwSetWindowCloseCallback(NativeHandle, [](GLFWwindow *Window) {
@@ -54,7 +54,7 @@ bool FGLFWWindow::Init(const FWindowConfig &Cfg) {
 
         FEvent E = {};
         E.Type = EEventType::WINDOW_CLOSE;
-        Data->EventFn(E);
+        Data->EventFn(&E);
     });
 
     glfwSetKeyCallback(NativeHandle, [](GLFWwindow *Window, FSInt32 Key, FSInt32 Scancode, FSInt32 Action, FSInt32 Mods) {
@@ -78,7 +78,7 @@ bool FGLFWWindow::Init(const FWindowConfig &Cfg) {
         E.Type = EEventType::KEY;
         E.KE.Key = static_cast<EKeyCode>(Key);
         E.KE.State = State;
-        Data->EventFn(E);
+        Data->EventFn(&E);
     });
 
     glfwSetMouseButtonCallback(NativeHandle, [](GLFWwindow *Window, FSInt32 Button, FSInt32 Action, FSInt32 Mods) {
@@ -102,7 +102,7 @@ bool FGLFWWindow::Init(const FWindowConfig &Cfg) {
         E.Type = EEventType::MOUSE_BUTTON;
         E.MBE.Button = static_cast<EMouseCode>(Button);
         E.MBE.State = State;
-        Data->EventFn(E);
+        Data->EventFn(&E);
     });
 
     glfwSetCursorPosCallback(NativeHandle, [](GLFWwindow *Window, double X, double Y) {
@@ -114,7 +114,7 @@ bool FGLFWWindow::Init(const FWindowConfig &Cfg) {
         E.Type = EEventType::MOUSE_MOVE;
         E.MME.X = static_cast<FFloat>(X);
         E.MME.Y = static_cast<FFloat>(Y);
-        Data->EventFn(E);
+        Data->EventFn(&E);
     });
 
     Data.Viewport = RHICreateViewport(NativeHandle);
@@ -127,6 +127,7 @@ bool FGLFWWindow::Init(const FWindowConfig &Cfg) {
 }
 
 void FGLFWWindow::Shutdown() {
+    Data.Viewport->Shutdown();
     glfwDestroyWindow(NativeHandle);
 }
 
@@ -152,7 +153,7 @@ FWindowPosData FGLFWWindow::GetPos() {
     return { Data.X, Data.Y };
 }
 
-void FGLFWWindow::SetEventFn(const FEventFn &Func) {
+void FGLFWWindow::SetEventFn(FEventFn Func) {
     Data.EventFn = Func;
 }
 

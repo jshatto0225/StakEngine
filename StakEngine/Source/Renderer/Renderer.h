@@ -34,9 +34,6 @@ public:
 
     void AddSceneToImGuiWindow();
 
-    FRenderer(FRenderer &) = delete;
-    FRenderer &operator=(FRenderer &) = delete;
-
 private:
     std::vector<FRenderProxy *> RenderProxies;
     FRenderProxy *PostRenderProxy = nullptr;

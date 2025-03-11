@@ -12,10 +12,10 @@ public:
 
     virtual void RenderImGuiDrawData(ImDrawData *DrawData) = 0;
 
-    virtual void ResourceBarrier(const FRHIResourceBarrier &Barrier) = 0;
+    virtual void ResourceBarrier(FRHIResourceBarrier *Barrier) = 0;
 
     // TODO: Allow multiple render targets
-    virtual void SetRenderTarget(TRef<IRHITexture> Target, const FRHIRenderArea &RenderArea) = 0;
+    virtual void SetRenderTarget(TRef<IRHITexture> Target, FRHIRenderArea *RenderArea) = 0;
     virtual void UnsetRenderTarget() = 0;
 
     // TODO: Bind multiple buffer at once

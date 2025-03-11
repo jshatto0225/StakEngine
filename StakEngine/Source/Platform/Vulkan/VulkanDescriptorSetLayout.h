@@ -7,7 +7,7 @@ class FVulkanDescriptorSetLayout : public IRHIDescriptorSetLayout {
 public:
     FVulkanDescriptorSetLayout(VkDevice Device);
 
-    bool Init(const FRHIDescriptorSetLayoutDescription &Description) override;
+    bool Init(FRHIDescriptorSetLayoutDescription *Description) override;
     void Shutdown() override;
 
 public:
