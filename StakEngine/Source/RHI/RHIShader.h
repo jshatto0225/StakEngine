@@ -16,8 +16,6 @@ struct FRHIShaderDescription {
 };
 
 struct IRHIShader {
-    virtual ~IRHIShader() = default;
-
     virtual bool Init(FRHIShaderDescription *Description) = 0;
 
     virtual void Shutdown() = 0;

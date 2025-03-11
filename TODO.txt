@@ -2,7 +2,13 @@ Remove knowledge of current frame index from RHI, let the renderer handle it
   This is going to probably involve making a new command buffer/list abstraction to replace the command context
   This may also require more work on sync objects
 
-Convert classes to structs, most of the getters being used are unecessary
+Create new command list object to replace command context
+
+Remove functions from classes to fix awkward constructor/destructor nonsense
+
+Use raw pointers instead of smart pointers
+
+Window does not need to be virtual, it can be implemented per platform
 
 The RHI can probably initialize the objects it creates and return nullptr on failure
   this allows for failures to be checked but makes the renderer code less verbose
