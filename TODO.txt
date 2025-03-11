@@ -10,7 +10,5 @@ Remove knowledge of current frame index from RHI, let the renderer handle it
 
 Convert classes to structs, most of the getters being used are unecessary
 
-Move imgui renderer initilization into the imgui layer
-
 The RHI can probably initialize the objects it creates and return nullptr on failure
   this allows for failures to be checked but makes the renderer code less verbose

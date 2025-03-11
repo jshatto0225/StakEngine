@@ -14,7 +14,6 @@ void FApplication::AddLayer(IApplicationLayer *Layer) {
 }
 
 void FApplication::Shutdown() {
-    Renderer.ShutdownImGui();
     LayerStack.Clear();
 
     Renderer.Shutdown();
@@ -80,12 +79,6 @@ bool FApplication::Init(const FApplicationSpec &Spec) {
     }
 
     ImGuiLayer = new FImGuiLayer();
-
-    Renderer.SetPostProxy(ImGuiLayer);
-    if (!Renderer.InitImGui()) {
-        SK_LOG_ERROR("Failed to initialize renderer for imgui");
-        return false;
-    }
 
     AddLayer(ImGuiLayer);
 

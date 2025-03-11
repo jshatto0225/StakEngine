@@ -6,7 +6,7 @@
 #include "Renderer.h"
 #include "Application.h"
 
-FImGuiLayer::FImGuiLayer() {
+void FImGuiLayer::OnAttach() {
     DrawData = nullptr;
 
     ImGui::CreateContext();
@@ -15,9 +15,16 @@ FImGuiLayer::FImGuiLayer() {
     io.ConfigFlags |= ImGuiConfigFlags_NavEnableGamepad;
     io.ConfigFlags |= ImGuiConfigFlags_DockingEnable;
     ImGui::StyleColorsDark();
+
+    AppGetRenderer().SetPostProxy(this);
+    if (!AppGetRenderer().InitImGui()) {
+        SK_LOG_ERROR("Failed to initialize renderer for imgui");
+        return; // TODO: Silent fail
+    }
 }
 
-FImGuiLayer::~FImGuiLayer() {
+void FImGuiLayer::OnDetach() {
+    AppGetRenderer().ShutdownImGui();
     ImGui::DestroyContext();
 }
 

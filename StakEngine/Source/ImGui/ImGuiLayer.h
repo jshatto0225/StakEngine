@@ -9,11 +9,11 @@
 
 class FImGuiLayer final : public IApplicationLayer, public FRenderProxy {
 public:
-    FImGuiLayer();
-    ~FImGuiLayer();
-
     void BeginFrame();
     void EndFrame();
+
+    void OnAttach() override;
+    void OnDetach() override;
 
     void Render(TRef<IRHICommandContext> Context) override;
 
