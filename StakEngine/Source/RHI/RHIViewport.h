@@ -10,12 +10,9 @@ class IRHIViewport {
 public:
     virtual bool Init() = 0;
 
-    virtual TRef<IRHITexture> GetBackbuffer() = 0;
+    virtual TRef<IRHITexture> GetCurrentBackbuffer() = 0;
 
     virtual void OnFramebufferResize() = 0;
 
     virtual void Shutdown() = 0;
-
-protected:
-    virtual ~IRHIViewport() = default;
 };

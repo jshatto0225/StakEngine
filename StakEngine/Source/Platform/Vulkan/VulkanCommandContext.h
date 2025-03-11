@@ -46,5 +46,5 @@ private:
     VkDevice Device;
 
     VkCommandPool CommandPool = VK_NULL_HANDLE;
-    std::vector<VkCommandBuffer> MainCommandBuffers = {};
+    std::vector<VkCommandBuffer> MainCommandBuffers;
 };

@@ -132,11 +132,8 @@ void FVulkanCommandContext::TransitionBarrier(const FRHITransitionBarrier& Barri
             SK_LOG_ERROR("Unsupported destination queue");
             return;
         }
-        if (Texture->IsBackbuffer()) {
-            ImageBarrier.image = Texture->GetVulkanImage(RHI->GetCurrentImageIndex());
-        } else {
-            ImageBarrier.image = Texture->GetVulkanImage(RHI->GetCurrentFrameIndex());
-        }
+
+        ImageBarrier.image = Texture->GetVulkanImage();
         ImageBarrier.subresourceRange = Texture->GetVulkanSubresourceRange(Barrier.Subresource);
 
         // TODO: Batch pipeline barrier calls
@@ -160,11 +157,7 @@ void FVulkanCommandContext::SetRenderTarget(const TRef<IRHITexture> Target, cons
     AttachmentInfo.clearValue.color.float32[1] = 0.0f;
     AttachmentInfo.clearValue.color.float32[2] = 1.0f;
     AttachmentInfo.clearValue.color.float32[3] = 1.0f;
-    if (VulkanTarget->IsBackbuffer()) {
-        AttachmentInfo.imageView = VulkanTarget->GetVulkanImageView(RHI->GetCurrentImageIndex());
-    } else {
-        AttachmentInfo.imageView = VulkanTarget->GetVulkanImageView(RHI->GetCurrentFrameIndex());
-    }
+    AttachmentInfo.imageView = VulkanTarget->GetVulkanImageView();
     AttachmentInfo.imageLayout = VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL;
     AttachmentInfo.loadOp = VK_ATTACHMENT_LOAD_OP_CLEAR;
     AttachmentInfo.storeOp = VK_ATTACHMENT_STORE_OP_STORE;

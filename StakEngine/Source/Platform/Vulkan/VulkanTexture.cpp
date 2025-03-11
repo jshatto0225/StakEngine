@@ -8,32 +8,23 @@ bool FVulkanTexture::Init(const FRHIOffscreenRenderTargetDescription &Descriptio
     RHIFormat = Description.Format;
     Format = VulkanGetFormat(RHIFormat);
     Extent = { Description.Width, Description.Height };
-    ImageCount = MAX_FRAMES_IN_FLIGHT;
 
-    Images.resize(ImageCount);
-    ImageViews.resize(ImageCount);
-    Samplers.resize(ImageCount);
-    ImageMemories.resize(ImageCount);
-    ImGuiDescriptorSets.resize(ImageCount);
-
-    for (FUInt32 ImageIndex = 0; ImageIndex < ImageCount; ImageIndex++) {
-        if (!CreateImage(Device, GPU, Extent.width, Extent.height, Format, VK_IMAGE_TILING_OPTIMAL, VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT | VK_IMAGE_USAGE_SAMPLED_BIT, VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT, &Images[ImageIndex], &ImageMemories[ImageIndex])) {
-            SK_LOG_ERROR("Failed to create offscreen render target image");
-            return false;
-        }
-
-        if (!CreateImageView(&ImageViews[ImageIndex], Device, Images[ImageIndex], Format)) {
-            SK_LOG_ERROR("Failed to create image view for offscreen buffer");
-            return false;
-        }
-
-        if (!CreateTextureSampler(&Samplers[ImageIndex], Device, GPU)) {
-            SK_LOG_ERROR("Failed to create sampler for offscreen backbuffer");
-            return false;
-        }
-
-        ImGuiDescriptorSets[ImageIndex] = ImGui_ImplVulkan_AddTexture(Samplers[ImageIndex], ImageViews[ImageIndex], VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL);
+    if (!CreateImage(Device, GPU, Extent.width, Extent.height, Format, VK_IMAGE_TILING_OPTIMAL, VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT | VK_IMAGE_USAGE_SAMPLED_BIT, VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT, &Image, &ImageMemory)) {
+        SK_LOG_ERROR("Failed to create offscreen render target image");
+        return false;
     }
+
+    if (!CreateImageView(&ImageView, Device, Image, Format)) {
+        SK_LOG_ERROR("Failed to create image view for offscreen buffer");
+        return false;
+    }
+
+    if (!CreateTextureSampler(&Sampler, Device, GPU)) {
+        SK_LOG_ERROR("Failed to create sampler for offscreen backbuffer");
+        return false;
+    }
+
+    ImGuiDescriptorSet = ImGui_ImplVulkan_AddTexture(Sampler, ImageView, VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL);
 
     SubresourceRanges.emplace_back(VK_IMAGE_ASPECT_COLOR_BIT, 0, 1, 0, 1);
 
@@ -131,29 +122,16 @@ bool FVulkanTexture::CreateImage(VkDevice Device, VkPhysicalDevice GPU, FUInt32 
     return true;
 }
 
-bool FVulkanTexture::Init(VkSwapchainKHR NewSwapchain, FUInt32 NewImageCount, VkExtent2D NewExtent, VkFormat NewFormat) {
-    Backbuffer = true;
-    Swapchain = NewSwapchain;
-    ImageCount = NewImageCount;
-    Extent = NewExtent;
-    Format = NewFormat;
-
+bool FVulkanTexture::Init(VkImage SwapchainImage, VkExtent2D SwapchainExtent, VkFormat SwapchainFormat) {
+    SwapchainBackbuffer = true;
+    Extent = SwapchainExtent;
+    Format = SwapchainFormat;
     RHIFormat = VulkanGetRHIFormat(Format);
+    Image = SwapchainImage;
 
-    Images.resize(ImageCount);
-
-    if (vkGetSwapchainImagesKHR(Device, Swapchain, &ImageCount, Images.data()) != VK_SUCCESS) {
-        SK_LOG_ERROR("Failed to get swapchain image");
+    if (!CreateImageView(&ImageView, Device, Image, Format)) {
+        SK_LOG_ERROR("Failed to create image view");
         return false;
-    }
-
-    ImageViews.resize(Images.size());
-
-    for (FUInt32 ImageViewIndex = 0; ImageViewIndex < Images.size(); ImageViewIndex++) {
-        if (!CreateImageView(&ImageViews[ImageViewIndex], Device, Images[ImageViewIndex], Format)) {
-            SK_LOG_ERROR("Failed to create image view");
-            return false;
-        }
     }
 
     SubresourceRanges.emplace_back(VK_IMAGE_ASPECT_COLOR_BIT, 0, 1, 0, 1);
@@ -161,33 +139,22 @@ bool FVulkanTexture::Init(VkSwapchainKHR NewSwapchain, FUInt32 NewImageCount, Vk
     return true;
 }
 
-// TODO:
 void FVulkanTexture::Shutdown() {
-    for (FUInt32 ImageIndex = 0; ImageIndex < Images.size(); ImageIndex++) {
-        vkDestroyImageView(Device, ImageViews[ImageIndex], nullptr);
-        if (!Backbuffer) {
-            vkFreeMemory(Device, ImageMemories[ImageIndex], nullptr);
-            vkDestroyImage(Device, Images[ImageIndex], nullptr);
-            vkDestroySampler(Device, Samplers[ImageIndex], nullptr);
-            ImGui_ImplVulkan_RemoveTexture(ImGuiDescriptorSets[ImageIndex]);
-        }
+    vkDestroyImageView(Device, ImageView, nullptr);
+    if (!SwapchainBackbuffer) {
+        vkFreeMemory(Device, ImageMemory, nullptr);
+        vkDestroyImage(Device, Image, nullptr);
+        vkDestroySampler(Device, Sampler, nullptr);
+        ImGui_ImplVulkan_RemoveTexture(ImGuiDescriptorSet);
     }
 }
 
-VkImage FVulkanTexture::GetVulkanImage(FUInt32 ImageIndex) {
-    if (ImageIndex > Images.size()) {
-        SK_LOG_ERROR("Image index out of range");
-        return nullptr;
-    }
-    return Images[ImageIndex];
+VkImage FVulkanTexture::GetVulkanImage() {
+    return Image;
 }
 
-VkImageView FVulkanTexture::GetVulkanImageView(FUInt32 ImageIndex) {
-    if (ImageIndex > ImageViews.size()) {
-        SK_LOG_ERROR("Image index out of range");
-        return nullptr;
-    }
-    return ImageViews[ImageIndex];
+VkImageView FVulkanTexture::GetVulkanImageView() {
+    return ImageView;
 }
 
 VkImageSubresourceRange FVulkanTexture::GetVulkanSubresourceRange(FUInt32 Index) {
@@ -202,10 +169,32 @@ VkFormat FVulkanTexture::GetVulkanFormat() {
     return Format;
 }
 
-FUInt32 FVulkanTexture::GetImageCount() {
-    return ImageCount;
+FUInt64 FVulkanTexture::GetImGuiImageHandle() {
+    return reinterpret_cast<FUInt64>(ImGuiDescriptorSet);
 }
 
-FUInt64 FVulkanTexture::GetImGuiImageHandle(FUInt32 CurrentFrame) {
-    return reinterpret_cast<FUInt64>(ImGuiDescriptorSets[CurrentFrame]);
+void FVulkanTexture::AddToImGuiWindow() {
+    ImVec2 ViewportPanelSize = ImGui::GetContentRegionAvail();
+
+    // Keep aspect ratio
+    FFloat Aspect = static_cast<FFloat>(Extent.width) / static_cast<FFloat>(Extent.height);
+    ImVec2 ImageSize;
+    if (ViewportPanelSize.x / Aspect <= ViewportPanelSize.y) {
+        ImageSize.x = ViewportPanelSize.x;
+        ImageSize.y = ViewportPanelSize.x / Aspect;
+    } else {
+        ImageSize.y = ViewportPanelSize.y;
+        ImageSize.x = ViewportPanelSize.y * Aspect;
+    }
+
+    // Center Image
+    ImVec2 Offset = { (ViewportPanelSize.x - ImageSize.x) * 0.5f, (ViewportPanelSize.y - ImageSize.y) * 0.5f };
+    Offset.x = (Offset.x > 0) ? Offset.x : 0;
+    Offset.y = (Offset.y > 0) ? Offset.y : 0;
+    ImVec2 CursorPos = ImGui::GetCursorPos();
+    CursorPos.x += Offset.x;
+    CursorPos.y += Offset.y;
+    ImGui::SetCursorPos(CursorPos);
+
+    ImGui::Image(reinterpret_cast<FUInt64>(ImGuiDescriptorSet), ImageSize);
 }

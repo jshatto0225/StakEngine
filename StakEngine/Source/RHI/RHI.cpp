@@ -27,11 +27,6 @@ TRef<IRHITexture> RHICreateTexture() {
     return GRHI->CreateTexture();
 }
 
-void RHIAddBackbufferToImGuiWindow(TRef<IRHITexture> Backbuffer) {
-    assert(GRHI);
-    GRHI->AddBackbufferToImGuiWindow(Backbuffer);
-}
-
 void RHIImGuiNewFrame() {
     assert(GRHI);
     return GRHI->ImGuiNewFrame();

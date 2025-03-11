@@ -42,11 +42,13 @@ private:
     FRenderProxy *PostRenderProxy = nullptr;
     TRef<IRHICommandContext> CommandContext;
     TRef<IWindow> Window = nullptr;
-    TRef<IRHITexture> SwapchainBackbuffer = nullptr;
-    TRef<IRHITexture> OffscreenBackbuffer = nullptr;
+    TRef<IRHITexture> SwapchainBackbuffer;
 
+    FUInt32 OffscreenBackbufferImageIndex = 0;
+    static const FUInt32 MaxFramesInFlight = 2;
+    TRef<IRHITexture> OffscreenBackbuffers[MaxFramesInFlight];
     bool UseOffscreenBuffer = false;
-    
+
     TRef<IRHIPipelineLayout> PipelineLayout = nullptr;
     TRef<IRHIPipeline> Pipeline = nullptr;
 };

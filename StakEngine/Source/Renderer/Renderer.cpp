@@ -12,15 +12,13 @@ bool FRenderer::Init(TRef<IWindow> Win, bool RenderToOffscreenBuffer) {
     UseOffscreenBuffer = RenderToOffscreenBuffer;
 
     RHISetActiveViewport(Window->GetRHIViewport());
-    SwapchainBackbuffer = Window->GetRHIViewport()->GetBackbuffer();
+    SwapchainBackbuffer = Window->GetRHIViewport()->GetCurrentBackbuffer();
     
     CommandContext = RHICreateCommandContext();
     if (!CommandContext->Init()) {
         SK_LOG_ERROR("Failed to initialize command context");
         return false;
     }
-
-    
 
     if (!UseOffscreenBuffer) {
         FRHIShaderDescription VertexShaderDescription = {};
@@ -81,39 +79,36 @@ void FRenderer::Shutdown() {
 bool FRenderer::Render() {
     RHIPrepareFrame();
 
-    // NOTE: Assume swapchain backbuffer will not change
-    // TODO: Handle swapchain backbuffer changes
+    // NOTE: There will be a new backbuffer every frame
+    SwapchainBackbuffer = Window->GetRHIViewport()->GetCurrentBackbuffer();
 
     if (!CommandContext->Begin()) {
         SK_LOG_ERROR("Failed to begin command context");
         return false;
     }
     {
-        FRHIResourceBarrier RenderTargetBarrier = {
-            ERHIBarrierType::TRANSITION,
 
-            SwapchainBackbuffer,
-            ERHIResourceState::UNDEFINED,
-            ERHIResourceState::RENDER_TARGET,
-            0
-        };
+        FRHIResourceBarrier RenderTargetBarrier = {};
+        RenderTargetBarrier.Type = ERHIBarrierType::TRANSITION;
+        RenderTargetBarrier.TransitionBarrier.Resource = SwapchainBackbuffer;
+        RenderTargetBarrier.TransitionBarrier.StateBefore = ERHIResourceState::UNDEFINED;
+        RenderTargetBarrier.TransitionBarrier.StateAfter = ERHIResourceState::RENDER_TARGET;
+        RenderTargetBarrier.TransitionBarrier.Subresource = 0;
 
         CommandContext->ResourceBarrier(RenderTargetBarrier);
 
         // NOTE: Use offscreen backbuffer if requested by the config, else use swapchain backbuffer
         if (UseOffscreenBuffer) {
-            FRHIResourceBarrier OffscreenBufferRenderTargetBarrier = {
-                ERHIBarrierType::TRANSITION,
-
-                OffscreenBackbuffer,
-                ERHIResourceState::UNDEFINED,
-                ERHIResourceState::RENDER_TARGET,
-                0
-            };
+            FRHIResourceBarrier OffscreenBufferRenderTargetBarrier = {};
+            OffscreenBufferRenderTargetBarrier.Type = ERHIBarrierType::TRANSITION;
+            OffscreenBufferRenderTargetBarrier.TransitionBarrier.Resource = OffscreenBackbuffers[OffscreenBackbufferImageIndex];
+            OffscreenBufferRenderTargetBarrier.TransitionBarrier.StateBefore = ERHIResourceState::UNDEFINED;
+            OffscreenBufferRenderTargetBarrier.TransitionBarrier.StateAfter = ERHIResourceState::RENDER_TARGET;
+            OffscreenBufferRenderTargetBarrier.TransitionBarrier.Subresource = 0;
 
             CommandContext->ResourceBarrier(OffscreenBufferRenderTargetBarrier);
 
-            CommandContext->SetRenderTarget(OffscreenBackbuffer, OffscreenBackbuffer->GetRenderArea());
+            CommandContext->SetRenderTarget(OffscreenBackbuffers[OffscreenBackbufferImageIndex], OffscreenBackbuffers[OffscreenBackbufferImageIndex]->GetRenderArea());
         } else {
             CommandContext->SetRenderTarget(SwapchainBackbuffer, SwapchainBackbuffer->GetRenderArea());
         }
@@ -132,16 +127,14 @@ bool FRenderer::Render() {
             // NOTE: Unset offscreen backbuffer
             CommandContext->UnsetRenderTarget();
 
-            FRHIResourceBarrier OffscreenBufferRenderTargetBarrier = {
-                ERHIBarrierType::TRANSITION,
+            FRHIResourceBarrier OffscreenBufferShaderResourceBarrier = {};
+            OffscreenBufferShaderResourceBarrier.Type = ERHIBarrierType::TRANSITION;
+            OffscreenBufferShaderResourceBarrier.TransitionBarrier.Resource = OffscreenBackbuffers[OffscreenBackbufferImageIndex];
+            OffscreenBufferShaderResourceBarrier.TransitionBarrier.StateBefore = ERHIResourceState::RENDER_TARGET;
+            OffscreenBufferShaderResourceBarrier.TransitionBarrier.StateAfter = ERHIResourceState::SHADER_RESOURCE;
+            OffscreenBufferShaderResourceBarrier.TransitionBarrier.Subresource = 0;
 
-                OffscreenBackbuffer,
-                ERHIResourceState::RENDER_TARGET,
-                ERHIResourceState::SHADER_RESOURCE,
-                0
-            };
-
-            CommandContext->ResourceBarrier(OffscreenBufferRenderTargetBarrier);
+            CommandContext->ResourceBarrier(OffscreenBufferShaderResourceBarrier);
 
             // NOTE: Setup swapchain for imgui 
             CommandContext->SetRenderTarget(SwapchainBackbuffer, SwapchainBackbuffer->GetRenderArea());
@@ -153,14 +146,12 @@ bool FRenderer::Render() {
 
         CommandContext->UnsetRenderTarget();
 
-        FRHIResourceBarrier PresentBarrier = {
-            ERHIBarrierType::TRANSITION,
-
-            SwapchainBackbuffer,
-            ERHIResourceState::RENDER_TARGET,
-            ERHIResourceState::PRESENT,
-            0
-        };
+        FRHIResourceBarrier PresentBarrier = {};
+        PresentBarrier.Type = ERHIBarrierType::TRANSITION;
+        PresentBarrier.TransitionBarrier.Resource = SwapchainBackbuffer;
+        PresentBarrier.TransitionBarrier.StateBefore = ERHIResourceState::RENDER_TARGET;
+        PresentBarrier.TransitionBarrier.StateAfter = ERHIResourceState::PRESENT;
+        PresentBarrier.TransitionBarrier.Subresource = 0;
 
         CommandContext->ResourceBarrier(PresentBarrier);
     }
@@ -191,10 +182,12 @@ bool FRenderer::InitImGui() {
         OffscreenBackbufferDescription.Width = Width;
         OffscreenBackbufferDescription.Height = Height;
         OffscreenBackbufferDescription.UseForImGui = true;
-        OffscreenBackbuffer = RHICreateTexture();
-        if (!OffscreenBackbuffer->Init(OffscreenBackbufferDescription)) {
-            SK_LOG_ERROR("Failed to initialize offscreen backbuffer");
-            return false;
+        for (auto &Backbuffer : OffscreenBackbuffers) {
+            Backbuffer = RHICreateTexture();
+            if (!Backbuffer->Init(OffscreenBackbufferDescription)) {
+                SK_LOG_ERROR("Failed to initialize offscreen backbuffer");
+                return false;
+            }
         }
 
         FRHIShaderDescription VertexShaderDescription = {};
@@ -223,7 +216,7 @@ bool FRenderer::InitImGui() {
         }
 
         FRHIGraphicsPipelineStateDescription PipelineDescription = {};
-        PipelineDescription.ColorFormats = { OffscreenBackbuffer->GetFormat() };
+        PipelineDescription.ColorFormats = { OffscreenBackbuffers[OffscreenBackbufferImageIndex]->GetFormat()};
         PipelineDescription.DepthStencilFormat = { ERHIFormat::UNDEFINED };
         PipelineDescription.Layout = PipelineLayout;
         PipelineDescription.Shaders = { VertexShader, FragmentShader };
@@ -274,5 +267,5 @@ void FRenderer::UnsetPostProxy() {
 }
 
 void FRenderer::AddSceneToImGuiWindow() {
-    RHIAddBackbufferToImGuiWindow(OffscreenBackbuffer);
+    OffscreenBackbuffers[OffscreenBackbufferImageIndex]->AddToImGuiWindow();
 }

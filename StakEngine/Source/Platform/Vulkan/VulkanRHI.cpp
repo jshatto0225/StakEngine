@@ -494,7 +494,7 @@ void FVulkanRHI::ShutdownImGui() {
 }
 
 void FVulkanRHI::InitImGui() {
-    VkFormat Formats[] = { VulkanGetFormat(ActiveViewport->GetBackbuffer()->GetFormat()) };
+    VkFormat Formats[] = { VulkanGetFormat(ActiveViewport->GetCurrentBackbuffer()->GetFormat()) };
 
     VkPipelineRenderingCreateInfo PipelineInfo = {};
     PipelineInfo.sType = VK_STRUCTURE_TYPE_PIPELINE_RENDERING_CREATE_INFO;
@@ -511,8 +511,8 @@ void FVulkanRHI::InitImGui() {
     InitInfo.Device = Device;
     InitInfo.QueueFamily = GraphicsQueueIndex;
     InitInfo.Queue = GraphicsQueue;
-    InitInfo.MinImageCount = std::static_pointer_cast<FVulkanViewport>(ActiveViewport)->GetImageCount();
-    InitInfo.ImageCount = std::static_pointer_cast<FVulkanViewport>(ActiveViewport)->GetMinImageCount();
+    InitInfo.MinImageCount = std::static_pointer_cast<FVulkanViewport>(ActiveViewport)->GetMinImageCount();
+    InitInfo.ImageCount = std::static_pointer_cast<FVulkanViewport>(ActiveViewport)->GetImageCount();
     InitInfo.MSAASamples = VK_SAMPLE_COUNT_1_BIT;
     InitInfo.DescriptorPoolSize = 1000;
     InitInfo.UseDynamicRendering = true;
@@ -754,9 +754,8 @@ bool FVulkanRHI::SetActiveViewport(TRef<IRHIViewport> Viewport) {
     return true;
 }
 
-
 TRef<IRHITexture> FVulkanRHI::GetCurrentBackbuffer() {
-    return ActiveViewport->GetBackbuffer();
+    return ActiveViewport->GetCurrentBackbuffer();
 }
 
 TRef<IRHIViewport> FVulkanRHI::CreateViewport(void *WindowHandle) {
@@ -773,32 +772,4 @@ FUInt32 FVulkanRHI::GetActivePresentQueueIndex() {
 
 TRef<IRHITexture> FVulkanRHI::CreateTexture() {
     return TCreateRef<FVulkanTexture>(Device, GPU);
-}
-
-// TODO: This might be better as a member of IRHITexture
-void FVulkanRHI::AddBackbufferToImGuiWindow(TRef<IRHITexture> Backbuffer) {
-    ImVec2 ViewportPanelSize = ImGui::GetContentRegionAvail();
-
-    // Keep aspect ratio
-    auto [Layers, X, Y, Width, Height] = Backbuffer->GetRenderArea();
-    FFloat Aspect = static_cast<FFloat>(Width) / static_cast<FFloat>(Height);
-    ImVec2 ImageSize;
-    if (ViewportPanelSize.x / Aspect <= ViewportPanelSize.y) {
-        ImageSize.x = ViewportPanelSize.x;
-        ImageSize.y = ViewportPanelSize.x / Aspect;
-    } else {
-        ImageSize.y = ViewportPanelSize.y;
-        ImageSize.x = ViewportPanelSize.y * Aspect;
-    }
-
-    // Center Image
-    ImVec2 Offset = { (ViewportPanelSize.x - ImageSize.x) * 0.5f, (ViewportPanelSize.y - ImageSize.y) * 0.5f };
-    Offset.x = (Offset.x > 0) ? Offset.x : 0;
-    Offset.y = (Offset.y > 0) ? Offset.y : 0;
-    ImVec2 CursorPos = ImGui::GetCursorPos();
-    CursorPos.x += Offset.x;
-    CursorPos.y += Offset.y;
-    ImGui::SetCursorPos(CursorPos);
-
-    ImGui::Image(std::static_pointer_cast<FVulkanTexture>(Backbuffer)->GetImGuiImageHandle(CurrentFrame), ImageSize);
 }

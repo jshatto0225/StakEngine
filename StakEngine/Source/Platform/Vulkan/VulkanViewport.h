@@ -10,7 +10,7 @@ class FVulkanViewport : public IRHIViewport {
 public:
     FVulkanViewport(VkInstance Instance, VkPhysicalDevice GPU, VkDevice Device, void *WindowHandle);
 
-    TRef<IRHITexture> GetBackbuffer() override;
+    TRef<IRHITexture> GetCurrentBackbuffer() override;
 
     bool Init() override;
     void Shutdown() override;
@@ -48,5 +48,5 @@ private:
 
     void *WindowHandle = nullptr;
 
-    TRef<FVulkanTexture> Backbuffer;
+    std::vector<TRef<FVulkanTexture>> Backbuffers;
 };

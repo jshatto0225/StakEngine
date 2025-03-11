@@ -123,13 +123,24 @@ bool FVulkanViewport::CreateSwapchain() {
         return false;
     }
 
-    if (Backbuffer == nullptr) {
-        Backbuffer = TCreateRef<FVulkanTexture>(Device, GPU);
+    std::vector<VkImage> SwapchainImages = {};
+    SwapchainImages.resize(ImageCount);
+
+    vkGetSwapchainImagesKHR(Device, Swapchain, &ImageCount, SwapchainImages.data());
+    
+    if (Backbuffers.size() != ImageCount) {
+        Backbuffers.clear();
+        Backbuffers.resize(ImageCount);
+        for (auto &Backbuffer : Backbuffers) {
+            Backbuffer = TCreateRef<FVulkanTexture>(Device, GPU);
+        }
     }
 
-    if (!Backbuffer->Init(Swapchain, ImageCount, SwapchainExtent, Format.format)) {
-        SK_LOG_ERROR("Failed to initialize backbuffer");
-        return false;
+    for (FUInt32 BackbufferIndex = 0; BackbufferIndex < ImageCount; BackbufferIndex++) {
+        if (!Backbuffers[BackbufferIndex]->Init(SwapchainImages[BackbufferIndex], SwapchainExtent, Format.format)) {
+            SK_LOG_ERROR("Failed to initialize backbuffer");
+            return false;
+        }
     }
 
     return true;
@@ -177,12 +188,14 @@ bool FVulkanViewport::PresentFrame(FUInt32 FrameIndex) {
     return true;
 }
 
-TRef<IRHITexture> FVulkanViewport::GetBackbuffer() {
-    return Backbuffer;
+TRef<IRHITexture> FVulkanViewport::GetCurrentBackbuffer() {
+    return Backbuffers[ImageIndex];
 }
 
 void FVulkanViewport::Shutdown() {
-    Backbuffer->Shutdown();
+    for (auto &Backbuffer : Backbuffers) {
+        Backbuffer->Shutdown();
+    }
 
     vkDestroySwapchainKHR(Device, Swapchain, nullptr);
 
@@ -212,7 +225,9 @@ bool FVulkanViewport::RecreateSwapchain() {
         return false;
     }
 
-    Backbuffer->Shutdown();
+    for (auto &Backbuffer : Backbuffers) {
+        Backbuffer->Shutdown();
+    }
 
     vkDestroySwapchainKHR(Device, Swapchain, nullptr);
 

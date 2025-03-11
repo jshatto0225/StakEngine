@@ -93,7 +93,6 @@ public:
     TRef<IRHITexture> GetCurrentBackbuffer() override;
     TRef<IRHIViewport> CreateViewport(void *WindowHandle) override;
     TRef<IRHITexture> CreateTexture() override;
-    void AddBackbufferToImGuiWindow(TRef<IRHITexture> Backbuffer) override;
 
 public:
     VkCommandBuffer BeginOneTimeCommandBuffer();
