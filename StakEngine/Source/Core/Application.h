@@ -35,17 +35,13 @@ struct FEngine {
     void Run();
     void Close();
   
-    inline const char *GetName() const { return Name; }
-    inline TRef<IWindow> GetWindow() { return Window; }
-    inline FRenderer *GetRenderer() { return &Renderer; }
-    inline TRef<FInput> GetInput() { return Input; }
     void OnEvent(FEvent *Event);
 
-    FApplication *App = nullptr;
-    TRef<IWindow> Window = nullptr;
+    FApplication *App;
+    FWindow Window;
     FRenderer Renderer;
-    TRef<FInput> Input = nullptr;
-    FBool Running = false;
-    FImGuiRenderer ImGuiRenderer = {};
+    FInput Input;
+    FBool Running;
+    FImGuiRenderer ImGuiRenderer;
     const char *Name;
 };

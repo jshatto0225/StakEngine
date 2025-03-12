@@ -10,17 +10,24 @@ void FEngine::Shutdown() {
 
     ImGuiRenderer.Shutdown();
 
-    Window->Shutdown();
+    PlatformCloseWindow(&Window);
 
     Renderer.Shutdown();
 
     RHIShutdown();
+
+    PlatformShutdown();
 }
 
 bool FEngine::Init(FEngineSpecification *Spec, FApplication *AppImpl) {
     App = AppImpl;
 
     Name = Spec->AppName;
+
+    if (!PlatformInit()) {
+        SK_LOG_ERROR("Failed to initialize platform");
+        return false;
+    }
 
     if (!RHIInit()) {
         SK_LOG_ERROR("Failed to initialize RHI");
@@ -30,22 +37,20 @@ bool FEngine::Init(FEngineSpecification *Spec, FApplication *AppImpl) {
     FWindowConfig Cfg = {
         Spec->WindowWidth,
         Spec->WindowHeight,
-        Spec->WindowTitle
+        Spec->WindowTitle,
+        ([this](FEvent *Event) {
+            this->OnEvent(Event);
+        })
     };
 
-    Window = IWindow::Create();
-    if (!Window->Init(Cfg)) {
+    if (!PlatformOpenWindow(&Window, &Cfg)) {
         SK_LOG_ERROR("Failed to create window");
         return false;
     }
 
-    Window->Data.EventFn = ([this](FEvent *Event) {
-        this->OnEvent(Event);
-    });
+    assert(InitializeInput(&Input, &Window));
 
-    Input = TCreateRef<FInput>(Window);
-
-    if (!Renderer.Init(Window, Spec->RenderToOffscreenBuffer)) {
+    if (!Renderer.Init(&Window, Spec->RenderToOffscreenBuffer)) {
         SK_LOG_ERROR("Failed to initialize renderer");
         return false;
     }
@@ -61,7 +66,7 @@ bool FEngine::Init(FEngineSpecification *Spec, FApplication *AppImpl) {
 
 void FEngine::Run() {
     while (Running) {
-        PlatformPollEvents();
+        PlatformProcessMessages();
 
         if (App->Update) App->Update(this, App);
 
@@ -79,6 +84,15 @@ void FEngine::OnEvent(FEvent *Event) {
     switch (Event->Type) {
     case EEventType::WINDOW_CLOSE:
         Running = false;
+        break;
+    case EEventType::KEY:
+        SetKey(&Input, Event->KE.Key, Event->KE.State);
+        break;
+    case EEventType::MOUSE_BUTTON:
+        SetMouseButton(&Input, Event->MBE.Button, Event->MBE.State);
+        break;
+    case EEventType::MOUSE_MOVE:
+        SetMousePos(&Input, Event->MME.X, Event->MME.Y);
         break;
     default:
         break;

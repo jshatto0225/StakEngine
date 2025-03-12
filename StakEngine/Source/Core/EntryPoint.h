@@ -10,7 +10,7 @@ extern void DestroyApplication(FApplication *App);
 extern FEngine *GEngine;
 
 inline FSInt32 StakMain() {
-    FLog::Init();
+    LogInit();
 
     FEngine Engine = {};
     FApplication App = {};

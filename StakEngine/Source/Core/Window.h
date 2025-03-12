@@ -6,10 +6,13 @@
 #include "Types.h"
 #include "RHIViewport.h"
 
+using FEventFn = std::function<void(FEvent *)>;
+
 struct FWindowConfig {
     FSInt32 Width;
     FSInt32 Height;
     const char *Title;
+    FEventFn EventFn;
 };
 
 struct FWindowSizeData {
@@ -22,29 +25,23 @@ struct FWindowPosData {
     FSInt32 Y;
 };
 
-struct IWindow {
-    virtual bool Init(const FWindowConfig &Cfg) = 0;
-    virtual void Shutdown() = 0;
+struct FWindow {
+    FSInt32 X;
+    FSInt32 Y;
+    FSInt32 Width;
+    FSInt32 Height;
+    FSInt32 FramebufferWidth;
+    FSInt32 FramebufferHeight;
+    FUInt32 TitleLength;
+    const char *Title;
+    FEventFn EventFn;
+    bool Open;
 
-    using FEventFn  = std::function<void(FEvent *)>;
+    // NOTE: Only platform functions should touch this
+    //   because it is probably implemented as a pointer/handle
+    //   to a platform window
+    FHandle PlatformHandle;
 
-    virtual void InitImGui() = 0;
-    virtual void ImGuiNewFrame() = 0;
-    virtual void ShutdownImGui() = 0;
-
-    static TRef<IWindow> Create();
-
-    struct FWindowData {
-        FEventFn EventFn = nullptr;
-        FSInt32 X = 0;
-        FSInt32 Y = 0;
-        FSInt32 Width = 0;
-        FSInt32 Height = 0;
-        FSInt32 FramebufferWidth = 0;
-        FSInt32 FramebufferHeight = 0;
-        std::string Title;
-        TRef<IRHIViewport> Viewport = nullptr;
-    };
-
-    FWindowData Data = {};
+    // NOTE: Similarly only renderer/RHI functions should touch this
+    TRef<IRHIViewport> Viewport;
 };

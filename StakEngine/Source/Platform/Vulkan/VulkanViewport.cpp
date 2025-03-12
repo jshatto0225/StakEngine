@@ -5,7 +5,7 @@
 #include "Platform.h"
 
 #ifdef SK_GLFW
-#include "GLFWWindow.h"
+#include <glfw/glfw3.h>
 #endif
 
 extern IRHI *GRHI;

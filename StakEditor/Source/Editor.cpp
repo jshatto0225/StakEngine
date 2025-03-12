@@ -24,11 +24,11 @@ void DestroyApplication(FApplication *App) {
 bool Init(FEngine *Engine, FApplication *App) {
     auto Editor = static_cast<FEditor *>(App->UserData);
 
-    Editor->EscapePressedCallbackInfo = Engine->GetInput()->AddKeyPressCallback(EKeyCode::ESCAPE, [Engine]() {
+    Editor->EscapePressedCallbackInfo = AddKeyPressCallback(&Engine->Input, EKeyCode::ESCAPE, [Engine]() {
         LOG_TRACE("[Callback Input] Escape pressed. Quitting.");
         Engine->Close();
     });
-    Editor->WPressedCallbackInfo = Engine->GetInput()->AddKeyPressCallback(EKeyCode::W, []() {
+    Editor->WPressedCallbackInfo = AddKeyPressCallback(&Engine->Input, EKeyCode::W, []() {
         LOG_TRACE("[Callback Input] W pressed");
     });
 
@@ -38,8 +38,8 @@ bool Init(FEngine *Engine, FApplication *App) {
 void Shutdown(FEngine *Engine, FApplication *App) {
     auto Editor = static_cast<FEditor *>(App->UserData);
 
-    Engine->GetInput()->RemoveCallback(Editor->EscapePressedCallbackInfo);
-    Engine->GetInput()->RemoveCallback(Editor->WPressedCallbackInfo);
+    RemoveCallback(&Engine->Input, Editor->EscapePressedCallbackInfo);
+    RemoveCallback(&Engine->Input, Editor->WPressedCallbackInfo);
 }
 
 void OnImGuiRender(FEngine *Engine, FApplication *App) {
@@ -125,7 +125,7 @@ void OnImGuiRender(FEngine *Engine, FApplication *App) {
 void Update(FEngine *Engine, FApplication *App) {
     auto Editor = static_cast<FEditor *>(App->UserData);
 
-    if (Engine->GetInput()->GetKey(EKeyCode::SPACE) == EInputState::DOWN) {
+    if (Engine->Input.Keyboard[EKeyCode::SPACE] == EInputState::DOWN) {
         LOG_TRACE("[Polled Input] Space Pressed");
     }
 }

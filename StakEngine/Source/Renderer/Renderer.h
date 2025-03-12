@@ -13,7 +13,7 @@ struct FRenderProxy {
 };
 
 struct FRenderer {
-    bool Init(TRef<IWindow> Window, bool RenderToOffscreenBuffer);
+    bool Init(FWindow *Window, bool RenderToOffscreenBuffer);
     void Shutdown();
 
     bool InitImGui();
@@ -32,7 +32,7 @@ struct FRenderer {
     std::vector<FRenderProxy *> RenderProxies;
     FRenderProxy *PostRenderProxy = nullptr;
     TRef<IRHICommandContext> CommandContext;
-    TRef<IWindow> Window = nullptr;
+    FWindow *Window = nullptr;
     TRef<IRHITexture> SwapchainBackbuffer;
 
     FUInt32 OffscreenBackbufferImageIndex = 0;

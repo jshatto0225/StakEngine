@@ -18,7 +18,7 @@ typedef uint8_t  FUInt8;
 
 typedef bool FBool;
 
-typedef FUInt64 FOpaqueHandle;
+typedef FUInt64 FHandle;
 
 template <typename TType> using TScope = std::unique_ptr<TType>;
 template <typename TType, typename... Args>

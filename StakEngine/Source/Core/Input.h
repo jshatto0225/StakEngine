@@ -8,7 +8,7 @@
 
 #undef DELETE
 
-struct IWindow;
+struct FWindow;
 
 enum class EKeyCode : FSInt16 {
     UNKNOWN       = -1,
@@ -182,57 +182,16 @@ struct FInputCallbackInfo {
 };
 
 struct FInput {
-    FInput(TRef<IWindow> window);
-
-    struct FMousePosData {
+    struct {
         FFloat X;
         FFloat Y;
-    };
 
-    inline const FMousePosData &GetMousePos() const { return MousePos; }
-    inline FFloat GetMouseX() const { return GetMousePos().X; }
-    inline FFloat GetMouseY() const { return GetMousePos().Y; }
-    inline EInputState GetKey(EKeyCode Key) const { return Keys.at(Key); }
-    inline EInputState GetMouseButton(EMouseCode Button) const { return MouseButtons.at(Button); }
-
-    inline bool IsUsingRawInput() { return UsingRawInput; }
-    void SetRawInput(FBool Value);
-
-    inline ECursorVisibility GetCursorVisibility() { return CursorVisibility; }
-    void SetCursorVisibility(ECursorVisibility Visibility);
-
-    FInputCallbackInfo AddKeyPressCallback(EKeyCode Key, std::function<void()> Func);
-    FInputCallbackInfo AddKeyReleaseCallback(EKeyCode Key, std::function<void()> Func);
-
-    FInputCallbackInfo AddAnyKeyPressCallback(std::function<void(EKeyCode)> Func);
-    FInputCallbackInfo AddAnyKeyReleaseCallback(std::function<void(EKeyCode)> Func);
-
-    FInputCallbackInfo AddKeyAnyActionCallback(EKeyCode Key, std::function<void(EInputState)> Func);
-    FInputCallbackInfo AddAnyKeyAnyActionCallback(std::function<void(EInputState, EKeyCode)> Func);
-  
-    FInputCallbackInfo AddMouseButtonPressCallback(EMouseCode Button, std::function<void()> Func);
-    FInputCallbackInfo AddMouseButtonReleaseCallback(EMouseCode Button, std::function<void()> Func);
-
-    FInputCallbackInfo AddAnyMouseButtonPressCallback(std::function<void(EMouseCode)> Func);
-    FInputCallbackInfo AddAnyMouseButtonReleaseCallback(std::function<void(EMouseCode)> Func);
-
-    FInputCallbackInfo AddMouseButtonAnyActionCallback(EMouseCode Button, std::function<void(EInputState)> Func);
-    FInputCallbackInfo AddAnyMouseButtonAnyActionCallback(std::function<void(EInputState, EMouseCode)> Func);
-  
-    FInputCallbackInfo AddMouseMoveCallback(std::function<void(FFloat, FFloat)> Func);
-
-    void RemoveCallback(const FInputCallbackInfo &Info);
-
-    void SetKey(EKeyCode Key, EInputState Action);
-    void SetMouseButton(EMouseCode Button, EInputState Action);
-    void SetMousePos(FFloat X, FFloat Y);
+        std::unordered_map<EMouseCode, EInputState> Buttons;
+    } Mouse;
+    std::unordered_map<EKeyCode, EInputState> Keyboard;
 
     FBool UsingRawInput;
     ECursorVisibility CursorVisibility;
-
-    FMousePosData MousePos = {};
-    std::unordered_map<EKeyCode, EInputState> Keys;
-    std::unordered_map<EMouseCode, EInputState> MouseButtons;
 
     FUInt64 KeyPressId = 0;
     std::unordered_map<EKeyCode, std::unordered_map<FUInt64, std::function<void()>>> KeyPressCallbacks;
@@ -267,5 +226,29 @@ struct FInput {
     FUInt64 MouseMoveId = 0;
     std::unordered_map<FUInt64, std::function<void(FFloat, FFloat)>> MouseMoveCallbacks;
 
-    TRef<IWindow> Window;
+    FWindow *Window;
 };
+
+bool InitializeInput(FInput *Input, FWindow *Window);
+
+void SetRawInput(FInput *Input, FBool Value);
+void SetCursorVisibility(FInput *Input, ECursorVisibility Visibility);
+
+FInputCallbackInfo AddKeyPressCallback(FInput *Input, EKeyCode Key, std::function<void()> Func);
+FInputCallbackInfo AddKeyReleaseCallback(FInput *Input, EKeyCode Key, std::function<void()> Func);
+FInputCallbackInfo AddAnyKeyPressCallback(FInput *Input, std::function<void(EKeyCode)> Func);
+FInputCallbackInfo AddAnyKeyReleaseCallback(FInput *Input, std::function<void(EKeyCode)> Func);
+FInputCallbackInfo AddKeyAnyActionCallback(FInput *Input, EKeyCode Key, std::function<void(EInputState)> Func);
+FInputCallbackInfo AddAnyKeyAnyActionCallback(FInput *Input, std::function<void(EInputState, EKeyCode)> Func);
+FInputCallbackInfo AddMouseButtonPressCallback(FInput *Input, EMouseCode Button, std::function<void()> Func);
+FInputCallbackInfo AddMouseButtonReleaseCallback(FInput *Input, EMouseCode Button, std::function<void()> Func);
+FInputCallbackInfo AddAnyMouseButtonPressCallback(FInput *Input, std::function<void(EMouseCode)> Func);
+FInputCallbackInfo AddAnyMouseButtonReleaseCallback(FInput *Input, std::function<void(EMouseCode)> Func);
+FInputCallbackInfo AddMouseButtonAnyActionCallback(FInput *Input, EMouseCode Button, std::function<void(EInputState)> Func);
+FInputCallbackInfo AddAnyMouseButtonAnyActionCallback(FInput *Input, std::function<void(EInputState, EMouseCode)> Func);
+FInputCallbackInfo AddMouseMoveCallback(FInput *Input, std::function<void(FFloat, FFloat)> Func);
+
+void RemoveCallback(FInput *Input, const FInputCallbackInfo &Info);
+void SetKey(FInput *Input, EKeyCode Key, EInputState Action);
+void SetMouseButton(FInput *Input, EMouseCode Button, EInputState Action);
+void SetMousePos(FInput *Input, FFloat X, FFloat Y);

@@ -3,16 +3,17 @@
 #include "RHIPipeline.h"
 #include "Window.h"
 #include "RHI.h"
+#include "Platform.h"
 
 #include "RHITexture.h"
 #include "RHIShader.h"
 
-bool FRenderer::Init(TRef<IWindow> Win, bool RenderToOffscreenBuffer) {
+bool FRenderer::Init(FWindow *Win, bool RenderToOffscreenBuffer) {
     Window = Win;
     UseOffscreenBuffer = RenderToOffscreenBuffer;
 
-    RHISetActiveViewport(Window->Data.Viewport);
-    SwapchainBackbuffer = Window->Data.Viewport->CurrentBackbuffer;
+    RHISetActiveViewport(Window->Viewport);
+    SwapchainBackbuffer = Window->Viewport->CurrentBackbuffer;
     
     CommandContext = RHICreateCommandContext();
     if (!CommandContext->Init()) {
@@ -79,7 +80,7 @@ bool FRenderer::Render() {
     RHIPrepareFrame();
 
     // NOTE: There will be a new backbuffer every frame
-    SwapchainBackbuffer = Window->Data.Viewport->CurrentBackbuffer;
+    SwapchainBackbuffer = Window->Viewport->CurrentBackbuffer;
 
     if (!CommandContext->Begin()) {
         SK_LOG_ERROR("Failed to begin command context");
@@ -174,14 +175,14 @@ bool FRenderer::Render() {
 }
 
 bool FRenderer::InitImGui() {
-    Window->InitImGui();
+    PlatformInitImGui(Window);
     RHIInitImGui();
 
     if (UseOffscreenBuffer) {
         FRHIOffscreenRenderTargetDescription OffscreenBackbufferDescription = {};
         OffscreenBackbufferDescription.Format = ERHIFormat::B8G8R8A8_SRGB;
-        OffscreenBackbufferDescription.Width = Window->Data.FramebufferWidth;
-        OffscreenBackbufferDescription.Height = Window->Data.FramebufferHeight;
+        OffscreenBackbufferDescription.Width = Window->FramebufferWidth;
+        OffscreenBackbufferDescription.Height = Window->FramebufferHeight;
         OffscreenBackbufferDescription.UseForImGui = true;
         for (auto &Backbuffer : OffscreenBackbuffers) {
             Backbuffer = RHICreateTexture();
@@ -238,7 +239,7 @@ bool FRenderer::InitImGui() {
 }
 
 void FRenderer::ImGuiNewFrame() {
-    Window->ImGuiNewFrame();
+    PlatformImGuiNewFrame();
     RHIImGuiNewFrame();
 }
 
@@ -250,7 +251,7 @@ void FRenderer::ShutdownImGui() {
     }
 
     RHIShutdownImGui();
-    Window->ShutdownImGui();
+    PlatformShutdownImGui();
 }
 
 void FRenderer::AddProxy(FRenderProxy *Proxy) {
