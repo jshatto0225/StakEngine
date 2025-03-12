@@ -1,6 +1,6 @@
 #pragma once
 
-#include "Application.h"
+#include "Engine.h"
 #include "Log.h"
 #include "Types.h"
 
@@ -12,20 +12,20 @@ extern FEngine *GEngine;
 inline FSInt32 StakMain() {
     LogInit();
 
-    FEngine Engine = {};
-    FApplication App = {};
+    FEngine Engine            = {};
+    FApplication App          = {};
     FEngineSpecification Spec = {};
 
     InitializeApplication(&App, &Spec);
 
-    if (!Engine.Init(&Spec, &App)) {
+    if (!EngineInit(&Engine, &Spec, &App)) {
         SK_LOG_CRITICAL("Failed to initialize engine");
         return -1;
     }
 
-    Engine.Run();
+    EngineRun(&Engine);
 
-    Engine.Shutdown();
+    EngineShutdown(&Engine);
 
     DestroyApplication(Engine.App);
 

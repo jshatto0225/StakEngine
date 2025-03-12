@@ -26,7 +26,7 @@ bool Init(FEngine *Engine, FApplication *App) {
 
     Editor->EscapePressedCallbackInfo = AddKeyPressCallback(&Engine->Input, EKeyCode::ESCAPE, [Engine]() {
         LOG_TRACE("[Callback Input] Escape pressed. Quitting.");
-        Engine->Close();
+        EngineClose(Engine);
     });
     Editor->WPressedCallbackInfo = AddKeyPressCallback(&Engine->Input, EKeyCode::W, []() {
         LOG_TRACE("[Callback Input] W pressed");
