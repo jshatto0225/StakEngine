@@ -8,7 +8,7 @@
 void EngineShutdown(FEngine *Engine) {
     Engine->App->Shutdown(Engine, Engine->App);
 
-    Engine->ImGuiRenderer.Shutdown();
+    ImGuiRendererShutdown(&Engine->ImGuiRenderer);
 
     PlatformCloseWindow(&Engine->Window);
 
@@ -55,7 +55,7 @@ bool EngineInit(FEngine *Engine, FEngineSpecification *Spec, FApplication *AppIm
         return false;
     }
 
-    Engine->ImGuiRenderer.Init(&Engine->Renderer);
+    ImGuiRendererInit(&Engine->ImGuiRenderer, &Engine->Renderer);
 
     Engine->Running = true;
 
@@ -75,9 +75,9 @@ void EngineRun(FEngine *Engine) {
 
         if (Engine->App->Update) Engine->App->Update(Engine, Engine->App);
 
-        Engine->ImGuiRenderer.BeginFrame();
+        ImGuiRendererBeginFrame(&Engine->ImGuiRenderer);
         if (Engine->App->OnImGuiRender) Engine->App->OnImGuiRender(Engine, Engine->App);
-        Engine->ImGuiRenderer.EndFrame();
+        ImGuiRendererEndFrame(&Engine->ImGuiRenderer);
 
         if (!Engine->Renderer.Render()) {
             SK_LOG_ERROR("Failed to render");

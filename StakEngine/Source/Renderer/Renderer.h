@@ -6,11 +6,7 @@
 #include "RHITexture.h"
 #include "Window.h"
 
-struct FRenderProxy {
-    virtual ~FRenderProxy() = default;
-
-    virtual void Render(TRef<IRHICommandContext> CommandContext) {}
-};
+using FRenderFunc = std::function<void(TRef<IRHICommandContext>)>;
 
 struct FRenderer {
     bool Init(FWindow *Window, bool RenderToOffscreenBuffer);
@@ -21,16 +17,10 @@ struct FRenderer {
     void ShutdownImGui();
     bool Render();
 
-    void AddProxy(FRenderProxy *Proxy);
-    void RemoveProxy(FRenderProxy *Proxy);
-
-    void SetPostProxy(FRenderProxy *Proxy);
-    void UnsetPostProxy();
-
     void AddSceneToImGuiWindow();
 
-    std::vector<FRenderProxy *> RenderProxies;
-    FRenderProxy *PostRenderProxy = nullptr;
+    FRenderFunc GuiRenderFunc;
+
     TRef<IRHICommandContext> CommandContext;
     FWindow *Window = nullptr;
     TRef<IRHITexture> SwapchainBackbuffer;

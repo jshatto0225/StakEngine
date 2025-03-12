@@ -4,11 +4,11 @@
 
 #include "Log.h"
 #include "Renderer.h"
-#include "Application.h"
+#include "Engine.h"
 
-bool FImGuiRenderer::Init(FRenderer *R) {
-    Renderer = R;
-    DrawData = nullptr;
+bool ImGuiRendererInit(FImGuiRenderer *ImGuiRenderer, FRenderer *Renderer) {
+    ImGuiRenderer->Renderer = Renderer;
+    ImGuiRenderer->DrawData = nullptr;
 
     ImGui::CreateContext();
     ImGuiIO &io = ImGui::GetIO();
@@ -17,7 +17,10 @@ bool FImGuiRenderer::Init(FRenderer *R) {
     io.ConfigFlags |= ImGuiConfigFlags_DockingEnable;
     ImGui::StyleColorsDark();
 
-    Renderer->SetPostProxy(this);
+    Renderer->GuiRenderFunc = [ImGuiRenderer] (TRef<IRHICommandContext> CommandContext) {
+        CommandContext->RenderImGuiDrawData(ImGuiRenderer->DrawData);
+    };
+
     if (!Renderer->InitImGui()) {
         SK_LOG_ERROR("Failed to initialize renderer for imgui");
         return false;
@@ -26,25 +29,21 @@ bool FImGuiRenderer::Init(FRenderer *R) {
     return true;
 }
 
-void FImGuiRenderer::Shutdown() {
-    Renderer->ShutdownImGui();
+void ImGuiRendererShutdown(FImGuiRenderer *ImGuiRenderer) {
+    ImGuiRenderer->Renderer->ShutdownImGui();
     ImGui::DestroyContext();
 }
 
-void FImGuiRenderer::BeginFrame() {
-    Renderer->ImGuiNewFrame();
+void ImGuiRendererBeginFrame(FImGuiRenderer *ImGuiRenderer) {
+    ImGuiRenderer->Renderer->ImGuiNewFrame();
     ImGui::NewFrame();
 }
 
-void FImGuiRenderer::EndFrame() {
+void ImGuiRendererEndFrame(FImGuiRenderer *ImGuiRenderer) {
     ImGui::Render();
     ImDrawData *Data = ImGui::GetDrawData();
     const FBool IsMinimized = (Data->DisplaySize.x <= 0.0f || Data->DisplaySize.y <= 0.0f);
     if (!IsMinimized) {
-        DrawData = Data;
+        ImGuiRenderer->DrawData = Data;
     }
-}
-
-void FImGuiRenderer::Render(TRef<IRHICommandContext> CommandContext) {
-    CommandContext->RenderImGuiDrawData(DrawData);
 }

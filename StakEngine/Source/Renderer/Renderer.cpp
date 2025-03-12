@@ -121,10 +121,6 @@ bool FRenderer::Render() {
         CommandContext->SetViewport(static_cast<FFloat>(X), static_cast<FFloat>(Y), static_cast<FFloat>(Width), static_cast<FFloat>(Height), 0.0f, 1.0f);
         CommandContext->SetScissor(static_cast<FSInt32>(X), static_cast<FSInt32>(Y), Width, Height);
         CommandContext->DrawInstanced(3, 1, 0, 0);
-
-        for (auto Proxy : RenderProxies) {
-            Proxy->Render(CommandContext);
-        }
         
         if (UseOffscreenBuffer) {
             // NOTE: Unset offscreen backbuffer
@@ -142,10 +138,8 @@ bool FRenderer::Render() {
             auto RenderArea = OffscreenBackbuffers[OffscreenBackbufferImageIndex]->RenderArea;
             CommandContext->SetRenderTarget(SwapchainBackbuffer, &RenderArea);
         }
-        
-        if (PostRenderProxy) {
-            PostRenderProxy->Render(CommandContext);
-        }
+
+        if (GuiRenderFunc) GuiRenderFunc(CommandContext);
 
         CommandContext->UnsetRenderTarget();
 
@@ -252,25 +246,6 @@ void FRenderer::ShutdownImGui() {
 
     RHIShutdownImGui();
     PlatformShutdownImGui();
-}
-
-void FRenderer::AddProxy(FRenderProxy *Proxy) {
-    RenderProxies.push_back(Proxy);
-}
-
-void FRenderer::RemoveProxy(FRenderProxy *Proxy) {
-    auto It = std::find(RenderProxies.begin(), RenderProxies.end(), Proxy);
-    if (It != RenderProxies.end()) {
-        RenderProxies.erase(It);
-    }
-}
-
-void FRenderer::SetPostProxy(FRenderProxy *Proxy) {
-    PostRenderProxy = Proxy;
-}
-
-void FRenderer::UnsetPostProxy() {
-    PostRenderProxy = nullptr;
 }
 
 void FRenderer::AddSceneToImGuiWindow() {
