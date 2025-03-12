@@ -115,7 +115,7 @@ void OnImGuiRender(FEngine *Engine, FApplication *App) {
 
         ImGui::Begin("Scene View");
         {
-            Engine->Renderer.AddSceneToImGuiWindow();
+            RendererAddSceneToImGuiWindow(&Engine->Renderer);
         }
         ImGui::End();
     }

@@ -12,7 +12,7 @@ void EngineShutdown(FEngine *Engine) {
 
     PlatformCloseWindow(&Engine->Window);
 
-    Engine->Renderer.Shutdown();
+    RendererShutdown(&Engine->Renderer);
 
     RHIShutdown();
 
@@ -50,7 +50,7 @@ bool EngineInit(FEngine *Engine, FEngineSpecification *Spec, FApplication *AppIm
 
     assert(InitializeInput(&Engine->Input, &Engine->Window));
 
-    if (!Engine->Renderer.Init(&Engine->Window, Spec->RenderToOffscreenBuffer)) {
+    if (!RendererInit(&Engine->Renderer, &Engine->Window, Spec->RenderToOffscreenBuffer)) {
         SK_LOG_ERROR("Failed to initialize renderer");
         return false;
     }
@@ -79,7 +79,7 @@ void EngineRun(FEngine *Engine) {
         if (Engine->App->OnImGuiRender) Engine->App->OnImGuiRender(Engine, Engine->App);
         ImGuiRendererEndFrame(&Engine->ImGuiRenderer);
 
-        if (!Engine->Renderer.Render()) {
+        if (!RendererRender(&Engine->Renderer)) {
             SK_LOG_ERROR("Failed to render");
         }
     }

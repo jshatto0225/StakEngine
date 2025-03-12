@@ -21,7 +21,7 @@ bool ImGuiRendererInit(FImGuiRenderer *ImGuiRenderer, FRenderer *Renderer) {
         CommandContext->RenderImGuiDrawData(ImGuiRenderer->DrawData);
     };
 
-    if (!Renderer->InitImGui()) {
+    if (!RendererInitImGui(ImGuiRenderer->Renderer)) {
         SK_LOG_ERROR("Failed to initialize renderer for imgui");
         return false;
     }
@@ -30,12 +30,12 @@ bool ImGuiRendererInit(FImGuiRenderer *ImGuiRenderer, FRenderer *Renderer) {
 }
 
 void ImGuiRendererShutdown(FImGuiRenderer *ImGuiRenderer) {
-    ImGuiRenderer->Renderer->ShutdownImGui();
+    RendererShutdownImGui(ImGuiRenderer->Renderer);
     ImGui::DestroyContext();
 }
 
 void ImGuiRendererBeginFrame(FImGuiRenderer *ImGuiRenderer) {
-    ImGuiRenderer->Renderer->ImGuiNewFrame();
+    RendererImGuiNewFrame(ImGuiRenderer->Renderer);
     ImGui::NewFrame();
 }
 
