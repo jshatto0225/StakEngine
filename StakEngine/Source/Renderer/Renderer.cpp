@@ -1,22 +1,20 @@
 #include "Renderer.h"
 
-#include "RHIPipeline.h"
 #include "Window.h"
 #include "RHI.h"
 #include "Platform.h"
-
-#include "RHITexture.h"
-#include "RHIShader.h"
+#include "Log.h"
 
 bool RendererInit(FRenderer *Renderer, FWindow *Win, bool RenderToOffscreenBuffer) {
     Renderer->Window = Win;
     Renderer->UseOffscreenBuffer = RenderToOffscreenBuffer;
 
-    RHISetActiveViewport(Renderer->Window->Viewport);
-    Renderer->SwapchainBackbuffer = Renderer->Window->Viewport->CurrentBackbuffer;
-    
-    Renderer->CommandContext = RHICreateCommandContext();
-    if (!Renderer->CommandContext->Init()) {
+    Renderer->SwapchainTexture = GRHI.GetCurrentSwapchainTexture(Renderer->Window->Swapchain);
+
+    FRHICommandListDescription CommandListDescription = {};
+    CommandListDescription.IsSecondary = false;
+    Renderer->CommandList = GRHI.CreateCommandList(&CommandListDescription);
+    if (!Renderer->CommandList) {
         SK_LOG_ERROR("Failed to initialize command context");
         return false;
     }
@@ -25,8 +23,8 @@ bool RendererInit(FRenderer *Renderer, FWindow *Win, bool RenderToOffscreenBuffe
         FRHIShaderDescription VertexShaderDescription = {};
         VertexShaderDescription.Name = "BasicShader.vert";
         VertexShaderDescription.Type = ERHIShaderType::VERTEX;
-        TRef<IRHIShader> VertexShader = RHICreateShader();
-        if (!VertexShader->Init(&VertexShaderDescription)) {
+        FRHIResourceHandle VertexShader = GRHI.CreateShader(&VertexShaderDescription);
+        if (!VertexShader) {
             SK_LOG_ERROR("Failed to initialize vertex shader");
             return false;
         }
@@ -34,55 +32,59 @@ bool RendererInit(FRenderer *Renderer, FWindow *Win, bool RenderToOffscreenBuffe
         FRHIShaderDescription FragmentShaderDescription = {};
         FragmentShaderDescription.Name = "BasicShader.frag";
         FragmentShaderDescription.Type = ERHIShaderType::FRAGMENT;
-        TRef<IRHIShader> FragmentShader = RHICreateShader();
-        if (!FragmentShader->Init(&FragmentShaderDescription)) {
+        FRHIResourceHandle FragmentShader = GRHI.CreateShader(&FragmentShaderDescription);
+        if (!FragmentShader) {
             SK_LOG_ERROR("Failed to initialize fragment shader");
             return false;
         }
 
         FRHIPipelineLayoutDescription PipelineLayoutDescription = {};
-        Renderer->PipelineLayout = RHICreatePipelineLayout();
-        if (!Renderer->PipelineLayout->Init(&PipelineLayoutDescription)) {
+        Renderer->PipelineLayout = GRHI.CreatePipelineLayout(&PipelineLayoutDescription);
+        if (!Renderer->PipelineLayout) {
             SK_LOG_ERROR("Failed to initialize pipeline layout");
             return false;
         }
 
+        FRHIResourceHandle Shaders[] = { VertexShader, FragmentShader };
+        ERHIFormat Formats[] = { GRHI.GetTextureFormat(Renderer->SwapchainTexture) };
+
         FRHIGraphicsPipelineStateDescription PipelineDescription = {};
-        PipelineDescription.ColorFormats = { Renderer->SwapchainBackbuffer->Format };
+        PipelineDescription.ColorFormats = Formats;
         PipelineDescription.DepthStencilFormat = { ERHIFormat::UNDEFINED };
         PipelineDescription.Layout = Renderer->PipelineLayout;
-        PipelineDescription.Shaders = { VertexShader, FragmentShader };
+        PipelineDescription.ShaderCount = 2;
+        PipelineDescription.Shaders = Shaders;
         PipelineDescription.VertexInputAttributes = {};
         PipelineDescription.VertexInputBindings = {};
 
-        Renderer->Pipeline = RHICreatePipeline();
-        if (!Renderer->Pipeline->Init(&PipelineDescription)) {
+        Renderer->Pipeline = GRHI.CreateGraphicsPipeline(&PipelineDescription);
+        if (!Renderer->Pipeline) {
             SK_LOG_ERROR("Failed to initialize pipeline");
             return false;
         }
 
-        VertexShader->Shutdown();
-        FragmentShader->Shutdown();
+        GRHI.DestroyShader(&VertexShader);
+        GRHI.DestroyShader(&FragmentShader);
     }
 
     return true;
 }
 
 void RendererShutdown(FRenderer *Renderer) {
-    Renderer->PipelineLayout->Shutdown();
-    Renderer->Pipeline->Shutdown();
+    GRHI.DestroyPipelineLayout(&Renderer->PipelineLayout);
+    GRHI.DestroyPipeline(&Renderer->Pipeline);
 
-    RHIWaitForGPUIdle();
-    Renderer->CommandContext->Shutdown();
+    GRHI.WaitForGPUIdle();
+    GRHI.DestroyCommandList(&Renderer->CommandList);
 }
 
 bool RendererRender(FRenderer *Renderer) {
-    RHIPrepareFrame();
+    GRHI.PrepareFrame(Renderer->Window->Swapchain);
 
     // NOTE: There will be a new backbuffer every frame
-    Renderer->SwapchainBackbuffer = Renderer->Window->Viewport->CurrentBackbuffer;
+    Renderer->SwapchainTexture = GRHI.GetCurrentSwapchainTexture(Renderer->Window->Swapchain);
 
-    if (!Renderer->CommandContext->Begin()) {
+    if (!GRHI.BeginCommandList(Renderer->CommandList)) {
         SK_LOG_ERROR("Failed to begin command context");
         return false;
     }
@@ -90,12 +92,12 @@ bool RendererRender(FRenderer *Renderer) {
 
         FRHIResourceBarrier RenderTargetBarrier = {};
         RenderTargetBarrier.Type = ERHIBarrierType::TRANSITION;
-        RenderTargetBarrier.TransitionBarrier.Resource = Renderer->SwapchainBackbuffer;
+        RenderTargetBarrier.TransitionBarrier.Resource = Renderer->SwapchainTexture;
         RenderTargetBarrier.TransitionBarrier.StateBefore = ERHIResourceState::UNDEFINED;
         RenderTargetBarrier.TransitionBarrier.StateAfter = ERHIResourceState::RENDER_TARGET;
         RenderTargetBarrier.TransitionBarrier.Subresource = 0;
 
-        Renderer->CommandContext->ResourceBarrier(&RenderTargetBarrier);
+        GRHI.CmdResourceBarrier(Renderer->CommandList, &RenderTargetBarrier);
 
         // NOTE: Use offscreen backbuffer if requested by the config, else use swapchain backbuffer
         if (Renderer->UseOffscreenBuffer) {
@@ -106,25 +108,25 @@ bool RendererRender(FRenderer *Renderer) {
             OffscreenBufferRenderTargetBarrier.TransitionBarrier.StateAfter = ERHIResourceState::RENDER_TARGET;
             OffscreenBufferRenderTargetBarrier.TransitionBarrier.Subresource = 0;
 
-            Renderer->CommandContext->ResourceBarrier(&OffscreenBufferRenderTargetBarrier);
+            GRHI.CmdResourceBarrier(Renderer->CommandList, &OffscreenBufferRenderTargetBarrier);
 
 
-            auto RenderArea = Renderer->OffscreenBackbuffers[Renderer->OffscreenBackbufferImageIndex]->RenderArea;
-            Renderer->CommandContext->SetRenderTarget(Renderer->OffscreenBackbuffers[Renderer->OffscreenBackbufferImageIndex], &RenderArea);
+            auto RenderArea = GRHI.GetTextureRenderArea(Renderer->OffscreenBackbuffers[Renderer->OffscreenBackbufferImageIndex]);
+            GRHI.CmdSetRenderTarget(Renderer->CommandList, Renderer->OffscreenBackbuffers[Renderer->OffscreenBackbufferImageIndex], &RenderArea);
         } else {
-            auto RenderArea = Renderer->SwapchainBackbuffer->RenderArea;
-            Renderer->CommandContext->SetRenderTarget(Renderer->SwapchainBackbuffer, &RenderArea);
+            auto RenderArea = GRHI.GetTextureRenderArea(Renderer->SwapchainTexture);
+            GRHI.CmdSetRenderTarget(Renderer->CommandList, Renderer->SwapchainTexture, &RenderArea);
         }
 
-        Renderer->CommandContext->BindPipeline(Renderer->Pipeline);
-        auto [LayerCount, X, Y, Width, Height] = Renderer->SwapchainBackbuffer->RenderArea;
-        Renderer->CommandContext->SetViewport(static_cast<FFloat>(X), static_cast<FFloat>(Y), static_cast<FFloat>(Width), static_cast<FFloat>(Height), 0.0f, 1.0f);
-        Renderer->CommandContext->SetScissor(static_cast<FSInt32>(X), static_cast<FSInt32>(Y), Width, Height);
-        Renderer->CommandContext->DrawInstanced(3, 1, 0, 0);
-        
+        GRHI.CmdBindPipeline(Renderer->CommandList, Renderer->Pipeline);
+        auto [LayerCount, X, Y, Width, Height] = GRHI.GetTextureRenderArea(Renderer->SwapchainTexture);
+        GRHI.CmdSetViewport(Renderer->CommandList, (FFloat)X, (FFloat)Y, (FFloat)Width, (FFloat)Height, 0.0f, 1.0f);
+        GRHI.CmdSetScissor(Renderer->CommandList, (FSInt32)X, (FSInt32)Y, Width, Height);
+        GRHI.CmdDrawInstanced(Renderer->CommandList, 3, 1, 0, 0);
+
         if (Renderer->UseOffscreenBuffer) {
             // NOTE: Unset offscreen backbuffer
-            Renderer->CommandContext->UnsetRenderTarget();
+            GRHI.CmdUnsetRenderTarget(Renderer->CommandList);
 
             FRHIResourceBarrier OffscreenBufferShaderResourceBarrier = {};
             OffscreenBufferShaderResourceBarrier.Type = ERHIBarrierType::TRANSITION;
@@ -133,34 +135,34 @@ bool RendererRender(FRenderer *Renderer) {
             OffscreenBufferShaderResourceBarrier.TransitionBarrier.StateAfter = ERHIResourceState::SHADER_RESOURCE;
             OffscreenBufferShaderResourceBarrier.TransitionBarrier.Subresource = 0;
 
-            Renderer->CommandContext->ResourceBarrier(&OffscreenBufferShaderResourceBarrier);
+            GRHI.CmdResourceBarrier(Renderer->CommandList, &OffscreenBufferShaderResourceBarrier);
 
-            auto RenderArea = Renderer->OffscreenBackbuffers[Renderer->OffscreenBackbufferImageIndex]->RenderArea;
-            Renderer->CommandContext->SetRenderTarget(Renderer->SwapchainBackbuffer, &RenderArea);
+            auto RenderArea = GRHI.GetTextureRenderArea(Renderer->OffscreenBackbuffers[Renderer->OffscreenBackbufferImageIndex]);
+            GRHI.CmdSetRenderTarget(Renderer->CommandList, Renderer->SwapchainTexture, &RenderArea);
         }
 
-        if (Renderer->GuiRenderFunc) Renderer->GuiRenderFunc(Renderer->CommandContext);
+        if (Renderer->GuiRenderFunc) Renderer->GuiRenderFunc(Renderer->CommandList);
 
-        Renderer->CommandContext->UnsetRenderTarget();
+        GRHI.CmdUnsetRenderTarget(Renderer->CommandList);
 
         FRHIResourceBarrier PresentBarrier = {};
         PresentBarrier.Type = ERHIBarrierType::TRANSITION;
-        PresentBarrier.TransitionBarrier.Resource = Renderer->SwapchainBackbuffer;
+        PresentBarrier.TransitionBarrier.Resource = Renderer->SwapchainTexture;
         PresentBarrier.TransitionBarrier.StateBefore = ERHIResourceState::RENDER_TARGET;
         PresentBarrier.TransitionBarrier.StateAfter = ERHIResourceState::PRESENT;
         PresentBarrier.TransitionBarrier.Subresource = 0;
 
-        Renderer->CommandContext->ResourceBarrier(&PresentBarrier);
+        GRHI.CmdResourceBarrier(Renderer->CommandList, &PresentBarrier);
     }
-    if (!Renderer->CommandContext->End()) {
+    if (!GRHI.EndCommandList(Renderer->CommandList)) {
         SK_LOG_ERROR("Failed to end command context");
         return false;
     }
-    if (!RHISubmit(Renderer->CommandContext)) {
+    if (!GRHI.Submit(Renderer->CommandList)) {
         SK_LOG_ERROR("Failed to submit commands");
         return false;
     }
-    if (!RHIPresentFrame()) {
+    if (!GRHI.PresentFrame()) {
         SK_LOG_ERROR("Failed to present");
         return false;
     }
@@ -170,17 +172,19 @@ bool RendererRender(FRenderer *Renderer) {
 
 bool RendererInitImGui(FRenderer *Renderer) {
     PlatformInitImGui(Renderer->Window);
-    RHIInitImGui();
+    // NOTE: Assume all swapchain textures have the same format
+    GRHI.InitImGui(Renderer->Window->Swapchain);
 
     if (Renderer->UseOffscreenBuffer) {
-        FRHIOffscreenRenderTargetDescription OffscreenBackbufferDescription = {};
+        FRHITextureDescription OffscreenBackbufferDescription = {};
         OffscreenBackbufferDescription.Format = ERHIFormat::B8G8R8A8_SRGB;
         OffscreenBackbufferDescription.Width = Renderer->Window->FramebufferWidth;
         OffscreenBackbufferDescription.Height = Renderer->Window->FramebufferHeight;
         OffscreenBackbufferDescription.UseForImGui = true;
+        OffscreenBackbufferDescription.UseAsShaderResource = true;
         for (auto &Backbuffer : Renderer->OffscreenBackbuffers) {
-            Backbuffer = RHICreateTexture();
-            if (!Backbuffer->Init(&OffscreenBackbufferDescription)) {
+            Backbuffer = GRHI.CreateTexture(&OffscreenBackbufferDescription);
+            if (!Backbuffer) {
                 SK_LOG_ERROR("Failed to initialize offscreen backbuffer");
                 return false;
             }
@@ -189,8 +193,8 @@ bool RendererInitImGui(FRenderer *Renderer) {
         FRHIShaderDescription VertexShaderDescription = {};
         VertexShaderDescription.Name = "BasicShader.vert";
         VertexShaderDescription.Type = ERHIShaderType::VERTEX;
-        TRef<IRHIShader> VertexShader = RHICreateShader();
-        if (!VertexShader->Init(&VertexShaderDescription)) {
+        FRHIResourceHandle VertexShader = GRHI.CreateShader(&VertexShaderDescription);
+        if (!VertexShader) {
             SK_LOG_ERROR("Failed to initialize vertex shader");
             return false;
         }
@@ -198,35 +202,39 @@ bool RendererInitImGui(FRenderer *Renderer) {
         FRHIShaderDescription FragmentShaderDescription = {};
         FragmentShaderDescription.Name = "BasicShader.frag";
         FragmentShaderDescription.Type = ERHIShaderType::FRAGMENT;
-        TRef<IRHIShader> FragmentShader = RHICreateShader();
-        if (!FragmentShader->Init(&FragmentShaderDescription)) {
+        FRHIResourceHandle FragmentShader = GRHI.CreateShader(&FragmentShaderDescription);
+        if (!FragmentShader) {
             SK_LOG_ERROR("Failed to initialize fragment shader");
             return false;
         }
 
         FRHIPipelineLayoutDescription PipelineLayoutDescription = {};
-        Renderer->PipelineLayout = RHICreatePipelineLayout();
-        if (!Renderer->PipelineLayout->Init(&PipelineLayoutDescription)) {
+        Renderer->PipelineLayout = GRHI.CreatePipelineLayout(&PipelineLayoutDescription);
+        if (!Renderer->PipelineLayout) {
             SK_LOG_ERROR("Failed to initialize pipeline layout");
             return false;
         }
 
+        ERHIFormat Formats[] = { ERHIFormat::B8G8R8A8_SRGB };
+        FRHIResourceHandle Shaders[] = { VertexShader, FragmentShader };
+
         FRHIGraphicsPipelineStateDescription PipelineDescription = {};
-        PipelineDescription.ColorFormats = { Renderer->OffscreenBackbuffers[Renderer->OffscreenBackbufferImageIndex]->Format };
+        PipelineDescription.ColorFormats = Formats;
         PipelineDescription.DepthStencilFormat = { ERHIFormat::UNDEFINED };
         PipelineDescription.Layout = Renderer->PipelineLayout;
-        PipelineDescription.Shaders = { VertexShader, FragmentShader };
+        PipelineDescription.ShaderCount = 2;
+        PipelineDescription.Shaders = Shaders;
         PipelineDescription.VertexInputAttributes = {};
         PipelineDescription.VertexInputBindings = {};
 
-        Renderer->Pipeline = RHICreatePipeline();
-        if (!Renderer->Pipeline->Init(&PipelineDescription)) {
+        Renderer->Pipeline = GRHI.CreateGraphicsPipeline(&PipelineDescription);
+        if (!Renderer->Pipeline) {
             SK_LOG_ERROR("Failed to initialize pipeline");
             return false;
         }
 
-        VertexShader->Shutdown();
-        FragmentShader->Shutdown();
+        GRHI.DestroyShader(&VertexShader);
+        GRHI.DestroyShader(&FragmentShader);
     }
 
     return true;
@@ -234,20 +242,20 @@ bool RendererInitImGui(FRenderer *Renderer) {
 
 void RendererImGuiNewFrame(FRenderer *Renderer) {
     PlatformImGuiNewFrame();
-    RHIImGuiNewFrame();
+    GRHI.ImGuiNewFrame();
 }
 
 void RendererShutdownImGui(FRenderer *Renderer) {
-    RHIWaitForGPUIdle();
+    GRHI.WaitForGPUIdle();
 
     for (auto &Backbuffer : Renderer->OffscreenBackbuffers) {
-        Backbuffer->Shutdown();
+        GRHI.DestroyTexture(&Backbuffer);
     }
 
-    RHIShutdownImGui();
+    GRHI.ShutdownImGui();
     PlatformShutdownImGui();
 }
 
 void RendererAddSceneToImGuiWindow(FRenderer *Renderer) {
-    Renderer->OffscreenBackbuffers[Renderer->OffscreenBackbufferImageIndex]->AddToImGuiWindow();
+    GRHI.AddTextureToImGuiWindow(Renderer->OffscreenBackbuffers[Renderer->OffscreenBackbufferImageIndex]);
 }

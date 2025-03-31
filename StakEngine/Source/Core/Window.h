@@ -4,7 +4,7 @@
 
 #include "Events.h"
 #include "Types.h"
-#include "RHIViewport.h"
+#include "RHI.h"
 
 using FEventFn = std::function<void(FEvent *)>;
 
@@ -42,6 +42,5 @@ struct FWindow {
     //   to a platform window
     FHandle PlatformHandle;
 
-    // NOTE: Similarly only renderer/RHI functions should touch this
-    TRef<IRHIViewport> Viewport;
+    FRHIResourceHandle Swapchain;
 };

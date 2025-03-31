@@ -1,103 +1,68 @@
 #include "RHI.h"
 
-#include "Asserts.h"
-#include "RHIViewport.h"
-
 #ifdef SK_VULKAN
 #include "VulkanRHI.h"
-using FPlatformRHI = FVulkanRHI;
 #endif
 
-IRHI *GRHI;
+FRHI GRHI;
 
-bool RHIInit() {
-    GRHI = new FPlatformRHI;
-    assert(GRHI);
-    return GRHI->Init();
+bool RHIInit(ERHIBackend Backend) {
+    switch (Backend) {
+    case ERHIBackend::VULKAN:
+        GRHI = VulkanCreateRHI();
+        break;
+    default:
+        SK_LOG_ERROR("Unsupported RHI backend");
+        return false;
+    }
+
+    return GRHI.Init();
 }
 
 void RHIShutdown() {
-    assert(GRHI);
-    GRHI->Shutdown();
-    delete GRHI;
+    GRHI.Shutdown();
+    GRHI = {};
 }
 
-TRef<IRHITexture> RHICreateTexture() {
-    assert(GRHI);
-    return GRHI->CreateTexture();
-}
+static std::unordered_map<ERHIResourceState, std::unordered_map<ERHIResourceState, ERHITransitionType>> TransitionTypes = {
+    {
+        ERHIResourceState::UNDEFINED,
+        {
+            { ERHIResourceState::RENDER_TARGET,   ERHITransitionType::IMAGE   },
+            { ERHIResourceState::PRESENT,         ERHITransitionType::IMAGE   },
+            { ERHIResourceState::UNDEFINED,       ERHITransitionType::INVALID },
+            { ERHIResourceState::SHADER_RESOURCE, ERHITransitionType::IMAGE   },
+        }
+    },
+    {
+        ERHIResourceState::RENDER_TARGET,
+        {
+            { ERHIResourceState::RENDER_TARGET,   ERHITransitionType::INVALID },
+            { ERHIResourceState::PRESENT,         ERHITransitionType::IMAGE   },
+            { ERHIResourceState::UNDEFINED,       ERHITransitionType::INVALID },
+            { ERHIResourceState::SHADER_RESOURCE, ERHITransitionType::IMAGE   },
+        }
+    },
+    {
+        ERHIResourceState::PRESENT,
+        {
+            { ERHIResourceState::RENDER_TARGET,   ERHITransitionType::IMAGE   },
+            { ERHIResourceState::PRESENT,         ERHITransitionType::INVALID },
+            { ERHIResourceState::UNDEFINED,       ERHITransitionType::INVALID },
+            { ERHIResourceState::SHADER_RESOURCE, ERHITransitionType::IMAGE   },
+        }
+    },
+    {
+        ERHIResourceState::SHADER_RESOURCE,
+        {
+            { ERHIResourceState::RENDER_TARGET,   ERHITransitionType::IMAGE   },
+            { ERHIResourceState::PRESENT,         ERHITransitionType::IMAGE   },
+            { ERHIResourceState::UNDEFINED,       ERHITransitionType::INVALID },
+            { ERHIResourceState::SHADER_RESOURCE, ERHITransitionType::INVALID },
+        }
+    },
+};
 
-void RHIImGuiNewFrame() {
-    assert(GRHI);
-    return GRHI->ImGuiNewFrame();
-}
-
-void RHIShutdownImGui() {
-    assert(GRHI);
-    return GRHI->ShutdownImGui();
-}
-
-void RHIInitImGui() {
-    assert(GRHI);
-    return GRHI->InitImGui();
-}
-
-bool RHIWaitForGPUIdle() {
-    assert(GRHI);
-    return GRHI->WaitForGPUIdle();
-}
-
-bool RHISubmit(TRef<IRHICommandContext> Context) {
-    assert(GRHI);
-    return GRHI->Submit(Context);
-}
-
-TRef<IRHICommandContext> RHICreateCommandContext() {
-    assert(GRHI);
-    return GRHI->CreateCommandContext();
-}
-
-TRef<IRHIShader> RHICreateShader() {
-    assert(GRHI);
-    return GRHI->CreateShader();
-}
-
-TRef<IRHIBuffer> RHICreateBuffer() {
-    assert(GRHI);
-    return GRHI->CreateBuffer();
-}
-
-TRef<IRHIPipelineLayout> RHICreatePipelineLayout() {
-    assert(GRHI);
-    return GRHI->CreatePipelineLayout();
-}
-
-TRef<IRHIDescriptorSetLayout> RHICreateDescriptorSetLayout() {
-    assert(GRHI);
-    return GRHI->CreateDescriptorSetLayout();
-}
-
-TRef<IRHIPipeline> RHICreatePipeline() {
-    assert(GRHI);
-    return GRHI->CreatePipeline();
-}
-
-bool RHISetActiveViewport(TRef<IRHIViewport> Viewport) {
-    assert(GRHI);
-    return GRHI->SetActiveViewport(Viewport);
-}
-
-bool RHIPrepareFrame() {
-    assert(GRHI);
-    return GRHI->PrepareFrame();
-}
-
-bool RHIPresentFrame() {
-    assert(GRHI);
-    return GRHI->PresentFrame();
-}
-
-TRef<IRHIViewport> RHICreateViewport(void *WindowHandle) {
-    assert(GRHI);
-    return GRHI->CreateViewport(WindowHandle);
+ERHITransitionType RHIGetTransitionType(ERHIResourceState Before, ERHIResourceState After) {
+    return TransitionTypes[Before][After];
 }

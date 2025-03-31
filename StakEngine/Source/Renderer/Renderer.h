@@ -2,27 +2,26 @@
 
 #include <imgui.h>
 
-#include "RHICommandContext.h"
-#include "RHITexture.h"
+#include "RHI.h"
 #include "Window.h"
 
-using FRenderFunc = std::function<void(TRef<IRHICommandContext>)>;
+using FRenderFunc = std::function<void(FRHIResourceHandle)>;
 
 struct FRenderer {
     static const FUInt32 MaxFramesInFlight = 2;
 
     FRenderFunc GuiRenderFunc;
 
-    TRef<IRHICommandContext> CommandContext;
+    FRHIResourceHandle CommandList;
     FWindow *Window;
-    TRef<IRHITexture> SwapchainBackbuffer;
+    FRHIResourceHandle SwapchainTexture;
 
     FUInt32 OffscreenBackbufferImageIndex;
-    TRef<IRHITexture> OffscreenBackbuffers[MaxFramesInFlight];
+    FRHIResourceHandle  OffscreenBackbuffers[MaxFramesInFlight];
     bool UseOffscreenBuffer;
 
-    TRef<IRHIPipelineLayout> PipelineLayout;
-    TRef<IRHIPipeline> Pipeline;
+    FRHIResourceHandle PipelineLayout;
+    FRHIResourceHandle Pipeline;
 };
 
 bool RendererInit(FRenderer *Renderer, FWindow *Window, bool RenderToOffscreenBuffer);

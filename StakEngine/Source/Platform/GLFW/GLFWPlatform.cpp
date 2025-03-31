@@ -3,8 +3,9 @@
 
 #include <glfw/glfw3.h>
 
-#include "RHIViewport.h"
 #include "RHI.h"
+#include "Window.h"
+#include "Log.h"
 
 static bool GlfwInitalized = false;
 
@@ -56,10 +57,10 @@ bool PlatformOpenWindow(FWindow *Window, const FWindowConfig *Cfg) {
     glfwSetFramebufferSizeCallback(Handle, [](GLFWwindow *Window, FSInt32 Width, FSInt32 Height) {
         auto *Data = static_cast<FWindow *>(glfwGetWindowUserPointer(Window));
 
-        Data->Viewport->FramebufferResized = true;
-
         Data->FramebufferWidth = Width;
         Data->FramebufferHeight = Height;
+
+        GRHI.NotifySwapchainOfResize(Data->Swapchain);
     });
 
     glfwSetWindowSizeCallback(Handle, [](GLFWwindow *Window, FSInt32 Width, FSInt32 Height) {
@@ -147,8 +148,8 @@ bool PlatformOpenWindow(FWindow *Window, const FWindowConfig *Cfg) {
         Data->EventFn(&E);
     });
 
-    Window->Viewport = RHICreateViewport(Handle);
-    if (!Window->Viewport->Init()) {
+    Window->Swapchain = GRHI.CreateSwapchain(Window);
+    if (!Window->Swapchain) {
         SK_LOG_ERROR("Failed to create viewport for window");
         return false;
     }
@@ -166,10 +167,11 @@ void PlatformCloseWindow(FWindow *Window) {
         return;
     }
 
-    auto Glfw = reinterpret_cast<GLFWwindow *>(Window->PlatformHandle);
+    auto Glfw = (GLFWwindow *)Window->PlatformHandle;
     assert(Glfw);
 
-    Window->Viewport->Shutdown();
+    GRHI.DestroySwapchain(&Window->Swapchain);
+
     glfwDestroyWindow(Glfw);
 
     Window->PlatformHandle = 0;

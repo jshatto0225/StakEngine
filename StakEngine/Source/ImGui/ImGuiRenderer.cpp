@@ -17,8 +17,8 @@ bool ImGuiRendererInit(FImGuiRenderer *ImGuiRenderer, FRenderer *Renderer) {
     io.ConfigFlags |= ImGuiConfigFlags_DockingEnable;
     ImGui::StyleColorsDark();
 
-    Renderer->GuiRenderFunc = [ImGuiRenderer] (TRef<IRHICommandContext> CommandContext) {
-        CommandContext->RenderImGuiDrawData(ImGuiRenderer->DrawData);
+    Renderer->GuiRenderFunc = [ImGuiRenderer] (FRHIResourceHandle List) {
+        GRHI.CmdRenderImGuiDrawData(List, ImGuiRenderer->DrawData);
     };
 
     if (!RendererInitImGui(ImGuiRenderer->Renderer)) {
@@ -47,3 +47,4 @@ void ImGuiRendererEndFrame(FImGuiRenderer *ImGuiRenderer) {
         ImGuiRenderer->DrawData = Data;
     }
 }
+

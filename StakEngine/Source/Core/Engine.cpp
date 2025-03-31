@@ -29,7 +29,7 @@ bool EngineInit(FEngine *Engine, FEngineSpecification *Spec, FApplication *AppIm
         return false;
     }
 
-    if (!RHIInit()) {
+    if (!RHIInit(ERHIBackend::VULKAN)) {
         SK_LOG_ERROR("Failed to initialize RHI");
         return false;
     }
