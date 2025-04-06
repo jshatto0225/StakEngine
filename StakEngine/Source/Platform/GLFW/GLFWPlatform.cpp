@@ -7,190 +7,191 @@
 #include "Window.h"
 #include "Log.h"
 
-static bool GlfwInitalized = false;
+static bool glfw_initialized = false;
 
-bool PlatformInit() {
+bool platform_init() {
     if (!glfwInit()) {
         return false;
     }
 
-    GlfwInitalized = true;
+    glfw_initialized = true;
 
     return true;
 }
 
-void PlatformShutdown() {
-    assert(GlfwInitalized);
+void platform_shutdown() {
+    assert(glfw_initialized);
 
     glfwTerminate();
-    GlfwInitalized = false;
+    glfw_initialized = false;
 }
 
-bool PlatformOpenWindow(FWindow *Window, const FWindowConfig *Cfg) {
-    assert(GlfwInitalized);
-    assert(Window);
+bool platform_open_window(Window *window, const Window_Config *cfg) {
+    assert(glfw_initialized);
+    assert(window);
 
-    if (Window->Open) {
+    if (window->open) {
         SK_LOG_WARN("Window already open");
         return true;
     }
 
     glfwWindowHint(GLFW_CLIENT_API, GLFW_NO_API);
 
-    Window->Width   = Cfg->Width;
-    Window->Height  = Cfg->Height;
-    Window->Title   = Cfg->Title;
-    Window->EventFn = Cfg->EventFn;
+    window->width   = cfg->width;
+    window->height  = cfg->height;
+    window->title   = cfg->title;
 
-    auto Handle = glfwCreateWindow(Cfg->Width, Cfg->Height, Cfg->Title, nullptr, nullptr);
+    window->event_function = cfg->event_function;
 
-    if (!Handle) {
+    auto handle = glfwCreateWindow(cfg->width, cfg->height, cfg->title, nullptr, nullptr);
+
+    if (!handle) {
         SK_LOG_ERROR("Failed to create glfw window");
         return false;
     }
 
-    Window->PlatformHandle = reinterpret_cast<FHandle>(Handle);
+    window->platform_handle = (Handle)handle;
 
-    glfwSetWindowUserPointer(Handle, static_cast<void *>(Window));
-    glfwGetFramebufferSize(Handle, &Window->FramebufferWidth, &Window->FramebufferHeight);
+    glfwSetWindowUserPointer(handle, static_cast<void *>(window));
+    glfwGetFramebufferSize(handle, &window->framebuffer_width, &window->framebuffer_height);
 
-    glfwSetFramebufferSizeCallback(Handle, [](GLFWwindow *Window, FSInt32 Width, FSInt32 Height) {
-        auto *Data = static_cast<FWindow *>(glfwGetWindowUserPointer(Window));
+    glfwSetFramebufferSizeCallback(handle, [](GLFWwindow *window, s32 width, s32 height) {
+        auto *data = static_cast<Window *>(glfwGetWindowUserPointer(window));
 
-        Data->FramebufferWidth = Width;
-        Data->FramebufferHeight = Height;
+        data->framebuffer_width = width;
+        data->framebuffer_height = height;
 
-        GRHI.NotifySwapchainOfResize(Data->Swapchain);
+        rhi.notify_swapchain_of_resize(data->swapchain);
     });
 
-    glfwSetWindowSizeCallback(Handle, [](GLFWwindow *Window, FSInt32 Width, FSInt32 Height) {
-        auto *Data = static_cast<FWindow *>(glfwGetWindowUserPointer(Window));
+    glfwSetWindowSizeCallback(handle, [](GLFWwindow *window, s32 width, s32 height) {
+        auto *data = static_cast<Window *>(glfwGetWindowUserPointer(window));
 
-        Data->Width = Width;
-        Data->Height = Height;
+        data->width = width;
+        data->height = height;
 
-        if (!Data->EventFn) return;
+        if (!data->event_function) return;
 
-        FEvent E = {};
-        E.Type = EEventType::WINDOW_RESIZE;
-        E.WRE.Width = Width;
-        E.WRE.Height = Height;
-        Data->EventFn(&E);
+        Event e = {};
+        e.type = Event_Type::WINDOW_RESIZE;
+        e.wre.width = width;
+        e.wre.height = height;
+        data->event_function(&e);
     });
 
-    glfwSetWindowCloseCallback(Handle, [](GLFWwindow *Window) {
-        auto *Data = static_cast<FWindow *>(glfwGetWindowUserPointer(Window));
+    glfwSetWindowCloseCallback(handle, [](GLFWwindow *window) {
+        auto *data = static_cast<Window *>(glfwGetWindowUserPointer(window));
 
-        if (!Data->EventFn) return;
+        if (!data->event_function) return;
 
-        FEvent E = {};
-        E.Type = EEventType::WINDOW_CLOSE;
-        Data->EventFn(&E);
+        Event e = {};
+        e.type = Event_Type::WINDOW_CLOSE;
+        data->event_function(&e);
     });
 
-    glfwSetKeyCallback(Handle, [](GLFWwindow *Window, FSInt32 Key, FSInt32 Scancode, FSInt32 Action, FSInt32 Mods) {
-        auto *Data = static_cast<FWindow *>(glfwGetWindowUserPointer(Window));
+    glfwSetKeyCallback(handle, [](GLFWwindow *window, s32 key, s32 Scancode, s32 action, s32 Mods) {
+        auto *data = static_cast<Window *>(glfwGetWindowUserPointer(window));
 
-        if (!Data->EventFn) return;
+        if (!data->event_function) return;
 
-        EInputState State;
-        switch (Action) {
+        Input_State state;
+        switch (action) {
         case GLFW_PRESS:
-            State = EInputState::DOWN;
+            state = Input_State::DOWN;
             break;
         case GLFW_RELEASE:
-            State = EInputState::UP;
+            state = Input_State::UP;
             break;
         default:
             return;
         }
 
-        FEvent E = {};
-        E.Type = EEventType::KEY;
-        E.KE.Key = static_cast<EKeyCode>(Key);
-        E.KE.State = State;
-        Data->EventFn(&E);
+        Event e = {};
+        e.type = Event_Type::KEY;
+        e.ke.key = static_cast<Key_Code>(key);
+        e.ke.state = state;
+        data->event_function(&e);
     });
 
-    glfwSetMouseButtonCallback(Handle, [](GLFWwindow *Window, FSInt32 Button, FSInt32 Action, FSInt32 Mods) {
-        auto *Data = static_cast<FWindow *>(glfwGetWindowUserPointer(Window));
+    glfwSetMouseButtonCallback(handle, [](GLFWwindow *window, s32 button, s32 action, s32 Mods) {
+        auto *data = static_cast<Window *>(glfwGetWindowUserPointer(window));
 
-        if (!Data->EventFn) return;
+        if (!data->event_function) return;
 
-        EInputState State;
-        switch (Action) {
+        Input_State state;
+        switch (action) {
         case GLFW_PRESS:
-            State = EInputState::DOWN;
+            state = Input_State::DOWN;
             break;
         case GLFW_RELEASE:
-            State = EInputState::UP;
+            state = Input_State::UP;
             break;
         default:
             return;
         }
 
-        FEvent E = {};
-        E.Type = EEventType::MOUSE_BUTTON;
-        E.MBE.Button = static_cast<EMouseCode>(Button);
-        E.MBE.State = State;
-        Data->EventFn(&E);
+        Event e = {};
+        e.type = Event_Type::MOUSE_BUTTON;
+        e.mbe.button = static_cast<Mouse_Code>(button);
+        e.mbe.state = state;
+        data->event_function(&e);
     });
 
-    glfwSetCursorPosCallback(Handle, [](GLFWwindow *Window, double X, double Y) {
-        auto *Data = static_cast<FWindow *>(glfwGetWindowUserPointer(Window));
+    glfwSetCursorPosCallback(handle, [](GLFWwindow *window, double x, double y) {
+        auto *data = static_cast<Window *>(glfwGetWindowUserPointer(window));
 
-        if (!Data->EventFn) return;
+        if (!data->event_function) return;
 
-        FEvent E = {};
-        E.Type = EEventType::MOUSE_MOVE;
-        E.MME.X = static_cast<FFloat>(X);
-        E.MME.Y = static_cast<FFloat>(Y);
-        Data->EventFn(&E);
+        Event e = {};
+        e.type = Event_Type::MOUSE_MOVE;
+        e.mme.x = static_cast<f32>(x);
+        e.mme.y = static_cast<f32>(y);
+        data->event_function(&e);
     });
 
-    Window->Swapchain = GRHI.CreateSwapchain(Window);
-    if (!Window->Swapchain) {
+    window->swapchain = rhi.create_swapchain(window);
+    if (!window->swapchain) {
         SK_LOG_ERROR("Failed to create viewport for window");
         return false;
     }
 
-    Window->Open = true;
+    window->open = true;
 
     return true;
 }
 
-void PlatformCloseWindow(FWindow *Window) {
-    assert(Window);
+void platform_close_window(Window *window) {
+    assert(window);
 
-    if (!Window->Open) {
+    if (!window->open) {
         SK_LOG_WARN("Window already closed");
         return;
     }
 
-    auto Glfw = (GLFWwindow *)Window->PlatformHandle;
-    assert(Glfw);
+    auto glfw = (GLFWwindow *)window->platform_handle;
+    assert(glfw);
 
-    GRHI.DestroySwapchain(&Window->Swapchain);
+    rhi.destroy_swapchain(&window->swapchain);
 
-    glfwDestroyWindow(Glfw);
+    glfwDestroyWindow(glfw);
 
-    Window->PlatformHandle = 0;
+    window->platform_handle = 0;
 
-    Window->Open = false;
+    window->open = false;
 }
 
-bool PlatformInitImGui(const FWindow *Window) {
-    assert(Window);
+bool platform_init_imgui(const Window *window) {
+    assert(window);
 
-    if (!Window->Open) {
+    if (!window->open) {
         SK_LOG_ERROR("Failed to initialize imgui, window was not open");
         return false;
     }
 
-    auto Glfw = reinterpret_cast<GLFWwindow *>(Window->PlatformHandle);
-    assert(Glfw);
+    auto glfw = reinterpret_cast<GLFWwindow *>(window->platform_handle);
+    assert(glfw);
 
-    if (!ImGui_ImplGlfw_InitForVulkan(Glfw, true)) {
+    if (!ImGui_ImplGlfw_InitForVulkan(glfw, true)) {
         SK_LOG_ERROR("Failed to initialize imgui");
         return false;
     }
@@ -198,73 +199,71 @@ bool PlatformInitImGui(const FWindow *Window) {
     return true;
 }
 
-void PlatformImGuiNewFrame() {
+void platform_imgui_new_frame() {
     ImGui_ImplGlfw_NewFrame();
 }
 
-void PlatformShutdownImGui() {
+void platform_shutdown_imgui() {
     ImGui_ImplGlfw_Shutdown();
 }
 
-void PlatformProcessMessages() {
+void platform_process_messages() {
     glfwPollEvents();
 }
 
-void PlatformEnableRawInput(const FWindow *Window) {
-    assert(Window);
+void platform_enable_raw_input(const Window *window) {
+    assert(window);
 
-    if (!Window->Open) {
+    if (!window->open) {
         SK_LOG_WARN("Cannot enable raw input, window is not open");
         return;
     }
 
-    auto Glfw = reinterpret_cast<GLFWwindow *>(Window->PlatformHandle);
-    assert(Glfw);
+    auto glfw = reinterpret_cast<GLFWwindow *>(window->platform_handle);
+    assert(glfw);
 
-    glfwSetInputMode(Glfw, GLFW_RAW_MOUSE_MOTION, GLFW_TRUE);
+    glfwSetInputMode(glfw, GLFW_RAW_MOUSE_MOTION, GLFW_TRUE);
 }
 
-void PlatformDisableRawInput(const FWindow *Window) {
-    assert(Window);
+void platform_disable_raw_input(const Window *window) {
+    assert(window);
 
-    if (!Window->Open) {
+    if (!window->open) {
         SK_LOG_WARN("Cannot disable raw input, window is not open");
         return;
     }
 
-    auto Glfw = reinterpret_cast<GLFWwindow *>(Window->PlatformHandle);
-    assert(Glfw);
+    auto glfw = reinterpret_cast<GLFWwindow *>(window->platform_handle);
+    assert(glfw);
 
-
-
-    glfwSetInputMode(Glfw, GLFW_RAW_MOUSE_MOTION, GLFW_FALSE);
+    glfwSetInputMode(glfw, GLFW_RAW_MOUSE_MOTION, GLFW_FALSE);
 }
 
-void PlatformSetCursorVisibility(const FWindow *Window, ECursorVisibility Visibility) {
-    assert(Window);
+void platform_set_cursor_visibility(const Window *window, Cursor_Visibility visibility) {
+    assert(window);
 
-    if (!Window->Open) {
+    if (!window->open) {
         SK_LOG_WARN("Cannot disable raw input, window is not open");
         return;
     }
 
-    auto Glfw = reinterpret_cast<GLFWwindow *>(Window->PlatformHandle);
-    assert(Glfw);
+    auto glfw = reinterpret_cast<GLFWwindow *>(window->platform_handle);
+    assert(glfw);
 
-    FSInt32 GlfwVisibility;
-    switch (Visibility) {
-    case ECursorVisibility::NORMAL:
-        GlfwVisibility = GLFW_CURSOR_NORMAL;
+    s32 glfw_visibility;
+    switch (visibility) {
+    case Cursor_Visibility::NORMAL:
+        glfw_visibility = GLFW_CURSOR_NORMAL;
         break;
-    case ECursorVisibility::HIDDEN:
-        GlfwVisibility = GLFW_CURSOR_HIDDEN;
+    case Cursor_Visibility::HIDDEN:
+        glfw_visibility = GLFW_CURSOR_HIDDEN;
         break;
-    case ECursorVisibility::DISABLED:
-        GlfwVisibility = GLFW_CURSOR_DISABLED;
+    case Cursor_Visibility::DISABLED:
+        glfw_visibility = GLFW_CURSOR_DISABLED;
         break;
     default:
         return;
     }
 
-    glfwSetInputMode(Glfw, GLFW_CURSOR, GlfwVisibility);
+    glfwSetInputMode(glfw, GLFW_CURSOR, glfw_visibility);
 }

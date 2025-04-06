@@ -2,12 +2,12 @@
 
 #include <StakEngine.h>
 
-bool Init(FEngine *Engine, FApplication *App);
-void Shutdown(FEngine *Engine, FApplication *App);
-void Update(FEngine *Engine, FApplication *App);
-void OnImGuiRender(FEngine *Engine, FApplication *App);
+bool init(Engine *engine, Application *app);
+void shutdown(Engine *engine, Application *app);
+void Update(Engine *engine, Application *app);
+void on_imgui_render(Engine *engine, Application *app);
 
-struct FEditor {
-    FInputCallbackInfo EscapePressedCallbackInfo;
-    FInputCallbackInfo WPressedCallbackInfo;
+struct Editor {
+    Input_Callback_Info escape_pressed_callback_info;
+    Input_Callback_Info w_pressed_callback_info;
 };

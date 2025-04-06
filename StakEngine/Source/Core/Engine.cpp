@@ -5,62 +5,62 @@
 #include "RHI.h"
 #include "Platform.h"
 
-void EngineShutdown(FEngine *Engine) {
-    Engine->App->Shutdown(Engine, Engine->App);
+void engine_shutdown(Engine *engine) {
+    engine->app->shutdown(engine, engine->app);
 
-    ImGuiRendererShutdown(&Engine->ImGuiRenderer);
+    imgui_renderer_shutdown(&engine->imgui_renderer);
 
-    PlatformCloseWindow(&Engine->Window);
+    platform_close_window(&engine->window);
 
-    RendererShutdown(&Engine->Renderer);
+    renderer_shutdown(&engine->renderer);
 
-    RHIShutdown();
+    rhi_shutdown();
 
-    PlatformShutdown();
+    platform_shutdown();
 }
 
-bool EngineInit(FEngine *Engine, FEngineSpecification *Spec, FApplication *AppImpl) {
-    Engine->App = AppImpl;
+bool engine_init(Engine *engine, Engine_Specification *spec, Application *app) {
+    engine->app = app;
 
-    Engine->Name = Spec->AppName;
+    engine->name = spec->app_name;
 
-    if (!PlatformInit()) {
+    if (!platform_init()) {
         SK_LOG_ERROR("Failed to initialize platform");
         return false;
     }
 
-    if (!RHIInit(ERHIBackend::VULKAN)) {
+    if (!rhi_init(Rhi_Backend::VULKAN)) {
         SK_LOG_ERROR("Failed to initialize RHI");
         return false;
     }
 
-    FWindowConfig Cfg = {
-        Spec->WindowWidth,
-        Spec->WindowHeight,
-        Spec->WindowTitle,
-        ([Engine](FEvent *Event) {
-            EngineOnEvent(Engine, Event);
+    Window_Config cfg = {
+        spec->window_width,
+        spec->window_height,
+        spec->window_title,
+        ([engine](Event *event) {
+            engine_on_event(engine, event);
         })
     };
 
-    if (!PlatformOpenWindow(&Engine->Window, &Cfg)) {
+    if (!platform_open_window(&engine->window, &cfg)) {
         SK_LOG_ERROR("Failed to create window");
         return false;
     }
 
-    assert(InitializeInput(&Engine->Input, &Engine->Window));
+    assert(initialize_input(&engine->input, &engine->window));
 
-    if (!RendererInit(&Engine->Renderer, &Engine->Window, Spec->RenderToOffscreenBuffer)) {
+    if (!renderer_init(&engine->renderer, &engine->window, spec->render_to_offscreen_buffer)) {
         SK_LOG_ERROR("Failed to initialize renderer");
         return false;
     }
 
-    ImGuiRendererInit(&Engine->ImGuiRenderer, &Engine->Renderer);
+    imgui_renderer_init(&engine->imgui_renderer, &engine->renderer);
 
-    Engine->Running = true;
+    engine->running = true;
 
-    if (Engine->App) {
-        if (!Engine->App->Init(Engine, Engine->App)) {
+    if (engine->app) {
+        if (!engine->app->init(engine, engine->app)) {
             SK_LOG_ERROR("Failed to initialize application");
             return false;
         }
@@ -69,43 +69,43 @@ bool EngineInit(FEngine *Engine, FEngineSpecification *Spec, FApplication *AppIm
     return true;
 }
 
-void EngineRun(FEngine *Engine) {
-    while (Engine->Running) {
-        PlatformProcessMessages();
+void engine_run(Engine *engine) {
+    while (engine->running) {
+        platform_process_messages();
 
-        if (Engine->App->Update) Engine->App->Update(Engine, Engine->App);
+        if (engine->app->update) engine->app->update(engine, engine->app);
 
-        ImGuiRendererBeginFrame(&Engine->ImGuiRenderer);
-        if (Engine->App->OnImGuiRender) Engine->App->OnImGuiRender(Engine, Engine->App);
-        ImGuiRendererEndFrame(&Engine->ImGuiRenderer);
+        imgui_renderer_begin_frame(&engine->imgui_renderer);
+        if (engine->app->on_imgui_render) engine->app->on_imgui_render(engine, engine->app);
+        imgui_renderer_end_frame(&engine->imgui_renderer);
 
-        if (!RendererRender(&Engine->Renderer)) {
+        if (!renderer_render(&engine->renderer)) {
             SK_LOG_ERROR("Failed to render");
         }
     }
 }
 
-void EngineOnEvent(FEngine *Engine, FEvent *Event) {
-    switch (Event->Type) {
-    case EEventType::WINDOW_CLOSE:
-        Engine->Running = false;
+void engine_on_event(Engine *engine, Event *event) {
+    switch (event->type) {
+    case Event_Type::WINDOW_CLOSE:
+        engine->running = false;
         break;
-    case EEventType::KEY:
-        SetKey(&Engine->Input, Event->KE.Key, Event->KE.State);
+    case Event_Type::KEY:
+        SetKey(&engine->input, event->ke.key, event->ke.state);
         break;
-    case EEventType::MOUSE_BUTTON:
-        SetMouseButton(&Engine->Input, Event->MBE.Button, Event->MBE.State);
+    case Event_Type::MOUSE_BUTTON:
+        SetMouseButton(&engine->input, event->mbe.button, event->mbe.state);
         break;
-    case EEventType::MOUSE_MOVE:
-        SetMousePos(&Engine->Input, Event->MME.X, Event->MME.Y);
+    case Event_Type::MOUSE_MOVE:
+        SetMousePos(&engine->input, event->mme.x, event->mme.y);
         break;
     default:
         break;
     }
 
-    if (Engine->App->OnEvent) Engine->App->OnEvent(Engine, Event);
+    if (engine->app->on_event) engine->app->on_event(engine, event);
 }
 
-void EngineClose(FEngine *Engine) {
-    Engine->Running = false;
+void engine_close(Engine *engine) {
+    engine->running = false;
 }

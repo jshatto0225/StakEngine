@@ -6,19 +6,19 @@
 
 #include "Types.h"
 
-void LogInit();
+void log_init();
 
-extern TRef<spdlog::logger> GCoreLogger;
-extern TRef<spdlog::logger> GClientLogger;
+extern std::shared_ptr<spdlog::logger> global_core_logger;
+extern std::shared_ptr<spdlog::logger> g_client_logger;
 
-#define SK_LOG_TRACE(...)     GCoreLogger->trace(__VA_ARGS__)
-#define SK_LOG_INFO(...)      GCoreLogger->info(__VA_ARGS__)
-#define SK_LOG_WARN(...)      GCoreLogger->warn(__VA_ARGS__)
-#define SK_LOG_ERROR(...)     GCoreLogger->error(__VA_ARGS__)
-#define SK_LOG_CRITICAL(...)  GCoreLogger->critical(__VA_ARGS__)
+#define SK_LOG_TRACE(...)     global_core_logger->trace(__VA_ARGS__)
+#define SK_LOG_INFO(...)      global_core_logger->info(__VA_ARGS__)
+#define SK_LOG_WARN(...)      global_core_logger->warn(__VA_ARGS__)
+#define SK_LOG_ERROR(...)     global_core_logger->error(__VA_ARGS__)
+#define SK_LOG_CRITICAL(...)  global_core_logger->critical(__VA_ARGS__)
 
-#define LOG_TRACE(...)        GClientLogger->trace(__VA_ARGS__)
-#define LOG_INFO(...)         GClientLogger->info(__VA_ARGS__)
-#define LOG_WARN(...)         GClientLogger->warn(__VA_ARGS__)
-#define LOG_ERROR(...)        GClientLogger->error(__VA_ARGS__)
-#define LOG_CRITICAL(...)     GClientLogger->critical(__VA_ARGS__)
+#define LOG_TRACE(...)        g_client_logger->trace(__VA_ARGS__)
+#define LOG_INFO(...)         g_client_logger->info(__VA_ARGS__)
+#define LOG_WARN(...)         g_client_logger->warn(__VA_ARGS__)
+#define LOG_ERROR(...)        g_client_logger->error(__VA_ARGS__)
+#define LOG_CRITICAL(...)     g_client_logger->critical(__VA_ARGS__)

@@ -6,41 +6,30 @@
 #include "Types.h"
 #include "RHI.h"
 
-using FEventFn = std::function<void(FEvent *)>;
+using Event_Function = std::function<void(Event *)>;
 
-struct FWindowConfig {
-    FSInt32 Width;
-    FSInt32 Height;
-    const char *Title;
-    FEventFn EventFn;
+struct Window_Config {
+    s32 width;
+    s32 height;
+    const char *title;
+    Event_Function event_function;
 };
 
-struct FWindowSizeData {
-    FSInt32 Width;
-    FSInt32 Height;
-};
-
-struct FWindowPosData {
-    FSInt32 X;
-    FSInt32 Y;
-};
-
-struct FWindow {
-    FSInt32 X;
-    FSInt32 Y;
-    FSInt32 Width;
-    FSInt32 Height;
-    FSInt32 FramebufferWidth;
-    FSInt32 FramebufferHeight;
-    FUInt32 TitleLength;
-    const char *Title;
-    FEventFn EventFn;
-    bool Open;
+struct Window {
+    s32 x;
+    s32 y;
+    s32 width;
+    s32 height;
+    s32 framebuffer_width;
+    s32 framebuffer_height;
+    const char *title;
+    Event_Function event_function;
+    bool open;
 
     // NOTE: Only platform functions should touch this
     //   because it is probably implemented as a pointer/handle
     //   to a platform window
-    FHandle PlatformHandle;
+    Handle platform_handle;
 
-    FRHIResourceHandle Swapchain;
+    Rhi_Resource_Handle swapchain;
 };

@@ -6,9 +6,9 @@
 #include "Renderer.h"
 #include "Engine.h"
 
-bool ImGuiRendererInit(FImGuiRenderer *ImGuiRenderer, FRenderer *Renderer) {
-    ImGuiRenderer->Renderer = Renderer;
-    ImGuiRenderer->DrawData = nullptr;
+bool imgui_renderer_init(Imgui_Renderer *imgui_renderer, Renderer *renderer) {
+    imgui_renderer->renderer = renderer;
+    imgui_renderer->draw_data = nullptr;
 
     ImGui::CreateContext();
     ImGuiIO &io = ImGui::GetIO();
@@ -17,11 +17,11 @@ bool ImGuiRendererInit(FImGuiRenderer *ImGuiRenderer, FRenderer *Renderer) {
     io.ConfigFlags |= ImGuiConfigFlags_DockingEnable;
     ImGui::StyleColorsDark();
 
-    Renderer->GuiRenderFunc = [ImGuiRenderer] (FRHIResourceHandle List) {
-        GRHI.CmdRenderImGuiDrawData(List, ImGuiRenderer->DrawData);
+    renderer->gui_render_func = [imgui_renderer] (Rhi_Resource_Handle List) {
+        rhi.cmd_render_imgui_draw_data(List, imgui_renderer->draw_data);
     };
 
-    if (!RendererInitImGui(ImGuiRenderer->Renderer)) {
+    if (!renderer_init_imgui(imgui_renderer->renderer)) {
         SK_LOG_ERROR("Failed to initialize renderer for imgui");
         return false;
     }
@@ -29,22 +29,22 @@ bool ImGuiRendererInit(FImGuiRenderer *ImGuiRenderer, FRenderer *Renderer) {
     return true;
 }
 
-void ImGuiRendererShutdown(FImGuiRenderer *ImGuiRenderer) {
-    RendererShutdownImGui(ImGuiRenderer->Renderer);
+void imgui_renderer_shutdown(Imgui_Renderer *imgui_renderer) {
+    renderer_shutdown_imgui(imgui_renderer->renderer);
     ImGui::DestroyContext();
 }
 
-void ImGuiRendererBeginFrame(FImGuiRenderer *ImGuiRenderer) {
-    RendererImGuiNewFrame(ImGuiRenderer->Renderer);
+void imgui_renderer_begin_frame(Imgui_Renderer *imgui_renderer) {
+    renderer_imgui_new_frame(imgui_renderer->renderer);
     ImGui::NewFrame();
 }
 
-void ImGuiRendererEndFrame(FImGuiRenderer *ImGuiRenderer) {
+void imgui_renderer_end_frame(Imgui_Renderer *imgui_renderer) {
     ImGui::Render();
-    ImDrawData *Data = ImGui::GetDrawData();
-    const FBool IsMinimized = (Data->DisplaySize.x <= 0.0f || Data->DisplaySize.y <= 0.0f);
-    if (!IsMinimized) {
-        ImGuiRenderer->DrawData = Data;
+    ImDrawData *data = ImGui::GetDrawData();
+    const bool minimized = (data->DisplaySize.x <= 0.0f || data->DisplaySize.y <= 0.0f);
+    if (!minimized) {
+        imgui_renderer->draw_data = data;
     }
 }
 

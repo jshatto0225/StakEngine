@@ -4,65 +4,65 @@
 #include "VulkanRHI.h"
 #endif
 
-FRHI GRHI;
+Rhi rhi;
 
-bool RHIInit(ERHIBackend Backend) {
-    switch (Backend) {
-    case ERHIBackend::VULKAN:
-        GRHI = VulkanCreateRHI();
+bool rhi_init(Rhi_Backend backend) {
+    switch (backend) {
+    case Rhi_Backend::VULKAN:
+        rhi = vulkan_create_rhi();
         break;
     default:
         SK_LOG_ERROR("Unsupported RHI backend");
         return false;
     }
 
-    return GRHI.Init();
+    return rhi.init();
 }
 
-void RHIShutdown() {
-    GRHI.Shutdown();
-    GRHI = {};
+void rhi_shutdown() {
+    rhi.shutdown();
+    rhi = {};
 }
 
-static std::unordered_map<ERHIResourceState, std::unordered_map<ERHIResourceState, ERHITransitionType>> TransitionTypes = {
+static std::unordered_map<Rhi_Resource_State, std::unordered_map<Rhi_Resource_State, Rhi_Transition_Type>> transition_types = {
     {
-        ERHIResourceState::UNDEFINED,
+        Rhi_Resource_State::UNDEFINED,
         {
-            { ERHIResourceState::RENDER_TARGET,   ERHITransitionType::IMAGE   },
-            { ERHIResourceState::PRESENT,         ERHITransitionType::IMAGE   },
-            { ERHIResourceState::UNDEFINED,       ERHITransitionType::INVALID },
-            { ERHIResourceState::SHADER_RESOURCE, ERHITransitionType::IMAGE   },
+            { Rhi_Resource_State::RENDER_TARGET,   Rhi_Transition_Type::IMAGE   },
+            { Rhi_Resource_State::PRESENT,         Rhi_Transition_Type::IMAGE   },
+            { Rhi_Resource_State::UNDEFINED,       Rhi_Transition_Type::INVALID },
+            { Rhi_Resource_State::SHADER_RESOURCE, Rhi_Transition_Type::IMAGE   },
         }
     },
     {
-        ERHIResourceState::RENDER_TARGET,
+        Rhi_Resource_State::RENDER_TARGET,
         {
-            { ERHIResourceState::RENDER_TARGET,   ERHITransitionType::INVALID },
-            { ERHIResourceState::PRESENT,         ERHITransitionType::IMAGE   },
-            { ERHIResourceState::UNDEFINED,       ERHITransitionType::INVALID },
-            { ERHIResourceState::SHADER_RESOURCE, ERHITransitionType::IMAGE   },
+            { Rhi_Resource_State::RENDER_TARGET,   Rhi_Transition_Type::INVALID },
+            { Rhi_Resource_State::PRESENT,         Rhi_Transition_Type::IMAGE   },
+            { Rhi_Resource_State::UNDEFINED,       Rhi_Transition_Type::INVALID },
+            { Rhi_Resource_State::SHADER_RESOURCE, Rhi_Transition_Type::IMAGE   },
         }
     },
     {
-        ERHIResourceState::PRESENT,
+        Rhi_Resource_State::PRESENT,
         {
-            { ERHIResourceState::RENDER_TARGET,   ERHITransitionType::IMAGE   },
-            { ERHIResourceState::PRESENT,         ERHITransitionType::INVALID },
-            { ERHIResourceState::UNDEFINED,       ERHITransitionType::INVALID },
-            { ERHIResourceState::SHADER_RESOURCE, ERHITransitionType::IMAGE   },
+            { Rhi_Resource_State::RENDER_TARGET,   Rhi_Transition_Type::IMAGE   },
+            { Rhi_Resource_State::PRESENT,         Rhi_Transition_Type::INVALID },
+            { Rhi_Resource_State::UNDEFINED,       Rhi_Transition_Type::INVALID },
+            { Rhi_Resource_State::SHADER_RESOURCE, Rhi_Transition_Type::IMAGE   },
         }
     },
     {
-        ERHIResourceState::SHADER_RESOURCE,
+        Rhi_Resource_State::SHADER_RESOURCE,
         {
-            { ERHIResourceState::RENDER_TARGET,   ERHITransitionType::IMAGE   },
-            { ERHIResourceState::PRESENT,         ERHITransitionType::IMAGE   },
-            { ERHIResourceState::UNDEFINED,       ERHITransitionType::INVALID },
-            { ERHIResourceState::SHADER_RESOURCE, ERHITransitionType::INVALID },
+            { Rhi_Resource_State::RENDER_TARGET,   Rhi_Transition_Type::IMAGE   },
+            { Rhi_Resource_State::PRESENT,         Rhi_Transition_Type::IMAGE   },
+            { Rhi_Resource_State::UNDEFINED,       Rhi_Transition_Type::INVALID },
+            { Rhi_Resource_State::SHADER_RESOURCE, Rhi_Transition_Type::INVALID },
         }
     },
 };
 
-ERHITransitionType RHIGetTransitionType(ERHIResourceState Before, ERHIResourceState After) {
-    return TransitionTypes[Before][After];
+Rhi_Transition_Type rhi_get_transition_type(Rhi_Resource_State before, Rhi_Resource_State after) {
+    return transition_types[before][after];
 }

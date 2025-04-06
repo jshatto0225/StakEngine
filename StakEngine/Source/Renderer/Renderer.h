@@ -5,35 +5,35 @@
 #include "RHI.h"
 #include "Window.h"
 
-using FRenderFunc = std::function<void(FRHIResourceHandle)>;
+using Render_Func = std::function<void(Rhi_Resource_Handle)>;
 
-struct FRenderer {
-    static const FUInt32 MaxFramesInFlight = 2;
+struct Renderer {
+    static const u32 max_frames_in_flight = 2;
 
-    FRenderFunc GuiRenderFunc;
+    Render_Func gui_render_func;
 
-    FRHIResourceHandle CommandList;
-    FWindow *Window;
-    FRHIResourceHandle SwapchainTexture;
+    Rhi_Resource_Handle command_list;
+    Window *window;
+    Rhi_Resource_Handle swapchain_texture;
 
-    FUInt32 OffscreenBackbufferImageIndex;
-    FRHIResourceHandle  OffscreenBackbuffers[MaxFramesInFlight];
-    bool UseOffscreenBuffer;
+    u32 offscreen_backbuffer_image_index;
+    Rhi_Resource_Handle  offscreen_backbuffers[max_frames_in_flight];
+    bool use_offscreen_buffer;
 
-    FRHIResourceHandle PipelineLayout;
-    FRHIResourceHandle Pipeline;
+    Rhi_Resource_Handle pipeline_layout;
+    Rhi_Resource_Handle pipeline;
 };
 
-bool RendererInit(FRenderer *Renderer, FWindow *Window, bool RenderToOffscreenBuffer);
+bool renderer_init(Renderer *renderer, Window *window, bool render_to_offscreen_buffer);
 
-void RendererShutdown(FRenderer *Renderer);
+void renderer_shutdown(Renderer *renderer);
 
-bool RendererInitImGui(FRenderer *Renderer);
+bool renderer_init_imgui(Renderer *renderer);
 
-void RendererImGuiNewFrame(FRenderer *Renderer);
+void renderer_imgui_new_frame(Renderer *renderer);
 
-void RendererShutdownImGui(FRenderer *Renderer);
+void renderer_shutdown_imgui(Renderer *renderer);
 
-bool RendererRender(FRenderer *Renderer);
+bool renderer_render(Renderer *renderer);
 
-void RendererAddSceneToImGuiWindow(FRenderer *Renderer);
+void renderer_add_scene_to_imgui_window(Renderer *renderer);

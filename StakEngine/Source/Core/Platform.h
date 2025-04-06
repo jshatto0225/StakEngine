@@ -2,18 +2,18 @@
 
 #include "Window.h"
 
-bool PlatformInit();
-void PlatformShutdown();
+bool platform_init();
+void platform_shutdown();
 
-bool PlatformOpenWindow(FWindow *Window, const FWindowConfig *Cfg);
-void PlatformCloseWindow(FWindow *Window);
+bool platform_open_window(Window *window, const Window_Config *cfg);
+void platform_close_window(Window *window);
 
-bool PlatformInitImGui(const FWindow *Window);
+bool platform_init_imgui(const Window *window);
 
-void PlatformImGuiNewFrame();
-void PlatformShutdownImGui();
-void PlatformProcessMessages();
+void platform_imgui_new_frame();
+void platform_shutdown_imgui();
+void platform_process_messages();
 
-void PlatformEnableRawInput(const FWindow *Window);
-void PlatformDisableRawInput(const FWindow *Window);
-void PlatformSetCursorVisibility(const FWindow *Window, ECursorVisibility Visibility);
+void platform_enable_raw_input(const Window *window);
+void platform_disable_raw_input(const Window *window);
+void platform_set_cursor_visibility(const Window *window, Cursor_Visibility visibility);

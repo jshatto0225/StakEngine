@@ -3,27 +3,27 @@
 #include "Types.h"
 #include "Input.h"
 
-struct FWindowResizeEvent {
-    FSInt32 Width;
-    FSInt32 Height;
+struct Window_Resize_Event {
+    s32 width;
+    s32 height;
 };
 
-struct FKeyEvent {
-    EKeyCode Key;
-    EInputState State;
+struct Key_Event {
+    Key_Code key;
+    Input_State state;
 };
 
-struct FMouseButtonEvent {
-    EMouseCode Button;
-    EInputState State;
+struct Mouse_Button_Event {
+    Mouse_Code button;
+    Input_State state;
 };
 
-struct FMouseMoveEvent {
-    FFloat X;
-    FFloat Y;
+struct Mouse_Move_Event {
+    f32 x;
+    f32 y;
 };
 
-enum class EEventType {
+enum class Event_Type {
     WINDOW_RESIZE,
     KEY,
     MOUSE_BUTTON,
@@ -31,12 +31,12 @@ enum class EEventType {
     WINDOW_CLOSE,
 };
 
-struct FEvent {
-    EEventType Type;
+struct Event {
+    Event_Type type;
     union {
-        FWindowResizeEvent WRE;
-        FKeyEvent KE;
-        FMouseButtonEvent MBE;
-        FMouseMoveEvent MME;
+        Window_Resize_Event wre;
+        Key_Event ke;
+        Mouse_Button_Event mbe;
+        Mouse_Move_Event mme;
     };
 };

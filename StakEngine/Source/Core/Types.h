@@ -3,33 +3,19 @@
 #include <cstdint>
 #include <memory>
 
-typedef float FFloat;
-typedef double FDouble;
+typedef float f32;
+typedef double f64;
 
-typedef int64_t FSInt64;
-typedef int32_t FSInt32;
-typedef int16_t FSInt16;
-typedef int8_t  FSInt8;
+typedef int64_t s64;
+typedef int32_t s32;
+typedef int16_t s16;
+typedef int8_t  s8;
 
-typedef uint64_t FUInt64;
-typedef uint32_t FUInt32;
-typedef uint16_t FUInt16;
-typedef uint8_t  FUInt8;
+typedef uint64_t u64;
+typedef uint32_t u32;
+typedef uint16_t u16;
+typedef uint8_t  u8;
 
-typedef bool FBool;
-
-typedef FUInt64 FHandle;
-
-template <typename TType> using TScope = std::unique_ptr<TType>;
-template <typename TType, typename... Args>
-constexpr TScope<TType> TCreateScope(Args &&...args) {
-    return std::make_unique<TType>(std::forward<Args>(args)...);
-}
-
-template <typename TType> using TRef = std::shared_ptr<TType>;
-template <typename TType, typename... Args>
-constexpr TRef<TType> TCreateRef(Args &&...args) {
-    return std::make_shared<TType>(std::forward<Args>(args)...);
-}
+typedef u64 Handle;
 
 #define BIT(x) (1 << x)

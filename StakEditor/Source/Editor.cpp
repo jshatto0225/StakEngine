@@ -2,48 +2,48 @@
 
 #include "Editor.h"
 
-void InitializeApplication(FApplication *OutApp, FEngineSpecification *OutSpec) {
-    OutSpec->WindowWidth = 1920;
-    OutSpec->WindowHeight = 1080;
-    OutSpec->WindowTitle = "Stak Editor";
-    OutSpec->AppName = "StakEditor";
-    OutSpec->RenderToOffscreenBuffer = true;
+void initialize_application(Application *out_app, Engine_Specification *out_spec) {
+    out_spec->window_width = 1920;
+    out_spec->window_height = 1080;
+    out_spec->window_title = "Stak Editor";
+    out_spec->app_name = "StakEditor";
+    out_spec->render_to_offscreen_buffer = true;
 
-    auto Editor = new FEditor;
-    OutApp->Init = Init;
-    OutApp->Shutdown = Shutdown;
-    OutApp->OnImGuiRender = OnImGuiRender;
-    OutApp->UserData = Editor;
+    auto editor = new Editor;
+    out_app->init = init;
+    out_app->shutdown = shutdown;
+    out_app->on_imgui_render = on_imgui_render;
+    out_app->user_data = editor;
 }
 
-void DestroyApplication(FApplication *App) {
-    auto Editor = static_cast<FEditor *>(App->UserData);
-    delete Editor;
+void destroy_application(Application *app) {
+    auto editor = static_cast<Editor *>(app->user_data);
+    delete editor;
 }
 
-bool Init(FEngine *Engine, FApplication *App) {
-    auto Editor = static_cast<FEditor *>(App->UserData);
+bool init(Engine *engine, Application *app) {
+    auto editor = static_cast<Editor *>(app->user_data);
 
-    Editor->EscapePressedCallbackInfo = AddKeyPressCallback(&Engine->Input, EKeyCode::ESCAPE, [Engine]() {
+    editor->escape_pressed_callback_info = add_key_press_callback(&engine->input, Key_Code::ESCAPE, [engine]() {
         LOG_TRACE("[Callback Input] Escape pressed. Quitting.");
-        EngineClose(Engine);
+        engine_close(engine);
     });
-    Editor->WPressedCallbackInfo = AddKeyPressCallback(&Engine->Input, EKeyCode::W, []() {
+    editor->w_pressed_callback_info = add_key_press_callback(&engine->input, Key_Code::W, []() {
         LOG_TRACE("[Callback Input] W pressed");
     });
 
     return true;
 }
 
-void Shutdown(FEngine *Engine, FApplication *App) {
-    auto Editor = static_cast<FEditor *>(App->UserData);
+void shutdown(Engine *engine, Application *app) {
+    auto editor = static_cast<Editor *>(app->user_data);
 
-    RemoveCallback(&Engine->Input, Editor->EscapePressedCallbackInfo);
-    RemoveCallback(&Engine->Input, Editor->WPressedCallbackInfo);
+    RemoveCallback(&engine->input, editor->escape_pressed_callback_info);
+    RemoveCallback(&engine->input, editor->w_pressed_callback_info);
 }
 
-void OnImGuiRender(FEngine *Engine, FApplication *App) {
-    auto Editor = static_cast<FEditor *>(App->UserData);
+void on_imgui_render(Engine *engine, Application *app) {
+    auto editor = static_cast<Editor *>(app->user_data);
 
     static bool opt_fullscreen = true;
     static bool opt_padding = false;
@@ -115,17 +115,17 @@ void OnImGuiRender(FEngine *Engine, FApplication *App) {
 
         ImGui::Begin("Scene View");
         {
-            RendererAddSceneToImGuiWindow(&Engine->Renderer);
+            renderer_add_scene_to_imgui_window(&engine->renderer);
         }
         ImGui::End();
     }
     ImGui::End();
 }
 
-void Update(FEngine *Engine, FApplication *App) {
-    auto Editor = static_cast<FEditor *>(App->UserData);
+void Update(Engine *engine, Application *app) {
+    auto editor = static_cast<Editor *>(app->user_data);
 
-    if (Engine->Input.Keyboard[EKeyCode::SPACE] == EInputState::DOWN) {
+    if (engine->input.keyboard[Key_Code::SPACE] == Input_State::DOWN) {
         LOG_TRACE("[Polled Input] Space Pressed");
     }
 }

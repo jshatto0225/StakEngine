@@ -8,40 +8,40 @@
 #include "Input.h"
 #include "ImGuiRenderer.h"
 
-struct FEngine;
+struct Engine;
 
-struct FApplication {
-    bool (*Init)          (FEngine *, FApplication *);
-    void (*Shutdown)      (FEngine *, FApplication *);
-    void (*OnImGuiRender) (FEngine *, FApplication *);
-    void (*Update)        (FEngine *, FApplication *);
-    void (*OnEvent)       (FEngine *, FEvent *);
+struct Application {
+    bool (*init)            (Engine *, Application *);
+    void (*shutdown)        (Engine *, Application *);
+    void (*on_imgui_render) (Engine *, Application *);
+    void (*update)          (Engine *, Application *);
+    void (*on_event)        (Engine *, Event *);
 
-    void *UserData;
+    void *user_data;
 };
 
-struct FEngineSpecification {
-    const char *WindowTitle;
-    const char *AppName;
-    FSInt32 WindowWidth;
-    FSInt32 WindowHeight;
-    bool RenderToOffscreenBuffer;
+struct Engine_Specification {
+    const char *window_title;
+    const char *app_name;
+    s32 window_width;
+    s32 window_height;
+    bool render_to_offscreen_buffer;
 };
 
-struct FEngine {
-    FApplication *App;
-    FWindow Window;
-    FRenderer Renderer;
-    FInput Input;
-    FBool Running;
-    FImGuiRenderer ImGuiRenderer;
-    const char *Name;
+struct Engine {
+    Application *app;
+    Window window;
+    Renderer renderer;
+    Input input;
+    bool running;
+    Imgui_Renderer imgui_renderer;
+    const char *name;
 };
 
-bool EngineInit(FEngine *Engine, FEngineSpecification *Spec, FApplication *AppImpl);
-void EngineShutdown(FEngine *Engine);
+bool engine_init(Engine *engine, Engine_Specification *spec, Application *app_impl);
+void engine_shutdown(Engine *engine);
 
-void EngineRun(FEngine *Engine);
-void EngineClose(FEngine *Engine);
+void engine_run(Engine *engine);
+void engine_close(Engine *engine);
 
-void EngineOnEvent(FEngine *Engine, FEvent *Event);
+void engine_on_event(Engine *engine, Event *event);

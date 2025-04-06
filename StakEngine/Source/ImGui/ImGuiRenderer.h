@@ -6,15 +6,15 @@
 #include "Window.h"
 #include "Renderer.h"
 
-struct FImGuiRenderer {
-    ImDrawData *DrawData;
-    FRenderer *Renderer;
+struct Imgui_Renderer {
+    ImDrawData *draw_data;
+    Renderer *renderer;
 };
 
-void ImGuiRendererBeginFrame(FImGuiRenderer *ImGuiRenderer);
+void imgui_renderer_begin_frame(Imgui_Renderer *imgui_renderer);
 
-void ImGuiRendererEndFrame(FImGuiRenderer *ImGuiRenderer);
+void imgui_renderer_end_frame(Imgui_Renderer *imgui_renderer);
 
-bool ImGuiRendererInit(FImGuiRenderer *ImGuiRenderer, FRenderer *Renderer);
+bool imgui_renderer_init(Imgui_Renderer *imgui_renderer, Renderer *renderer);
 
-void ImGuiRendererShutdown(FImGuiRenderer *ImGuiRenderer);
+void imgui_renderer_shutdown(Imgui_Renderer *imgui_renderer);

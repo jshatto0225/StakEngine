@@ -6,495 +6,495 @@
 #undef DELETE
 
 
-bool InitializeInput(FInput *Input, FWindow *Window) {
-    Input->Window = Window;
+bool initialize_input(Input *input, Window *window) {
+    input->window = window;
 
-    Input->Keyboard[EKeyCode::UNKNOWN] = EInputState::UP;
-    Input->Keyboard[EKeyCode::SPACE] = EInputState::UP;
-    Input->Keyboard[EKeyCode::APOSTROPHE] = EInputState::UP;
-    Input->Keyboard[EKeyCode::COMMA] = EInputState::UP;
-    Input->Keyboard[EKeyCode::MINUS] = EInputState::UP;
-    Input->Keyboard[EKeyCode::PERIOD] = EInputState::UP;
-    Input->Keyboard[EKeyCode::SLASH] = EInputState::UP;
-    Input->Keyboard[EKeyCode::ZERO] = EInputState::UP;
-    Input->Keyboard[EKeyCode::ONE] = EInputState::UP;
-    Input->Keyboard[EKeyCode::TWO] = EInputState::UP;
-    Input->Keyboard[EKeyCode::THREE] = EInputState::UP;
-    Input->Keyboard[EKeyCode::FOUR] = EInputState::UP;
-    Input->Keyboard[EKeyCode::FIVE] = EInputState::UP;
-    Input->Keyboard[EKeyCode::SIX] = EInputState::UP;
-    Input->Keyboard[EKeyCode::SEVEN] = EInputState::UP;
-    Input->Keyboard[EKeyCode::EIGHT] = EInputState::UP;
-    Input->Keyboard[EKeyCode::NINE] = EInputState::UP;
-    Input->Keyboard[EKeyCode::SEMICOLON] = EInputState::UP;
-    Input->Keyboard[EKeyCode::EQUAL] = EInputState::UP;
-    Input->Keyboard[EKeyCode::A] = EInputState::UP;
-    Input->Keyboard[EKeyCode::B] = EInputState::UP;
-    Input->Keyboard[EKeyCode::C] = EInputState::UP;
-    Input->Keyboard[EKeyCode::D] = EInputState::UP;
-    Input->Keyboard[EKeyCode::E] = EInputState::UP;
-    Input->Keyboard[EKeyCode::F] = EInputState::UP;
-    Input->Keyboard[EKeyCode::G] = EInputState::UP;
-    Input->Keyboard[EKeyCode::H] = EInputState::UP;
-    Input->Keyboard[EKeyCode::I] = EInputState::UP;
-    Input->Keyboard[EKeyCode::J] = EInputState::UP;
-    Input->Keyboard[EKeyCode::K] = EInputState::UP;
-    Input->Keyboard[EKeyCode::L] = EInputState::UP;
-    Input->Keyboard[EKeyCode::M] = EInputState::UP;
-    Input->Keyboard[EKeyCode::N] = EInputState::UP;
-    Input->Keyboard[EKeyCode::O] = EInputState::UP;
-    Input->Keyboard[EKeyCode::P] = EInputState::UP;
-    Input->Keyboard[EKeyCode::Q] = EInputState::UP;
-    Input->Keyboard[EKeyCode::R] = EInputState::UP;
-    Input->Keyboard[EKeyCode::S] = EInputState::UP;
-    Input->Keyboard[EKeyCode::T] = EInputState::UP;
-    Input->Keyboard[EKeyCode::U] = EInputState::UP;
-    Input->Keyboard[EKeyCode::V] = EInputState::UP;
-    Input->Keyboard[EKeyCode::W] = EInputState::UP;
-    Input->Keyboard[EKeyCode::X] = EInputState::UP;
-    Input->Keyboard[EKeyCode::Y] = EInputState::UP;
-    Input->Keyboard[EKeyCode::Z] = EInputState::UP;
-    Input->Keyboard[EKeyCode::LEFT_BRACKET] = EInputState::UP;
-    Input->Keyboard[EKeyCode::BACKSLASH] = EInputState::UP;
-    Input->Keyboard[EKeyCode::RIGHT_BRACKET] = EInputState::UP;
-    Input->Keyboard[EKeyCode::GRAVE_ACCENT] = EInputState::UP;
-    Input->Keyboard[EKeyCode::WORLD_1] = EInputState::UP;
-    Input->Keyboard[EKeyCode::WORLD_2] = EInputState::UP;
-    Input->Keyboard[EKeyCode::ESCAPE] = EInputState::UP;
-    Input->Keyboard[EKeyCode::ENTER] = EInputState::UP;
-    Input->Keyboard[EKeyCode::TAB] = EInputState::UP;
-    Input->Keyboard[EKeyCode::BACKSPACE] = EInputState::UP;
-    Input->Keyboard[EKeyCode::INSERT] = EInputState::UP;
-    Input->Keyboard[EKeyCode::DELETE] = EInputState::UP;
-    Input->Keyboard[EKeyCode::RIGHT] = EInputState::UP;
-    Input->Keyboard[EKeyCode::LEFT] = EInputState::UP;
-    Input->Keyboard[EKeyCode::DOWN] = EInputState::UP;
-    Input->Keyboard[EKeyCode::UP] = EInputState::UP;
-    Input->Keyboard[EKeyCode::PAGE_UP] = EInputState::UP;
-    Input->Keyboard[EKeyCode::PAGE_DOWN] = EInputState::UP;
-    Input->Keyboard[EKeyCode::HOME] = EInputState::UP;
-    Input->Keyboard[EKeyCode::END] = EInputState::UP;
-    Input->Keyboard[EKeyCode::CAPS_LOCK] = EInputState::UP;
-    Input->Keyboard[EKeyCode::SCROLL_LOCK] = EInputState::UP;
-    Input->Keyboard[EKeyCode::NUM_LOCK] = EInputState::UP;
-    Input->Keyboard[EKeyCode::PRINT_SCREEN] = EInputState::UP;
-    Input->Keyboard[EKeyCode::PAUSE] = EInputState::UP;
-    Input->Keyboard[EKeyCode::F1] = EInputState::UP;
-    Input->Keyboard[EKeyCode::F2] = EInputState::UP;
-    Input->Keyboard[EKeyCode::F3] = EInputState::UP;
-    Input->Keyboard[EKeyCode::F4] = EInputState::UP;
-    Input->Keyboard[EKeyCode::F5] = EInputState::UP;
-    Input->Keyboard[EKeyCode::F6] = EInputState::UP;
-    Input->Keyboard[EKeyCode::F7] = EInputState::UP;
-    Input->Keyboard[EKeyCode::F8] = EInputState::UP;
-    Input->Keyboard[EKeyCode::F9] = EInputState::UP;
-    Input->Keyboard[EKeyCode::F10] = EInputState::UP;
-    Input->Keyboard[EKeyCode::F11] = EInputState::UP;
-    Input->Keyboard[EKeyCode::F12] = EInputState::UP;
-    Input->Keyboard[EKeyCode::F13] = EInputState::UP;
-    Input->Keyboard[EKeyCode::F14] = EInputState::UP;
-    Input->Keyboard[EKeyCode::F15] = EInputState::UP;
-    Input->Keyboard[EKeyCode::F16] = EInputState::UP;
-    Input->Keyboard[EKeyCode::F17] = EInputState::UP;
-    Input->Keyboard[EKeyCode::F18] = EInputState::UP;
-    Input->Keyboard[EKeyCode::F19] = EInputState::UP;
-    Input->Keyboard[EKeyCode::F20] = EInputState::UP;
-    Input->Keyboard[EKeyCode::F21] = EInputState::UP;
-    Input->Keyboard[EKeyCode::F22] = EInputState::UP;
-    Input->Keyboard[EKeyCode::F23] = EInputState::UP;
-    Input->Keyboard[EKeyCode::F24] = EInputState::UP;
-    Input->Keyboard[EKeyCode::F25] = EInputState::UP;
-    Input->Keyboard[EKeyCode::KP_0] = EInputState::UP;
-    Input->Keyboard[EKeyCode::KP_1] = EInputState::UP;
-    Input->Keyboard[EKeyCode::KP_2] = EInputState::UP;
-    Input->Keyboard[EKeyCode::KP_3] = EInputState::UP;
-    Input->Keyboard[EKeyCode::KP_4] = EInputState::UP;
-    Input->Keyboard[EKeyCode::KP_5] = EInputState::UP;
-    Input->Keyboard[EKeyCode::KP_6] = EInputState::UP;
-    Input->Keyboard[EKeyCode::KP_7] = EInputState::UP;
-    Input->Keyboard[EKeyCode::KP_8] = EInputState::UP;
-    Input->Keyboard[EKeyCode::KP_9] = EInputState::UP;
-    Input->Keyboard[EKeyCode::KP_DECIMAL] = EInputState::UP;
-    Input->Keyboard[EKeyCode::KP_DIVIDE] = EInputState::UP;
-    Input->Keyboard[EKeyCode::KP_MULTIPLY] = EInputState::UP;
-    Input->Keyboard[EKeyCode::KP_SUBTRACT] = EInputState::UP;
-    Input->Keyboard[EKeyCode::KP_ADD] = EInputState::UP;
-    Input->Keyboard[EKeyCode::KP_ENTER] = EInputState::UP;
-    Input->Keyboard[EKeyCode::KP_EQUAL] = EInputState::UP;
-    Input->Keyboard[EKeyCode::LEFT_SHIFT] = EInputState::UP;
-    Input->Keyboard[EKeyCode::LEFT_CONTROL] = EInputState::UP;
-    Input->Keyboard[EKeyCode::LEFT_ALT] = EInputState::UP;
-    Input->Keyboard[EKeyCode::LEFT_SUPER] = EInputState::UP;
-    Input->Keyboard[EKeyCode::RIGHT_SHIFT] = EInputState::UP;
-    Input->Keyboard[EKeyCode::RIGHT_CONTROL] = EInputState::UP;
-    Input->Keyboard[EKeyCode::RIGHT_ALT] = EInputState::UP;
-    Input->Keyboard[EKeyCode::RIGHT_SUPER] = EInputState::UP;
-    Input->Keyboard[EKeyCode::MENU] = EInputState::UP;
-    Input->Keyboard[EKeyCode::LAST] = EInputState::UP;
+    input->keyboard[Key_Code::UNKNOWN] = Input_State::UP;
+    input->keyboard[Key_Code::SPACE] = Input_State::UP;
+    input->keyboard[Key_Code::APOSTROPHE] = Input_State::UP;
+    input->keyboard[Key_Code::COMMA] = Input_State::UP;
+    input->keyboard[Key_Code::MINUS] = Input_State::UP;
+    input->keyboard[Key_Code::PERIOD] = Input_State::UP;
+    input->keyboard[Key_Code::SLASH] = Input_State::UP;
+    input->keyboard[Key_Code::ZERO] = Input_State::UP;
+    input->keyboard[Key_Code::ONE] = Input_State::UP;
+    input->keyboard[Key_Code::TWO] = Input_State::UP;
+    input->keyboard[Key_Code::THREE] = Input_State::UP;
+    input->keyboard[Key_Code::FOUR] = Input_State::UP;
+    input->keyboard[Key_Code::FIVE] = Input_State::UP;
+    input->keyboard[Key_Code::SIX] = Input_State::UP;
+    input->keyboard[Key_Code::SEVEN] = Input_State::UP;
+    input->keyboard[Key_Code::EIGHT] = Input_State::UP;
+    input->keyboard[Key_Code::NINE] = Input_State::UP;
+    input->keyboard[Key_Code::SEMICOLON] = Input_State::UP;
+    input->keyboard[Key_Code::EQUAL] = Input_State::UP;
+    input->keyboard[Key_Code::A] = Input_State::UP;
+    input->keyboard[Key_Code::B] = Input_State::UP;
+    input->keyboard[Key_Code::C] = Input_State::UP;
+    input->keyboard[Key_Code::D] = Input_State::UP;
+    input->keyboard[Key_Code::E] = Input_State::UP;
+    input->keyboard[Key_Code::F] = Input_State::UP;
+    input->keyboard[Key_Code::G] = Input_State::UP;
+    input->keyboard[Key_Code::H] = Input_State::UP;
+    input->keyboard[Key_Code::I] = Input_State::UP;
+    input->keyboard[Key_Code::J] = Input_State::UP;
+    input->keyboard[Key_Code::K] = Input_State::UP;
+    input->keyboard[Key_Code::L] = Input_State::UP;
+    input->keyboard[Key_Code::M] = Input_State::UP;
+    input->keyboard[Key_Code::N] = Input_State::UP;
+    input->keyboard[Key_Code::O] = Input_State::UP;
+    input->keyboard[Key_Code::P] = Input_State::UP;
+    input->keyboard[Key_Code::Q] = Input_State::UP;
+    input->keyboard[Key_Code::R] = Input_State::UP;
+    input->keyboard[Key_Code::S] = Input_State::UP;
+    input->keyboard[Key_Code::T] = Input_State::UP;
+    input->keyboard[Key_Code::U] = Input_State::UP;
+    input->keyboard[Key_Code::V] = Input_State::UP;
+    input->keyboard[Key_Code::W] = Input_State::UP;
+    input->keyboard[Key_Code::x] = Input_State::UP;
+    input->keyboard[Key_Code::y] = Input_State::UP;
+    input->keyboard[Key_Code::Z] = Input_State::UP;
+    input->keyboard[Key_Code::LEFT_BRACKET] = Input_State::UP;
+    input->keyboard[Key_Code::BACKSLASH] = Input_State::UP;
+    input->keyboard[Key_Code::RIGHT_BRACKET] = Input_State::UP;
+    input->keyboard[Key_Code::GRAVE_ACCENT] = Input_State::UP;
+    input->keyboard[Key_Code::WORLD_1] = Input_State::UP;
+    input->keyboard[Key_Code::WORLD_2] = Input_State::UP;
+    input->keyboard[Key_Code::ESCAPE] = Input_State::UP;
+    input->keyboard[Key_Code::ENTER] = Input_State::UP;
+    input->keyboard[Key_Code::TAB] = Input_State::UP;
+    input->keyboard[Key_Code::BACKSPACE] = Input_State::UP;
+    input->keyboard[Key_Code::INSERT] = Input_State::UP;
+    input->keyboard[Key_Code::DELETE] = Input_State::UP;
+    input->keyboard[Key_Code::RIGHT] = Input_State::UP;
+    input->keyboard[Key_Code::LEFT] = Input_State::UP;
+    input->keyboard[Key_Code::DOWN] = Input_State::UP;
+    input->keyboard[Key_Code::UP] = Input_State::UP;
+    input->keyboard[Key_Code::PAGE_UP] = Input_State::UP;
+    input->keyboard[Key_Code::PAGE_DOWN] = Input_State::UP;
+    input->keyboard[Key_Code::HOME] = Input_State::UP;
+    input->keyboard[Key_Code::END] = Input_State::UP;
+    input->keyboard[Key_Code::CAPS_LOCK] = Input_State::UP;
+    input->keyboard[Key_Code::SCROLL_LOCK] = Input_State::UP;
+    input->keyboard[Key_Code::NUM_LOCK] = Input_State::UP;
+    input->keyboard[Key_Code::PRINT_SCREEN] = Input_State::UP;
+    input->keyboard[Key_Code::PAUSE] = Input_State::UP;
+    input->keyboard[Key_Code::F1] = Input_State::UP;
+    input->keyboard[Key_Code::F2] = Input_State::UP;
+    input->keyboard[Key_Code::F3] = Input_State::UP;
+    input->keyboard[Key_Code::F4] = Input_State::UP;
+    input->keyboard[Key_Code::F5] = Input_State::UP;
+    input->keyboard[Key_Code::F6] = Input_State::UP;
+    input->keyboard[Key_Code::F7] = Input_State::UP;
+    input->keyboard[Key_Code::F8] = Input_State::UP;
+    input->keyboard[Key_Code::F9] = Input_State::UP;
+    input->keyboard[Key_Code::F10] = Input_State::UP;
+    input->keyboard[Key_Code::F11] = Input_State::UP;
+    input->keyboard[Key_Code::F12] = Input_State::UP;
+    input->keyboard[Key_Code::F13] = Input_State::UP;
+    input->keyboard[Key_Code::F14] = Input_State::UP;
+    input->keyboard[Key_Code::F15] = Input_State::UP;
+    input->keyboard[Key_Code::F16] = Input_State::UP;
+    input->keyboard[Key_Code::F17] = Input_State::UP;
+    input->keyboard[Key_Code::F18] = Input_State::UP;
+    input->keyboard[Key_Code::F19] = Input_State::UP;
+    input->keyboard[Key_Code::F20] = Input_State::UP;
+    input->keyboard[Key_Code::F21] = Input_State::UP;
+    input->keyboard[Key_Code::F22] = Input_State::UP;
+    input->keyboard[Key_Code::F23] = Input_State::UP;
+    input->keyboard[Key_Code::F24] = Input_State::UP;
+    input->keyboard[Key_Code::F25] = Input_State::UP;
+    input->keyboard[Key_Code::KP_0] = Input_State::UP;
+    input->keyboard[Key_Code::KP_1] = Input_State::UP;
+    input->keyboard[Key_Code::KP_2] = Input_State::UP;
+    input->keyboard[Key_Code::KP_3] = Input_State::UP;
+    input->keyboard[Key_Code::KP_4] = Input_State::UP;
+    input->keyboard[Key_Code::KP_5] = Input_State::UP;
+    input->keyboard[Key_Code::KP_6] = Input_State::UP;
+    input->keyboard[Key_Code::KP_7] = Input_State::UP;
+    input->keyboard[Key_Code::KP_8] = Input_State::UP;
+    input->keyboard[Key_Code::KP_9] = Input_State::UP;
+    input->keyboard[Key_Code::KP_DECIMAL] = Input_State::UP;
+    input->keyboard[Key_Code::KP_DIVIDE] = Input_State::UP;
+    input->keyboard[Key_Code::KP_MULTIPLY] = Input_State::UP;
+    input->keyboard[Key_Code::KP_SUBTRACT] = Input_State::UP;
+    input->keyboard[Key_Code::KP_ADD] = Input_State::UP;
+    input->keyboard[Key_Code::KP_ENTER] = Input_State::UP;
+    input->keyboard[Key_Code::KP_EQUAL] = Input_State::UP;
+    input->keyboard[Key_Code::LEFT_SHIFT] = Input_State::UP;
+    input->keyboard[Key_Code::LEFT_CONTROL] = Input_State::UP;
+    input->keyboard[Key_Code::LEFT_ALT] = Input_State::UP;
+    input->keyboard[Key_Code::LEFT_SUPER] = Input_State::UP;
+    input->keyboard[Key_Code::RIGHT_SHIFT] = Input_State::UP;
+    input->keyboard[Key_Code::RIGHT_CONTROL] = Input_State::UP;
+    input->keyboard[Key_Code::RIGHT_ALT] = Input_State::UP;
+    input->keyboard[Key_Code::RIGHT_SUPER] = Input_State::UP;
+    input->keyboard[Key_Code::MENU] = Input_State::UP;
+    input->keyboard[Key_Code::LAST] = Input_State::UP;
 
-    Input->Mouse.Buttons[EMouseCode::ONE] = EInputState::UP;
-    Input->Mouse.Buttons[EMouseCode::TWO] = EInputState::UP;
-    Input->Mouse.Buttons[EMouseCode::THREE] = EInputState::UP;
-    Input->Mouse.Buttons[EMouseCode::FOUR] = EInputState::UP;
-    Input->Mouse.Buttons[EMouseCode::FIVE] = EInputState::UP;
-    Input->Mouse.Buttons[EMouseCode::SIX] = EInputState::UP;
-    Input->Mouse.Buttons[EMouseCode::SEVEN] = EInputState::UP;
-    Input->Mouse.Buttons[EMouseCode::EIGHT] = EInputState::UP;
-    Input->Mouse.Buttons[EMouseCode::LAST] = EInputState::UP;
-    Input->Mouse.Buttons[EMouseCode::LEFT] = EInputState::UP;
-    Input->Mouse.Buttons[EMouseCode::RIGHT] = EInputState::UP;
-    Input->Mouse.Buttons[EMouseCode::MIDDLE] = EInputState::UP;
+    input->mouse.buttons[Mouse_Code::ONE] = Input_State::UP;
+    input->mouse.buttons[Mouse_Code::TWO] = Input_State::UP;
+    input->mouse.buttons[Mouse_Code::THREE] = Input_State::UP;
+    input->mouse.buttons[Mouse_Code::FOUR] = Input_State::UP;
+    input->mouse.buttons[Mouse_Code::FIVE] = Input_State::UP;
+    input->mouse.buttons[Mouse_Code::SIX] = Input_State::UP;
+    input->mouse.buttons[Mouse_Code::SEVEN] = Input_State::UP;
+    input->mouse.buttons[Mouse_Code::EIGHT] = Input_State::UP;
+    input->mouse.buttons[Mouse_Code::LAST] = Input_State::UP;
+    input->mouse.buttons[Mouse_Code::LEFT] = Input_State::UP;
+    input->mouse.buttons[Mouse_Code::RIGHT] = Input_State::UP;
+    input->mouse.buttons[Mouse_Code::MIDDLE] = Input_State::UP;
 
-    Input->UsingRawInput = false;
-    Input->CursorVisibility = ECursorVisibility::NORMAL;
+    input->using_raw_input = false;
+    input->cursor_visibility = Cursor_Visibility::NORMAL;
 
     return true;
 }
 
-FInputCallbackInfo AddKeyPressCallback(FInput *Input, EKeyCode Key, std::function<void()> Func) {
-    Input->KeyPressCallbacks[Key][Input->KeyPressId] = Func;
+Input_Callback_Info add_key_press_callback(Input *input, Key_Code key, std::function<void()> func) {
+    input->key_press_callbacks[key][input->key_press_id] = func;
 
-    FInputCallbackInfo Info = {};
+    Input_Callback_Info info = {};
 
-    Info.Type = ECallbackType::KEY;
-    Info.Key = Key;
-    Info.Action = EInputState::DOWN;
-    Info.Id = Input->KeyPressId;
+    info.type = Input_Callback_Type::KEY;
+    info.key = key;
+    info.action = Input_State::DOWN;
+    info.id = input->key_press_id;
 
-    Input->KeyPressId++;
+    input->key_press_id++;
 
-    return Info;
+    return info;
 }
 
-FInputCallbackInfo AddKeyReleaseCallback(FInput *Input, EKeyCode Key, std::function<void()> Func) {
-    Input->KeyReleaseCallbacks[Key][Input->KeyReleaseId] = Func;
+Input_Callback_Info add_key_release_callback(Input *input, Key_Code key, std::function<void()> func) {
+    input->key_release_callbacks[key][input->key_release_id] = func;
 
-    FInputCallbackInfo Info = {};
+    Input_Callback_Info info = {};
 
-    Info.Type = ECallbackType::KEY;
-    Info.Key = Key;
-    Info.Action = EInputState::UP;
-    Info.Id = Input->KeyReleaseId;
+    info.type = Input_Callback_Type::KEY;
+    info.key = key;
+    info.action = Input_State::UP;
+    info.id = input->key_release_id;
 
-    Input->KeyReleaseId++;
+    input->key_release_id++;
 
-    return Info;
+    return info;
 }
 
-FInputCallbackInfo AddAnyKeyPressCallback(FInput *Input, std::function<void(EKeyCode)> Func) {
-    Input->AnyKeyPressCallbacks[Input->AnyKeyPressId] = Func;
+Input_Callback_Info add_any_key_press_callback(Input *input, std::function<void(Key_Code)> func) {
+    input->any_key_press_callbacks[input->any_key_press_id] = func;
 
-    FInputCallbackInfo Info = {};
+    Input_Callback_Info info = {};
 
-    Info.Type = ECallbackType::KEY;
-    Info.Action = EInputState::DOWN;
-    Info.IsAnyCode = true;
-    Info.Id = Input->AnyKeyPressId;
+    info.type = Input_Callback_Type::KEY;
+    info.action = Input_State::DOWN;
+    info.is_any_code = true;
+    info.id = input->any_key_press_id;
 
-    Input->AnyKeyPressId++;
+    input->any_key_press_id++;
 
-    return Info;
+    return info;
 }
 
-FInputCallbackInfo AddAnyKeyReleaseCallback(FInput *Input, std::function<void(EKeyCode)> Func) {
-    Input->AnyKeyReleaseCallbacks[Input->AnyKeyReleaseId] = Func;
+Input_Callback_Info add_any_key_release_callback(Input *input, std::function<void(Key_Code)> func) {
+    input->any_key_release_callbacks[input->any_key_release_id] = func;
 
-    FInputCallbackInfo Info = {};
+    Input_Callback_Info info = {};
 
-    Info.Type = ECallbackType::KEY;
-    Info.Action = EInputState::UP;
-    Info.IsAnyCode = true;
-    Info.Id = Input->AnyKeyReleaseId;
+    info.type = Input_Callback_Type::KEY;
+    info.action = Input_State::UP;
+    info.is_any_code = true;
+    info.id = input->any_key_release_id;
 
-    Input->AnyKeyReleaseId++;
+    input->any_key_release_id++;
 
-    return Info;
+    return info;
 }
 
-FInputCallbackInfo AddKeyAnyActionCallback(FInput *Input, EKeyCode Key, std::function<void(EInputState)> Func) {
-    Input->KeyAnyActionCallbacks[Key][Input->KeyAnyActionId] = Func;
+Input_Callback_Info add_key_any_action_callback(Input *input, Key_Code key, std::function<void(Input_State)> func) {
+    input->key_any_action_callbacks[key][input->key_any_action_id] = func;
 
-    FInputCallbackInfo Info = {};
+    Input_Callback_Info info = {};
 
-    Info.Type = ECallbackType::KEY;
-    Info.IsAnyCode = true;
-    Info.Key = Key;
-    Info.Id = Input->KeyAnyActionId;
+    info.type = Input_Callback_Type::KEY;
+    info.is_any_code = true;
+    info.key = key;
+    info.id = input->key_any_action_id;
 
-    Input->KeyAnyActionId++;
+    input->key_any_action_id++;
 
-    return Info;
+    return info;
 }
 
-FInputCallbackInfo AddAnyKeyAnyActionCallback(FInput *Input, std::function<void(EInputState, EKeyCode)> Func) {
-    Input->AnyKeyAnyActionCallbacks[Input->AnyKeyAnyActionId] = Func;
+Input_Callback_Info add_any_key_any_action_callback(Input *input, std::function<void(Input_State, Key_Code)> func) {
+    input->any_key_any_action_callbacks[input->any_key_any_action_id] = func;
 
-    FInputCallbackInfo Info = {};
+    Input_Callback_Info info = {};
 
-    Info.Type = ECallbackType::KEY;
-    Info.IsAnyCode = true;
-    Info.IsAnyAction = true;
-    Info.Id = Input->AnyKeyAnyActionId;
+    info.type = Input_Callback_Type::KEY;
+    info.is_any_code = true;
+    info.is_any_action = true;
+    info.id = input->any_key_any_action_id;
 
-    Input->AnyKeyAnyActionId++;
+    input->any_key_any_action_id++;
 
-    return Info;
+    return info;
 }
 
-FInputCallbackInfo AddMouseButtonPressCallback(FInput *Input, EMouseCode Button, std::function<void()> Func) {
-    Input->MouseButtonPressCallbacks[Button][Input->MouseButtonPressId] = Func;
+Input_Callback_Info add_mouse_button_press_callback(Input *input, Mouse_Code button, std::function<void()> func) {
+    input->mouse_button_press_callbacks[button][input->mouse_button_press_id] = func;
 
-    FInputCallbackInfo Info = {};
+    Input_Callback_Info info = {};
 
-    Info.Type = ECallbackType::MOUSE_BUTTON;
-    Info.Button = Button;
-    Info.Action = EInputState::DOWN;
-    Info.Id = Input->MouseButtonPressId;
+    info.type = Input_Callback_Type::MOUSE_BUTTON;
+    info.button = button;
+    info.action = Input_State::DOWN;
+    info.id = input->mouse_button_press_id;
 
-    Input->MouseButtonPressId++;
+    input->mouse_button_press_id++;
 
-    return Info;
+    return info;
 }
 
-FInputCallbackInfo AddMouseButtonReleaseCallback(FInput *Input, EMouseCode Button, std::function<void()> Func) {
-    Input->MouseButtonReleaseCallbacks[Button][Input->MouseButtonReleaseId] = Func;
+Input_Callback_Info add_mouse_button_release_callback(Input *input, Mouse_Code button, std::function<void()> func) {
+    input->mouse_button_release_callbacks[button][input->mouse_button_release_id] = func;
 
-    FInputCallbackInfo Info = {};
+    Input_Callback_Info info = {};
 
-    Info.Type = ECallbackType::MOUSE_BUTTON;
-    Info.Button = Button;
-    Info.Action = EInputState::UP;
-    Info.Id = Input->MouseButtonReleaseId;
+    info.type = Input_Callback_Type::MOUSE_BUTTON;
+    info.button = button;
+    info.action = Input_State::UP;
+    info.id = input->mouse_button_release_id;
 
-    Input->MouseButtonReleaseId++;
+    input->mouse_button_release_id++;
 
-    return Info;
+    return info;
 }
 
-FInputCallbackInfo AddAnyMouseButtonPressCallback(FInput *Input, std::function<void(EMouseCode)> Func) {
-    Input->AnyMouseButtonPressCallbacks[Input->AnyMouseButtonPressId] = Func;
+Input_Callback_Info add_any_mouse_button_press_callback(Input *input, std::function<void(Mouse_Code)> func) {
+    input->any_mouse_button_press_callbacks[input->any_mouse_button_press_id] = func;
 
-    FInputCallbackInfo Info = {};
+    Input_Callback_Info info = {};
 
-    Info.Type = ECallbackType::MOUSE_BUTTON;
-    Info.Action = EInputState::DOWN;
-    Info.IsAnyCode = true;
-    Info.Id = Input->AnyMouseButtonPressId;
+    info.type = Input_Callback_Type::MOUSE_BUTTON;
+    info.action = Input_State::DOWN;
+    info.is_any_code = true;
+    info.id = input->any_mouse_button_press_id;
 
-    Input->AnyMouseButtonPressId++;
+    input->any_mouse_button_press_id++;
 
-    return Info;
+    return info;
 }
 
-FInputCallbackInfo AddAnyMouseButtonReleaseCallback(FInput *Input, std::function<void(EMouseCode)> Func) {
-    Input->AnyMouseButtonReleaseCallbacks[Input->AnyMouseButtonReleaseId] = Func;
+Input_Callback_Info add_any_mouse_button_release_callback(Input *input, std::function<void(Mouse_Code)> func) {
+    input->any_mouse_button_release_callbacks[input->any_mouse_button_release_id] = func;
 
-    FInputCallbackInfo Info = {};
+    Input_Callback_Info info = {};
 
-    Info.Type = ECallbackType::MOUSE_BUTTON;
-    Info.Action = EInputState::UP;
-    Info.IsAnyCode = true;
-    Info.Id = Input->AnyMouseButtonReleaseId;
+    info.type = Input_Callback_Type::MOUSE_BUTTON;
+    info.action = Input_State::UP;
+    info.is_any_code = true;
+    info.id = input->any_mouse_button_release_id;
 
-    Input->AnyMouseButtonReleaseId++;
+    input->any_mouse_button_release_id++;
 
-    return Info;
+    return info;
 }
 
-FInputCallbackInfo AddMouseButtonAnyActionCallback(FInput *Input, EMouseCode Button, std::function<void(EInputState)> Func) {
-    Input->MouseButtonAnyActionCallbacks[Button][Input->MouseButtonAnyActionId] = Func;
+Input_Callback_Info add_mouse_button_any_action_callback(Input *input, Mouse_Code button, std::function<void(Input_State)> func) {
+    input->mouse_button_any_action_callbakcs[button][input->mouse_button_any_action_id] = func;
 
-    FInputCallbackInfo Info = {};
+    Input_Callback_Info info = {};
 
-    Info.Type = ECallbackType::MOUSE_BUTTON;
-    Info.IsAnyAction = true;
-    Info.Button = Button;
-    Info.Id = Input->MouseButtonAnyActionId;
+    info.type = Input_Callback_Type::MOUSE_BUTTON;
+    info.is_any_action = true;
+    info.button = button;
+    info.id = input->mouse_button_any_action_id;
 
-    Input->MouseButtonAnyActionId++;
+    input->mouse_button_any_action_id++;
 
-    return Info;
+    return info;
 }
 
-FInputCallbackInfo AddAnyMouseButtonAnyActionCallback(FInput *Input, std::function<void(EInputState, EMouseCode)> Func) {
-    Input->AnyMouseButtonAnyActionCallbacks[Input->AnyMouseButtonAnyActionId] = Func;
+Input_Callback_Info add_any_mouse_button_any_action_callback(Input *input, std::function<void(Input_State, Mouse_Code)> func) {
+    input->any_mouse_button_any_action_callbacks[input->any_mouse_button_any_action_id] = func;
 
-    FInputCallbackInfo Info = {};
+    Input_Callback_Info info = {};
 
-    Info.Type = ECallbackType::MOUSE_BUTTON;
-    Info.IsAnyAction = true;
-    Info.IsAnyCode = true;
-    Info.Id = Input->AnyMouseButtonAnyActionId;
+    info.type = Input_Callback_Type::MOUSE_BUTTON;
+    info.is_any_action = true;
+    info.is_any_code = true;
+    info.id = input->any_mouse_button_any_action_id;
 
-    Input->AnyMouseButtonAnyActionId++;
+    input->any_mouse_button_any_action_id++;
 
-    return Info;
+    return info;
 }
 
-FInputCallbackInfo AddMouseMoveCallback(FInput *Input, std::function<void(FFloat, FFloat)> Func) {
-    Input->MouseMoveCallbacks[Input->MouseMoveId] = Func;
+Input_Callback_Info add_mouse_move_callback(Input *input, std::function<void(f32, f32)> func) {
+    input->mouse_move_callbacks[input->mouse_move_id] = func;
 
-    FInputCallbackInfo Info = {};
+    Input_Callback_Info info = {};
 
-    Info.Type = ECallbackType::MOUSE_MOVE;
-    Info.Id = Input->MouseMoveId;
+    info.type = Input_Callback_Type::MOUSE_MOVE;
+    info.id = input->mouse_move_id;
 
-    Input->MouseMoveId++;
+    input->mouse_move_id++;
 
-    return Info;
+    return info;
 }
 
-void SetKey(FInput *Input, EKeyCode Key, EInputState State) {
-    Input->Keyboard[Key] = State;
+void SetKey(Input *input, Key_Code key, Input_State state) {
+    input->keyboard[key] = state;
 
-    switch (State) {
-    case EInputState::DOWN:
-        for (auto &It : Input->KeyPressCallbacks[Key]) {
-            It.second();
+    switch (state) {
+    case Input_State::DOWN:
+        for (auto &it : input->key_press_callbacks[key]) {
+            it.second();
         }
-        for (auto &It : Input->AnyKeyPressCallbacks) {
-            It.second(Key);
-        }
-        break;
-    case EInputState::UP:
-        for (auto &It : Input->KeyReleaseCallbacks[Key]) {
-            It.second();
-        }
-        for (auto &It : Input->AnyKeyReleaseCallbacks) {
-            It.second(Key);
+        for (auto &It : input->any_key_press_callbacks) {
+            It.second(key);
         }
         break;
-    }
-
-    for (auto &It : Input->KeyAnyActionCallbacks[Key]) {
-        It.second(State);
-    }
-    for (auto &It : Input->AnyKeyAnyActionCallbacks) {
-        It.second(State, Key);
-    }
-}
-
-void SetMouseButton(FInput *Input, EMouseCode Button, EInputState State) {
-    Input->Mouse.Buttons[Button] = State;
-
-    switch (State) {
-    case EInputState::DOWN:
-        for (auto &It : Input->MouseButtonPressCallbacks[Button]) {
-            It.second();
+    case Input_State::UP:
+        for (auto &it : input->key_release_callbacks[key]) {
+            it.second();
         }
-        for (auto &It : Input->AnyMouseButtonPressCallbacks) {
-            It.second(Button);
-        }
-        break;
-    case EInputState::UP:
-        for (auto &It : Input->MouseButtonReleaseCallbacks[Button]) {
-            It.second();
-        }
-        for (auto &It : Input->AnyMouseButtonReleaseCallbacks) {
-            It.second(Button);
+        for (auto &it : input->any_key_release_callbacks) {
+            it.second(key);
         }
         break;
     }
 
-    for (auto &It : Input->MouseButtonAnyActionCallbacks[Button]) {
-        It.second(State);
+    for (auto &it : input->key_any_action_callbacks[key]) {
+        it.second(state);
     }
-    for (const auto &It : Input->AnyMouseButtonAnyActionCallbacks) {
-        It.second(State, Button);
-    }
-}
-
-void SetMousePos(FInput *Input, FFloat X, FFloat Y) {
-    Input->Mouse.X = X;
-    Input->Mouse.Y = Y;
-
-    for (auto &It : Input->MouseMoveCallbacks) {
-        It.second(X, Y);
+    for (auto &It : input->any_key_any_action_callbacks) {
+        It.second(state, key);
     }
 }
 
-void RemoveCallback(FInput *Input, const FInputCallbackInfo &Info) {
-    switch (Info.Type) {
-    case ECallbackType::KEY:
-        if (Info.IsAnyAction && Info.IsAnyCode) {
-            Input->AnyKeyAnyActionCallbacks.erase(Info.Id);
-        } else if (Info.IsAnyAction) {
-            Input->KeyAnyActionCallbacks[Info.Key].erase(Info.Id);
-        } else if (Info.IsAnyCode) {
-            switch (Info.Action) {
-            case EInputState::UP:
-                Input->AnyKeyReleaseCallbacks.erase(Info.Id);
+void SetMouseButton(Input *input, Mouse_Code button, Input_State state) {
+    input->mouse.buttons[button] = state;
+
+    switch (state) {
+    case Input_State::DOWN:
+        for (auto &it : input->mouse_button_press_callbacks[button]) {
+            it.second();
+        }
+        for (auto &it : input->any_mouse_button_press_callbacks) {
+            it.second(button);
+        }
+        break;
+    case Input_State::UP:
+        for (auto &it : input->mouse_button_release_callbacks[button]) {
+            it.second();
+        }
+        for (auto &it : input->any_mouse_button_release_callbacks) {
+            it.second(button);
+        }
+        break;
+    }
+
+    for (auto &it : input->mouse_button_any_action_callbakcs[button]) {
+        it.second(state);
+    }
+    for (const auto &it : input->any_mouse_button_any_action_callbacks) {
+        it.second(state, button);
+    }
+}
+
+void SetMousePos(Input *input, f32 x, f32 y) {
+    input->mouse.x = x;
+    input->mouse.y = y;
+
+    for (auto &it : input->mouse_move_callbacks) {
+        it.second(x, y);
+    }
+}
+
+void RemoveCallback(Input *input, const Input_Callback_Info &info) {
+    switch (info.type) {
+    case Input_Callback_Type::KEY:
+        if (info.is_any_action && info.is_any_code) {
+            input->any_key_any_action_callbacks.erase(info.id);
+        } else if (info.is_any_action) {
+            input->key_any_action_callbacks[info.key].erase(info.id);
+        } else if (info.is_any_code) {
+            switch (info.action) {
+            case Input_State::UP:
+                input->any_key_release_callbacks.erase(info.id);
                 break;
-            case EInputState::DOWN:
-                Input->AnyKeyPressCallbacks.erase(Info.Id);
+            case Input_State::DOWN:
+                input->any_key_press_callbacks.erase(info.id);
                 break;
             }
         } else {
-            switch (Info.Action) {
-            case EInputState::UP:
-                Input->KeyReleaseCallbacks[Info.Key].erase(Info.Id);
+            switch (info.action) {
+            case Input_State::UP:
+                input->key_release_callbacks[info.key].erase(info.id);
                 break;
-            case EInputState::DOWN:
-                Input->KeyPressCallbacks[Info.Key].erase(Info.Id);
+            case Input_State::DOWN:
+                input->key_press_callbacks[info.key].erase(info.id);
                 break;
             }
         }
         break;
-    case ECallbackType::MOUSE_BUTTON:
-        if (Info.IsAnyAction && Info.IsAnyCode) {
-            Input->AnyMouseButtonAnyActionCallbacks.erase(Info.Id);
-        } else if (Info.IsAnyAction) {
-            Input->MouseButtonAnyActionCallbacks[Info.Button].erase(Info.Id);
-        } else if (Info.IsAnyCode) {
-            switch (Info.Action) {
-            case EInputState::UP:
-                Input->AnyMouseButtonReleaseCallbacks.erase(Info.Id);
+    case Input_Callback_Type::MOUSE_BUTTON:
+        if (info.is_any_action && info.is_any_code) {
+            input->any_mouse_button_any_action_callbacks.erase(info.id);
+        } else if (info.is_any_action) {
+            input->mouse_button_any_action_callbakcs[info.button].erase(info.id);
+        } else if (info.is_any_code) {
+            switch (info.action) {
+            case Input_State::UP:
+                input->any_mouse_button_release_callbacks.erase(info.id);
                 break;
-            case EInputState::DOWN:
-                Input->AnyMouseButtonPressCallbacks.erase(Info.Id);
+            case Input_State::DOWN:
+                input->any_mouse_button_press_callbacks.erase(info.id);
                 break;
             }
         } else {
-            switch (Info.Action) {
-            case EInputState::UP:
-                Input->MouseButtonReleaseCallbacks[Info.Button].erase(Info.Id);
+            switch (info.action) {
+            case Input_State::UP:
+                input->mouse_button_release_callbacks[info.button].erase(info.id);
                 break;
-            case EInputState::DOWN:
-                Input->MouseButtonPressCallbacks[Info.Button].erase(Info.Id);
+            case Input_State::DOWN:
+                input->mouse_button_press_callbacks[info.button].erase(info.id);
                 break;
             }
         }
         break;
-    case ECallbackType::MOUSE_MOVE:
-        Input->MouseMoveCallbacks.erase(Info.Id);
+    case Input_Callback_Type::MOUSE_MOVE:
+        input->mouse_move_callbacks.erase(info.id);
         break;
     }
 }
 
-void SetRawInput(FInput *Input, FBool Value) {
-    if (Input->UsingRawInput != Value) {
-        Input->UsingRawInput = Value;
-        if (Value) {
-            if (Input->CursorVisibility == ECursorVisibility::DISABLED) {
-                PlatformEnableRawInput(Input->Window);
+void set_raw_input(Input *input, bool value) {
+    if (input->using_raw_input != value) {
+        input->using_raw_input = value;
+        if (value) {
+            if (input->cursor_visibility == Cursor_Visibility::DISABLED) {
+                platform_enable_raw_input(input->window);
             }
             else {
                 SK_LOG_ERROR("Cannot enable raw input while cursor is not disabled");
             }
         }
         else {
-            PlatformDisableRawInput(Input->Window);
+            platform_disable_raw_input(input->window);
         }
     }
 }
 
-void SetCursorVisibility(FInput *Input, ECursorVisibility Visibility) {
-    if (Visibility != Input->CursorVisibility) {
-        Input->CursorVisibility = Visibility;
-        if (Input->CursorVisibility != ECursorVisibility::DISABLED && Input->UsingRawInput) {
+void set_cursor_visibility(Input *input, Cursor_Visibility visibility) {
+    if (visibility != input->cursor_visibility) {
+        input->cursor_visibility = visibility;
+        if (input->cursor_visibility != Cursor_Visibility::DISABLED && input->using_raw_input) {
             SK_LOG_ERROR("Cannot change cursor state from disabled while raw input is enabled");
             return;
         }
-        PlatformSetCursorVisibility(Input->Window, Visibility);
+        platform_set_cursor_visibility(input->window, visibility);
     }
 }

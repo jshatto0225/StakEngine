@@ -4,35 +4,35 @@
 #include "Log.h"
 #include "Types.h"
 
-extern void InitializeApplication(FApplication *OutApp, FEngineSpecification *OutSpec);
-extern void DestroyApplication(FApplication *App);
+extern void initialize_application(Application *out_app, Engine_Specification *out_spec);
+extern void destroy_application(Application *app);
 
-extern FEngine *GEngine;
+extern Engine *global_engine;
 
-inline FSInt32 StakMain() {
-    LogInit();
+inline s32 stak_main() {
+    log_init();
 
-    FEngine Engine            = {};
-    FApplication App          = {};
-    FEngineSpecification Spec = {};
+    Engine engine            = {};
+    Application app          = {};
+    Engine_Specification spec = {};
 
-    InitializeApplication(&App, &Spec);
+    initialize_application(&app, &spec);
 
-    if (!EngineInit(&Engine, &Spec, &App)) {
+    if (!engine_init(&engine, &spec, &app)) {
         SK_LOG_CRITICAL("Failed to initialize engine");
         return -1;
     }
 
-    EngineRun(&Engine);
+    engine_run(&engine);
 
-    EngineShutdown(&Engine);
+    engine_shutdown(&engine);
 
-    DestroyApplication(Engine.App);
+    destroy_application(engine.app);
 
     return 0;
 }
 
 int main(int argc, char **argv) {
-    return StakMain();
+    return stak_main();
 }
 
