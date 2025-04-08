@@ -4,11 +4,11 @@
 #include "VulkanRHI.h"
 #endif
 
-Rhi rhi;
+RHI rhi;
 
-bool rhi_init(Rhi_Backend backend) {
+bool rhi_init(RHIBackend backend) {
     switch (backend) {
-    case Rhi_Backend::VULKAN:
+    case RHIBackend::Vulkan:
         rhi = vulkan_create_rhi();
         break;
     default:
@@ -24,45 +24,45 @@ void rhi_shutdown() {
     rhi = {};
 }
 
-static std::unordered_map<Rhi_Resource_State, std::unordered_map<Rhi_Resource_State, Rhi_Transition_Type>> transition_types = {
+static std::unordered_map<RHIResourceState, std::unordered_map<RHIResourceState, RHITransitionType>> transition_types = {
     {
-        Rhi_Resource_State::UNDEFINED,
+        RHIResourceState::Undefined,
         {
-            { Rhi_Resource_State::RENDER_TARGET,   Rhi_Transition_Type::IMAGE   },
-            { Rhi_Resource_State::PRESENT,         Rhi_Transition_Type::IMAGE   },
-            { Rhi_Resource_State::UNDEFINED,       Rhi_Transition_Type::INVALID },
-            { Rhi_Resource_State::SHADER_RESOURCE, Rhi_Transition_Type::IMAGE   },
+            { RHIResourceState::RenderTarget,   RHITransitionType::IMAGE   },
+            { RHIResourceState::Present,         RHITransitionType::IMAGE   },
+            { RHIResourceState::Undefined,       RHITransitionType::INVALID },
+            { RHIResourceState::ShaderResource, RHITransitionType::IMAGE   },
         }
     },
     {
-        Rhi_Resource_State::RENDER_TARGET,
+        RHIResourceState::RenderTarget,
         {
-            { Rhi_Resource_State::RENDER_TARGET,   Rhi_Transition_Type::INVALID },
-            { Rhi_Resource_State::PRESENT,         Rhi_Transition_Type::IMAGE   },
-            { Rhi_Resource_State::UNDEFINED,       Rhi_Transition_Type::INVALID },
-            { Rhi_Resource_State::SHADER_RESOURCE, Rhi_Transition_Type::IMAGE   },
+            { RHIResourceState::RenderTarget,   RHITransitionType::INVALID },
+            { RHIResourceState::Present,         RHITransitionType::IMAGE   },
+            { RHIResourceState::Undefined,       RHITransitionType::INVALID },
+            { RHIResourceState::ShaderResource, RHITransitionType::IMAGE   },
         }
     },
     {
-        Rhi_Resource_State::PRESENT,
+        RHIResourceState::Present,
         {
-            { Rhi_Resource_State::RENDER_TARGET,   Rhi_Transition_Type::IMAGE   },
-            { Rhi_Resource_State::PRESENT,         Rhi_Transition_Type::INVALID },
-            { Rhi_Resource_State::UNDEFINED,       Rhi_Transition_Type::INVALID },
-            { Rhi_Resource_State::SHADER_RESOURCE, Rhi_Transition_Type::IMAGE   },
+            { RHIResourceState::RenderTarget,   RHITransitionType::IMAGE   },
+            { RHIResourceState::Present,         RHITransitionType::INVALID },
+            { RHIResourceState::Undefined,       RHITransitionType::INVALID },
+            { RHIResourceState::ShaderResource, RHITransitionType::IMAGE   },
         }
     },
     {
-        Rhi_Resource_State::SHADER_RESOURCE,
+        RHIResourceState::ShaderResource,
         {
-            { Rhi_Resource_State::RENDER_TARGET,   Rhi_Transition_Type::IMAGE   },
-            { Rhi_Resource_State::PRESENT,         Rhi_Transition_Type::IMAGE   },
-            { Rhi_Resource_State::UNDEFINED,       Rhi_Transition_Type::INVALID },
-            { Rhi_Resource_State::SHADER_RESOURCE, Rhi_Transition_Type::INVALID },
+            { RHIResourceState::RenderTarget,   RHITransitionType::IMAGE   },
+            { RHIResourceState::Present,         RHITransitionType::IMAGE   },
+            { RHIResourceState::Undefined,       RHITransitionType::INVALID },
+            { RHIResourceState::ShaderResource, RHITransitionType::INVALID },
         }
     },
 };
 
-Rhi_Transition_Type rhi_get_transition_type(Rhi_Resource_State before, Rhi_Resource_State after) {
+RHITransitionType rhi_get_transition_type(RHIResourceState before, RHIResourceState after) {
     return transition_types[before][after];
 }

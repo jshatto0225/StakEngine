@@ -5,23 +5,23 @@
 #include "RHI.h"
 #include "Window.h"
 
-using Render_Func = std::function<void(Rhi_Resource_Handle)>;
+using RenderFunc = std::function<void(RHIResourceHandle)>;
 
 struct Renderer {
     static const u32 max_frames_in_flight = 2;
 
-    Render_Func gui_render_func;
+    RenderFunc gui_render_func;
 
-    Rhi_Resource_Handle command_list;
+    RHIResourceHandle command_list;
     Window *window;
-    Rhi_Resource_Handle swapchain_texture;
+    RHIResourceHandle swapchain_texture;
 
     u32 offscreen_backbuffer_image_index;
-    Rhi_Resource_Handle  offscreen_backbuffers[max_frames_in_flight];
+    RHIResourceHandle  offscreen_backbuffers[max_frames_in_flight];
     bool use_offscreen_buffer;
 
-    Rhi_Resource_Handle pipeline_layout;
-    Rhi_Resource_Handle pipeline;
+    RHIResourceHandle pipeline_layout;
+    RHIResourceHandle pipeline;
 };
 
 bool renderer_init(Renderer *renderer, Window *window, bool render_to_offscreen_buffer);

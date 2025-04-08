@@ -26,7 +26,7 @@ void platform_shutdown() {
     glfw_initialized = false;
 }
 
-bool platform_open_window(Window *window, const Window_Config *cfg) {
+bool platform_open_window(Window *window, const WindowConfig *cfg) {
     assert(glfw_initialized);
     assert(window);
 
@@ -73,7 +73,7 @@ bool platform_open_window(Window *window, const Window_Config *cfg) {
         if (!data->event_function) return;
 
         Event e = {};
-        e.type = Event_Type::WINDOW_RESIZE;
+        e.type = EventType::WindowResize;
         e.wre.width = width;
         e.wre.height = height;
         data->event_function(&e);
@@ -85,7 +85,7 @@ bool platform_open_window(Window *window, const Window_Config *cfg) {
         if (!data->event_function) return;
 
         Event e = {};
-        e.type = Event_Type::WINDOW_CLOSE;
+        e.type = EventType::WindowClose;
         data->event_function(&e);
     });
 
@@ -94,21 +94,21 @@ bool platform_open_window(Window *window, const Window_Config *cfg) {
 
         if (!data->event_function) return;
 
-        Input_State state;
+        InputState state;
         switch (action) {
         case GLFW_PRESS:
-            state = Input_State::DOWN;
+            state = InputState::Down;
             break;
         case GLFW_RELEASE:
-            state = Input_State::UP;
+            state = InputState::Up;
             break;
         default:
             return;
         }
 
         Event e = {};
-        e.type = Event_Type::KEY;
-        e.ke.key = static_cast<Key_Code>(key);
+        e.type = EventType::Key;
+        e.ke.key = static_cast<KeyCode>(key);
         e.ke.state = state;
         data->event_function(&e);
     });
@@ -118,21 +118,21 @@ bool platform_open_window(Window *window, const Window_Config *cfg) {
 
         if (!data->event_function) return;
 
-        Input_State state;
+        InputState state;
         switch (action) {
         case GLFW_PRESS:
-            state = Input_State::DOWN;
+            state = InputState::Down;
             break;
         case GLFW_RELEASE:
-            state = Input_State::UP;
+            state = InputState::Up;
             break;
         default:
             return;
         }
 
         Event e = {};
-        e.type = Event_Type::MOUSE_BUTTON;
-        e.mbe.button = static_cast<Mouse_Code>(button);
+        e.type = EventType::MouseButton;
+        e.mbe.button = static_cast<MouseCode>(button);
         e.mbe.state = state;
         data->event_function(&e);
     });
@@ -143,7 +143,7 @@ bool platform_open_window(Window *window, const Window_Config *cfg) {
         if (!data->event_function) return;
 
         Event e = {};
-        e.type = Event_Type::MOUSE_MOVE;
+        e.type = EventType::MouseMove;
         e.mme.x = static_cast<f32>(x);
         e.mme.y = static_cast<f32>(y);
         data->event_function(&e);
@@ -239,7 +239,7 @@ void platform_disable_raw_input(const Window *window) {
     glfwSetInputMode(glfw, GLFW_RAW_MOUSE_MOTION, GLFW_FALSE);
 }
 
-void platform_set_cursor_visibility(const Window *window, Cursor_Visibility visibility) {
+void platform_set_cursor_visibility(const Window *window, CursorVisibility visibility) {
     assert(window);
 
     if (!window->open) {
@@ -252,13 +252,13 @@ void platform_set_cursor_visibility(const Window *window, Cursor_Visibility visi
 
     s32 glfw_visibility;
     switch (visibility) {
-    case Cursor_Visibility::NORMAL:
+    case CursorVisibility::Normal:
         glfw_visibility = GLFW_CURSOR_NORMAL;
         break;
-    case Cursor_Visibility::HIDDEN:
+    case CursorVisibility::Hidden:
         glfw_visibility = GLFW_CURSOR_HIDDEN;
         break;
-    case Cursor_Visibility::DISABLED:
+    case CursorVisibility::Disabled:
         glfw_visibility = GLFW_CURSOR_DISABLED;
         break;
     default:

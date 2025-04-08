@@ -20,7 +20,7 @@ struct Application {
     void *user_data;
 };
 
-struct Engine_Specification {
+struct EngineSpecification {
     const char *window_title;
     const char *app_name;
     s32 window_width;
@@ -34,11 +34,11 @@ struct Engine {
     Renderer renderer;
     Input input;
     bool running;
-    Imgui_Renderer imgui_renderer;
+    ImguiRenderer imgui_renderer;
     const char *name;
 };
 
-bool engine_init(Engine *engine, Engine_Specification *spec, Application *app_impl);
+bool engine_init(Engine *engine, EngineSpecification *spec, Application *app_impl);
 void engine_shutdown(Engine *engine);
 
 void engine_run(Engine *engine);

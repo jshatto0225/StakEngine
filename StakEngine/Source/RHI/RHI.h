@@ -4,68 +4,68 @@
 
 #include <imgui.h>
 
-typedef Handle Rhi_Resource_Handle;
+typedef Handle RHIResourceHandle;
 
-enum class Rhi_Backend {
-    VULKAN,
+enum class RHIBackend {
+    Vulkan,
 };
 
-enum class Rhi_Resource_State {
-    UNDEFINED,
-    RENDER_TARGET,
-    SHADER_RESOURCE,
-    PRESENT,
+enum class RHIResourceState {
+    Undefined,
+    RenderTarget,
+    ShaderResource,
+    Present,
 };
 
-enum class Rhi_Transition_Type {
-    INVALID,
-    IMAGE,
-    BUFFER,
+enum class RHITransitionType {
+    Invalid,
+    Image,
+    Buffer,
 };
 
-struct Rhi_Transition_Barrier {
-    Rhi_Resource_Handle resource;
-    Rhi_Resource_State state_before;
-    Rhi_Resource_State state_after;
+struct RHITransitionBarrier {
+    RHIResourceHandle resource;
+    RHIResourceState state_before;
+    RHIResourceState state_after;
     u32 subresource;
 };
 
-struct Rhi_Uav_Barrier {
-    Rhi_Resource_Handle resource;
+struct RHIUAVBarrier {
+    RHIResourceHandle resource;
 };
 
-struct Rhi_Aliasing_Barrier {
-    Rhi_Resource_Handle resource_before;
-    Rhi_Resource_Handle resource_after;
+struct RHIAliasingBarrier {
+    RHIResourceHandle resource_before;
+    RHIResourceHandle resource_after;
 };
 
-enum class Rhi_Barrier_Type {
-    TRANSITION,
+enum class RHIBarrierType {
+    Transition,
     //UAV,
     //ALIASING
 };
 
-enum class Rhi_Format {
-    UNDEFINED,
-    B8G8R8A8_SRGB,
+enum class RHIFormat {
+    Undefined,
+    B8G8R8A8Srgb,
 };
 
 struct Rhi_Resource_Barrier {
-    Rhi_Barrier_Type type;
+    RHIBarrierType type;
 
     union {
-        Rhi_Transition_Barrier transition_barrier;
-        Rhi_Uav_Barrier uav_barrier;
-        Rhi_Aliasing_Barrier aliasing_barrier;
+        RHITransitionBarrier transition_barrier;
+        RHIUAVBarrier uav_barrier;
+        RHIAliasingBarrier aliasing_barrier;
     };
 };
 
-enum class Rhi_Resource_Type {
-    TEXTURE,
-    BUFFER,
+enum class RHIResourceType {
+    Texture,
+    Buffer,
 };
 
-struct Rhi_Render_Area {
+struct RHIRenderArea {
     u32 layer_count;
     u32 x;
     u32 y;
@@ -73,194 +73,194 @@ struct Rhi_Render_Area {
     u32 height;
 };
 
-struct Rhi_Texture_Description {
+struct RHITextureDescription {
     u32 width;
     u32 height;
-    Rhi_Format format;
+    RHIFormat format;
     bool use_for_imgui;
     bool use_as_shader_resource;
 };
 
-enum class Rhi_Shader_Type {
-    VERTEX,
-    FRAGMENT
+enum class RHIShaderType {
+    Vertex,
+    Fragment
 };
 
-struct Rhi_Shader_Description {
-    Rhi_Shader_Type type;
+struct RHIShaderDescription {
+    RHIShaderType type;
     const char *name;
 };
 
-struct Rhi_Buffer_Element {
+struct RHIBufferElement {
     u32 location;
     u32 binding;
-    Rhi_Format format;
+    RHIFormat format;
     u32 offset;
 };
 
-struct Rhi_Buffer_Layout {
+struct RHIBufferLayout {
     u32 element_count;
-    Rhi_Buffer_Element *elements;
+    RHIBufferElement *elements;
     u32 stride;
 };
 
-enum class Rhi_Buffer_Type {
-    VERTEX,
-    INDEX
+enum class RHIBufferType {
+    Vertex,
+    Index
 };
 
-struct Rhi_Vertex_Buffer_Description {
-    Rhi_Buffer_Layout layout;
+struct RHIVertexBufferDescription {
+    RHIBufferLayout layout;
     u32 element_count;
     void *initial_contents; // NOTE: Optional
     u32 initial_contents_size; // NOTE: Optional
     bool use_staging_buffer;
 };
 
-struct Rhi_Index_Buffer_Description {
+struct RHIIndexBufferDescription {
     u32 count;
     void *initial_contents;
     u32 initial_contents_size;
     bool use_staging_buffer;
 };
 
-struct Rhi_Pipeline_Layout_Description {
+struct RHIPipelineLayoutDescription {
     u32 descriptor_set_layout_count;
-    Rhi_Resource_Handle *descriptor_set_layouts;
+    RHIResourceHandle *descriptor_set_layouts;
 };
 
-enum class Rhi_Pipeline_Type {
-    GRAPHICS
+enum class RHIPipelineType {
+    Graphics
 };
 
-enum class Rhi_Vertex_Input_Rate {
-    PER_VERTEX,
-    PER_INSTANCE,
+enum class RHIVertexInputRate {
+    Vertex,
+    Instance,
 };
 
-struct Rhi_Vertex_Input_Binding {
+struct RHIVertexInputBinding {
     u32 binding;
     u32 stride;
-    Rhi_Vertex_Input_Rate input_rate;
+    RHIVertexInputRate input_rate;
 };
 
-struct Rhi_Vertex_Input_Attribute {
+struct RHIVertexInputAttribute {
     u32 location;
     u32 binding;
-    Rhi_Format format;
+    RHIFormat format;
     u32 offset;
 };
 
-struct Rhi_Graphics_Pipeline_State_Description {
+struct RHIGraphicsPipelineStateDescription {
     u32 color_format_count;
-    Rhi_Format *color_formats;
-    Rhi_Format depth_stencil_format;
+    RHIFormat *color_formats;
+    RHIFormat depth_stencil_format;
 
     u32 shader_count;
-    Rhi_Resource_Handle *shaders;
+    RHIResourceHandle *shaders;
 
     u32 vertex_input_binding_count;
-    Rhi_Vertex_Input_Binding *vertex_input_bindings;
+    RHIVertexInputBinding *vertex_input_bindings;
     u32 vertex_input_attribute_count;
-    Rhi_Vertex_Input_Attribute *vertex_input_attributes;
+    RHIVertexInputAttribute *vertex_input_attributes;
 
-    Rhi_Resource_Handle layout;
+    RHIResourceHandle layout;
 };
 
-enum class Rhi_Descriptor_Type {
-    UNIFORM_BUFFER,
-    TEXTURE
+enum class RHIDescriptorType {
+    UniformBuffer,
+    Texture
 };
 
-struct Rhi_Descriptor {
+struct RHIDescriptor {
     u32 binding;
-    Rhi_Descriptor_Type type;
+    RHIDescriptorType type;
     u32 count;
     u32 shader_stage_count;
-    Rhi_Shader_Type *stages;
+    RHIShaderType *stages;
 };
 
-struct Rhi_Descriptor_Set_Layout_Description {
+struct RHIDescriptorSetLayoutDescription {
     u32 descriptor_count;
-    Rhi_Descriptor *descriptors;
+    RHIDescriptor *descriptors;
 };
 
-struct Rhi_Command_List_Description {
+struct RHICommandListDescription {
     bool is_secondary;
 };
 
 struct Window;
 
-struct Rhi {
+struct RHI {
     bool (*init)();
     void (*shutdown)();
 
     void (*imgui_new_frame)();
     void (*shutdown_imgui)();
-    void (*init_imgui)(Rhi_Resource_Handle);
+    void (*init_imgui)(RHIResourceHandle);
 
     bool (*wait_for_gpu_idle)();
 
-    bool (*prepare_frame)(Rhi_Resource_Handle);
+    bool (*prepare_frame)(RHIResourceHandle);
     bool (*present_frame)();
-    bool (*submit)(Rhi_Resource_Handle);
+    bool (*submit)(RHIResourceHandle);
 
-    void (*add_texture_to_imgui_window)(Rhi_Resource_Handle);
+    void (*add_texture_to_imgui_window)(RHIResourceHandle);
 
-    Rhi_Resource_Handle (*create_texture)(Rhi_Texture_Description *);
-    void (*destroy_texture)(Rhi_Resource_Handle *);
+    RHIResourceHandle (*create_texture)(RHITextureDescription *);
+    void (*destroy_texture)(RHIResourceHandle *);
 
-    Rhi_Resource_Handle (*create_swapchain)(Window *);
-    void (*destroy_swapchain)(Rhi_Resource_Handle *);
+    RHIResourceHandle (*create_swapchain)(Window *);
+    void (*destroy_swapchain)(RHIResourceHandle *);
 
-    Rhi_Resource_Handle(*create_command_list)(Rhi_Command_List_Description *);
-    void (*destroy_command_list)(Rhi_Resource_Handle *);
+    RHIResourceHandle(*create_command_list)(RHICommandListDescription *);
+    void (*destroy_command_list)(RHIResourceHandle *);
 
-    Rhi_Resource_Handle (*create_shader)(Rhi_Shader_Description *);
-    void (*destroy_shader)(Rhi_Resource_Handle *);
+    RHIResourceHandle (*create_shader)(RHIShaderDescription *);
+    void (*destroy_shader)(RHIResourceHandle *);
 
-    Rhi_Resource_Handle(*create_vertex_buffer)(Rhi_Vertex_Buffer_Description *);
-    Rhi_Resource_Handle(*create_index_buffer)(Rhi_Index_Buffer_Description *);
-    void (*destroy_buffer)(Rhi_Resource_Handle *);
+    RHIResourceHandle(*create_vertex_buffer)(RHIVertexBufferDescription *);
+    RHIResourceHandle(*create_index_buffer)(RHIIndexBufferDescription *);
+    void (*destroy_buffer)(RHIResourceHandle *);
 
-    Rhi_Resource_Handle (*create_pipeline_layout)(Rhi_Pipeline_Layout_Description *);
-    void (*destroy_pipeline_layout)(Rhi_Resource_Handle *);
+    RHIResourceHandle (*create_pipeline_layout)(RHIPipelineLayoutDescription *);
+    void (*destroy_pipeline_layout)(RHIResourceHandle *);
 
-    Rhi_Resource_Handle (*create_descriptor_set_layout)(Rhi_Descriptor_Set_Layout_Description *);
-    void (*destroy_descriptor_set_layout)(Rhi_Resource_Handle *);
+    RHIResourceHandle (*create_descriptor_set_layout)(RHIDescriptorSetLayoutDescription *);
+    void (*destroy_descriptor_set_layout)(RHIResourceHandle *);
 
-    Rhi_Resource_Handle (*create_graphics_pipeline)(Rhi_Graphics_Pipeline_State_Description *);
-    void (*destroy_pipeline)(Rhi_Resource_Handle *);
+    RHIResourceHandle (*create_graphics_pipeline)(RHIGraphicsPipelineStateDescription *);
+    void (*destroy_pipeline)(RHIResourceHandle *);
 
-    void (*set_buffer_data)(Rhi_Resource_Handle, void *, u32);
-    void (*map_buffer_data)(Rhi_Resource_Handle, void **, u32);
-    bool (*send_buffer_to_gpu)(Rhi_Resource_Handle);
+    void (*set_buffer_data)(RHIResourceHandle, void *, u32);
+    void (*map_buffer_data)(RHIResourceHandle, void **, u32);
+    bool (*send_buffer_to_gpu)(RHIResourceHandle);
 
-    Rhi_Resource_Handle (*get_current_swapchain_texture)(Rhi_Resource_Handle);
-    Rhi_Format (*get_texture_format)(Rhi_Resource_Handle);
-    Rhi_Render_Area (*get_texture_render_area)(Rhi_Resource_Handle);
+    RHIResourceHandle (*get_current_swapchain_texture)(RHIResourceHandle);
+    RHIFormat (*get_texture_format)(RHIResourceHandle);
+    RHIRenderArea (*get_texture_render_area)(RHIResourceHandle);
 
-    bool (*begin_command_list)(Rhi_Resource_Handle);
-    bool (*end_command_list)(Rhi_Resource_Handle);
+    bool (*begin_command_list)(RHIResourceHandle);
+    bool (*end_command_list)(RHIResourceHandle);
 
-    void (*cmd_render_imgui_draw_data)(Rhi_Resource_Handle, ImDrawData *);
-    void (*cmd_resource_barrier)(Rhi_Resource_Handle, Rhi_Resource_Barrier *);
-    void (*cmd_set_render_target)(Rhi_Resource_Handle, Rhi_Resource_Handle, Rhi_Render_Area *);
-    void (*cmd_unset_render_target)(Rhi_Resource_Handle);
-    void (*cmd_bind_vertex_buffer)(Rhi_Resource_Handle, Rhi_Resource_Handle, u32);
-    void (*cmd_bind_index_buffer)(Rhi_Resource_Handle, Rhi_Resource_Handle);
-    void (*cmd_draw_indexed)(Rhi_Resource_Handle, u32, u32, u32, s32, u32);
-    void (*cmd_draw_instanced)(Rhi_Resource_Handle, u32, u32, u32, u32);
-    void (*cmd_set_viewport)(Rhi_Resource_Handle, f32, f32, f32, f32, f32, f32);
-    void (*cmd_set_scissor)(Rhi_Resource_Handle, s32, s32, u32, u32);
-    void (*cmd_bind_pipeline)(Rhi_Resource_Handle, Rhi_Resource_Handle);
+    void (*cmd_render_imgui_draw_data)(RHIResourceHandle, ImDrawData *);
+    void (*cmd_resource_barrier)(RHIResourceHandle, Rhi_Resource_Barrier *);
+    void (*cmd_set_render_target)(RHIResourceHandle, RHIResourceHandle, RHIRenderArea *);
+    void (*cmd_unset_render_target)(RHIResourceHandle);
+    void (*cmd_bind_vertex_buffer)(RHIResourceHandle, RHIResourceHandle, u32);
+    void (*cmd_bind_index_buffer)(RHIResourceHandle, RHIResourceHandle);
+    void (*cmd_draw_indexed)(RHIResourceHandle, u32, u32, u32, s32, u32);
+    void (*cmd_draw_instanced)(RHIResourceHandle, u32, u32, u32, u32);
+    void (*cmd_set_viewport)(RHIResourceHandle, f32, f32, f32, f32, f32, f32);
+    void (*cmd_set_scissor)(RHIResourceHandle, s32, s32, u32, u32);
+    void (*cmd_bind_pipeline)(RHIResourceHandle, RHIResourceHandle);
 
-    void (*notify_swapchain_of_resize)(Rhi_Resource_Handle);
+    void (*notify_swapchain_of_resize)(RHIResourceHandle);
 };
 
-Rhi_Transition_Type rhi_get_transition_type(Rhi_Resource_State before, Rhi_Resource_State after);
+RHITransitionType rhi_get_transition_type(RHIResourceState before, RHIResourceState after);
 
-bool rhi_init(Rhi_Backend backend);
+bool rhi_init(RHIBackend backend);
 void rhi_shutdown();
 
-extern Rhi rhi;
+extern RHI rhi;

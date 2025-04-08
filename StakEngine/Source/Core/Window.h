@@ -6,13 +6,13 @@
 #include "Types.h"
 #include "RHI.h"
 
-using Event_Function = std::function<void(Event *)>;
+using EventFunction = std::function<void(Event *)>;
 
-struct Window_Config {
+struct WindowConfig {
     s32 width;
     s32 height;
     const char *title;
-    Event_Function event_function;
+    EventFunction event_function;
 };
 
 struct Window {
@@ -23,7 +23,7 @@ struct Window {
     s32 framebuffer_width;
     s32 framebuffer_height;
     const char *title;
-    Event_Function event_function;
+    EventFunction event_function;
     bool open;
 
     // NOTE: Only platform functions should touch this
@@ -31,5 +31,5 @@ struct Window {
     //   to a platform window
     Handle platform_handle;
 
-    Rhi_Resource_Handle swapchain;
+    RHIResourceHandle swapchain;
 };

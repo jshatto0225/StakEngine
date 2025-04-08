@@ -3,40 +3,40 @@
 #include "Types.h"
 #include "Input.h"
 
-struct Window_Resize_Event {
+struct WindowResizeEvent {
     s32 width;
     s32 height;
 };
 
-struct Key_Event {
-    Key_Code key;
-    Input_State state;
+struct KeyEvent {
+    KeyCode key;
+    InputState state;
 };
 
-struct Mouse_Button_Event {
-    Mouse_Code button;
-    Input_State state;
+struct MouseButtonEvent {
+    MouseCode button;
+    InputState state;
 };
 
-struct Mouse_Move_Event {
+struct MouseMoveEvent {
     f32 x;
     f32 y;
 };
 
-enum class Event_Type {
-    WINDOW_RESIZE,
-    KEY,
-    MOUSE_BUTTON,
-    MOUSE_MOVE,
-    WINDOW_CLOSE,
+enum class EventType {
+    WindowResize,
+    Key,
+    MouseButton,
+    MouseMove,
+    WindowClose,
 };
 
 struct Event {
-    Event_Type type;
+    EventType type;
     union {
-        Window_Resize_Event wre;
-        Key_Event ke;
-        Mouse_Button_Event mbe;
-        Mouse_Move_Event mme;
+        WindowResizeEvent wre;
+        KeyEvent ke;
+        MouseButtonEvent mbe;
+        MouseMoveEvent mme;
     };
 };

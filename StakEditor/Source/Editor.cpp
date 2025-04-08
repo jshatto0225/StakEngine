@@ -2,7 +2,7 @@
 
 #include "Editor.h"
 
-void initialize_application(Application *out_app, Engine_Specification *out_spec) {
+void initialize_application(Application *out_app, EngineSpecification *out_spec) {
     out_spec->window_width = 1920;
     out_spec->window_height = 1080;
     out_spec->window_title = "Stak Editor";
@@ -24,11 +24,11 @@ void destroy_application(Application *app) {
 bool init(Engine *engine, Application *app) {
     auto editor = static_cast<Editor *>(app->user_data);
 
-    editor->escape_pressed_callback_info = add_key_press_callback(&engine->input, Key_Code::ESCAPE, [engine]() {
+    editor->escape_pressed_callback_info = add_key_press_callback(&engine->input, KeyCode::Escape, [engine]() {
         LOG_TRACE("[Callback Input] Escape pressed. Quitting.");
         engine_close(engine);
     });
-    editor->w_pressed_callback_info = add_key_press_callback(&engine->input, Key_Code::W, []() {
+    editor->w_pressed_callback_info = add_key_press_callback(&engine->input, KeyCode::W, []() {
         LOG_TRACE("[Callback Input] W pressed");
     });
 
@@ -122,10 +122,10 @@ void on_imgui_render(Engine *engine, Application *app) {
     ImGui::End();
 }
 
-void Update(Engine *engine, Application *app) {
+void update(Engine *engine, Application *app) {
     auto editor = static_cast<Editor *>(app->user_data);
 
-    if (engine->input.keyboard[Key_Code::SPACE] == Input_State::DOWN) {
+    if (engine->input.keyboard[KeyCode::Space] == InputState::Down) {
         LOG_TRACE("[Polled Input] Space Pressed");
     }
 }

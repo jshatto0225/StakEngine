@@ -4,7 +4,7 @@
 #include "Log.h"
 #include "Types.h"
 
-extern void initialize_application(Application *out_app, Engine_Specification *out_spec);
+extern void initialize_application(Application *out_app, EngineSpecification *out_spec);
 extern void destroy_application(Application *app);
 
 extern Engine *global_engine;
@@ -14,7 +14,7 @@ inline s32 stak_main() {
 
     Engine engine            = {};
     Application app          = {};
-    Engine_Specification spec = {};
+    EngineSpecification spec = {};
 
     initialize_application(&app, &spec);
 

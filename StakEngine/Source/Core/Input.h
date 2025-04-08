@@ -6,30 +6,30 @@
 #include <unordered_map>
 #include <functional>
 
-#undef DELETE
+#undef Delete
 
 struct Window;
 
-enum class Key_Code : s16 {
-    UNKNOWN       = -1,
-    SPACE         = 32,
-    APOSTROPHE    = 39, /* ' */
-    COMMA         = 44, /* , */
-    MINUS         = 45, /* - */
-    PERIOD        = 46, /* . */
-    SLASH         = 47, /* / */
-    ZERO          = 48,
-    ONE           = 49,
-    TWO           = 50,
-    THREE         = 51,
-    FOUR          = 52,
-    FIVE          = 53,
-    SIX           = 54,
-    SEVEN         = 55,
-    EIGHT         = 56,
-    NINE          = 57,
-    SEMICOLON     = 59, /* ; */
-    EQUAL         = 61, /* = */
+enum class KeyCode : s16 {
+    Unknown       = -1,
+    Space         = 32,
+    Apostrophe    = 39, /* ' */
+    Comma         = 44, /* , */
+    Minus         = 45, /* - */
+    Period        = 46, /* . */
+    Slash         = 47, /* / */
+    Zero          = 48,
+    One           = 49,
+    Two           = 50,
+    Three         = 51,
+    Four          = 52,
+    Five          = 53,
+    Six           = 54,
+    Seven         = 55,
+    Eight         = 56,
+    Nine          = 57,
+    Semicolon     = 59, /* ; */
+    Equal         = 61, /* = */
     A             = 65,
     B             = 66,
     C             = 67,
@@ -56,31 +56,31 @@ enum class Key_Code : s16 {
     x             = 88,
     y             = 89,
     Z             = 90,
-    LEFT_BRACKET  = 91,/* [ */
-    BACKSLASH     = 92,/* \ */
-    RIGHT_BRACKET = 93,/* ] */
-    GRAVE_ACCENT  = 96,/* ` */
-    WORLD_1       = 161, /* non-US #1 */
-    WORLD_2       = 162, /* non-US #2 */
-    ESCAPE        = 256,
-    ENTER         = 257,
-    TAB           = 258,
-    BACKSPACE     = 259,
-    INSERT        = 260,
-    DELETE        = 261,
-    RIGHT         = 262,
-    LEFT          = 263,
-    DOWN          = 264,
-    UP            = 265,
-    PAGE_UP       = 266,
-    PAGE_DOWN     = 267,
-    HOME          = 268,
-    END           = 269,
-    CAPS_LOCK     = 280,
-    SCROLL_LOCK   = 281,
-    NUM_LOCK      = 282,
-    PRINT_SCREEN  = 283,
-    PAUSE         = 284,
+    LeftBracket   = 91,/* [ */
+    Backslash     = 92,/* \ */
+    RightBracket  = 93,/* ] */
+    Grave         = 96,/* ` */
+    World1        = 161, /* non-US #1 */
+    World2        = 162, /* non-US #2 */
+    Escape        = 256,
+    Enter         = 257,
+    Tab           = 258,
+    Backspace     = 259,
+    Insert        = 260,
+    Delete        = 261,
+    Right         = 262,
+    Left          = 263,
+    Down          = 264,
+    Up            = 265,
+    PageUp        = 266,
+    PageDown      = 267,
+    Home          = 268,
+    End           = 269,
+    CapsLock      = 280,
+    ScrollLock    = 281,
+    NumLock       = 282,
+    PrintScreen   = 283,
+    Pause         = 284,
     F1            = 290,
     F2            = 291,
     F3            = 292,
@@ -116,67 +116,67 @@ enum class Key_Code : s16 {
     KP_7          = 327,
     KP_8          = 328,
     KP_9          = 329,
-    KP_DECIMAL    = 330,
-    KP_DIVIDE     = 331,
-    KP_MULTIPLY   = 332,
-    KP_SUBTRACT   = 333,
-    KP_ADD        = 334,
-    KP_ENTER      = 335,
-    KP_EQUAL      = 336,
-    LEFT_SHIFT    = 340,
-    LEFT_CONTROL  = 341,
-    LEFT_ALT      = 342,
-    LEFT_SUPER    = 343,
-    RIGHT_SHIFT   = 344,
-    RIGHT_CONTROL = 345,
-    RIGHT_ALT     = 346,
-    RIGHT_SUPER   = 347,
-    MENU          = 348,
-    LAST          = MENU
+    KPDecimal     = 330,
+    KPDivide      = 331,
+    KPMultiply    = 332,
+    KPSubtract    = 333,
+    KPAdd         = 334,
+    KPEnter       = 335,
+    KPEqual       = 336,
+    LeftShift     = 340,
+    LeftControl   = 341,
+    LeftAlt       = 342,
+    LeftSuper     = 343,
+    RightShift    = 344,
+    RightControl  = 345,
+    RightAlt      = 346,
+    RightSuper    = 347,
+    Menu          = 348,
+    Last          = Menu
 };
 
-enum class Mouse_Code : u8 {
-    ONE     = 0,
-    TWO     = 1,
-    THREE   = 2,
-    FOUR    = 3,
-    FIVE    = 4,
-    SIX     = 5,
-    SEVEN   = 6,
-    EIGHT   = 7,
-    LAST    = EIGHT,
-    LEFT    = ONE,
-    RIGHT   = TWO,
-    MIDDLE  = THREE
+enum class MouseCode : u8 {
+    One     = 0,
+    Two     = 1,
+    Three   = 2,
+    Four    = 3,
+    Five    = 4,
+    Six     = 5,
+    Seven   = 6,
+    Eight   = 7,
+    Last    = Eight,
+    Left    = One,
+    Right   = Two,
+    Middle  = Three
 };
 
-enum class Cursor_Visibility : u8 {
-    NORMAL,
-    HIDDEN,
-    DISABLED
+enum class CursorVisibility : u8 {
+    Normal,
+    Hidden,
+    Disabled
 };
 
-enum class Input_State : u8 {
-    DOWN,
-    UP,
+enum class InputState : u8 {
+    Down,
+    Up,
 };
 
-enum class Input_Callback_Type {
-    KEY,
-    MOUSE_BUTTON,
-    MOUSE_MOVE,
+enum class InputCallbackType {
+    Key,
+    MouseButton,
+    MouseMove,
 };
 
-struct Input_Callback_Info {
-    Input_Callback_Type type;
+struct InputCallbackInfo {
+    InputCallbackType type;
     
     bool is_any_code;
     bool is_any_action;
 
-    Key_Code key;
-    Mouse_Code button;
+    KeyCode key;
+    MouseCode button;
 
-    Input_State action;
+    InputState action;
 
     u64 id;
 };
@@ -186,42 +186,42 @@ struct Input {
         f32 x;
         f32 y;
 
-        std::unordered_map<Mouse_Code, Input_State> buttons;
+        std::unordered_map<MouseCode, InputState> buttons;
     } mouse;
-    std::unordered_map<Key_Code, Input_State> keyboard;
+    std::unordered_map<KeyCode, InputState> keyboard;
 
     bool using_raw_input;
-    Cursor_Visibility cursor_visibility;
+    CursorVisibility cursor_visibility;
 
     u64 key_press_id = 0;
-    std::unordered_map<Key_Code, std::unordered_map<u64, std::function<void()>>> key_press_callbacks;
+    std::unordered_map<KeyCode, std::unordered_map<u64, std::function<void()>>> key_press_callbacks;
     u64 key_release_id = 0;
-    std::unordered_map<Key_Code, std::unordered_map<u64, std::function<void()>>> key_release_callbacks;
+    std::unordered_map<KeyCode, std::unordered_map<u64, std::function<void()>>> key_release_callbacks;
 
     u64 any_key_press_id = 0;
-    std::unordered_map<u64, std::function<void(Key_Code)>> any_key_press_callbacks;
+    std::unordered_map<u64, std::function<void(KeyCode)>> any_key_press_callbacks;
     u64 any_key_release_id = 0;
-    std::unordered_map<u64, std::function<void(Key_Code)>> any_key_release_callbacks;
+    std::unordered_map<u64, std::function<void(KeyCode)>> any_key_release_callbacks;
 
     u64 key_any_action_id = 0;
-    std::unordered_map<Key_Code, std::unordered_map<u64, std::function<void(Input_State)>>> key_any_action_callbacks;
+    std::unordered_map<KeyCode, std::unordered_map<u64, std::function<void(InputState)>>> key_any_action_callbacks;
     u64 any_key_any_action_id = 0;
-    std::unordered_map<u64, std::function<void(Input_State, Key_Code)>> any_key_any_action_callbacks;
+    std::unordered_map<u64, std::function<void(InputState, KeyCode)>> any_key_any_action_callbacks;
 
     u64 mouse_button_press_id = 0;
-    std::unordered_map<Mouse_Code, std::unordered_map<u64, std::function<void()>>> mouse_button_press_callbacks;
+    std::unordered_map<MouseCode, std::unordered_map<u64, std::function<void()>>> mouse_button_press_callbacks;
     u64 mouse_button_release_id = 0;
-    std::unordered_map<Mouse_Code, std::unordered_map<u64, std::function<void()>>> mouse_button_release_callbacks;
+    std::unordered_map<MouseCode, std::unordered_map<u64, std::function<void()>>> mouse_button_release_callbacks;
 
     u64 any_mouse_button_press_id = 0;
-    std::unordered_map<u64, std::function<void(Mouse_Code)>> any_mouse_button_press_callbacks;
+    std::unordered_map<u64, std::function<void(MouseCode)>> any_mouse_button_press_callbacks;
     u64 any_mouse_button_release_id = 0;
-    std::unordered_map<u64, std::function<void(Mouse_Code)>> any_mouse_button_release_callbacks;
+    std::unordered_map<u64, std::function<void(MouseCode)>> any_mouse_button_release_callbacks;
 
     u64 mouse_button_any_action_id = 0;
-    std::unordered_map<Mouse_Code, std::unordered_map<u64, std::function<void(Input_State)>>> mouse_button_any_action_callbakcs;
+    std::unordered_map<MouseCode, std::unordered_map<u64, std::function<void(InputState)>>> mouse_button_any_action_callbakcs;
     u64 any_mouse_button_any_action_id = 0;
-    std::unordered_map<u64, std::function<void(Input_State, Mouse_Code)>> any_mouse_button_any_action_callbacks;
+    std::unordered_map<u64, std::function<void(InputState, MouseCode)>> any_mouse_button_any_action_callbacks;
 
     u64 mouse_move_id = 0;
     std::unordered_map<u64, std::function<void(f32, f32)>> mouse_move_callbacks;
@@ -232,23 +232,23 @@ struct Input {
 bool initialize_input(Input *input, Window *window);
 
 void set_raw_input(Input *input, bool value);
-void set_cursor_visibility(Input *input, Cursor_Visibility visibility);
+void set_cursor_visibility(Input *input, CursorVisibility visibility);
 
-Input_Callback_Info add_key_press_callback(Input *input, Key_Code key, std::function<void()> func);
-Input_Callback_Info add_key_release_callback(Input *input, Key_Code key, std::function<void()> func);
-Input_Callback_Info add_any_key_press_callback(Input *input, std::function<void(Key_Code)> func);
-Input_Callback_Info add_any_key_release_callback(Input *input, std::function<void(Key_Code)> func);
-Input_Callback_Info add_key_any_action_callback(Input *input, Key_Code key, std::function<void(Input_State)> func);
-Input_Callback_Info add_any_key_any_action_callback(Input *input, std::function<void(Input_State, Key_Code)> func);
-Input_Callback_Info add_mouse_button_press_callback(Input *input, Mouse_Code button, std::function<void()> func);
-Input_Callback_Info add_mouse_button_release_callback(Input *input, Mouse_Code button, std::function<void()> func);
-Input_Callback_Info add_any_mouse_button_press_callback(Input *input, std::function<void(Mouse_Code)> func);
-Input_Callback_Info add_any_mouse_button_release_callback(Input *input, std::function<void(Mouse_Code)> func);
-Input_Callback_Info add_mouse_button_any_action_callback(Input *input, Mouse_Code button, std::function<void(Input_State)> func);
-Input_Callback_Info add_any_mouse_button_any_action_callback(Input *input, std::function<void(Input_State, Mouse_Code)> func);
-Input_Callback_Info add_mouse_move_callback(Input *input, std::function<void(f32, f32)> func);
+InputCallbackInfo add_key_press_callback(Input *input, KeyCode key, std::function<void()> func);
+InputCallbackInfo add_key_release_callback(Input *input, KeyCode key, std::function<void()> func);
+InputCallbackInfo add_any_key_press_callback(Input *input, std::function<void(KeyCode)> func);
+InputCallbackInfo add_any_key_release_callback(Input *input, std::function<void(KeyCode)> func);
+InputCallbackInfo add_key_any_action_callback(Input *input, KeyCode key, std::function<void(InputState)> func);
+InputCallbackInfo add_any_key_any_action_callback(Input *input, std::function<void(InputState, KeyCode)> func);
+InputCallbackInfo add_mouse_button_press_callback(Input *input, MouseCode button, std::function<void()> func);
+InputCallbackInfo add_mouse_button_release_callback(Input *input, MouseCode button, std::function<void()> func);
+InputCallbackInfo add_any_mouse_button_press_callback(Input *input, std::function<void(MouseCode)> func);
+InputCallbackInfo add_any_mouse_button_release_callback(Input *input, std::function<void(MouseCode)> func);
+InputCallbackInfo add_mouse_button_any_action_callback(Input *input, MouseCode button, std::function<void(InputState)> func);
+InputCallbackInfo add_any_mouse_button_any_action_callback(Input *input, std::function<void(InputState, MouseCode)> func);
+InputCallbackInfo add_mouse_move_callback(Input *input, std::function<void(f32, f32)> func);
 
-void RemoveCallback(Input *Input, const Input_Callback_Info &Info);
-void SetKey(Input *Input, Key_Code key, Input_State action);
-void SetMouseButton(Input *Input, Mouse_Code button, Input_State action);
+void RemoveCallback(Input *Input, const InputCallbackInfo &Info);
+void SetKey(Input *Input, KeyCode key, InputState action);
+void SetMouseButton(Input *Input, MouseCode button, InputState action);
 void SetMousePos(Input *Input, f32 x, f32 y);

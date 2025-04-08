@@ -19,7 +19,7 @@ void engine_shutdown(Engine *engine) {
     platform_shutdown();
 }
 
-bool engine_init(Engine *engine, Engine_Specification *spec, Application *app) {
+bool engine_init(Engine *engine, EngineSpecification *spec, Application *app) {
     engine->app = app;
 
     engine->name = spec->app_name;
@@ -29,12 +29,12 @@ bool engine_init(Engine *engine, Engine_Specification *spec, Application *app) {
         return false;
     }
 
-    if (!rhi_init(Rhi_Backend::VULKAN)) {
+    if (!rhi_init(RHIBackend::Vulkan)) {
         SK_LOG_ERROR("Failed to initialize RHI");
         return false;
     }
 
-    Window_Config cfg = {
+    WindowConfig cfg = {
         spec->window_width,
         spec->window_height,
         spec->window_title,
@@ -87,16 +87,16 @@ void engine_run(Engine *engine) {
 
 void engine_on_event(Engine *engine, Event *event) {
     switch (event->type) {
-    case Event_Type::WINDOW_CLOSE:
+    case EventType::WindowClose:
         engine->running = false;
         break;
-    case Event_Type::KEY:
+    case EventType::Key:
         SetKey(&engine->input, event->ke.key, event->ke.state);
         break;
-    case Event_Type::MOUSE_BUTTON:
+    case EventType::MouseButton:
         SetMouseButton(&engine->input, event->mbe.button, event->mbe.state);
         break;
-    case Event_Type::MOUSE_MOVE:
+    case EventType::MouseMove:
         SetMousePos(&engine->input, event->mme.x, event->mme.y);
         break;
     default:

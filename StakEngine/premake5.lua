@@ -42,7 +42,7 @@ project "StakEngine"
         systemversion "latest"
         defines {
             "SK_WINDOWS",
-            "SK_VULKAN",
+            "SK_VULKAN"
         }
         
         links { 
