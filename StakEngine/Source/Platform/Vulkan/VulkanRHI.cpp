@@ -75,6 +75,8 @@ struct VulkanTexture {
 struct VulkanCommandBuffer {
     VkCommandBuffer command_buffer;
     VulkanQueue *queue;
+    std::vector<VkSemaphoreSubmitInfo> waits;
+    std::vector<VkSemaphoreSubmitInfo> signals;
 };
 
 struct VulkanPipeline {
@@ -926,12 +928,38 @@ RHICommandBuffer vk_start_command_recording(RHIQueue queue) {
     return rhi_cb;
 }
 
-void vk_submit(RHIQueue queue, RHICommandBuffer *command_buffers, u32 command_buffer_count, RHISemaphore semaphore, u64 sem_val) {
+void vk_submit(RHIQueue queue, RHICommandBuffer *command_buffers, u32 command_buffer_count, RHISemaphore sem, u64 sem_val) {
     auto vulkan_queue = (VulkanQueue *) queue.data;
 
+    auto semaphore = (VulkanSemaphore *) sem.data;
+
+    VULKAN_VALIDATE(vulkan_queue != nullptr, "vk_submit called with null queue", VULKAN_VALIDATION_SEVERITY_WARN);
+    VULKAN_VALIDATE(semaphore != nullptr, "vk_submit called with null semaphore", VULKAN_VALIDATION_SEVERITY_WARN);
+
+    if (vulkan_queue == nullptr || semaphore == nullptr) {
+        return;
+    }
+
+    std::vector<VkSemaphoreSubmitInfo> signals;
+
+    signals.push_back({
+        .sType = VK_STRUCTURE_TYPE_SEMAPHORE_SUBMIT_INFO,
+        .semaphore = semaphore->semaphore,
+        .value = sem_val,
+        .stageMask = VK_PIPELINE_STAGE_2_ALL_COMMANDS_BIT,
+    });
+
+    std::vector<VkSemaphoreSubmitInfo> waits;
+
     std::vector<VkCommandBufferSubmitInfo> cb_infos(command_buffer_count);
+
     for (u32 i = 0; i < cb_infos.size(); i++) {
         auto cb = (VulkanCommandBuffer*) command_buffers[i].data;
+        VULKAN_VALIDATE(cb != nullptr, "vk_submit called with null command buffer", VULKAN_VALIDATION_SEVERITY_WARN);
+
+        if (cb == nullptr) {
+            continue;
+        }
 
         VULKAN_VALIDATE(cb->queue == vulkan_queue, "vk_submit called with command buffer whose queue does not match the submission queue", VULKAN_VALIDATION_SEVERITY_WARN);
 
@@ -942,26 +970,19 @@ void vk_submit(RHIQueue queue, RHICommandBuffer *command_buffers, u32 command_bu
         cb_infos[i].sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_SUBMIT_INFO;
         cb_infos[i].commandBuffer = cb->command_buffer;
         cb_infos[i].deviceMask = 0; // ???
+
+        waits.insert(waits.end(), cb->waits.begin(), cb->waits.end());
+        signals.insert(signals.end(), cb->signals.begin(), cb->signals.end());
     }
-
-    auto vulkan_semaphore = (VulkanSemaphore *) semaphore.data;
-
-    VkSemaphoreSubmitInfo signal_info = {
-        .sType = VK_STRUCTURE_TYPE_SEMAPHORE_SUBMIT_INFO,
-        .semaphore = vulkan_semaphore->semaphore,
-        .value = sem_val,
-        .stageMask = VK_PIPELINE_STAGE_2_ALL_COMMANDS_BIT,
-        .deviceIndex = 0,
-    };
 
     VkSubmitInfo2 info = {
         .sType = VK_STRUCTURE_TYPE_SUBMIT_INFO,
-        .waitSemaphoreInfoCount = 0,
-        .pWaitSemaphoreInfos = nullptr,
+        .waitSemaphoreInfoCount = waits.size(),
+        .pWaitSemaphoreInfos = waits.data(),
         .commandBufferInfoCount = cb_infos.size(),
         .pCommandBufferInfos = cb_infos.data(),
-        .signalSemaphoreInfoCount = 1,
-        .pSignalSemaphoreInfos = &signal_info,
+        .signalSemaphoreInfoCount = signals.size(),
+        .pSignalSemaphoreInfos = signals.data(),
     };
     
     if (vkQueueSubmit2(vulkan_queue->queue, 1, &info, nullptr) != VK_SUCCESS) {
@@ -1191,9 +1212,43 @@ void vk_barrier(RHICommandBuffer cb, RHIPipelineStage before, RHIPipelineStage a
     vkCmdPipelineBarrier2(command_buffer->command_buffer, &dep);
 }
 
-void vk_signal_after(RHICommandBuffer cb, RHIPipelineStage before, void *ptr_gpu, u64 value, RHISignal signal);
+void vk_signal_after(RHICommandBuffer cb, RHIPipelineStage before, RHISemaphore sem, u64 value) {
+    auto command_buffer = (VulkanCommandBuffer *) cb.data;
+    auto semaphore = (VulkanSemaphore *) sem.data;
 
-void vk_wait_before(RHICommandBuffer cb, RHIPipelineStage after, void *ptr_gpu, u64 value, RHIOp op, RHIHazardFlags hazards, u64 mask);
+    VULKAN_VALIDATE(command_buffer != nullptr, "vk_signal_after called with null command_buffer", VULKAN_VALIDATION_SEVERITY_WARN);
+    VULKAN_VALIDATE(semaphore != nullptr, "vk_signal_after called with null semaphore", VULKAN_VALIDATION_SEVERITY_WARN);
+
+    if (command_buffer == nullptr || semaphore == nullptr) {
+        return;
+    }
+
+    command_buffer->signals.push_back({ 
+        .sType = VK_STRUCTURE_TYPE_SEMAPHORE_SUBMIT_INFO,
+        .semaphore = semaphore->semaphore,
+        .value = value,
+        .stageMask = vk_get_pipeline_stage(before),
+    });
+}
+
+void vk_wait_before(RHICommandBuffer cb, RHIPipelineStage after, RHISemaphore sem, u64 value) {
+    auto command_buffer = (VulkanCommandBuffer *) cb.data;
+    auto semaphore = (VulkanSemaphore *) sem.data;
+
+    VULKAN_VALIDATE(command_buffer != nullptr, "vk_wait_before called with null command_buffer", VULKAN_VALIDATION_SEVERITY_WARN);
+    VULKAN_VALIDATE(semaphore != nullptr, "vk_wait_before called with null semaphore", VULKAN_VALIDATION_SEVERITY_WARN);
+
+    if (command_buffer == nullptr || semaphore == nullptr) {
+        return;
+    }
+
+    command_buffer->waits.push_back({
+        .sType = VK_STRUCTURE_TYPE_SEMAPHORE_SUBMIT_INFO,
+        .semaphore = semaphore->semaphore,
+        .value = value,
+        .stageMask = vk_get_pipeline_stage(after),
+    });
+}
 
 void vk_set_pipeline(RHICommandBuffer cb, RHIPipeline pipeline) {
     auto command_buffer = (VulkanCommandBuffer *) cb.data;
