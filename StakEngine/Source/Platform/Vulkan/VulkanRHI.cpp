@@ -113,21 +113,24 @@ struct VulkanBlendState {
     VkColorComponentFlags color_write_mask;
 };
 
+struct VulkanStencil {
+    u32 write_mask;
+    VkStencilOp fail_op;
+    VkStencilOp pass_op;
+    VkStencilOp depth_fail_op;
+    VkCompareOp compare_op;
+    u32 reference;
+    u32 compare_mask;
+};
+
 struct VulkanDepthStencilState {
     bool depth_write_enabled;
     VkCompareOp depth_compare_op;
-    bool depth_bias_enable;
     float depth_bias_constant;
     float depth_bias_clamp;
     float depth_bias_slope;
-    VkStencilFaceFlags stencil_face_mask;
-    u32 stencil_write_mask;
-    VkStencilOp stencil_fail_op;
-    VkStencilOp stencil_pass_op;
-    VkStencilOp depth_fail_op;
-    VkCompareOp stencil_compare_op;
-    u32 stencil_reference;
-    u32 stencil_compare_mask;
+    VulkanStencil front;
+    VulkanStencil back;
 };
 
 Vulkan vulkan;
@@ -151,6 +154,54 @@ static void vk_validation_message(const char *str, VulkanValidationSeverity seve
                 SK_LOG_CRITICAL("[RHI_VALIDATION] {}", str);
                 break;
         }
+    }
+}
+
+VkStencilOp vk_get_stencil_op(RHIStencilOp op) {
+    switch (op) {
+        case RHI_STENCIL_OP_KEEP:
+            return VK_STENCIL_OP_KEEP;
+        case RHI_STENCIL_OP_ZERO:
+            return VK_STENCIL_OP_ZERO;
+        case RHI_STENCIL_OP_REPLACE:
+            return VK_STENCIL_OP_REPLACE;
+        case RHI_STENCIL_OP_INCREMENT_AND_CLAMP:
+            return VK_STENCIL_OP_INCREMENT_AND_CLAMP;
+        case RHI_STENCIL_OP_DECREMENT_AND_CLAMP:
+            return VK_STENCIL_OP_DECREMENT_AND_CLAMP;
+        case RHI_STENCIL_OP_INVERT:
+            return VK_STENCIL_OP_INVERT;
+        case RHI_STENCIL_OP_INCREMENT_AND_WRAP:
+            return VK_STENCIL_OP_INCREMENT_AND_WRAP;
+        case RHI_STENCIL_OP_DECREMENT_AND_WRAP:
+            return VK_STENCIL_OP_DECREMENT_AND_WRAP;
+        default:
+            VULKAN_VALIDATE(false, "vk_get_compare_op called with invalid op", VULKAN_VALIDATION_SEVERITY_WARN);
+            return (VkStencilOp) 0;
+    }
+}
+
+VkCompareOp vk_get_compare_op(RHIOp op) {
+    switch (op) {
+        case RHI_OP_NEVER:
+            return VK_COMPARE_OP_NEVER;
+        case RHI_OP_LESS:
+            return VK_COMPARE_OP_LESS;
+        case RHI_OP_EQUAL:
+            return VK_COMPARE_OP_EQUAL;
+        case RHI_OP_LESS_EQUAL:
+            return VK_COMPARE_OP_LESS_OR_EQUAL;
+        case RHI_OP_GREATER:
+            return VK_COMPARE_OP_GREATER;
+        case RHI_OP_NOT_EQUAL:
+            return VK_COMPARE_OP_NOT_EQUAL;
+        case RHI_OP_GREATER_EQUAL:
+            return VK_COMPARE_OP_GREATER_OR_EQUAL;
+        case RHI_OP_ALWAYS:
+            return VK_COMPARE_OP_ALWAYS;
+        default:
+            VULKAN_VALIDATE(false, "vk_get_compare_op called with invalid op", VULKAN_VALIDATION_SEVERITY_WARN);
+            return (VkCompareOp) 0;
     }
 }
 
@@ -524,7 +575,7 @@ RHIPipeline vk_create_compute_pipeline(u8 *compute_ir, u32 ir_size) {
         }
     };
 
-    VkPipeline vulkan_pipeline;
+    VkPipeline vulkan_pipeline = nullptr;
     if (vkCreateComputePipelines(vulkan.device, nullptr, 1, &info, nullptr, &vulkan_pipeline) != VK_SUCCESS) {
         vkDestroyShaderModule(vulkan.device, shader_module, nullptr);
 
@@ -535,7 +586,7 @@ RHIPipeline vk_create_compute_pipeline(u8 *compute_ir, u32 ir_size) {
 
     vkDestroyShaderModule(vulkan.device, shader_module, nullptr);
 
-    auto pipeline = new VulkanPipeline;
+    auto pipeline = (VulkanPipeline *) malloc(sizeof(VulkanPipeline));
     pipeline->pipeline = vulkan_pipeline;
     pipeline->bind_point = VK_PIPELINE_BIND_POINT_COMPUTE;
     return { (u64) pipeline };
@@ -675,7 +726,7 @@ RHIPipeline vk_create_graphics_pipeline(u8 *vertex_ir, u32 vertex_ir_size, u8 *p
     };
     info.pDynamicState = &dynamic_state;
 
-    VkPipeline vulkan_pipeline;
+    VkPipeline vulkan_pipeline = nullptr;
     if (vkCreateGraphicsPipelines(vulkan.device, nullptr, 1, &info, nullptr, &vulkan_pipeline) != VK_SUCCESS) {
         vkDestroyShaderModule(vulkan.device, vertex_shader_module, nullptr);
         vkDestroyShaderModule(vulkan.device, fragment_shader_module, nullptr);
@@ -688,7 +739,7 @@ RHIPipeline vk_create_graphics_pipeline(u8 *vertex_ir, u32 vertex_ir_size, u8 *p
     vkDestroyShaderModule(vulkan.device, vertex_shader_module, nullptr);
     vkDestroyShaderModule(vulkan.device, fragment_shader_module, nullptr);
 
-    auto pipeline = new VulkanPipeline;
+    auto pipeline = (VulkanPipeline *) malloc(sizeof(VulkanPipeline));
     pipeline->pipeline = vulkan_pipeline;
     pipeline->bind_point = VK_PIPELINE_BIND_POINT_GRAPHICS;
     return { (u64) pipeline };
@@ -841,7 +892,7 @@ RHIPipeline vk_create_graphics_meshlet_pipeline(u8 *meshlet_ir, u32 meshlet_ir_s
     vkDestroyShaderModule(vulkan.device, mesh_shader_module, nullptr);
     vkDestroyShaderModule(vulkan.device, fragment_shader_module, nullptr);
 
-    auto pipeline = new VulkanPipeline;
+    auto pipeline = (VulkanPipeline *) malloc(sizeof(VulkanPipeline));
     pipeline->pipeline = vulkan_pipeline;
     pipeline->bind_point = VK_PIPELINE_BIND_POINT_GRAPHICS;
     return { (u64) pipeline };
@@ -857,14 +908,52 @@ void vk_free_pipeline(RHIPipeline pipeline) {
     }
 
     vkDestroyPipeline(vulkan.device, vulkan_pipeline->pipeline, nullptr);
-    delete vulkan_pipeline;
+    free(vulkan_pipeline);
     pipeline.data = 0;
 }
 
 // State objects
-RHIDepthStencilState vk_create_depth_stencil_state(RHIDepthStencilDesc desc);
 
-RHIBlendState vk_create_blend_state(RHIBlendDesc desc);
+
+RHIDepthStencilState vk_create_depth_stencil_state(RHIDepthStencilDesc desc) {
+    auto state = (VulkanDepthStencilState *) malloc(sizeof(VulkanDepthStencilState));
+
+    state->depth_write_enabled = desc.depth_mode == RHI_DEPTH_WRITE;
+    state->depth_compare_op = vk_get_compare_op(desc.depth_test);
+    state->depth_bias_constant = desc.depth_bias;
+    state->depth_bias_clamp = desc.depth_bias_clamp;
+    state->depth_bias_slope = desc.depth_bias_slope_factor;
+    
+    state->front.write_mask = desc.stencil_write_mask;
+    state->front.fail_op = vk_get_stencil_op(desc.stencil_front.fail_op);
+    state->front.pass_op = vk_get_stencil_op(desc.stencil_front.pass_op);
+    state->front.depth_fail_op = vk_get_stencil_op(desc.stencil_front.depth_fail_op);
+    state->front.reference = desc.stencil_front.reference;
+    state->front.compare_mask = desc.stencil_read_mask;
+
+    state->back.write_mask = desc.stencil_write_mask;
+    state->back.fail_op = vk_get_stencil_op(desc.stencil_back.fail_op);
+    state->back.pass_op = vk_get_stencil_op(desc.stencil_back.pass_op);
+    state->back.depth_fail_op = vk_get_stencil_op(desc.stencil_back.depth_fail_op);
+    state->back.reference = desc.stencil_back.reference;
+    state->back.compare_mask = desc.stencil_read_mask;
+
+    return { (u32) state };
+}
+
+RHIBlendState vk_create_blend_state(RHIBlendDesc desc) {
+    auto state = (VulkanBlendState *) malloc(sizeof(VulkanBlendState));
+
+    state->src_color_factor = vk_get_blend_factor(desc.src_color_factor);
+    state->dst_color_factor = vk_get_blend_factor(desc.src_color_factor);
+    state->color_op = vk_get_blend_op(desc.color_op);
+    state->src_alpha_factor = vk_get_blend_factor(desc.src_alpha_factor);
+    state->dst_alpha_factor = vk_get_blend_factor(desc.dst_alpha_factor);
+    state->alpha_op = vk_get_blend_op(desc.alpha_op);
+    state->color_write_mask = desc.color_write_mask;
+
+    return { (u64) state };
+}
 
 void vk_free_depth_stencil_state(RHIDepthStencilState state) {
     auto depth_stencil = (VulkanDepthStencilState *) state.data;
@@ -875,7 +964,7 @@ void vk_free_depth_stencil_state(RHIDepthStencilState state) {
         return;
     }
 
-    delete depth_stencil;
+    free(depth_stencil);
     state.data = 0;
 }
 
@@ -888,7 +977,7 @@ void vk_free_blend_state(RHIBlendState state) {
         return;
     }
 
-    delete blend;
+    free(blend);
     state.data = 0;
 }
 
@@ -920,7 +1009,7 @@ RHICommandBuffer vk_start_command_recording(RHIQueue queue) {
         return { 0 };
     }
 
-    auto vkcb = new VulkanCommandBuffer;
+    auto vkcb = (VulkanCommandBuffer *) malloc(sizeof(VulkanCommandBuffer));
     vkcb->command_buffer = cb;
     vkcb->queue = (VulkanQueue *) queue.data;
 
@@ -1012,7 +1101,7 @@ RHISemaphore vk_create_semaphore(u64 init_value) {
         return { 0 };
     }
 
-    auto semaphore = new VulkanSemaphore;
+    auto semaphore = (VulkanSemaphore *) malloc(sizeof(VulkanSemaphore));
     semaphore->semaphore = sem;
 
     return { (u64) semaphore };
@@ -1046,7 +1135,7 @@ void vk_destroy_semaphore(RHISemaphore sem) {
         return;
     }
     vkDestroySemaphore(vulkan.device, semaphore->semaphore, nullptr);
-    delete semaphore;
+    free(semaphore);
     sem.data = 0;
 }
 
@@ -1279,12 +1368,18 @@ void vk_set_depth_stencil_state(RHICommandBuffer cb, RHIDepthStencilState state)
 
     vkCmdSetDepthWriteEnable(command_buffer->command_buffer, depth_stencil->depth_write_enabled);
     vkCmdSetDepthCompareOp(command_buffer->command_buffer, depth_stencil->depth_compare_op);
-    vkCmdSetDepthBiasEnable(command_buffer->command_buffer, depth_stencil->depth_bias_enable);
+    vkCmdSetDepthBiasEnable(command_buffer->command_buffer, true);
     vkCmdSetDepthBias(command_buffer->command_buffer, depth_stencil->depth_bias_constant, depth_stencil->depth_bias_clamp, depth_stencil->depth_bias_slope);
-    vkCmdSetStencilWriteMask(command_buffer->command_buffer, depth_stencil->stencil_face_mask, depth_stencil->stencil_write_mask);
-    vkCmdSetStencilOp(command_buffer->command_buffer, depth_stencil->stencil_face_mask, depth_stencil->stencil_fail_op, depth_stencil->stencil_pass_op, depth_stencil->depth_fail_op, depth_stencil->stencil_compare_op);
-    vkCmdSetStencilReference(command_buffer->command_buffer, depth_stencil->stencil_face_mask, depth_stencil->stencil_reference);
-    vkCmdSetStencilCompareMask(command_buffer->command_buffer, depth_stencil->stencil_face_mask, depth_stencil->stencil_compare_mask);
+
+    vkCmdSetStencilWriteMask(command_buffer->command_buffer, VK_STENCIL_FACE_FRONT_BIT, depth_stencil->front.write_mask);
+    vkCmdSetStencilOp(command_buffer->command_buffer, VK_STENCIL_FACE_FRONT_BIT, depth_stencil->front.fail_op, depth_stencil->front.pass_op, depth_stencil->front.depth_fail_op, depth_stencil->depth_compare_op);
+    vkCmdSetStencilReference(command_buffer->command_buffer, VK_STENCIL_FACE_FRONT_BIT, depth_stencil->front.reference);
+    vkCmdSetStencilCompareMask(command_buffer->command_buffer, VK_STENCIL_FACE_FRONT_BIT, depth_stencil->front.compare_mask);
+
+    vkCmdSetStencilWriteMask(command_buffer->command_buffer, VK_STENCIL_FACE_BACK_BIT, depth_stencil->back.write_mask);
+    vkCmdSetStencilOp(command_buffer->command_buffer, VK_STENCIL_FACE_BACK_BIT, depth_stencil->back.fail_op, depth_stencil->back.pass_op, depth_stencil->back.depth_fail_op, depth_stencil->depth_compare_op);
+    vkCmdSetStencilReference(command_buffer->command_buffer, VK_STENCIL_FACE_BACK_BIT, depth_stencil->back.reference);
+    vkCmdSetStencilCompareMask(command_buffer->command_buffer, VK_STENCIL_FACE_BACK_BIT, depth_stencil->back.compare_mask);
 }
 
 void vk_set_blend_state(RHICommandBuffer cb, RHIBlendState state) {

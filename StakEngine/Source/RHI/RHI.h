@@ -130,12 +130,23 @@ enum RHISignal {
     RHI_SIGNAL_ATOMIC_OR
 };
 
+enum RHIStencilOp {
+    RHI_STENCIL_OP_KEEP,
+    RHI_STENCIL_OP_ZERO,
+    RHI_STENCIL_OP_REPLACE,
+    RHI_STENCIL_OP_INCREMENT_AND_CLAMP,
+    RHI_STENCIL_OP_DECREMENT_AND_CLAMP,
+    RHI_STENCIL_OP_INVERT,
+    RHI_STENCIL_OP_INCREMENT_AND_WRAP,
+    RHI_STENCIL_OP_DECREMENT_AND_WRAP,
+};
+
 // Structs
 struct RHIStencil {
     RHIOp test;
-    RHIOp fail_op;
-    RHIOp pass_op;
-    RHIOp depth_fail_op;
+    RHIStencilOp fail_op;
+    RHIStencilOp pass_op;
+    RHIStencilOp depth_fail_op;
     u8 reference;
 };
 
