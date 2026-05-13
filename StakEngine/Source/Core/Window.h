@@ -30,6 +30,4 @@ struct Window {
     //   because it is probably implemented as a pointer/handle
     //   to a platform window
     Handle platform_handle;
-
-    RHIResourceHandle swapchain;
 };

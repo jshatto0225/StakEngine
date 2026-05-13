@@ -1,6 +1,6 @@
 #include <imgui.h>
 #include <backends/imgui_impl_glfw.h>
-
+#define GLFW_INCLUDE_NONE
 #include <glfw/glfw3.h>
 
 #include "RHI.h"
