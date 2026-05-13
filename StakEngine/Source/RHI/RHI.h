@@ -33,6 +33,10 @@ struct RHISemaphore {
     u64 data;
 };
 
+struct RHIDevice {
+    u64 data;
+};
+
 // Enums
 enum RHIMemoryType { 
     RHI_MEMORY_TYPE_DEFAULT, 
@@ -247,37 +251,37 @@ struct RHIRenderPassDesc {
 
 struct RHI {
     // Memory
-    void *(*alloc)(u64 bytes, RHIMemoryType memory);
-    void (*free)(void *ptr);
-    void *(*host_to_device_pointer)(void *ptr);
+    void *(*alloc)(RHIDevice device, u64 bytes, RHIMemoryType memory);
+    void (*free)(RHIDevice device, void *ptr);
+    void *(*host_to_device_pointer)(RHIDevice device, void *ptr);
 
     // Textures
     RHITextureSizeAlign (*texture_size_align)(RHITextureDesc desc);
-    RHITexture (*create_texture)(RHITextureDesc desc, void *ptr_gpu);
-    RHITextureDescriptor (*texture_view_descriptor)(RHITexture texture, RHIViewDesc desc);
-    RHITextureDescriptor (*rw_texture_view_descriptor)(RHITexture texture, RHIViewDesc desc);
+    RHITexture (*create_texture)(RHIDevice device, RHITextureDesc desc, void *ptr_gpu);
+    RHITextureDescriptor (*texture_view_descriptor)(RHIDevice device, RHITexture texture, RHIViewDesc desc);
+    RHITextureDescriptor (*rw_texture_view_descriptor)(RHIDevice device, RHITexture texture, RHIViewDesc desc);
 
     // Pipelines
-    RHIPipeline (*create_compute_pipeline)(u8 *compute_ir, u32 ir_size);
-    RHIPipeline (*create_graphics_pipeline)(u8 *vertex_ir, u32 vertex_ir_size, u8 *pixel_ir, u32 pixel_ir_size, RHIRasterDesc desc);
-    RHIPipeline (*create_graphics_meshlet_pipeline)(u8 meshlet_ir, u32 meshlet_ir_length, u8 *pixel_ir, u32 pixel_ir_size, RHIRasterDesc desc);
-    void (*free_pipeline)(RHIPipeline pipeline);
+    RHIPipeline (*create_compute_pipeline)(RHIDevice device, u8 *compute_ir, u32 ir_size);
+    RHIPipeline (*create_graphics_pipeline)(RHIDevice device, u8 *vertex_ir, u32 vertex_ir_size, u8 *pixel_ir, u32 pixel_ir_size, RHIRasterDesc desc);
+    RHIPipeline (*create_graphics_meshlet_pipeline)(RHIDevice device, u8 meshlet_ir, u32 meshlet_ir_length, u8 *pixel_ir, u32 pixel_ir_size, RHIRasterDesc desc);
+    void (*free_pipeline)(RHIDevice device, RHIPipeline pipeline);
 
     // State objects
-    RHIDepthStencilState (*create_depth_stencil_state)(RHIDepthStencilDesc desc);
-    RHIBlendState (*create_blend_state)(RHIBlendDesc desc);
-    void (*free_depth_stencil_state)(RHIDepthStencilState state);
-    void (*free_blend_state)(RHIBlendState state);
+    RHIDepthStencilState (*create_depth_stencil_state)(RHIDevice device, RHIDepthStencilDesc desc);
+    RHIBlendState (*create_blend_state)(RHIDevice device, RHIBlendDesc desc);
+    void (*free_depth_stencil_state)(RHIDevice device, RHIDepthStencilState state);
+    void (*free_blend_state)(RHIDevice device, RHIBlendState state);
 
     // Queue
-    RHIQueue (*create_queue)(/* DEVICE & QUEUE CREATION DETAILS OMITTED */);
-    RHICommandBuffer (*start_command_recording)(RHIQueue queue);
+    RHIQueue (*create_queue)(RHIDevice device);
+    RHICommandBuffer (*start_command_recording)(RHIDevice device, RHIQueue queue);
     void (*submit)(RHIQueue queue, RHICommandBuffer *command_buffers, u32 command_buffer_count, RHISemaphore semaphore);
 
     // Semaphores
-    RHISemaphore (*create_semaphore)(u64 init_value);
-    void (*wait_semaphore)(RHISemaphore semaphore, u64 value);
-    void (*destroy_semaphore)(RHISemaphore semaphore);
+    RHISemaphore (*create_semaphore)(RHIDevice device, u64 init_value);
+    void (*wait_semaphore)(RHIDevice device, RHISemaphore semaphore, u64 value);
+    void (*destroy_semaphore)(RHIDevice device, RHISemaphore semaphore);
 
     // Commands
     void (*mem_copy)(RHICommandBuffer cb, void *dest_gpu, void *src_gpu, u64 size);

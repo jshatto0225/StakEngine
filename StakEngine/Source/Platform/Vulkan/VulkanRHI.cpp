@@ -32,18 +32,22 @@ struct AllocBlock {
 struct Vulkan {
     VkInstance instance;
     VkDebugUtilsMessengerEXT debug_messenger;
-    VkDevice device;
-    VkPhysicalDevice gpu;
+};
 
+struct VulkanSwapchain {
     VkSurfaceKHR surface;
     VkSwapchainKHR swapchain;
 
-    u32 swapchain_image_count;
-    std::vector<VkImage> swapchain_images;
-    std::vector<VkImageView> swapchain_image_views;
-    VkFormat swapchain_format;
-    VkExtent2D swapchain_extent;
+    u32 image_count;
+    std::vector<VkImage> images;
+    std::vector<VkImageView> image_views;
+    VkFormat format;
+    VkExtent2D extent;
+};
 
+struct VulkanDevice {
+    VkDevice device;
+    VkPhysicalDevice gpu;
     VkCommandPool command_pool;
 
     std::vector<AllocBlock> cpu_allocations;
@@ -55,6 +59,8 @@ struct VulkanSemaphore {
 };
 
 struct VulkanQueue {
+    VulkanDevice *device;
+
     VkQueue queue;
 };
 
@@ -73,6 +79,8 @@ struct VulkanTexture {
 };
 
 struct VulkanCommandBuffer {
+    VulkanDevice *device;
+
     VkCommandBuffer command_buffer;
     VulkanQueue *queue;
     std::vector<VkSemaphoreSubmitInfo> waits;
@@ -289,14 +297,20 @@ VkCullModeFlags vk_get_cull_mode(RHICullMode mode) {
     }
 }
 
-AllocBlock *find_allocation_gpu(void *gpu) {
+AllocBlock *find_allocation_gpu(VulkanDevice *device, void *gpu) {
+    VULKAN_VALIDATE(device != nullptr, "find_allocation_gpu called with null device", VULKAN_VALIDATION_SEVERITY_WARN);
+
+    if (device == nullptr) {
+        return nullptr;
+    }
+
     u64 low = 0;
-    u64 high = vulkan.gpu_allocations.size() - 1;
+    u64 high = device->gpu_allocations.size() - 1;
 
     while (low <= high) {
         u64 mid = low + (high - low) / 2;
 
-        auto block = &vulkan.gpu_allocations[mid];
+        auto block = &device->gpu_allocations[mid];
         if ((u64) gpu >= (u64) block->gpu && (u64) gpu < (u64) block->gpu + block->size) {
             return block;
         }
@@ -311,14 +325,20 @@ AllocBlock *find_allocation_gpu(void *gpu) {
     return nullptr;
 }
 
-AllocBlock *find_allocation_cpu(void *cpu) {
+AllocBlock *find_allocation_cpu(VulkanDevice *device, void *cpu) {
+    VULKAN_VALIDATE(device != nullptr, "find_allocation_cpu called with null device", VULKAN_VALIDATION_SEVERITY_WARN);
+
+    if (device == nullptr) {
+        return nullptr;
+    }
+
     u64 low = 0;
-    u64 high = vulkan.cpu_allocations.size() - 1;
+    u64 high = device->cpu_allocations.size() - 1;
 
     while (low <= high) {
         u64 mid = low + (high - low) / 2;
 
-        auto block = &vulkan.cpu_allocations[mid];
+        auto block = &device->cpu_allocations[mid];
         if ((u64) cpu >= (u64) block->cpu && (u64) cpu < (u64) block->cpu + block->size) {
             return block;
         }
@@ -333,8 +353,10 @@ AllocBlock *find_allocation_cpu(void *cpu) {
     return nullptr;
 }
 
-VulkanBufferOffset get_buffer_offset_gpu(void *gpu) {
-    AllocBlock *block = find_allocation_gpu(gpu);
+VulkanBufferOffset get_buffer_offset_gpu(VulkanDevice *device, void *gpu) {
+    VULKAN_VALIDATE(device != nullptr, "get_buffer_offset_gpu called with null device", VULKAN_VALIDATION_SEVERITY_WARN);
+
+    AllocBlock *block = find_allocation_gpu(device, gpu);
 
     VULKAN_VALIDATE(block != nullptr, "get_buffer_offset_gpu could not find associated allocation block", VULKAN_VALIDATION_SEVERITY_CRITICAL);
 
@@ -343,9 +365,9 @@ VulkanBufferOffset get_buffer_offset_gpu(void *gpu) {
     return { block->buffer, offset };
 }
 
-bool find_memory_type(u32 *memory_type_index, u32 filter, VkMemoryPropertyFlags flags) {
+bool find_memory_type(VkPhysicalDevice gpu, u32 *memory_type_index, u32 filter, VkMemoryPropertyFlags flags) {
     VkPhysicalDeviceMemoryProperties mem_props;
-    vkGetPhysicalDeviceMemoryProperties(vulkan.gpu, &mem_props);
+    vkGetPhysicalDeviceMemoryProperties(gpu, &mem_props);
 
     for (auto i = 0; i < mem_props.memoryTypeCount; i++) {
         if (((filter & (1 << i)) != 0) && ((mem_props.memoryTypes[i].propertyFlags & flags) == flags)) {
@@ -354,19 +376,25 @@ bool find_memory_type(u32 *memory_type_index, u32 filter, VkMemoryPropertyFlags 
         }
     }
 
-    VULKAN_VALIDATE(false, "Failed to find memory type", VULKAN_VALIDATION_SEVERITY_ERROR);
+    VULKAN_VALIDATE(false, "find_memory_type Failed to find memory type", VULKAN_VALIDATION_SEVERITY_ERROR);
 
     return false;
 }
 
-u64 find_insert_pos_cpu(void *cpu) {
+u64 find_insert_pos_cpu(VulkanDevice *device, void *cpu) {
+    VULKAN_VALIDATE(device != nullptr, "find_insert_pos_cpu called with null device", VULKAN_VALIDATION_SEVERITY_WARN);
+
+    if (device == nullptr) {
+        return;
+    }
+
     u64 low = 0;
-    u64 high = vulkan.cpu_allocations.size();
+    u64 high = device->cpu_allocations.size();
 
     while (low < high) {
         u64 mid = (low + high) / 2;
 
-        if (vulkan.cpu_allocations[mid].cpu < cpu) {
+        if (device->cpu_allocations[mid].cpu < cpu) {
             low = mid + 1;
         } else {
             high = mid;
@@ -376,14 +404,20 @@ u64 find_insert_pos_cpu(void *cpu) {
     return low;
 }
 
-u64 find_insert_pos_gpu(void *gpu) {
+u64 find_insert_pos_gpu(VulkanDevice *device, void *gpu) {
+    VULKAN_VALIDATE(device != nullptr, "find_insert_pos_gpu called with null device", VULKAN_VALIDATION_SEVERITY_WARN);
+
+    if (device == nullptr) {
+        return;
+    }
+
     u64 low = 0;
-    u64 high = vulkan.gpu_allocations.size();
+    u64 high = device->gpu_allocations.size();
 
     while (low < high) {
         u64 mid = (low + high) / 2;
 
-        if (vulkan.gpu_allocations[mid].gpu < gpu) {
+        if (device->gpu_allocations[mid].gpu < gpu) {
             low = mid + 1;
         } else {
             high = mid;
@@ -393,14 +427,26 @@ u64 find_insert_pos_gpu(void *gpu) {
     return low;
 }
 
-void insert_allocation_cpu(AllocBlock in) {
-    auto pos = find_insert_pos_cpu(in.cpu);
-    vulkan.cpu_allocations.insert(vulkan.cpu_allocations.begin() + pos, in);
+void insert_allocation_cpu(VulkanDevice *device, AllocBlock in) {
+    VULKAN_VALIDATE(device != nullptr, "insert_allocation_cpu called with null device", VULKAN_VALIDATION_SEVERITY_WARN);
+
+    if (device == nullptr) {
+        return;
+    }
+
+    auto pos = find_insert_pos_cpu(device, in.cpu);
+    device->cpu_allocations.insert(device->cpu_allocations.begin() + pos, in);
 }
 
-void insert_allocation_gpu(AllocBlock in) {
-    auto pos = find_insert_pos_gpu(in.gpu);
-    vulkan.gpu_allocations.insert(vulkan.gpu_allocations.begin() + pos, in);
+void insert_allocation_gpu(VulkanDevice *device, AllocBlock in) {
+    VULKAN_VALIDATE(device != nullptr, "insert_allocation_gpu called with null device", VULKAN_VALIDATION_SEVERITY_WARN);
+
+    if (device == nullptr) {
+        return;
+    }
+
+    auto pos = find_insert_pos_gpu(device, in.gpu);
+    device->gpu_allocations.insert(device->gpu_allocations.begin() + pos, in);
 }
 
 bool vulkan_init(RHI *rhi) {
@@ -412,7 +458,15 @@ void vulkan_shutdown() {
 }
 
 // Memory
-void *vk_alloc(u64 bytes, RHIMemoryType memory = RHI_MEMORY_TYPE_DEFAULT) {
+void *vk_alloc(RHIDevice device, u64 bytes, RHIMemoryType memory = RHI_MEMORY_TYPE_DEFAULT) {
+    auto vulkan_device = (VulkanDevice *) device.data;
+
+    VULKAN_VALIDATE(vulkan_device != nullptr, "vk_alloc called with null device", VULKAN_VALIDATION_SEVERITY_WARN);
+
+    if (vulkan_device == nullptr) {
+        return;
+    }
+
     VULKAN_VALIDATE(bytes > 0, "vk_alloc given 0 size", VULKAN_VALIDATION_SEVERITY_TRACE);
 
     if (bytes == 0) {
@@ -437,12 +491,12 @@ void *vk_alloc(u64 bytes, RHIMemoryType memory = RHI_MEMORY_TYPE_DEFAULT) {
         .sharingMode = VK_SHARING_MODE_EXCLUSIVE,
     };
 
-    if (vkCreateBuffer(vulkan.device, &buffer_info, nullptr, &alloc_block.buffer) != VK_SUCCESS) {
+    if (vkCreateBuffer(vulkan_device->device, &buffer_info, nullptr, &alloc_block.buffer) != VK_SUCCESS) {
         return nullptr;
     }
 
     VkMemoryRequirements mem_reqs;
-    vkGetBufferMemoryRequirements(vulkan.device, alloc_block.buffer, &mem_reqs);
+    vkGetBufferMemoryRequirements(vulkan_device->device, alloc_block.buffer, &mem_reqs);
 
     VkMemoryAllocateInfo alloc_info = {
         .sType = VK_STRUCTURE_TYPE_MEMORY_ALLOCATE_INFO,
@@ -461,20 +515,20 @@ void *vk_alloc(u64 bytes, RHIMemoryType memory = RHI_MEMORY_TYPE_DEFAULT) {
             properties = VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT | VK_MEMORY_PROPERTY_HOST_CACHED_BIT;
             break;
         default:
-            vkDestroyBuffer(vulkan.device, alloc_block.buffer, nullptr);
+            vkDestroyBuffer(vulkan_device->device, alloc_block.buffer, nullptr);
             VULKAN_VALIDATE(false, "vk_alloc invalid RHIMemoryType", VULKAN_VALIDATION_SEVERITY_ERROR);
             return nullptr;
     }
 
-    if (!find_memory_type(&alloc_info.memoryTypeIndex, mem_reqs.memoryTypeBits, properties) != VK_SUCCESS) {
-        vkDestroyBuffer(vulkan.device, alloc_block.buffer, nullptr);
+    if (!find_memory_type(vulkan_device->gpu, &alloc_info.memoryTypeIndex, mem_reqs.memoryTypeBits, properties) != VK_SUCCESS) {
+        vkDestroyBuffer(vulkan_device->device, alloc_block.buffer, nullptr);
 
         VULKAN_VALIDATE(false, "vk_alloc find_memory_type failed", VULKAN_VALIDATION_SEVERITY_ERROR);
         return nullptr;
     }
 
-    if (vkAllocateMemory(vulkan.device, &alloc_info, nullptr, &alloc_block.memory) != VK_SUCCESS) {
-        vkDestroyBuffer(vulkan.device, alloc_block.buffer, nullptr);
+    if (vkAllocateMemory(vulkan_device->device, &alloc_info, nullptr, &alloc_block.memory) != VK_SUCCESS) {
+        vkDestroyBuffer(vulkan_device->device, alloc_block.buffer, nullptr);
 
         VULKAN_VALIDATE(false, "vk_alloc vkAllocateMemory failed", VULKAN_VALIDATION_SEVERITY_ERROR);
         return nullptr;
@@ -484,48 +538,64 @@ void *vk_alloc(u64 bytes, RHIMemoryType memory = RHI_MEMORY_TYPE_DEFAULT) {
         .sType = VK_STRUCTURE_TYPE_BUFFER_DEVICE_ADDRESS_INFO,
         .buffer = alloc_block.buffer,
     };
-    alloc_block.gpu = (void *)vkGetBufferDeviceAddress(vulkan.device, &addr_info);
+    alloc_block.gpu = (void *)vkGetBufferDeviceAddress(vulkan_device->device, &addr_info);
 
     if (memory == RHI_MEMORY_TYPE_DEFAULT || memory == RHI_MEMORY_TYPE_READBACK) {
-        if (vkMapMemory(vulkan.device, alloc_block.memory, 0, alloc_block.size, 0, &alloc_block.cpu) != VK_SUCCESS) {
-            vkFreeMemory(vulkan.device, alloc_block.memory, nullptr);
-            vkDestroyBuffer(vulkan.device, alloc_block.buffer, nullptr);
+        if (vkMapMemory(vulkan_device->device, alloc_block.memory, 0, alloc_block.size, 0, &alloc_block.cpu) != VK_SUCCESS) {
+            vkFreeMemory(vulkan_device->device, alloc_block.memory, nullptr);
+            vkDestroyBuffer(vulkan_device->device, alloc_block.buffer, nullptr);
 
             VULKAN_VALIDATE(false, "vk_alloc vkMapMemory failed", VULKAN_VALIDATION_SEVERITY_ERROR);
         }
 
-        insert_allocation_cpu(alloc_block);
-        insert_allocation_gpu(alloc_block);
+        insert_allocation_cpu(vulkan_device, alloc_block);
+        insert_allocation_gpu(vulkan_device, alloc_block);
         return alloc_block.cpu;
     }
 
-    insert_allocation_gpu(alloc_block);
+    insert_allocation_gpu(vulkan_device, alloc_block);
     return alloc_block.gpu;
 }
 
-void vk_free(void *ptr) {
+void vk_free(RHIDevice device, void *ptr) {
+    auto vulkan_device = (VulkanDevice *) device.data;
+
+    VULKAN_VALIDATE(vulkan_device != nullptr, "vk_free called with null device", VULKAN_VALIDATION_SEVERITY_WARN);
+
+    if (vulkan_device == nullptr) {
+        return;
+    }
+
     VULKAN_VALIDATE(ptr != nullptr, "vk_free called with nullptr", VULKAN_VALIDATION_SEVERITY_TRACE);
 
     if (ptr == nullptr) {
         return;
     }
 
-    AllocBlock *block = find_allocation_cpu(ptr);
+    AllocBlock *block = find_allocation_cpu(vulkan_device, ptr);
     if (!block) {
-        block = find_allocation_gpu(ptr);
+        block = find_allocation_gpu(vulkan_device, ptr);
     }
 
     VULKAN_VALIDATE(block != nullptr, "vk_free called with invalid pointer", VULKAN_VALIDATION_SEVERITY_CRITICAL);
 
     if (block->cpu) {
-        vkUnmapMemory(vulkan.device, block->memory);
+        vkUnmapMemory(vulkan_device->device, block->memory);
     }
-    vkFreeMemory(vulkan.device, block->memory, nullptr);
-    vkDestroyBuffer(vulkan.device, block->buffer, nullptr);
+    vkFreeMemory(vulkan_device->device, block->memory, nullptr);
+    vkDestroyBuffer(vulkan_device->device, block->buffer, nullptr);
 }
 
-void *vk_host_to_device_pointer(void *ptr) {
-    AllocBlock *block = find_allocation_cpu(ptr);
+void *vk_host_to_device_pointer(RHIDevice device, void *ptr) {
+    auto vulkan_device = (VulkanDevice *) device.data;
+
+    VULKAN_VALIDATE(vulkan_device != nullptr, "vk_host_to_device_pointer called with null device", VULKAN_VALIDATION_SEVERITY_WARN);
+
+    if (vulkan_device == nullptr) {
+        return;
+    }
+
+    AllocBlock *block = find_allocation_cpu(vulkan_device, ptr);
 
     VULKAN_VALIDATE(block != nullptr, "vk_host_to_device_pointer called with invalid pointer", VULKAN_VALIDATION_SEVERITY_CRITICAL);
 
@@ -544,7 +614,15 @@ RHITextureDescriptor vk_texture_view_descriptor(RHITexture texture, RHIViewDesc 
 RHITextureDescriptor vk_rw_texture_view_descriptor(RHITexture texture, RHIViewDesc desc);
 
 // Pipelines
-RHIPipeline vk_create_compute_pipeline(u8 *compute_ir, u32 ir_size) {
+RHIPipeline vk_create_compute_pipeline(RHIDevice device, u8 *compute_ir, u32 ir_size) {
+    auto vulkan_device = (VulkanDevice *) device.data;
+
+    VULKAN_VALIDATE(vulkan_device != nullptr, "insert_allocation_cpu called with null device", VULKAN_VALIDATION_SEVERITY_WARN);
+
+    if (vulkan_device == nullptr) {
+        return;
+    }
+
     VULKAN_VALIDATE(compute_ir != nullptr, "vk_create_compute_pipeline called with null compute_ir", VULKAN_VALIDATION_SEVERITY_WARN);
     VULKAN_VALIDATE(ir_size > 0, "vk_create_compute_pipeline called with 0 ir_size", VULKAN_VALIDATION_SEVERITY_WARN);
 
@@ -560,7 +638,7 @@ RHIPipeline vk_create_compute_pipeline(u8 *compute_ir, u32 ir_size) {
 
     VkShaderModule shader_module = nullptr;
 
-    if (vkCreateShaderModule(vulkan.device, &shader_info, nullptr, &shader_module) != VK_SUCCESS) {
+    if (vkCreateShaderModule(vulkan_device->device, &shader_info, nullptr, &shader_module) != VK_SUCCESS) {
         VULKAN_VALIDATE(false, "vk_create_compute_pipeline vkCreateShaderModule failed", VULKAN_VALIDATION_SEVERITY_ERROR);
         return {};
     }
@@ -576,15 +654,15 @@ RHIPipeline vk_create_compute_pipeline(u8 *compute_ir, u32 ir_size) {
     };
 
     VkPipeline vulkan_pipeline = nullptr;
-    if (vkCreateComputePipelines(vulkan.device, nullptr, 1, &info, nullptr, &vulkan_pipeline) != VK_SUCCESS) {
-        vkDestroyShaderModule(vulkan.device, shader_module, nullptr);
+    if (vkCreateComputePipelines(vulkan_device->device, nullptr, 1, &info, nullptr, &vulkan_pipeline) != VK_SUCCESS) {
+        vkDestroyShaderModule(vulkan_device->device, shader_module, nullptr);
 
         VULKAN_VALIDATE(false, "vk_create_compute_pipeline vkCreateComputePipelines failed", VULKAN_VALIDATION_SEVERITY_ERROR);
 
         return {};
     }
 
-    vkDestroyShaderModule(vulkan.device, shader_module, nullptr);
+    vkDestroyShaderModule(vulkan_device->device, shader_module, nullptr);
 
     auto pipeline = (VulkanPipeline *) malloc(sizeof(VulkanPipeline));
     pipeline->pipeline = vulkan_pipeline;
@@ -592,7 +670,15 @@ RHIPipeline vk_create_compute_pipeline(u8 *compute_ir, u32 ir_size) {
     return { (u64) pipeline };
 }
 
-RHIPipeline vk_create_graphics_pipeline(u8 *vertex_ir, u32 vertex_ir_size, u8 *pixel_ir, u32 pixel_ir_size, RHIRasterDesc desc) {
+RHIPipeline vk_create_graphics_pipeline(RHIDevice device, u8 *vertex_ir, u32 vertex_ir_size, u8 *pixel_ir, u32 pixel_ir_size, RHIRasterDesc desc) {
+    auto vulkan_device = (VulkanDevice *) device.data;
+
+    VULKAN_VALIDATE(vulkan_device != nullptr, "insert_allocation_cpu called with null device", VULKAN_VALIDATION_SEVERITY_WARN);
+
+    if (vulkan_device == nullptr) {
+        return;
+    }
+
     VULKAN_VALIDATE(vertex_ir != nullptr, "vk_create_graphics_pipeline called with null vertex_ir", VULKAN_VALIDATION_SEVERITY_WARN);
     VULKAN_VALIDATE(vertex_ir_size > 0, "vk_create_graphics_pipeline called with 0 vertex_ir_size", VULKAN_VALIDATION_SEVERITY_WARN);
     VULKAN_VALIDATE(pixel_ir != nullptr, "vk_create_graphics_pipeline called with null pixel_ir", VULKAN_VALIDATION_SEVERITY_WARN);
@@ -617,12 +703,12 @@ RHIPipeline vk_create_graphics_pipeline(u8 *vertex_ir, u32 vertex_ir_size, u8 *p
     VkShaderModule vertex_shader_module = nullptr;
     VkShaderModule fragment_shader_module = nullptr;
 
-    if (vkCreateShaderModule(vulkan.device, &vertex_shader_info, nullptr, &vertex_shader_module) != VK_SUCCESS) {
+    if (vkCreateShaderModule(vulkan_device->device, &vertex_shader_info, nullptr, &vertex_shader_module) != VK_SUCCESS) {
         VULKAN_VALIDATE(false, "vk_create_graphics_pipeline vkCreateShaderModule failed", VULKAN_VALIDATION_SEVERITY_ERROR);
         return {};
     }
 
-    if (vkCreateShaderModule(vulkan.device, &vertex_shader_info, nullptr, &fragment_shader_module) != VK_SUCCESS) {
+    if (vkCreateShaderModule(vulkan_device->device, &vertex_shader_info, nullptr, &fragment_shader_module) != VK_SUCCESS) {
         VULKAN_VALIDATE(false, "vk_create_graphics_pipeline vkCreateShaderModule failed", VULKAN_VALIDATION_SEVERITY_ERROR);
         return {};
     }
@@ -727,17 +813,17 @@ RHIPipeline vk_create_graphics_pipeline(u8 *vertex_ir, u32 vertex_ir_size, u8 *p
     info.pDynamicState = &dynamic_state;
 
     VkPipeline vulkan_pipeline = nullptr;
-    if (vkCreateGraphicsPipelines(vulkan.device, nullptr, 1, &info, nullptr, &vulkan_pipeline) != VK_SUCCESS) {
-        vkDestroyShaderModule(vulkan.device, vertex_shader_module, nullptr);
-        vkDestroyShaderModule(vulkan.device, fragment_shader_module, nullptr);
+    if (vkCreateGraphicsPipelines(vulkan_device->device, nullptr, 1, &info, nullptr, &vulkan_pipeline) != VK_SUCCESS) {
+        vkDestroyShaderModule(vulkan_device->device, vertex_shader_module, nullptr);
+        vkDestroyShaderModule(vulkan_device->device, fragment_shader_module, nullptr);
 
         VULKAN_VALIDATE(false, "vk_create_graphics_pipeline vkCreateGraphicsPipelines failed", VULKAN_VALIDATION_SEVERITY_ERROR);
 
         return {};
     }
 
-    vkDestroyShaderModule(vulkan.device, vertex_shader_module, nullptr);
-    vkDestroyShaderModule(vulkan.device, fragment_shader_module, nullptr);
+    vkDestroyShaderModule(vulkan_device->device, vertex_shader_module, nullptr);
+    vkDestroyShaderModule(vulkan_device->device, fragment_shader_module, nullptr);
 
     auto pipeline = (VulkanPipeline *) malloc(sizeof(VulkanPipeline));
     pipeline->pipeline = vulkan_pipeline;
@@ -745,7 +831,15 @@ RHIPipeline vk_create_graphics_pipeline(u8 *vertex_ir, u32 vertex_ir_size, u8 *p
     return { (u64) pipeline };
 }
 
-RHIPipeline vk_create_graphics_meshlet_pipeline(u8 *meshlet_ir, u32 meshlet_ir_size, u8 *pixel_ir, u32 pixel_ir_size, RHIRasterDesc desc) {
+RHIPipeline vk_create_graphics_meshlet_pipeline(RHIDevice device, u8 *meshlet_ir, u32 meshlet_ir_size, u8 *pixel_ir, u32 pixel_ir_size, RHIRasterDesc desc) {
+    auto vulkan_device = (VulkanDevice *) device.data;
+
+    VULKAN_VALIDATE(vulkan_device != nullptr, "insert_allocation_cpu called with null device", VULKAN_VALIDATION_SEVERITY_WARN);
+
+    if (vulkan_device == nullptr) {
+        return;
+    }
+
     VULKAN_VALIDATE(meshlet_ir != nullptr, "vk_create_graphics_meshlet_pipeline called with null meshlet_ir", VULKAN_VALIDATION_SEVERITY_WARN);
     VULKAN_VALIDATE(meshlet_ir_size > 0, "vk_create_graphics_meshlet_pipeline called with 0 meshlet_ir_size", VULKAN_VALIDATION_SEVERITY_WARN);
     VULKAN_VALIDATE(pixel_ir != nullptr, "vk_create_graphics_meshlet_pipeline called with null pixel_ir", VULKAN_VALIDATION_SEVERITY_WARN);
@@ -770,12 +864,12 @@ RHIPipeline vk_create_graphics_meshlet_pipeline(u8 *meshlet_ir, u32 meshlet_ir_s
     VkShaderModule mesh_shader_module = nullptr;
     VkShaderModule fragment_shader_module = nullptr;
 
-    if (vkCreateShaderModule(vulkan.device, &mesh_shader_info, nullptr, &mesh_shader_module) != VK_SUCCESS) {
+    if (vkCreateShaderModule(vulkan_device->device, &mesh_shader_info, nullptr, &mesh_shader_module) != VK_SUCCESS) {
         VULKAN_VALIDATE(false, "vk_create_graphics_meshlet_pipeline vkCreateShaderModule failed", VULKAN_VALIDATION_SEVERITY_ERROR);
         return {};
     }
 
-    if (vkCreateShaderModule(vulkan.device, &fragment_shader_info, nullptr, &fragment_shader_module) != VK_SUCCESS) {
+    if (vkCreateShaderModule(vulkan_device->device, &fragment_shader_info, nullptr, &fragment_shader_module) != VK_SUCCESS) {
         VULKAN_VALIDATE(false, "vk_create_graphics_meshlet_pipeline vkCreateShaderModule failed", VULKAN_VALIDATION_SEVERITY_ERROR);
         return {};
     }
@@ -880,17 +974,17 @@ RHIPipeline vk_create_graphics_meshlet_pipeline(u8 *meshlet_ir, u32 meshlet_ir_s
     info.pDynamicState = &dynamic_state;
 
     VkPipeline vulkan_pipeline;
-    if (vkCreateGraphicsPipelines(vulkan.device, nullptr, 1, &info, nullptr, &vulkan_pipeline) != VK_SUCCESS) {
-        vkDestroyShaderModule(vulkan.device, mesh_shader_module, nullptr);
-        vkDestroyShaderModule(vulkan.device, fragment_shader_module, nullptr);
+    if (vkCreateGraphicsPipelines(vulkan_device->device, nullptr, 1, &info, nullptr, &vulkan_pipeline) != VK_SUCCESS) {
+        vkDestroyShaderModule(vulkan_device->device, mesh_shader_module, nullptr);
+        vkDestroyShaderModule(vulkan_device->device, fragment_shader_module, nullptr);
 
         VULKAN_VALIDATE(false, "vk_create_graphics_meshlet_pipeline vkCreateGraphicsPipelines failed", VULKAN_VALIDATION_SEVERITY_ERROR);
 
         return {};
     }
 
-    vkDestroyShaderModule(vulkan.device, mesh_shader_module, nullptr);
-    vkDestroyShaderModule(vulkan.device, fragment_shader_module, nullptr);
+    vkDestroyShaderModule(vulkan_device->device, mesh_shader_module, nullptr);
+    vkDestroyShaderModule(vulkan_device->device, fragment_shader_module, nullptr);
 
     auto pipeline = (VulkanPipeline *) malloc(sizeof(VulkanPipeline));
     pipeline->pipeline = vulkan_pipeline;
@@ -898,7 +992,15 @@ RHIPipeline vk_create_graphics_meshlet_pipeline(u8 *meshlet_ir, u32 meshlet_ir_s
     return { (u64) pipeline };
 }
 
-void vk_free_pipeline(RHIPipeline pipeline) {
+void vk_free_pipeline(RHIDevice device, RHIPipeline pipeline) {
+    auto vulkan_device = (VulkanDevice *) device.data;
+
+    VULKAN_VALIDATE(vulkan_device != nullptr, "insert_allocation_cpu called with null device", VULKAN_VALIDATION_SEVERITY_WARN);
+
+    if (vulkan_device == nullptr) {
+        return;
+    }
+
     auto vulkan_pipeline = (VulkanPipeline *) pipeline.data;
 
     VULKAN_VALIDATE(vulkan_pipeline != nullptr, "vk_free_pipeline called with empty pipeline", VULKAN_VALIDATION_SEVERITY_TRACE);
@@ -907,7 +1009,7 @@ void vk_free_pipeline(RHIPipeline pipeline) {
         return;
     }
 
-    vkDestroyPipeline(vulkan.device, vulkan_pipeline->pipeline, nullptr);
+    vkDestroyPipeline(vulkan_device->device, vulkan_pipeline->pipeline, nullptr);
     free(vulkan_pipeline);
     pipeline.data = 0;
 }
@@ -981,19 +1083,34 @@ void vk_free_blend_state(RHIBlendState state) {
     state.data = 0;
 }
 
-// Queue
-RHIQueue vk_create_queue(/* DEVICE & QUEUE CREATION DETAILS OMITTED */);
+// Device
+RHIDevice vk_create_device() {
 
-RHICommandBuffer vk_start_command_recording(RHIQueue queue) {
+}
+
+// Queue
+RHIQueue vk_create_queue(RHIDevice device) {
+
+}
+
+RHICommandBuffer vk_start_command_recording(RHIDevice device, RHIQueue queue) {
+    auto vulkan_device = (VulkanDevice *) device.data;
+
+    VULKAN_VALIDATE(vulkan_device != nullptr, "insert_allocation_cpu called with null device", VULKAN_VALIDATION_SEVERITY_WARN);
+
+    if (vulkan_device == nullptr) {
+        return;
+    }
+
     VkCommandBufferAllocateInfo alloc_info = {
         .sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_ALLOCATE_INFO,
-        .commandPool = vulkan.command_pool,
+        .commandPool = vulkan_device->command_pool,
         .level = VK_COMMAND_BUFFER_LEVEL_PRIMARY,
         .commandBufferCount = 1,
     };
 
     VkCommandBuffer cb = nullptr;
-    if (vkAllocateCommandBuffers(vulkan.device, &alloc_info, &cb) != VK_SUCCESS) {
+    if (vkAllocateCommandBuffers(vulkan_device->device, &alloc_info, &cb) != VK_SUCCESS) {
         VULKAN_VALIDATE(false, "vk_start_command_recording vkAllocateCommandBuffers failed", VULKAN_VALIDATION_SEVERITY_ERROR);
         return { 0 };
     }
@@ -1004,7 +1121,7 @@ RHICommandBuffer vk_start_command_recording(RHIQueue queue) {
     };
 
     if (vkBeginCommandBuffer(cb, &begin_info) != VK_SUCCESS) {
-        vkFreeCommandBuffers(vulkan.device, vulkan.command_pool, 1, &cb);
+        vkFreeCommandBuffers(vulkan_device->device, vulkan_device->command_pool, 1, &cb);
         VULKAN_VALIDATE(false, "vk_start_command_recording vkBeginCommandBuffer failed", VULKAN_VALIDATION_SEVERITY_ERROR);
         return { 0 };
     }
@@ -1012,6 +1129,7 @@ RHICommandBuffer vk_start_command_recording(RHIQueue queue) {
     auto vkcb = (VulkanCommandBuffer *) malloc(sizeof(VulkanCommandBuffer));
     vkcb->command_buffer = cb;
     vkcb->queue = (VulkanQueue *) queue.data;
+    vkcb->device = vulkan_device;
 
     RHICommandBuffer rhi_cb = { .data = (u64) vkcb };
     return rhi_cb;
@@ -1080,7 +1198,15 @@ void vk_submit(RHIQueue queue, RHICommandBuffer *command_buffers, u32 command_bu
 }
 
 // Semaphores
-RHISemaphore vk_create_semaphore(u64 init_value) {
+RHISemaphore vk_create_semaphore(RHIDevice device, u64 init_value) {
+    auto vulkan_device = (VulkanDevice *) device.data;
+
+    VULKAN_VALIDATE(vulkan_device != nullptr, "insert_allocation_cpu called with null device", VULKAN_VALIDATION_SEVERITY_WARN);
+
+    if (vulkan_device == nullptr) {
+        return;
+    }
+
     VkSemaphore sem = nullptr;
 
     VkSemaphoreTypeCreateInfo timeline_info = {
@@ -1096,7 +1222,7 @@ RHISemaphore vk_create_semaphore(u64 init_value) {
         .flags = 0,
     };
 
-    if (vkCreateSemaphore(vulkan.device, &info, nullptr, &sem) != VK_SUCCESS) {
+    if (vkCreateSemaphore(vulkan_device->device, &info, nullptr, &sem) != VK_SUCCESS) {
         VULKAN_VALIDATE(false, "vk_create_semaphore vkCreateSemaphore failed", VULKAN_VALIDATION_SEVERITY_ERROR);
         return { 0 };
     }
@@ -1107,7 +1233,15 @@ RHISemaphore vk_create_semaphore(u64 init_value) {
     return { (u64) semaphore };
 }
 
-void vk_wait_semaphore(RHISemaphore sem, u64 value) {
+void vk_wait_semaphore(RHIDevice device, RHISemaphore sem, u64 value) {
+    auto vulkan_device = (VulkanDevice *) device.data;
+
+    VULKAN_VALIDATE(vulkan_device != nullptr, "insert_allocation_cpu called with null device", VULKAN_VALIDATION_SEVERITY_WARN);
+
+    if (vulkan_device == nullptr) {
+        return;
+    }
+
     auto semaphore = (VulkanSemaphore *) sem.data;
 
     VULKAN_VALIDATE(semaphore != nullptr, "vk_wait_semaphore called with null semaphore", VULKAN_VALIDATION_SEVERITY_WARN);
@@ -1123,18 +1257,29 @@ void vk_wait_semaphore(RHISemaphore sem, u64 value) {
         .pValues = &value
     };
 
-    if (vkWaitSemaphores(vulkan.device, &info, UINT64_MAX) != VK_SUCCESS) {
+    if (vkWaitSemaphores(vulkan_device->device, &info, UINT64_MAX) != VK_SUCCESS) {
         VULKAN_VALIDATE(false, "vk_wait_semaphore vkWaitSemaphores failed", VULKAN_VALIDATION_SEVERITY_ERROR);
     }
 }
 
-void vk_destroy_semaphore(RHISemaphore sem) {
+void vk_destroy_semaphore(RHIDevice device, RHISemaphore sem) {
+    auto vulkan_device = (VulkanDevice *) device.data;
+
+    VULKAN_VALIDATE(vulkan_device != nullptr, "insert_allocation_cpu called with null device", VULKAN_VALIDATION_SEVERITY_WARN);
+
+    if (vulkan_device == nullptr) {
+        return;
+    }
+
     auto semaphore = (VulkanSemaphore *) sem.data;
+
     VULKAN_VALIDATE(semaphore != nullptr, "vk_destroy_semaphore called with null semaphore", VULKAN_VALIDATION_SEVERITY_TRACE);
+
     if (semaphore == nullptr) {
         return;
     }
-    vkDestroySemaphore(vulkan.device, semaphore->semaphore, nullptr);
+
+    vkDestroySemaphore(vulkan_device->device, semaphore->semaphore, nullptr);
     free(semaphore);
     sem.data = 0;
 }
@@ -1143,12 +1288,12 @@ void vk_destroy_semaphore(RHISemaphore sem) {
 void vk_mem_copy(RHICommandBuffer cb, void *dst_gpu, void *src_gpu, u64 size) {
     auto command_buffer = (VulkanCommandBuffer *) cb.data;
 
-    VulkanBufferOffset dst = get_buffer_offset_gpu(dst_gpu);
-    VulkanBufferOffset src = get_buffer_offset_gpu(src_gpu);
+    VulkanBufferOffset dst = get_buffer_offset_gpu(command_buffer->device, dst_gpu);
+    VulkanBufferOffset src = get_buffer_offset_gpu(command_buffer->device, src_gpu);
 
     VULKAN_VALIDATE(command_buffer != nullptr, "vk_mem_copy called with null command_buffer", VULKAN_VALIDATION_SEVERITY_WARN);
-    VULKAN_VALIDATE(find_allocation_gpu(dst_gpu) != nullptr, "vk_mem_copy called with invalid dst", VULKAN_VALIDATION_SEVERITY_CRITICAL);
-    VULKAN_VALIDATE(find_allocation_gpu(src_gpu) != nullptr, "vk_mem_copy called with invalid src", VULKAN_VALIDATION_SEVERITY_CRITICAL);
+    VULKAN_VALIDATE(find_allocation_gpu(command_buffer->device, dst_gpu) != nullptr, "vk_mem_copy called with invalid dst", VULKAN_VALIDATION_SEVERITY_CRITICAL);
+    VULKAN_VALIDATE(find_allocation_gpu(command_buffer->device, src_gpu) != nullptr, "vk_mem_copy called with invalid src", VULKAN_VALIDATION_SEVERITY_CRITICAL);
 
     if (command_buffer == nullptr) {
         return;
@@ -1167,11 +1312,11 @@ void vk_copy_to_texture(RHICommandBuffer cb, RHITexture texture, void *src_gpu) 
 
     auto tex = (VulkanTexture *) texture.data;
 
-    VulkanBufferOffset offset = get_buffer_offset_gpu(src_gpu);
+    VulkanBufferOffset offset = get_buffer_offset_gpu(command_buffer->device, src_gpu);
 
     VULKAN_VALIDATE(command_buffer != nullptr, "vk_copy_to_texture called with null command_buffer", VULKAN_VALIDATION_SEVERITY_WARN);
     VULKAN_VALIDATE(tex != nullptr, "vk_copy_to_texture called with null tex", VULKAN_VALIDATION_SEVERITY_WARN);
-    VULKAN_VALIDATE(find_allocation_gpu(src_gpu) != nullptr, "vk_copy_to_texture called with invalid src", VULKAN_VALIDATION_SEVERITY_CRITICAL);
+    VULKAN_VALIDATE(find_allocation_gpu(command_buffer->device, src_gpu) != nullptr, "vk_copy_to_texture called with invalid src", VULKAN_VALIDATION_SEVERITY_CRITICAL);
 
     if (tex == nullptr || command_buffer == nullptr) {
         return;
@@ -1195,11 +1340,11 @@ void vk_copy_from_texture(RHICommandBuffer cb, void *dst_gpu, RHITexture texture
 
     auto tex = (VulkanTexture *) texture.data;
 
-    VulkanBufferOffset offset = get_buffer_offset_gpu(dst_gpu);
+    VulkanBufferOffset offset = get_buffer_offset_gpu(command_buffer->device, dst_gpu);
 
     VULKAN_VALIDATE(command_buffer != nullptr, "vk_copy_from_texture called with null command_buffer", VULKAN_VALIDATION_SEVERITY_WARN);
     VULKAN_VALIDATE(tex != nullptr, "vk_copy_from_texture called with null tex", VULKAN_VALIDATION_SEVERITY_WARN);
-    VULKAN_VALIDATE(find_allocation_gpu(dst_gpu) != nullptr, "vk_copy_from_texture called with invalid dst", VULKAN_VALIDATION_SEVERITY_CRITICAL);
+    VULKAN_VALIDATE(find_allocation_gpu(command_buffer->device, dst_gpu) != nullptr, "vk_copy_from_texture called with invalid dst", VULKAN_VALIDATION_SEVERITY_CRITICAL);
 
     if (tex == nullptr || command_buffer == nullptr) {
         return;
@@ -1415,7 +1560,7 @@ void vk_dispatch(RHICommandBuffer cb, void *data_gpu, u32 grid_dimensions[3]) {
     auto command_buffer = (VulkanCommandBuffer *) cb.data;
 
     VULKAN_VALIDATE(command_buffer != nullptr, "vk_dispatch called with null command_buffer", VULKAN_VALIDATION_SEVERITY_WARN);
-    VULKAN_VALIDATE(find_allocation_gpu(data_gpu) != nullptr, "vk_dispatch called with invalid gpu data", VULKAN_VALIDATION_SEVERITY_CRITICAL);
+    VULKAN_VALIDATE(find_allocation_gpu(command_buffer->device, data_gpu) != nullptr, "vk_dispatch called with invalid gpu data", VULKAN_VALIDATION_SEVERITY_CRITICAL);
 
     if (command_buffer == nullptr) {
         return;
@@ -1441,8 +1586,8 @@ void vk_dispatch_indirect(RHICommandBuffer cb, void *data_gpu, void *grid_dimens
     auto command_buffer = (VulkanCommandBuffer *) cb.data;
 
     VULKAN_VALIDATE(command_buffer != nullptr, "vk_dispatch_indirect called with null command_buffer", VULKAN_VALIDATION_SEVERITY_WARN);
-    VULKAN_VALIDATE(find_allocation_gpu(data_gpu) != nullptr, "vk_dispatch_indirect called with invalid gpu data", VULKAN_VALIDATION_SEVERITY_CRITICAL);
-    VULKAN_VALIDATE(find_allocation_gpu(grid_dimensions_gpu) != nullptr, "vk_dispatch_indirect called with invalid gpu grid dimensions", VULKAN_VALIDATION_SEVERITY_CRITICAL);
+    VULKAN_VALIDATE(find_allocation_gpu(command_buffer->device, data_gpu) != nullptr, "vk_dispatch_indirect called with invalid gpu data", VULKAN_VALIDATION_SEVERITY_CRITICAL);
+    VULKAN_VALIDATE(find_allocation_gpu(command_buffer->device, grid_dimensions_gpu) != nullptr, "vk_dispatch_indirect called with invalid gpu grid dimensions", VULKAN_VALIDATION_SEVERITY_CRITICAL);
 
     if (command_buffer == nullptr) {
         return;
@@ -1461,7 +1606,7 @@ void vk_dispatch_indirect(RHICommandBuffer cb, void *data_gpu, void *grid_dimens
     };
     vkCmdPushDataEXT(command_buffer->command_buffer, &pd);
 
-    VulkanBufferOffset offset = get_buffer_offset_gpu(grid_dimensions_gpu);
+    VulkanBufferOffset offset = get_buffer_offset_gpu(command_buffer->device, grid_dimensions_gpu);
     vkCmdDispatchIndirect(command_buffer->command_buffer, offset.buffer, offset.offset);
 }
 
@@ -1565,9 +1710,9 @@ void vk_draw_indexed_instanced(RHICommandBuffer cb, void *vertex_data_gpu, void 
     auto command_buffer = (VulkanCommandBuffer *) cb.data;
 
     VULKAN_VALIDATE(command_buffer != nullptr, "vk_draw_indexed_instanced called with null command_buffer", VULKAN_VALIDATION_SEVERITY_WARN);
-    VULKAN_VALIDATE(find_allocation_gpu(vertex_data_gpu) != nullptr, "vk_draw_indexed_instanced called with invalid vertex_data_gpu", VULKAN_VALIDATION_SEVERITY_CRITICAL);
-    VULKAN_VALIDATE(find_allocation_gpu(pixel_data_gpu) != nullptr, "vk_draw_indexed_instanced called with invalid pixel_data_gpu", VULKAN_VALIDATION_SEVERITY_CRITICAL);
-    VULKAN_VALIDATE(find_allocation_gpu(indices_gpu) != nullptr, "vk_draw_indexed_instanced called with invalid indices_gpu", VULKAN_VALIDATION_SEVERITY_CRITICAL);
+    VULKAN_VALIDATE(find_allocation_gpu(command_buffer->device, vertex_data_gpu) != nullptr, "vk_draw_indexed_instanced called with invalid vertex_data_gpu", VULKAN_VALIDATION_SEVERITY_CRITICAL);
+    VULKAN_VALIDATE(find_allocation_gpu(command_buffer->device, pixel_data_gpu) != nullptr, "vk_draw_indexed_instanced called with invalid pixel_data_gpu", VULKAN_VALIDATION_SEVERITY_CRITICAL);
+    VULKAN_VALIDATE(find_allocation_gpu(command_buffer->device, indices_gpu) != nullptr, "vk_draw_indexed_instanced called with invalid indices_gpu", VULKAN_VALIDATION_SEVERITY_CRITICAL);
 
     if (command_buffer == nullptr) {
         return;
@@ -1587,7 +1732,7 @@ void vk_draw_indexed_instanced(RHICommandBuffer cb, void *vertex_data_gpu, void 
     };
     vkCmdPushDataEXT(command_buffer->command_buffer, &pd);
 
-    VulkanBufferOffset offset = get_buffer_offset_gpu(indices_gpu);
+    VulkanBufferOffset offset = get_buffer_offset_gpu(command_buffer->device, indices_gpu);
     vkCmdBindIndexBuffer(command_buffer->command_buffer, offset.buffer, offset.offset, VK_INDEX_TYPE_UINT16);
 
     vkCmdDrawIndexed(command_buffer->command_buffer, index_count, instance_count, 0, 0, 0);
@@ -1597,10 +1742,10 @@ void vk_draw_indexed_instanced_indirect(RHICommandBuffer cb, void *vertex_data_g
     auto command_buffer = (VulkanCommandBuffer *) cb.data;
 
     VULKAN_VALIDATE(command_buffer != nullptr, "vk_draw_indexed_instanced_indirect called with null command_buffer", VULKAN_VALIDATION_SEVERITY_WARN);
-    VULKAN_VALIDATE(find_allocation_gpu(vertex_data_gpu) != nullptr, "vk_draw_indexed_instanced_indirect called with invalid vertex_data_gpu", VULKAN_VALIDATION_SEVERITY_CRITICAL);
-    VULKAN_VALIDATE(find_allocation_gpu(pixel_data_gpu) != nullptr, "vk_draw_indexed_instanced_indirect called with invalid pixel_data_gpu", VULKAN_VALIDATION_SEVERITY_CRITICAL);
-    VULKAN_VALIDATE(find_allocation_gpu(indices_gpu) != nullptr, "vk_draw_indexed_instanced_indirect called with invalid indices_gpu", VULKAN_VALIDATION_SEVERITY_CRITICAL);
-    VULKAN_VALIDATE(find_allocation_gpu(args_gpu) != nullptr, "vk_draw_indexed_instanced_indirect called with invalid args_gpu", VULKAN_VALIDATION_SEVERITY_CRITICAL);
+    VULKAN_VALIDATE(find_allocation_gpu(command_buffer->device, vertex_data_gpu) != nullptr, "vk_draw_indexed_instanced_indirect called with invalid vertex_data_gpu", VULKAN_VALIDATION_SEVERITY_CRITICAL);
+    VULKAN_VALIDATE(find_allocation_gpu(command_buffer->device, pixel_data_gpu) != nullptr, "vk_draw_indexed_instanced_indirect called with invalid pixel_data_gpu", VULKAN_VALIDATION_SEVERITY_CRITICAL);
+    VULKAN_VALIDATE(find_allocation_gpu(command_buffer->device, indices_gpu) != nullptr, "vk_draw_indexed_instanced_indirect called with invalid indices_gpu", VULKAN_VALIDATION_SEVERITY_CRITICAL);
+    VULKAN_VALIDATE(find_allocation_gpu(command_buffer->device, args_gpu) != nullptr, "vk_draw_indexed_instanced_indirect called with invalid args_gpu", VULKAN_VALIDATION_SEVERITY_CRITICAL);
     
     if (command_buffer == nullptr) {
         return;
@@ -1620,10 +1765,10 @@ void vk_draw_indexed_instanced_indirect(RHICommandBuffer cb, void *vertex_data_g
     };
     vkCmdPushDataEXT(command_buffer->command_buffer, &pd);
 
-    VulkanBufferOffset index_offset = get_buffer_offset_gpu(indices_gpu);
+    VulkanBufferOffset index_offset = get_buffer_offset_gpu(command_buffer->device, indices_gpu);
     vkCmdBindIndexBuffer(command_buffer->command_buffer, index_offset.buffer, index_offset.offset, VK_INDEX_TYPE_UINT16);
 
-    VulkanBufferOffset indirect_offset = get_buffer_offset_gpu(args_gpu);
+    VulkanBufferOffset indirect_offset = get_buffer_offset_gpu(command_buffer->device, args_gpu);
     vkCmdDrawIndexedIndirect(command_buffer->command_buffer, indirect_offset.buffer, indirect_offset.offset, 1, 0);
 }
 
@@ -1631,10 +1776,10 @@ void vk_draw_indexed_instanced_indirect_multi(RHICommandBuffer cb, void *vertex_
     auto command_buffer = (VulkanCommandBuffer *) cb.data;
 
     VULKAN_VALIDATE(command_buffer != nullptr, "vk_draw_indexed_instanced_indirect called with null command_buffer", VULKAN_VALIDATION_SEVERITY_WARN);
-    VULKAN_VALIDATE(find_allocation_gpu(vertex_data_gpu) != nullptr, "vk_draw_indexed_instanced_indirect called with invalid vertex_data_gpu", VULKAN_VALIDATION_SEVERITY_CRITICAL);
-    VULKAN_VALIDATE(find_allocation_gpu(pixel_data_gpu) != nullptr, "vk_draw_indexed_instanced_indirect called with invalid pixel_data_gpu", VULKAN_VALIDATION_SEVERITY_CRITICAL);
-    VULKAN_VALIDATE(find_allocation_gpu(draw_count_gpu) != nullptr, "vk_draw_indexed_instanced_indirect called with invalid draw_count_gpu", VULKAN_VALIDATION_SEVERITY_CRITICAL);
-    VULKAN_VALIDATE(find_allocation_gpu(args_gpu) != nullptr, "vk_draw_indexed_instanced_indirect called with invalid args_gpu", VULKAN_VALIDATION_SEVERITY_CRITICAL);
+    VULKAN_VALIDATE(find_allocation_gpu(command_buffer->device, vertex_data_gpu) != nullptr, "vk_draw_indexed_instanced_indirect called with invalid vertex_data_gpu", VULKAN_VALIDATION_SEVERITY_CRITICAL);
+    VULKAN_VALIDATE(find_allocation_gpu(command_buffer->device, pixel_data_gpu) != nullptr, "vk_draw_indexed_instanced_indirect called with invalid pixel_data_gpu", VULKAN_VALIDATION_SEVERITY_CRITICAL);
+    VULKAN_VALIDATE(find_allocation_gpu(command_buffer->device, draw_count_gpu) != nullptr, "vk_draw_indexed_instanced_indirect called with invalid draw_count_gpu", VULKAN_VALIDATION_SEVERITY_CRITICAL);
+    VULKAN_VALIDATE(find_allocation_gpu(command_buffer->device, args_gpu) != nullptr, "vk_draw_indexed_instanced_indirect called with invalid args_gpu", VULKAN_VALIDATION_SEVERITY_CRITICAL);
 
     if (command_buffer == nullptr) {
         return;
@@ -1654,8 +1799,8 @@ void vk_draw_indexed_instanced_indirect_multi(RHICommandBuffer cb, void *vertex_
     };
     vkCmdPushDataEXT(command_buffer->command_buffer, &pd);
 
-    VulkanBufferOffset indirect_offset = get_buffer_offset_gpu(args_gpu);
-    VulkanBufferOffset count_offset = get_buffer_offset_gpu(draw_count_gpu);
+    VulkanBufferOffset indirect_offset = get_buffer_offset_gpu(command_buffer->device, args_gpu);
+    VulkanBufferOffset count_offset = get_buffer_offset_gpu(command_buffer->device, draw_count_gpu);
     vkCmdDrawIndexedIndirectCount(command_buffer->command_buffer, indirect_offset.buffer, indirect_offset.offset, count_offset.buffer, count_offset.offset, 0, stride);
 }
 
@@ -1663,8 +1808,8 @@ void vk_draw_meshlets(RHICommandBuffer cb, void *meshlet_data_gpu, void *pixel_d
     auto command_buffer = (VulkanCommandBuffer *) cb.data;
 
     VULKAN_VALIDATE(command_buffer != nullptr, "vk_draw_meshlets called with null command_buffer", VULKAN_VALIDATION_SEVERITY_WARN);
-    VULKAN_VALIDATE(find_allocation_gpu(meshlet_data_gpu) != nullptr, "vk_draw_meshlets called with invalid vertex_data_gpu", VULKAN_VALIDATION_SEVERITY_CRITICAL);
-    VULKAN_VALIDATE(find_allocation_gpu(pixel_data_gpu) != nullptr, "vk_draw_meshlets called with invalid pixel_data_gpu", VULKAN_VALIDATION_SEVERITY_CRITICAL);
+    VULKAN_VALIDATE(find_allocation_gpu(command_buffer->device, meshlet_data_gpu) != nullptr, "vk_draw_meshlets called with invalid vertex_data_gpu", VULKAN_VALIDATION_SEVERITY_CRITICAL);
+    VULKAN_VALIDATE(find_allocation_gpu(command_buffer->device, pixel_data_gpu) != nullptr, "vk_draw_meshlets called with invalid pixel_data_gpu", VULKAN_VALIDATION_SEVERITY_CRITICAL);
 
     if (command_buffer == nullptr) {
         return;
@@ -1691,9 +1836,9 @@ void vk_draw_meshlets_indirect(RHICommandBuffer cb, void *meshlet_data_gpu, void
     auto command_buffer = (VulkanCommandBuffer *) cb.data;
 
     VULKAN_VALIDATE(command_buffer != nullptr, "vk_draw_meshlets_indirect called with null command_buffer", VULKAN_VALIDATION_SEVERITY_WARN);
-    VULKAN_VALIDATE(find_allocation_gpu(meshlet_data_gpu) != nullptr, "vk_draw_meshlets_indirect called with invalid vertex_data_gpu", VULKAN_VALIDATION_SEVERITY_CRITICAL);
-    VULKAN_VALIDATE(find_allocation_gpu(pixel_data_gpu) != nullptr, "vk_draw_meshlets_indirect called with invalid pixel_data_gpu", VULKAN_VALIDATION_SEVERITY_CRITICAL);
-    VULKAN_VALIDATE(find_allocation_gpu(dim_gpu) != nullptr, "vk_draw_meshlets_indirect called with invalid dim_gpu", VULKAN_VALIDATION_SEVERITY_CRITICAL);
+    VULKAN_VALIDATE(find_allocation_gpu(command_buffer->device, meshlet_data_gpu) != nullptr, "vk_draw_meshlets_indirect called with invalid vertex_data_gpu", VULKAN_VALIDATION_SEVERITY_CRITICAL);
+    VULKAN_VALIDATE(find_allocation_gpu(command_buffer->device, pixel_data_gpu) != nullptr, "vk_draw_meshlets_indirect called with invalid pixel_data_gpu", VULKAN_VALIDATION_SEVERITY_CRITICAL);
+    VULKAN_VALIDATE(find_allocation_gpu(command_buffer->device, dim_gpu) != nullptr, "vk_draw_meshlets_indirect called with invalid dim_gpu", VULKAN_VALIDATION_SEVERITY_CRITICAL);
 
     if (command_buffer == nullptr) {
         return;
@@ -1713,6 +1858,6 @@ void vk_draw_meshlets_indirect(RHICommandBuffer cb, void *meshlet_data_gpu, void
     };
     vkCmdPushDataEXT(command_buffer->command_buffer, &pd);
 
-    VulkanBufferOffset offset = get_buffer_offset_gpu(dim_gpu);
+    VulkanBufferOffset offset = get_buffer_offset_gpu(command_buffer->device, dim_gpu);
     vkCmdDrawMeshTasksIndirectEXT(command_buffer->command_buffer, offset.buffer, offset.offset, 1, 0);
 }
