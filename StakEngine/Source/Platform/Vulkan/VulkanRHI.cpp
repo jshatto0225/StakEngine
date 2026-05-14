@@ -484,162 +484,6 @@ VKAPI_ATTR VkBool32 VKAPI_CALL debug_messenger(VkDebugUtilsMessageSeverityFlagBi
     return VK_FALSE;
 }
 
-bool vulkan_init(RHI *rhi) {
-    bool extensions_supported = false;
-    u32 layer_count = 0;
-
-    vkEnumerateInstanceLayerProperties(&layer_count, nullptr);
-    auto layers = (VkLayerProperties *) malloc(sizeof(VkLayerProperties) * layer_count);
-    vkEnumerateInstanceLayerProperties(&layer_count, layers);
-
-    for (u32 i = 0; i < validation_layer_count; i++) {
-        bool layer_found = false;
-
-        for (u32 k = 0; k < layer_count; k++) {
-            if (strcmp(validation_layers[i], layers[k].layerName) == 0) {
-                layer_found = true;
-                break;
-            }
-        }
-
-        if (!layer_found) {
-            extensions_supported = false;
-            break;
-        }
-    }
-
-    VULKAN_VALIDATE(extensions_supported, "vulkan_init Vulkan extensions are not supported", VULKAN_VALIDATION_SEVERITY_CRITICAL);
-
-    VkApplicationInfo app_info = {
-        .sType = VK_STRUCTURE_TYPE_APPLICATION_INFO,
-        .pApplicationName = "app",
-        .applicationVersion = VK_MAKE_VERSION(0, 0, 1),
-        .pEngineName = "engine",
-        .engineVersion = VK_MAKE_VERSION(0, 0, 1),
-        .apiVersion = VK_API_VERSION_1_4,
-    };
-
-    VkInstanceCreateInfo instance_info = {
-        .sType = VK_STRUCTURE_TYPE_INSTANCE_CREATE_INFO,
-        .pApplicationInfo = &app_info,
-    };
-
-    VkDebugUtilsMessengerCreateInfoEXT debug_info = {};
-
-    if (enable_validation) {
-        instance_info.enabledLayerCount = validation_layer_count;
-        instance_info.ppEnabledLayerNames = validation_layers;
-
-        debug_info.sType = VK_STRUCTURE_TYPE_DEBUG_UTILS_MESSENGER_CREATE_INFO_EXT;
-        debug_info.messageSeverity = VK_DEBUG_UTILS_MESSAGE_SEVERITY_VERBOSE_BIT_EXT | 
-            VK_DEBUG_UTILS_MESSAGE_SEVERITY_WARNING_BIT_EXT | 
-            VK_DEBUG_UTILS_MESSAGE_SEVERITY_INFO_BIT_EXT | 
-            VK_DEBUG_UTILS_MESSAGE_SEVERITY_ERROR_BIT_EXT;
-        debug_info.messageType = VK_DEBUG_UTILS_MESSAGE_TYPE_GENERAL_BIT_EXT |
-            VK_DEBUG_UTILS_MESSAGE_TYPE_VALIDATION_BIT_EXT |
-            VK_DEBUG_UTILS_MESSAGE_TYPE_PERFORMANCE_BIT_EXT;
-        debug_info.pfnUserCallback = debug_messenger;
-
-        instance_info.pNext = &debug_info;
-    }
-
-    std::vector<const char *> extensions = platform_get_required_extensions();
-    if (enable_validation) {
-        extensions.push_back(VK_EXT_DEBUG_UTILS_EXTENSION_NAME);
-    }
-
-    instance_info.enabledExtensionCount = (u32) extensions.size();
-    instance_info.ppEnabledExtensionNames = extensions.data();
-
-    if (vkCreateInstance(&instance_info, nullptr, &vulkan.instance) != VK_SUCCESS) {
-        VULKAN_VALIDATE(extensions_supported, "vulkan_init vkCreateInstance failed", VULKAN_VALIDATION_SEVERITY_ERROR);
-        return false;
-    }
-    
-    if (create_debug_messenger(vulkan.instance, &debug_info, nullptr, &vulkan.debug_messenger) != VK_SUCCESS) {
-        VULKAN_VALIDATE(extensions_supported, "vulkan_init create_debug_messenger failed", VULKAN_VALIDATION_SEVERITY_ERROR);
-        return false;
-    }
-
-    *rhi = {
-        // Memory
-        vk_alloc,
-        vk_free,
-        vk_host_to_device_pointer,
-
-        // Device
-        vk_create_device,
-        vk_destroy_device,
-        vk_device_wait_idle,
-
-        //Textures
-        vk_texture_size_align,
-        vk_create_texture,
-        vk_destroy_texture,
-        vk_texture_view_descriptor,
-        vk_rw_texture_view_descriptor,
-
-        // Pipelines
-        vk_create_compute_pipeline,
-        vk_create_graphics_pipeline,
-        vk_create_graphics_meshlet_pipeline,
-        vk_destroy_pipeline,
-
-        // State objects
-        vk_create_depth_stencil_state,
-        vk_create_blend_state,
-        vk_free_depth_stencil_state,
-        vk_free_blend_state,
-
-        // Queue
-        vk_create_queue,
-        vk_destroy_queue,
-        vk_start_command_recording,
-        vk_submit,
-
-        // Semaphores
-        vk_create_semaphore,
-        vk_wait_semaphore,
-        vk_destroy_semaphore,
-
-        // Commands
-        vk_mem_copy,
-        vk_copy_to_texture,
-        vk_copy_from_texture,
-
-        vk_set_active_texture_heap_ptr,
-        vk_set_active_resource_heap_ptr,
-
-        vk_barrier,
-        vk_signal_after,
-        vk_wait_before,
-
-        vk_set_pipeline,
-        vk_set_depth_stencil_state,
-        vk_set_blend_state,
-
-        vk_dispatch,
-        vk_dispatch_indirect,
-
-        vk_begin_render_pass,
-        vk_end_render_pass,
-
-        vk_draw_indexed_instanced,
-        vk_draw_indexed_instanced_indirect,
-        vk_draw_indexed_instanced_indirect_multi,
-
-        vk_draw_meshlets,
-        vk_draw_meshlets_indirect,
-    };
-
-    return true;
-}
-
-void vulkan_shutdown() {
-    destroy_debug_messenger(vulkan.instance, vulkan.debug_messenger, nullptr);
-    vkDestroyInstance(vulkan.instance, nullptr);
-}
-
 // Memory
 void *vk_alloc(RHIDevice device, u64 bytes, RHIMemoryType memory = RHI_MEMORY_TYPE_DEFAULT) {
     auto vulkan_device = (VulkanDevice *) device;
@@ -2039,4 +1883,161 @@ void vk_draw_meshlets_indirect(RHICommandBuffer cb, void *meshlet_data_gpu, void
 
     VulkanBufferOffset offset = get_buffer_offset_gpu(command_buffer->queue->device, dim_gpu);
     vkCmdDrawMeshTasksIndirectEXT(command_buffer->command_buffer, offset.buffer, offset.offset, 1, 0);
+}
+
+
+bool vulkan_init(RHI *rhi) {
+    bool extensions_supported = false;
+    u32 layer_count = 0;
+
+    vkEnumerateInstanceLayerProperties(&layer_count, nullptr);
+    auto layers = (VkLayerProperties *) malloc(sizeof(VkLayerProperties) * layer_count);
+    vkEnumerateInstanceLayerProperties(&layer_count, layers);
+
+    for (u32 i = 0; i < validation_layer_count; i++) {
+        bool layer_found = false;
+
+        for (u32 k = 0; k < layer_count; k++) {
+            if (strcmp(validation_layers[i], layers[k].layerName) == 0) {
+                layer_found = true;
+                break;
+            }
+        }
+
+        if (!layer_found) {
+            extensions_supported = false;
+            break;
+        }
+    }
+
+    VULKAN_VALIDATE(extensions_supported, "vulkan_init Vulkan extensions are not supported", VULKAN_VALIDATION_SEVERITY_CRITICAL);
+
+    VkApplicationInfo app_info = {
+        .sType = VK_STRUCTURE_TYPE_APPLICATION_INFO,
+        .pApplicationName = "app",
+        .applicationVersion = VK_MAKE_VERSION(0, 0, 1),
+        .pEngineName = "engine",
+        .engineVersion = VK_MAKE_VERSION(0, 0, 1),
+        .apiVersion = VK_API_VERSION_1_4,
+    };
+
+    VkInstanceCreateInfo instance_info = {
+        .sType = VK_STRUCTURE_TYPE_INSTANCE_CREATE_INFO,
+        .pApplicationInfo = &app_info,
+    };
+
+    VkDebugUtilsMessengerCreateInfoEXT debug_info = {};
+
+    if (enable_validation) {
+        instance_info.enabledLayerCount = validation_layer_count;
+        instance_info.ppEnabledLayerNames = validation_layers;
+
+        debug_info.sType = VK_STRUCTURE_TYPE_DEBUG_UTILS_MESSENGER_CREATE_INFO_EXT;
+        debug_info.messageSeverity = VK_DEBUG_UTILS_MESSAGE_SEVERITY_VERBOSE_BIT_EXT |
+            VK_DEBUG_UTILS_MESSAGE_SEVERITY_WARNING_BIT_EXT |
+            VK_DEBUG_UTILS_MESSAGE_SEVERITY_INFO_BIT_EXT |
+            VK_DEBUG_UTILS_MESSAGE_SEVERITY_ERROR_BIT_EXT;
+        debug_info.messageType = VK_DEBUG_UTILS_MESSAGE_TYPE_GENERAL_BIT_EXT |
+            VK_DEBUG_UTILS_MESSAGE_TYPE_VALIDATION_BIT_EXT |
+            VK_DEBUG_UTILS_MESSAGE_TYPE_PERFORMANCE_BIT_EXT;
+        debug_info.pfnUserCallback = debug_messenger;
+
+        instance_info.pNext = &debug_info;
+    }
+
+    std::vector<const char *> extensions = platform_get_required_extensions();
+    if (enable_validation) {
+        extensions.push_back(VK_EXT_DEBUG_UTILS_EXTENSION_NAME);
+    }
+
+    instance_info.enabledExtensionCount = (u32) extensions.size();
+    instance_info.ppEnabledExtensionNames = extensions.data();
+
+    if (vkCreateInstance(&instance_info, nullptr, &vulkan.instance) != VK_SUCCESS) {
+        VULKAN_VALIDATE(extensions_supported, "vulkan_init vkCreateInstance failed", VULKAN_VALIDATION_SEVERITY_ERROR);
+        return false;
+    }
+
+    if (create_debug_messenger(vulkan.instance, &debug_info, nullptr, &vulkan.debug_messenger) != VK_SUCCESS) {
+        VULKAN_VALIDATE(extensions_supported, "vulkan_init create_debug_messenger failed", VULKAN_VALIDATION_SEVERITY_ERROR);
+        return false;
+    }
+
+    *rhi = {
+        // Memory
+        vk_alloc,
+        vk_free,
+        vk_host_to_device_pointer,
+
+        // Device
+        vk_create_device,
+        vk_destroy_device,
+        vk_device_wait_idle,
+
+        //Textures
+        vk_texture_size_align,
+        vk_create_texture,
+        vk_destroy_texture,
+        vk_texture_view_descriptor,
+        vk_rw_texture_view_descriptor,
+
+        // Pipelines
+        vk_create_compute_pipeline,
+        vk_create_graphics_pipeline,
+        vk_create_graphics_meshlet_pipeline,
+        vk_destroy_pipeline,
+
+        // State objects
+        vk_create_depth_stencil_state,
+        vk_create_blend_state,
+        vk_free_depth_stencil_state,
+        vk_free_blend_state,
+
+        // Queue
+        vk_create_queue,
+        vk_destroy_queue,
+        vk_start_command_recording,
+        vk_submit,
+
+        // Semaphores
+        vk_create_semaphore,
+        vk_wait_semaphore,
+        vk_destroy_semaphore,
+
+        // Commands
+        vk_mem_copy,
+        vk_copy_to_texture,
+        vk_copy_from_texture,
+
+        vk_set_active_texture_heap_ptr,
+        vk_set_active_resource_heap_ptr,
+
+        vk_barrier,
+        vk_signal_after,
+        vk_wait_before,
+
+        vk_set_pipeline,
+        vk_set_depth_stencil_state,
+        vk_set_blend_state,
+
+        vk_dispatch,
+        vk_dispatch_indirect,
+
+        vk_begin_render_pass,
+        vk_end_render_pass,
+
+        vk_draw_indexed_instanced,
+        vk_draw_indexed_instanced_indirect,
+        vk_draw_indexed_instanced_indirect_multi,
+
+        vk_draw_meshlets,
+        vk_draw_meshlets_indirect,
+    };
+
+    return true;
+}
+
+void vulkan_shutdown() {
+    destroy_debug_messenger(vulkan.instance, vulkan.debug_messenger, nullptr);
+    vkDestroyInstance(vulkan.instance, nullptr);
 }
