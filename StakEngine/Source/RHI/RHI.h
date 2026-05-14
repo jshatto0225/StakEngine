@@ -228,6 +228,28 @@ struct RHIRenderPassDesc {
     RHIRenderPassAttachment depth_stencil_attachment;
 };
 
+enum RHIQueueCapability {
+    RHI_QUEUE_GRAPHICS = 1 << 0,
+    RHI_QUEUE_COMPUTE = 1 << 1,
+    RHI_QUEUE_TRANSFER = 1 << 2,
+    RHI_QUEUE_PRESENT = 1 << 3,
+};
+
+struct RHIQueueRequest {
+    u32 capabilities;
+    u32 count;
+};
+
+struct RHIDeviceDesc {
+    RHIQueueRequest *queues;
+    u32 queue_count;
+};
+
+struct RHIQueueDesc {
+    u32 capabilities;
+    u32 index;
+};
+
 struct RHI {
     // Memory
     void *(*alloc)(RHIDevice device, u64 bytes, RHIMemoryType memory);
@@ -235,7 +257,7 @@ struct RHI {
     void *(*host_to_device_pointer)(RHIDevice device, void *ptr);
 
     // Device
-    RHIDevice (*create_device)();
+    RHIDevice (*create_device)(RHIDeviceDesc *desc);
     void (*destroy_device)(RHIDevice device);
     void (*device_wait_idle)(RHIDevice device);
 
@@ -259,8 +281,7 @@ struct RHI {
     void (*free_blend_state)(RHIDevice device, RHIBlendState state);
 
     // Queue
-    RHIQueue (*create_queue)(RHIDevice device);
-    void (*destroy_queue)(RHIDevice device, RHIQueue queue);
+    RHIQueue (*get_queue)(RHIDevice device, RHIQueueDesc *desc);
     RHICommandBuffer (*start_command_recording)(RHIQueue queue);
     void (*submit)(RHIQueue queue, RHICommandBuffer *command_buffers, u32 command_buffer_count, RHISemaphore semaphore, u64 semaphore_value);
 

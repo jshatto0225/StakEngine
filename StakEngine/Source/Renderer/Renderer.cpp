@@ -9,14 +9,26 @@ Renderer *create_renderer(Window win) {
 
     renderer->window = win;
 
-    renderer->device = rhi.create_device();
+    RHIQueueRequest queue_request = {
+        .capabilities = RHI_QUEUE_PRESENT | RHI_QUEUE_GRAPHICS,
+        .count = 1
+    };
+    RHIDeviceDesc device_desc = {
+        .queues = &queue_request,
+        .queue_count = 1
+    };
+    renderer->device = rhi.create_device(&device_desc);
     if (!renderer->device) {
         SK_LOG_ERROR("Failed to create rhi device");
         free(renderer);
         return nullptr;
     }
 
-    renderer->queue = rhi.create_queue(renderer->device);
+    RHIQueueDesc queue_desc = {
+        .capabilities = RHI_QUEUE_PRESENT | RHI_QUEUE_GRAPHICS,
+        .index = 0
+    };
+    renderer->queue = rhi.get_queue(renderer->device, &queue_desc);
     if (!renderer->queue) {
         SK_LOG_ERROR("Failed to initialize pipeline");
         free(renderer);
@@ -44,7 +56,6 @@ void destroy_renderer(Renderer *renderer) {
     rhi.device_wait_idle(renderer->device);
     rhi.destroy_pipeline(renderer->device, renderer->pipeline);
     rhi.destroy_semaphore(renderer->device, renderer->semaphore);
-    rhi.destroy_queue(renderer->device, renderer->queue);
     rhi.destroy_device(renderer->device);
 
     free(renderer);

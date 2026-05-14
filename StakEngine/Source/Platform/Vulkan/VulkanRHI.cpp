@@ -21,11 +21,18 @@ const char *validation_layers[] = {
     "VK_LAYER_KHRONOS_validation"
 };
 const u32 validation_layer_count = 1;
+const char *device_extensions[] = {
+    VK_KHR_SWAPCHAIN_EXTENSION_NAME,
+    VK_EXT_EXTENDED_DYNAMIC_STATE_3_EXTENSION_NAME,
+    VK_EXT_MESH_SHADER_EXTENSION_NAME,
+    VK_EXT_DESCRIPTOR_HEAP_EXTENSION_NAME,
+};
+const u32 device_extension_count = 2;
 #endif
 
-
-
 #define VULKAN_VALIDATE(cond, msg, severity) { if (!(cond)) vk_validation_message(msg, severity); if (severity == VULKAN_VALIDATION_SEVERITY_CRITICAL) assert(false); }
+
+struct VulkanQueue;
 
 struct AllocBlock {
     VkBuffer buffer;
@@ -53,6 +60,20 @@ struct VulkanSwapchain {
     VkExtent2D extent;
 };
 
+struct VulkanQueueFamilyAssignment {
+    u32 family;
+    u32 index;
+    u32 capabilities;
+};
+
+struct VulkanQueueFamilyInfo {
+    u32 total_count;
+    u32 used_count;
+
+    VkQueueFlags flags;
+    bool supports_present;
+};
+
 struct VulkanDevice {
     VkDevice device;
     VkPhysicalDevice gpu;
@@ -60,6 +81,9 @@ struct VulkanDevice {
 
     std::vector<AllocBlock> cpu_allocations;
     std::vector<AllocBlock> gpu_allocations;
+
+    VulkanQueue *queues;
+    u32 queue_count;
 };
 
 struct VulkanSemaphore {
@@ -67,9 +91,15 @@ struct VulkanSemaphore {
 };
 
 struct VulkanQueue {
-    VulkanDevice *device;
-    VkCommandPool command_pool;
     VkQueue queue;
+
+    u32 family;
+    u32 index;
+    u32 capabilities;
+
+    struct VulkanDevice *device;
+
+    VkCommandPool command_pool;
 };
 
 struct VulkanTexture {
@@ -149,17 +179,16 @@ struct VulkanDepthStencilState {
 
 Vulkan vulkan;
 
-VkResult create_debug_messenger(VkInstance instance, const VkDebugUtilsMessengerCreateInfoEXT *info, const VkAllocationCallbacks *allocator, VkDebugUtilsMessengerEXT *messenger) {
+static VkResult create_debug_messenger(VkInstance instance, const VkDebugUtilsMessengerCreateInfoEXT *info, const VkAllocationCallbacks *allocator, VkDebugUtilsMessengerEXT *messenger) {
     auto func = (PFN_vkCreateDebugUtilsMessengerEXT) vkGetInstanceProcAddr(instance, "vkCreateDebugUtilsMessengerEXT");
     if (func != nullptr) {
         return func(instance, info, allocator, messenger);
-    } else {
-        SK_LOG_ERROR("Extension not present");
-        return VK_ERROR_EXTENSION_NOT_PRESENT;
     }
+    SK_LOG_ERROR("Extension not present");
+    return VK_ERROR_EXTENSION_NOT_PRESENT;
 }
 
-void destroy_debug_messenger(VkInstance instance, VkDebugUtilsMessengerEXT messenger, const VkAllocationCallbacks *allocator) {
+static void destroy_debug_messenger(VkInstance instance, VkDebugUtilsMessengerEXT messenger, const VkAllocationCallbacks *allocator) {
     auto func = (PFN_vkDestroyDebugUtilsMessengerEXT) vkGetInstanceProcAddr(instance, "vkDestroyDebugUtilsMessengerEXT");
     if (func != nullptr) {
         func(instance, messenger, allocator);
@@ -188,7 +217,7 @@ static void vk_validation_message(const char *str, VulkanValidationSeverity seve
     }
 }
 
-VkStencilOp vk_get_stencil_op(RHIStencilOp op) {
+static VkStencilOp vk_get_stencil_op(RHIStencilOp op) {
     switch (op) {
         case RHI_STENCIL_OP_KEEP:
             return VK_STENCIL_OP_KEEP;
@@ -212,7 +241,7 @@ VkStencilOp vk_get_stencil_op(RHIStencilOp op) {
     }
 }
 
-VkCompareOp vk_get_compare_op(RHIOp op) {
+static VkCompareOp vk_get_compare_op(RHIOp op) {
     switch (op) {
         case RHI_OP_NEVER:
             return VK_COMPARE_OP_NEVER;
@@ -236,7 +265,7 @@ VkCompareOp vk_get_compare_op(RHIOp op) {
     }
 }
 
-VkPipelineStageFlags2 vk_get_pipeline_stage(RHIPipelineStage stage) {
+static VkPipelineStageFlags2 vk_get_pipeline_stage(RHIPipelineStage stage) {
     switch (stage) {
         case RHI_PIPELINE_STAGE_COMPUTE:
             return VK_PIPELINE_STAGE_2_COMPUTE_SHADER_BIT;
@@ -254,7 +283,7 @@ VkPipelineStageFlags2 vk_get_pipeline_stage(RHIPipelineStage stage) {
     }
 }
 
-VkPrimitiveTopology vk_get_topology(RHITopology t) {
+static VkPrimitiveTopology vk_get_topology(RHITopology t) {
     switch (t) {
         case RHI_TOPOLOGY_TRIANGLE_FAN:
             return VK_PRIMITIVE_TOPOLOGY_TRIANGLE_FAN;
@@ -268,7 +297,7 @@ VkPrimitiveTopology vk_get_topology(RHITopology t) {
     }
 }
 
-VkBlendFactor vk_get_blend_factor(RHIBlendFactor factor) {
+static VkBlendFactor vk_get_blend_factor(RHIBlendFactor factor) {
     switch (factor) {
         case RHI_BLEND_FACTOR_DST_COLOR:
             return VK_BLEND_FACTOR_DST_COLOR;
@@ -286,7 +315,7 @@ VkBlendFactor vk_get_blend_factor(RHIBlendFactor factor) {
     }
 }
 
-VkBlendOp vk_get_blend_op(RHIBlendOp op) {
+static VkBlendOp vk_get_blend_op(RHIBlendOp op) {
     switch (op) {
         case RHI_BLEND_OP_ADD:
             return VK_BLEND_OP_ADD;
@@ -304,7 +333,7 @@ VkBlendOp vk_get_blend_op(RHIBlendOp op) {
     }
 }
 
-VkCullModeFlags vk_get_cull_mode(RHICullMode mode) {
+static VkCullModeFlags vk_get_cull_mode(RHICullMode mode) {
     switch (mode) {
         case RHI_CULL_MODE_ALL:
             return VK_CULL_MODE_FRONT_AND_BACK;
@@ -320,7 +349,7 @@ VkCullModeFlags vk_get_cull_mode(RHICullMode mode) {
     }
 }
 
-AllocBlock *find_allocation_gpu(VulkanDevice *device, void *gpu) {
+static AllocBlock *find_allocation_gpu(VulkanDevice *device, void *gpu) {
     VULKAN_VALIDATE(device != nullptr, "find_allocation_gpu called with null device", VULKAN_VALIDATION_SEVERITY_WARN);
 
     if (device == nullptr) {
@@ -348,7 +377,7 @@ AllocBlock *find_allocation_gpu(VulkanDevice *device, void *gpu) {
     return nullptr;
 }
 
-AllocBlock *find_allocation_cpu(VulkanDevice *device, void *cpu) {
+static AllocBlock *find_allocation_cpu(VulkanDevice *device, void *cpu) {
     VULKAN_VALIDATE(device != nullptr, "find_allocation_cpu called with null device", VULKAN_VALIDATION_SEVERITY_WARN);
 
     if (device == nullptr) {
@@ -376,7 +405,7 @@ AllocBlock *find_allocation_cpu(VulkanDevice *device, void *cpu) {
     return nullptr;
 }
 
-VulkanBufferOffset get_buffer_offset_gpu(VulkanDevice *device, void *gpu) {
+static VulkanBufferOffset get_buffer_offset_gpu(VulkanDevice *device, void *gpu) {
     VULKAN_VALIDATE(device != nullptr, "get_buffer_offset_gpu called with null device", VULKAN_VALIDATION_SEVERITY_WARN);
 
     AllocBlock *block = find_allocation_gpu(device, gpu);
@@ -388,7 +417,7 @@ VulkanBufferOffset get_buffer_offset_gpu(VulkanDevice *device, void *gpu) {
     return { block->buffer, offset };
 }
 
-bool find_memory_type(VkPhysicalDevice gpu, u32 *memory_type_index, u32 filter, VkMemoryPropertyFlags flags) {
+static bool find_memory_type(VkPhysicalDevice gpu, u32 *memory_type_index, u32 filter, VkMemoryPropertyFlags flags) {
     VkPhysicalDeviceMemoryProperties mem_props;
     vkGetPhysicalDeviceMemoryProperties(gpu, &mem_props);
 
@@ -404,7 +433,7 @@ bool find_memory_type(VkPhysicalDevice gpu, u32 *memory_type_index, u32 filter, 
     return false;
 }
 
-u64 find_insert_pos_cpu(VulkanDevice *device, void *cpu) {
+static u64 find_insert_pos_cpu(VulkanDevice *device, void *cpu) {
     u64 low = 0;
     u64 high = device->cpu_allocations.size();
 
@@ -421,7 +450,7 @@ u64 find_insert_pos_cpu(VulkanDevice *device, void *cpu) {
     return low;
 }
 
-u64 find_insert_pos_gpu(VulkanDevice *device, void *gpu) {
+static u64 find_insert_pos_gpu(VulkanDevice *device, void *gpu) {
     u64 low = 0;
     u64 high = device->gpu_allocations.size();
 
@@ -438,7 +467,7 @@ u64 find_insert_pos_gpu(VulkanDevice *device, void *gpu) {
     return low;
 }
 
-void insert_allocation_cpu(VulkanDevice *device, AllocBlock in) {
+static void insert_allocation_cpu(VulkanDevice *device, AllocBlock in) {
     VULKAN_VALIDATE(device != nullptr, "insert_allocation_cpu called with null device", VULKAN_VALIDATION_SEVERITY_WARN);
 
     if (device == nullptr) {
@@ -449,7 +478,7 @@ void insert_allocation_cpu(VulkanDevice *device, AllocBlock in) {
     device->cpu_allocations.insert(device->cpu_allocations.begin() + pos, in);
 }
 
-void insert_allocation_gpu(VulkanDevice *device, AllocBlock in) {
+static void insert_allocation_gpu(VulkanDevice *device, AllocBlock in) {
     VULKAN_VALIDATE(device != nullptr, "insert_allocation_gpu called with null device", VULKAN_VALIDATION_SEVERITY_WARN);
 
     if (device == nullptr) {
@@ -460,7 +489,7 @@ void insert_allocation_gpu(VulkanDevice *device, AllocBlock in) {
     device->gpu_allocations.insert(device->gpu_allocations.begin() + pos, in);
 }
 
-VKAPI_ATTR VkBool32 VKAPI_CALL debug_messenger(VkDebugUtilsMessageSeverityFlagBitsEXT severity, 
+static VKAPI_ATTR VkBool32 VKAPI_CALL debug_messenger(VkDebugUtilsMessageSeverityFlagBitsEXT severity,
     VkDebugUtilsMessageTypeFlagsEXT type, 
     const VkDebugUtilsMessengerCallbackDataEXT *callback_data, 
     void *user_data) {
@@ -482,6 +511,24 @@ VKAPI_ATTR VkBool32 VKAPI_CALL debug_messenger(VkDebugUtilsMessageSeverityFlagBi
     }
 
     return VK_FALSE;
+}
+
+static bool queue_family_supports(
+    VulkanQueueFamilyInfo *family,
+    u32 capabilities) {
+    if ((capabilities & RHI_QUEUE_GRAPHICS) && !(family->flags & VK_QUEUE_GRAPHICS_BIT)) {
+        return false;
+    }
+
+    if ((capabilities & RHI_QUEUE_COMPUTE) && !(family->flags & VK_QUEUE_COMPUTE_BIT)) {
+        return false;
+    }
+
+    if ((capabilities & RHI_QUEUE_TRANSFER) && !(family->flags & VK_QUEUE_TRANSFER_BIT)) {
+        return false;
+    }
+
+    return true;
 }
 
 // Memory
@@ -1108,16 +1155,374 @@ void vk_free_blend_state(RHIDevice device, RHIBlendState state) {
 }
 
 // Device
-RHIDevice vk_create_device();
+RHIDevice vk_create_device(RHIDeviceDesc *desc) {
+    u32 gpu_count = 0;
+    if (vkEnumeratePhysicalDevices(vulkan.instance, &gpu_count, nullptr) != VK_SUCCESS) {
+        VULKAN_VALIDATE(false, "vk_create_device vkEnumeratePhysicalDevices failed", VULKAN_VALIDATION_SEVERITY_ERROR);
+        return 0;
+    }
+    auto gpus = (VkPhysicalDevice *) malloc(sizeof(VkPhysicalDevice) * gpu_count);
+    if (vkEnumeratePhysicalDevices(vulkan.instance, &gpu_count, gpus) != VK_SUCCESS) {
+        free(gpus);
+        VULKAN_VALIDATE(false, "vk_create_device vkEnumeratePhysicalDevices failed", VULKAN_VALIDATION_SEVERITY_ERROR);
+        return 0;
+    }
 
-void vk_destroy_device(RHIDevice device);
+    VkPhysicalDevice gpu = nullptr;
 
-void vk_device_wait_idle(RHIDevice device);
+    VulkanQueueFamilyAssignment *selected_queue_assignments = nullptr;
+    u32 selected_queue_assignment_count = 0;
+
+    VulkanQueueFamilyInfo *selected_family_infos = nullptr;
+    u32 selected_family_count = 0;
+
+    for (u32 i = 0; i < gpu_count; i++) {
+        u32 extension_count = 0;
+
+        if (vkEnumerateDeviceExtensionProperties(gpus[i], nullptr, &extension_count, nullptr) != VK_SUCCESS) {
+            free(gpus);
+            VULKAN_VALIDATE(false, "vk_create_device vkEnumerateDeviceExtensionProperties failed", VULKAN_VALIDATION_SEVERITY_ERROR);
+            return 0;
+        }
+        auto extensions = (VkExtensionProperties *) malloc(sizeof(VkExtensionProperties) * extension_count);
+        if (vkEnumerateDeviceExtensionProperties(gpus[i], nullptr, &extension_count, extensions) != VK_SUCCESS) {
+            free(gpus);
+            free(extensions);
+            VULKAN_VALIDATE(false, "vk_create_device vkEnumerateDeviceExtensionProperties failed", VULKAN_VALIDATION_SEVERITY_ERROR);
+            return 0;
+        }
+
+        bool extensions_supported = true;
+
+        for (u32 k = 0; k < device_extension_count; k++) {
+            bool extension_supported = false;
+            for (u32 j = 0; j < extension_count; j++) {
+                if (strcmp(device_extensions[k], extensions[j].extensionName) == 0) {
+                    extension_supported = true;
+                }
+            }
+
+            if (!extension_supported) {
+                extensions_supported = false;
+                break;
+            }
+        }
+
+        free(extensions);
+
+        VkPhysicalDeviceVulkan14Features features14 = {
+            .sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_VULKAN_1_4_FEATURES,
+        };
+        VkPhysicalDeviceVulkan13Features features13 = {
+            .sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_VULKAN_1_3_FEATURES,
+            .pNext = &features14
+        };
+        VkPhysicalDeviceVulkan12Features features12 = {
+            .sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_VULKAN_1_2_FEATURES,
+            .pNext = &features13
+        };
+        VkPhysicalDeviceVulkan11Features features11 = {
+            .sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_VULKAN_1_1_FEATURES,
+            .pNext = &features12
+        };
+        VkPhysicalDeviceFeatures2 features = {
+            .sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_FEATURES_2,
+            .pNext = &features11
+        };
+
+        vkGetPhysicalDeviceFeatures2(gpus[i], &features);
+
+        u32 family_count = 0;
+        vkGetPhysicalDeviceQueueFamilyProperties(gpus[i], &family_count, nullptr);
+
+        auto families = (VkQueueFamilyProperties *) malloc(sizeof(VkQueueFamilyProperties) * family_count);
+
+        vkGetPhysicalDeviceQueueFamilyProperties(gpus[i], &family_count, families);
+
+        auto family_infos = (VulkanQueueFamilyInfo *) malloc(sizeof(VulkanQueueFamilyInfo) * family_count);
+
+        for (u32 j = 0; j < family_count; j++) {
+            family_infos[j].total_count = families[j].queueCount;
+
+            family_infos[j].used_count = 0;
+            family_infos[j].flags = families[j].queueFlags;
+
+            family_infos[j].supports_present = false;
+        }
+
+        free(families);
+
+        auto queue_assignments = (VulkanQueueFamilyAssignment *) malloc(sizeof(VulkanQueueFamilyAssignment) * 64);
+
+        u32 assignment_count = 0;
+
+        bool queues_supported = true;
+
+        for (u32 j = 0; j < desc->queue_count; j++) {
+            RHIQueueRequest *request = &desc->queues[j];
+
+            for (u32 k = 0; k < request->count; k++) {
+
+                bool found = false;
+
+                for (u32 family = 0;
+                    family < family_count;
+                    family++) {
+                    VulkanQueueFamilyInfo *info = &family_infos[family];
+
+                    if (!queue_family_supports(info, request->capabilities)) {
+                        continue;
+                    }
+
+                    if (info->used_count >= info->total_count) {
+                        continue;
+                    }
+
+                    VulkanQueueFamilyAssignment assignment = {};
+                    assignment.family = family;
+                    assignment.index = info->used_count;
+                    assignment.capabilities = request->capabilities;
+
+                    queue_assignments[assignment_count++] = assignment;
+
+                    info->used_count++;
+
+                    found = true;
+                    break;
+                }
+
+                if (!found) {
+                    queues_supported = false;
+                    break;
+                }
+            }
+
+            if (!queues_supported) {
+                break;
+            }
+        }
+
+        if (extensions_supported &&
+            features.features.fullDrawIndexUint32 &&
+            features.features.drawIndirectFirstInstance &&
+            features.features.depthClamp &&
+            features.features.depthBiasClamp &&
+            features.features.samplerAnisotropy &&
+            features12.drawIndirectCount &&
+            features12.timelineSemaphore &&
+            features12.bufferDeviceAddress &&
+            features13.synchronization2 &&
+            features13.dynamicRendering &&
+            features14.maintenance5 &&
+            queues_supported) 
+        {
+            gpu = gpus[i];
+
+            selected_queue_assignments = queue_assignments;
+            selected_queue_assignment_count = assignment_count;
+
+            selected_family_infos = family_infos;
+            selected_family_count = family_count;
+            break;
+        }
+    }
+
+    free(gpus);
+
+    if (!gpu) {
+        VULKAN_VALIDATE(false, "vk_create_device could not find suitable VkPhysicalDevice", VULKAN_VALIDATION_SEVERITY_ERROR);
+        return false;
+    }
+
+    VkPhysicalDeviceVulkan14Features features14 = {
+        .sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_VULKAN_1_4_FEATURES,
+        .maintenance5 = true,
+    };
+    VkPhysicalDeviceVulkan13Features features13 = {
+        .sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_VULKAN_1_3_FEATURES,
+        .pNext = &features14,
+        .synchronization2 = true,
+        .dynamicRendering = true,
+    };
+    VkPhysicalDeviceVulkan12Features features12 = {
+        .sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_VULKAN_1_2_FEATURES,
+        .pNext = &features13,
+        .drawIndirectCount = true,
+        .timelineSemaphore = true,
+        .bufferDeviceAddress = true,
+    };
+    VkPhysicalDeviceVulkan11Features features11 = {
+        .sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_VULKAN_1_1_FEATURES,
+        .pNext = &features12,
+    };
+    VkPhysicalDeviceFeatures2 features = {
+        .sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_FEATURES_2,
+        .pNext = &features11,
+        .features = {
+            .fullDrawIndexUint32 = true,
+            .drawIndirectFirstInstance = true,
+            .depthClamp = true,
+            .depthBiasClamp = true,
+            .samplerAnisotropy = true
+        }
+    };
+
+    // TODO: Max queues per family
+    auto priorities = (float *) malloc(sizeof(float) * 64);
+
+    for (u32 i = 0; i < 64; i++) {
+        priorities[i] = 1.0f;
+    }
+
+    auto queue_infos = (VkDeviceQueueCreateInfo *) malloc(sizeof(VkDeviceQueueCreateInfo) * selected_family_count);
+
+    u32 queue_info_count = 0;
+
+    for (u32 i = 0; i < selected_family_count; i++) {
+
+        VulkanQueueFamilyInfo *family = &selected_family_infos[i];
+
+        if (family->used_count == 0) {
+            continue;
+        }
+
+        VkDeviceQueueCreateInfo info = {
+            .sType = VK_STRUCTURE_TYPE_DEVICE_QUEUE_CREATE_INFO,
+            .queueFamilyIndex = i,
+            .queueCount = family->used_count,
+            .pQueuePriorities = priorities
+        };
+
+        queue_infos[queue_info_count++] = info;
+    }
+
+    VkDeviceCreateInfo create_info = {
+        .sType = VK_STRUCTURE_TYPE_DEVICE_CREATE_INFO,
+        .pNext = &features,
+
+        .queueCreateInfoCount = queue_info_count,
+        .pQueueCreateInfos = queue_infos,
+
+        .enabledExtensionCount = device_extension_count,
+        .ppEnabledExtensionNames = device_extensions,
+    };
+
+    VkDevice vk_device = nullptr;
+
+    if (vkCreateDevice(gpu, &create_info, nullptr, &vk_device) != VK_SUCCESS) {
+        free(priorities);
+        free(queue_infos);
+        free(selected_queue_assignments);
+        free(selected_family_infos);
+
+        VULKAN_VALIDATE(false, "vk_create_device vkCreateDevice failed", VULKAN_VALIDATION_SEVERITY_ERROR);
+
+        return 0;
+    }
+
+    free(priorities);
+    free(queue_infos);
+
+    auto device = (VulkanDevice *) malloc(sizeof(VulkanDevice));
+    device->gpu_allocations = {};
+    device->cpu_allocations = {};
+
+    device->device = vk_device;
+    device->gpu = gpu;
+
+    device->queues = (VulkanQueue *) malloc(sizeof(VulkanQueue) * selected_queue_assignment_count);
+    device->queue_count = selected_queue_assignment_count;
+
+    for (u32 i = 0; i < selected_queue_assignment_count; i++) {
+        VulkanQueueFamilyAssignment *assignment = &selected_queue_assignments[i];
+
+        VulkanQueue *queue = &device->queues[i];
+
+        queue->family = assignment->family;
+        queue->index = assignment->index;
+        queue->capabilities = assignment->capabilities;
+
+        queue->device = device;
+
+        vkGetDeviceQueue(device->device, assignment->family, assignment->index, &queue->queue);
+
+        VkCommandPoolCreateInfo pool_info = {
+            .sType = VK_STRUCTURE_TYPE_COMMAND_POOL_CREATE_INFO,
+            .flags = VK_COMMAND_POOL_CREATE_RESET_COMMAND_BUFFER_BIT,
+            .queueFamilyIndex = assignment->family
+        };
+
+        if (vkCreateCommandPool(device->device, &pool_info, nullptr, &queue->command_pool) != VK_SUCCESS) {
+            VULKAN_VALIDATE(false, "vk_create_device vkCreateCommandPool failed", VULKAN_VALIDATION_SEVERITY_ERROR);
+            free(selected_queue_assignments);
+            free(selected_family_infos);
+            free(device->queues);
+            free(device);
+            return 0;
+        }
+    }
+
+    free(selected_queue_assignments);
+    free(selected_family_infos);
+
+    return (RHIDevice) device;
+}
+
+void vk_destroy_device(RHIDevice device) {
+    auto vulkan_device = (VulkanDevice *) device;
+    VULKAN_VALIDATE(vulkan_device != nullptr, "vk_destroy_device called with null device", VULKAN_VALIDATION_SEVERITY_TRACE);
+
+    if (!vulkan_device) {
+        return;
+    }
+
+    for (u32 i = 0; i < vulkan_device->queue_count; i++) {
+        vkDestroyCommandPool(vulkan_device->device, vulkan_device->queues[i].command_pool, nullptr);
+    }
+    free(vulkan_device->queues);
+
+    vulkan_device->cpu_allocations.~vector();
+    vulkan_device->gpu_allocations.~vector();
+
+    vkDestroyDevice(vulkan_device->device, nullptr);
+
+    free(vulkan_device);
+}
+
+void vk_device_wait_idle(RHIDevice device) {
+    auto vulkan_device = (VulkanDevice *) device;
+    VULKAN_VALIDATE(vulkan_device != nullptr, "vk_destroy_device called with null device", VULKAN_VALIDATION_SEVERITY_WARN);
+    if (!vulkan_device) {
+        return;
+    }
+
+    vkDeviceWaitIdle(vulkan_device->device);
+}
 
 // Queue
-RHIQueue vk_create_queue(RHIDevice device);
+RHIQueue vk_get_queue(RHIDevice device, RHIQueueDesc *desc) {
+    auto vulkan_device = (VulkanDevice *) device;
+    VULKAN_VALIDATE(vulkan_device != nullptr, "vk_destroy_device called with null device", VULKAN_VALIDATION_SEVERITY_WARN);
+    if (!vulkan_device) {
+        return 0;
+    }
 
-void vk_destroy_queue(RHIDevice device, RHIQueue queue);
+    u32 found = 0;
+
+    for (u32 i = 0; i < vulkan_device->queue_count; i++) {
+        if ((vulkan_device->queues[i].capabilities & desc->capabilities) != desc->capabilities) {
+            continue;
+        }
+
+        if (found == desc->index) {
+            return (u32)  &vulkan_device->queues[i];
+        }
+
+        found++;
+    }
+
+    return 0;
+}
 
 RHICommandBuffer vk_start_command_recording(RHIQueue queue) {
     auto vulkan_queue = (VulkanQueue *) queue;
@@ -1791,8 +2196,8 @@ void vk_draw_indexed_instanced_indirect(RHICommandBuffer cb, void *vertex_data_g
     VulkanBufferOffset index_offset = get_buffer_offset_gpu(command_buffer->queue->device, indices_gpu);
     vkCmdBindIndexBuffer(command_buffer->command_buffer, index_offset.buffer, index_offset.offset, VK_INDEX_TYPE_UINT16);
 
-    VulkanBufferOffset indirect_offset = get_buffer_offset_gpu(command_buffer->queue->device, args_gpu);
-    vkCmdDrawIndexedIndirect(command_buffer->command_buffer, indirect_offset.buffer, indirect_offset.offset, 1, 0);
+VulkanBufferOffset indirect_offset = get_buffer_offset_gpu(command_buffer->queue->device, args_gpu);
+vkCmdDrawIndexedIndirect(command_buffer->command_buffer, indirect_offset.buffer, indirect_offset.offset, 1, 0);
 }
 
 void vk_draw_indexed_instanced_indirect_multi(RHICommandBuffer cb, void *vertex_data_gpu, void *pixel_data_gpu, void *args_gpu, void *draw_count_gpu, u32 stride) {
@@ -1890,9 +2295,16 @@ bool vulkan_init(RHI *rhi) {
     bool extensions_supported = false;
     u32 layer_count = 0;
 
-    vkEnumerateInstanceLayerProperties(&layer_count, nullptr);
+    if (vkEnumerateInstanceLayerProperties(&layer_count, nullptr) != VK_SUCCESS) {
+        VULKAN_VALIDATE(false, "vulkan_init vkEnumerateInstanceLayerProperties failed", VULKAN_VALIDATION_SEVERITY_ERROR);
+        return false;
+    }
     auto layers = (VkLayerProperties *) malloc(sizeof(VkLayerProperties) * layer_count);
-    vkEnumerateInstanceLayerProperties(&layer_count, layers);
+    if (vkEnumerateInstanceLayerProperties(&layer_count, layers) != VK_SUCCESS) {
+        free(layers);
+        VULKAN_VALIDATE(false, "vulkan_init vkEnumerateInstanceLayerProperties failed", VULKAN_VALIDATION_SEVERITY_ERROR);
+        return false;
+    }
 
     for (u32 i = 0; i < validation_layer_count; i++) {
         bool layer_found = false;
@@ -1909,6 +2321,8 @@ bool vulkan_init(RHI *rhi) {
             break;
         }
     }
+
+    free(layers);
 
     VULKAN_VALIDATE(extensions_supported, "vulkan_init Vulkan extensions are not supported", VULKAN_VALIDATION_SEVERITY_CRITICAL);
 
@@ -1994,8 +2408,7 @@ bool vulkan_init(RHI *rhi) {
         vk_free_blend_state,
 
         // Queue
-        vk_create_queue,
-        vk_destroy_queue,
+        vk_get_queue,
         vk_start_command_recording,
         vk_submit,
 
