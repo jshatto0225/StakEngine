@@ -255,9 +255,14 @@ struct RHI {
     void (*free)(RHIDevice device, void *ptr);
     void *(*host_to_device_pointer)(RHIDevice device, void *ptr);
 
+    // Device
+    RHIDevice (*create_device)();
+    void (*destroy_device)(RHIDevice device);
+
     // Textures
-    RHITextureSizeAlign (*texture_size_align)(RHITextureDesc desc);
+    RHITextureSizeAlign (*texture_size_align)(RHIDevice device, RHITextureDesc desc);
     RHITexture (*create_texture)(RHIDevice device, RHITextureDesc desc, void *ptr_gpu);
+    void (*destroy_texture)(RHIDevice device, RHITexture texture);
     RHITextureDescriptor (*texture_view_descriptor)(RHIDevice device, RHITexture texture, RHIViewDesc desc);
     RHITextureDescriptor (*rw_texture_view_descriptor)(RHIDevice device, RHITexture texture, RHIViewDesc desc);
 
@@ -265,7 +270,7 @@ struct RHI {
     RHIPipeline (*create_compute_pipeline)(RHIDevice device, u8 *compute_ir, u32 ir_size);
     RHIPipeline (*create_graphics_pipeline)(RHIDevice device, u8 *vertex_ir, u32 vertex_ir_size, u8 *pixel_ir, u32 pixel_ir_size, RHIRasterDesc desc);
     RHIPipeline (*create_graphics_meshlet_pipeline)(RHIDevice device, u8 meshlet_ir, u32 meshlet_ir_length, u8 *pixel_ir, u32 pixel_ir_size, RHIRasterDesc desc);
-    void (*free_pipeline)(RHIDevice device, RHIPipeline pipeline);
+    void (*destroy_pipeline)(RHIDevice device, RHIPipeline pipeline);
 
     // State objects
     RHIDepthStencilState (*create_depth_stencil_state)(RHIDevice device, RHIDepthStencilDesc desc);
