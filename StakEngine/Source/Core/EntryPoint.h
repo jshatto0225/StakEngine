@@ -11,13 +11,21 @@ inline s32 stak_main() {
     log_init();
 
     Engine *engine = create_engine();
+    if (!engine) {
+        fprintf(stderr, "stak_main create_engine failed");
+        return -1;
+    }
 
     Application *app = create_application();
+    if (!app) {
+        fprintf(stderr, "stak_main create_application failed");
+        return -1;
+    }
 
     EngineSpecification spec = app->get_engine_spec(app);
 
     if (!engine_init(engine, &spec, app)) {
-        SK_LOG_CRITICAL("Failed to initialize engine");
+        SK_LOG_CRITICAL("stak_main engine_init failed");
         return -1;
     }
 

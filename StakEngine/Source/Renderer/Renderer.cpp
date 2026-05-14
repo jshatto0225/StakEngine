@@ -7,6 +7,11 @@
 Renderer *create_renderer(Window win) {
     auto renderer = (Renderer *) malloc(sizeof(Renderer));
 
+    if (!renderer) {
+        SK_LOG_ERROR("create_renderer malloc failed");
+        return nullptr;
+    }
+
     renderer->window = win;
 
     RHIQueueRequest queue_request = {
@@ -19,7 +24,7 @@ Renderer *create_renderer(Window win) {
     };
     renderer->device = rhi.create_device(&device_desc);
     if (!renderer->device) {
-        SK_LOG_ERROR("Failed to create rhi device");
+        SK_LOG_ERROR("create_renderer Failed to create rhi device");
         free(renderer);
         return nullptr;
     }
@@ -30,7 +35,7 @@ Renderer *create_renderer(Window win) {
     };
     renderer->queue = rhi.get_queue(renderer->device, &queue_desc);
     if (!renderer->queue) {
-        SK_LOG_ERROR("Failed to initialize pipeline");
+        SK_LOG_ERROR("create_renderer Failed to initialize pipeline");
         free(renderer);
         return nullptr;
     }
@@ -40,7 +45,7 @@ Renderer *create_renderer(Window win) {
     RHIRasterDesc raster_description = {};
     renderer->pipeline = rhi.create_graphics_pipeline(renderer->device, vertex_ir.data(), vertex_ir.size(), pixel_ir.data(), pixel_ir.size(), &raster_description);
     if (!renderer->pipeline) {
-        SK_LOG_ERROR("Failed to initialize pipeline");
+        SK_LOG_ERROR("create_renderer Failed to initialize pipeline");
         free(renderer);
         return nullptr;
     }

@@ -8,6 +8,10 @@
 
 Input *create_input(Window window) {
     auto input = (Input *) malloc(sizeof(Input));
+    if (!input) {
+        SK_LOG_ERROR("create_input malloc failed");
+        return nullptr;
+    }
 
     input->window = window;
 
@@ -484,7 +488,7 @@ void set_raw_input(Input *input, bool value) {
             if (input->cursor_visibility == CursorVisibility::Disabled) {
                 platform_enable_raw_input(input->window);
             } else {
-                SK_LOG_ERROR("Cannot enable raw input while cursor is not disabled");
+                SK_LOG_ERROR("set_raw_input Cannot enable raw input while cursor is not disabled");
             }
         }
         else {
@@ -497,7 +501,7 @@ void set_cursor_visibility(Input *input, CursorVisibility visibility) {
     if (visibility != input->cursor_visibility) {
         input->cursor_visibility = visibility;
         if (input->cursor_visibility != CursorVisibility::Disabled && input->using_raw_input) {
-            SK_LOG_ERROR("Cannot change cursor state from disabled while raw input is enabled");
+            SK_LOG_ERROR("set_raw_input Cannot change cursor state from disabled while raw input is enabled");
             return;
         }
         platform_set_cursor_visibility(input->window, visibility);

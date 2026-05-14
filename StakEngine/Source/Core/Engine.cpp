@@ -36,12 +36,12 @@ bool engine_init(Engine *engine, EngineSpecification *spec, Application *app) {
     engine->app = app;
 
     if (!platform_init()) {
-        SK_LOG_ERROR("Failed to initialize platform");
+        SK_LOG_ERROR("engine_init platform_init failed");
         return false;
     }
 
     if (!rhi_init()) {
-        SK_LOG_ERROR("Failed to initialize RHI");
+        SK_LOG_ERROR("engine_init rhi_init failed");
         return false;
     }
 
@@ -56,25 +56,25 @@ bool engine_init(Engine *engine, EngineSpecification *spec, Application *app) {
 
     engine->window = platform_create_window(&cfg);
     if (!engine->window) {
-        SK_LOG_ERROR("Failed to create window");
+        SK_LOG_ERROR("engine_init platform_create_window failed");
         return false;
     }
 
     engine->input = create_input(engine->window);
     if (!engine->input) {
-        SK_LOG_ERROR("Failed to create input");
+        SK_LOG_ERROR("engine_init create_input failed");
         return false;
     }
 
     engine->renderer = create_renderer(engine->window);
     if (!engine->renderer) {
-        SK_LOG_ERROR("Failed to initialize renderer");
+        SK_LOG_ERROR("engine_inot create_renderer failed");
         return false;
     }
 
     engine->imgui_renderer = create_imgui_renderer(engine->renderer);
     if (!engine->imgui_renderer) {
-        SK_LOG_ERROR("Failed to initialize renderer");
+        SK_LOG_ERROR("engine_init create_imgui_renderer failed");
         return false;
     }
 
@@ -82,7 +82,7 @@ bool engine_init(Engine *engine, EngineSpecification *spec, Application *app) {
 
     if (engine->app) {
         if (!engine->app->init(engine->app, engine)) {
-            SK_LOG_ERROR("Failed to initialize application");
+            SK_LOG_ERROR("engine_init engine->app->init failed");
             return false;
         }
     }
@@ -105,7 +105,7 @@ void engine_run(Engine *engine) {
         imgui_renderer_end_frame(engine->imgui_renderer);
 
         if (!render(engine->renderer)) {
-            SK_LOG_ERROR("Failed to render");
+            SK_LOG_ERROR("engine_run render failed");
         }
     }
 }

@@ -4,8 +4,15 @@
 
 Application *create_application() {
     auto app = (Application *) malloc(sizeof(Application));
+    if (!app) {
+        return nullptr;
+    }
 
     auto editor = (Editor *) malloc(sizeof(Editor));
+    if (!editor) {
+        free(app);
+        return nullptr;
+    }
 
     app->init = init;
     app->on_imgui_render = on_imgui_render;

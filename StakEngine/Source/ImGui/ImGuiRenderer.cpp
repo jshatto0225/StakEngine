@@ -8,6 +8,10 @@
 
 ImguiRenderer *create_imgui_renderer(Renderer *renderer) {
     auto imgui_renderer = (ImguiRenderer *) malloc(sizeof(ImguiRenderer));
+    if (!imgui_renderer) {
+        SK_LOG_ERROR("create_imgui_renderer malloc failed");
+        return nullptr;
+    }
 
     imgui_renderer->renderer = renderer;
     imgui_renderer->draw_data = nullptr;

@@ -24,6 +24,7 @@ struct GlfwWindow {
 
 bool platform_init() {
     if (!glfwInit()) {
+        SK_LOG_ERROR("platform_init glfwInit failed");
         return false;
     }
 
@@ -43,11 +44,16 @@ Window platform_create_window(const WindowConfig *cfg) {
     auto handle = glfwCreateWindow(cfg->width, cfg->height, cfg->title, nullptr, nullptr);
 
     if (!handle) {
-        SK_LOG_ERROR("Failed to create glfw window");
-        return false;
+        SK_LOG_ERROR("platform_create_window glfwCreateWindow failed");
+        return 0;
     }
 
     auto window = (GlfwWindow *) malloc(sizeof(GlfwWindow));
+    if (!window) {
+        SK_LOG_ERROR("platform_create_window malloc failed");
+        glfwDestroyWindow(handle);
+        return 0;
+    }
 
     window->width = cfg->width;
     window->height = cfg->height;
@@ -167,7 +173,7 @@ bool platform_init_imgui(Window win) {
     auto window = (GlfwWindow *) win;
 
     if (!ImGui_ImplGlfw_InitForVulkan(window->glfw, true)) {
-        SK_LOG_ERROR("Failed to initialize imgui");
+        SK_LOG_ERROR("platform_init_imgui ImGui_ImplGlfw_InitForVulkan failed");
         return false;
     }
 
@@ -201,7 +207,7 @@ void platform_disable_raw_input(Window win) {
 void platform_set_cursor_visibility(Window win, CursorVisibility visibility) {
     auto window = (GlfwWindow *) win;
 
-    s32 glfw_visibility;
+    s32 glfw_visibility = 0;
     switch (visibility) {
     case CursorVisibility::Normal:
         glfw_visibility = GLFW_CURSOR_NORMAL;
