@@ -4,38 +4,17 @@
 
 #include <imgui.h>
 
+#define RHI_HANDLE(name) typedef u64 RHI##name;
+
 // Opaque handles
-struct RHIPipeline {
-    u64 data;
-};
-
-struct RHITexture {
-    u64 data;
-};
-
-struct RHIDepthStencilState {
-    u64 data;
-};
-
-struct RHIBlendState {
-    u64 data;
-};
-
-struct RHIQueue {
-    u64 data;
-};
-
-struct RHICommandBuffer {
-    u64 data;
-};
-
-struct RHISemaphore {
-    u64 data;
-};
-
-struct RHIDevice {
-    u64 data;
-};
+RHI_HANDLE(Pipeline);
+RHI_HANDLE(Texture);
+RHI_HANDLE(DepthStencilState);
+RHI_HANDLE(BlendState);
+RHI_HANDLE(Queue);
+RHI_HANDLE(CommandBuffer);
+RHI_HANDLE(Semaphore);
+RHI_HANDLE(Device);
 
 // Enums
 enum RHIMemoryType { 
@@ -258,30 +237,31 @@ struct RHI {
     // Device
     RHIDevice (*create_device)();
     void (*destroy_device)(RHIDevice device);
+    void (*device_wait_idle)(RHIDevice device);
 
     // Textures
-    RHITextureSizeAlign (*texture_size_align)(RHIDevice device, RHITextureDesc desc);
-    RHITexture (*create_texture)(RHIDevice device, RHITextureDesc desc, void *ptr_gpu);
+    RHITextureSizeAlign (*texture_size_align)(RHIDevice device, RHITextureDesc *desc);
+    RHITexture (*create_texture)(RHIDevice device, RHITextureDesc *desc, void *ptr_gpu);
     void (*destroy_texture)(RHIDevice device, RHITexture texture);
-    RHITextureDescriptor (*texture_view_descriptor)(RHIDevice device, RHITexture texture, RHIViewDesc desc);
-    RHITextureDescriptor (*rw_texture_view_descriptor)(RHIDevice device, RHITexture texture, RHIViewDesc desc);
+    RHITextureDescriptor (*texture_view_descriptor)(RHIDevice device, RHITexture texture, RHIViewDesc *desc);
+    RHITextureDescriptor (*rw_texture_view_descriptor)(RHIDevice device, RHITexture texture, RHIViewDesc *desc);
 
     // Pipelines
     RHIPipeline (*create_compute_pipeline)(RHIDevice device, u8 *compute_ir, u32 ir_size);
-    RHIPipeline (*create_graphics_pipeline)(RHIDevice device, u8 *vertex_ir, u32 vertex_ir_size, u8 *pixel_ir, u32 pixel_ir_size, RHIRasterDesc desc);
-    RHIPipeline (*create_graphics_meshlet_pipeline)(RHIDevice device, u8 meshlet_ir, u32 meshlet_ir_length, u8 *pixel_ir, u32 pixel_ir_size, RHIRasterDesc desc);
+    RHIPipeline (*create_graphics_pipeline)(RHIDevice device, u8 *vertex_ir, u32 vertex_ir_size, u8 *pixel_ir, u32 pixel_ir_size, RHIRasterDesc *desc);
+    RHIPipeline (*create_graphics_meshlet_pipeline)(RHIDevice device, u8 meshlet_ir, u32 meshlet_ir_length, u8 *pixel_ir, u32 pixel_ir_size, RHIRasterDesc *desc);
     void (*destroy_pipeline)(RHIDevice device, RHIPipeline pipeline);
 
     // State objects
-    RHIDepthStencilState (*create_depth_stencil_state)(RHIDevice device, RHIDepthStencilDesc desc);
-    RHIBlendState (*create_blend_state)(RHIDevice device, RHIBlendDesc desc);
+    RHIDepthStencilState (*create_depth_stencil_state)(RHIDevice device, RHIDepthStencilDesc *desc);
+    RHIBlendState (*create_blend_state)(RHIDevice device, RHIBlendDesc *desc);
     void (*free_depth_stencil_state)(RHIDevice device, RHIDepthStencilState state);
     void (*free_blend_state)(RHIDevice device, RHIBlendState state);
 
     // Queue
     RHIQueue (*create_queue)(RHIDevice device);
-    RHICommandBuffer (*start_command_recording)(RHIDevice device, RHIQueue queue);
-    void (*submit)(RHIQueue queue, RHICommandBuffer *command_buffers, u32 command_buffer_count, RHISemaphore semaphore);
+    RHICommandBuffer (*start_command_recording)(RHIQueue queue);
+    void (*submit)(RHIQueue queue, RHICommandBuffer *command_buffers, u32 command_buffer_count, RHISemaphore semaphore, u64 semaphore_value);
 
     // Semaphores
     RHISemaphore (*create_semaphore)(RHIDevice device, u64 init_value);
@@ -307,7 +287,7 @@ struct RHI {
     void (*dispatch)(RHICommandBuffer cb, void *dataGpu, u32 grid_dimensions[3]);
     void (*dispatch_indirect)(RHICommandBuffer cb, void *dataGpu, void *grid_dimensions_gpu);
 
-    void (*begin_render_pass)(RHICommandBuffer cb, RHIRenderPassDesc desc);
+    void (*begin_render_pass)(RHICommandBuffer cb, RHIRenderPassDesc *desc);
     void (*end_render_pass)(RHICommandBuffer cb);
 
     void (*draw_indexed_instanced)(RHICommandBuffer cb, void *vertex_data_gpu, void *pixel_data_gpu, void *indices_gpu, u32 index_count, u32 instance_count);
