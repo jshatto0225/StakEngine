@@ -380,12 +380,6 @@ bool find_memory_type(VkPhysicalDevice gpu, u32 *memory_type_index, u32 filter, 
 }
 
 u64 find_insert_pos_cpu(VulkanDevice *device, void *cpu) {
-    VULKAN_VALIDATE(device != nullptr, "find_insert_pos_cpu called with null device", VULKAN_VALIDATION_SEVERITY_WARN);
-
-    if (device == nullptr) {
-        return;
-    }
-
     u64 low = 0;
     u64 high = device->cpu_allocations.size();
 
@@ -403,12 +397,6 @@ u64 find_insert_pos_cpu(VulkanDevice *device, void *cpu) {
 }
 
 u64 find_insert_pos_gpu(VulkanDevice *device, void *gpu) {
-    VULKAN_VALIDATE(device != nullptr, "find_insert_pos_gpu called with null device", VULKAN_VALIDATION_SEVERITY_WARN);
-
-    if (device == nullptr) {
-        return;
-    }
-
     u64 low = 0;
     u64 high = device->gpu_allocations.size();
 
@@ -448,7 +436,7 @@ void insert_allocation_gpu(VulkanDevice *device, AllocBlock in) {
 }
 
 bool vulkan_init(RHI *rhi) {
-
+    return false;
 }
 
 void vulkan_shutdown() {
@@ -462,7 +450,7 @@ void *vk_alloc(RHIDevice device, u64 bytes, RHIMemoryType memory = RHI_MEMORY_TY
     VULKAN_VALIDATE(vulkan_device != nullptr, "vk_alloc called with null device", VULKAN_VALIDATION_SEVERITY_WARN);
 
     if (vulkan_device == nullptr) {
-        return;
+        return nullptr;
     }
 
     VULKAN_VALIDATE(bytes > 0, "vk_alloc given 0 size", VULKAN_VALIDATION_SEVERITY_TRACE);
@@ -590,7 +578,7 @@ void *vk_host_to_device_pointer(RHIDevice device, void *ptr) {
     VULKAN_VALIDATE(vulkan_device != nullptr, "vk_host_to_device_pointer called with null device", VULKAN_VALIDATION_SEVERITY_WARN);
 
     if (vulkan_device == nullptr) {
-        return;
+        return nullptr;
     }
 
     AllocBlock *block = find_allocation_cpu(vulkan_device, ptr);
@@ -620,14 +608,14 @@ RHIPipeline vk_create_compute_pipeline(RHIDevice device, u8 *compute_ir, u32 ir_
     VULKAN_VALIDATE(vulkan_device != nullptr, "insert_allocation_cpu called with null device", VULKAN_VALIDATION_SEVERITY_WARN);
 
     if (vulkan_device == nullptr) {
-        return;
+        return 0;
     }
 
     VULKAN_VALIDATE(compute_ir != nullptr, "vk_create_compute_pipeline called with null compute_ir", VULKAN_VALIDATION_SEVERITY_WARN);
     VULKAN_VALIDATE(ir_size > 0, "vk_create_compute_pipeline called with 0 ir_size", VULKAN_VALIDATION_SEVERITY_WARN);
 
     if (compute_ir == nullptr || ir_size == 0) {
-        return {};
+        return 0;
     }
 
     VkShaderModuleCreateInfo shader_info = {
@@ -640,7 +628,7 @@ RHIPipeline vk_create_compute_pipeline(RHIDevice device, u8 *compute_ir, u32 ir_
 
     if (vkCreateShaderModule(vulkan_device->device, &shader_info, nullptr, &shader_module) != VK_SUCCESS) {
         VULKAN_VALIDATE(false, "vk_create_compute_pipeline vkCreateShaderModule failed", VULKAN_VALIDATION_SEVERITY_ERROR);
-        return {};
+        return 0;
     }
 
     VkComputePipelineCreateInfo info = {
@@ -659,7 +647,7 @@ RHIPipeline vk_create_compute_pipeline(RHIDevice device, u8 *compute_ir, u32 ir_
 
         VULKAN_VALIDATE(false, "vk_create_compute_pipeline vkCreateComputePipelines failed", VULKAN_VALIDATION_SEVERITY_ERROR);
 
-        return {};
+        return 0;
     }
 
     vkDestroyShaderModule(vulkan_device->device, shader_module, nullptr);
@@ -676,7 +664,7 @@ RHIPipeline vk_create_graphics_pipeline(RHIDevice device, u8 *vertex_ir, u32 ver
     VULKAN_VALIDATE(vulkan_device != nullptr, "insert_allocation_cpu called with null device", VULKAN_VALIDATION_SEVERITY_WARN);
 
     if (vulkan_device == nullptr) {
-        return;
+        return 0;
     }
 
     VULKAN_VALIDATE(vertex_ir != nullptr, "vk_create_graphics_pipeline called with null vertex_ir", VULKAN_VALIDATION_SEVERITY_WARN);
@@ -685,7 +673,7 @@ RHIPipeline vk_create_graphics_pipeline(RHIDevice device, u8 *vertex_ir, u32 ver
     VULKAN_VALIDATE(pixel_ir_size > 0, "vk_create_graphics_pipeline called with 0 pixel_ir_size", VULKAN_VALIDATION_SEVERITY_WARN);
 
     if (vertex_ir == nullptr || pixel_ir == nullptr || vertex_ir_size == 0 || pixel_ir_size == 0) {
-        return {};
+        return 0;
     }
 
     VkShaderModuleCreateInfo vertex_shader_info = {
@@ -705,12 +693,12 @@ RHIPipeline vk_create_graphics_pipeline(RHIDevice device, u8 *vertex_ir, u32 ver
 
     if (vkCreateShaderModule(vulkan_device->device, &vertex_shader_info, nullptr, &vertex_shader_module) != VK_SUCCESS) {
         VULKAN_VALIDATE(false, "vk_create_graphics_pipeline vkCreateShaderModule failed", VULKAN_VALIDATION_SEVERITY_ERROR);
-        return {};
+        return 0;
     }
 
     if (vkCreateShaderModule(vulkan_device->device, &vertex_shader_info, nullptr, &fragment_shader_module) != VK_SUCCESS) {
         VULKAN_VALIDATE(false, "vk_create_graphics_pipeline vkCreateShaderModule failed", VULKAN_VALIDATION_SEVERITY_ERROR);
-        return {};
+        return 0;
     }
 
     const u32 shader_stage_count = 2;
@@ -807,7 +795,7 @@ RHIPipeline vk_create_graphics_pipeline(RHIDevice device, u8 *vertex_ir, u32 ver
 
     VkPipelineDynamicStateCreateInfo dynamic_state = {
         .sType = VK_STRUCTURE_TYPE_PIPELINE_DYNAMIC_STATE_CREATE_INFO,
-        .dynamicStateCount = dynamic_states.size(),
+        .dynamicStateCount = (u32) dynamic_states.size(),
         .pDynamicStates = dynamic_states.data(),
     };
     info.pDynamicState = &dynamic_state;
@@ -819,7 +807,7 @@ RHIPipeline vk_create_graphics_pipeline(RHIDevice device, u8 *vertex_ir, u32 ver
 
         VULKAN_VALIDATE(false, "vk_create_graphics_pipeline vkCreateGraphicsPipelines failed", VULKAN_VALIDATION_SEVERITY_ERROR);
 
-        return {};
+        return 0;
     }
 
     vkDestroyShaderModule(vulkan_device->device, vertex_shader_module, nullptr);
@@ -837,7 +825,7 @@ RHIPipeline vk_create_graphics_meshlet_pipeline(RHIDevice device, u8 *meshlet_ir
     VULKAN_VALIDATE(vulkan_device != nullptr, "insert_allocation_cpu called with null device", VULKAN_VALIDATION_SEVERITY_WARN);
 
     if (vulkan_device == nullptr) {
-        return;
+        return 0;
     }
 
     VULKAN_VALIDATE(meshlet_ir != nullptr, "vk_create_graphics_meshlet_pipeline called with null meshlet_ir", VULKAN_VALIDATION_SEVERITY_WARN);
@@ -846,7 +834,7 @@ RHIPipeline vk_create_graphics_meshlet_pipeline(RHIDevice device, u8 *meshlet_ir
     VULKAN_VALIDATE(pixel_ir_size > 0, "vk_create_graphics_meshlet_pipeline called with 0 pixel_ir_size", VULKAN_VALIDATION_SEVERITY_WARN);
 
     if (meshlet_ir == nullptr || pixel_ir == nullptr || meshlet_ir_size == 0 || pixel_ir_size == 0) {
-        return {};
+        return 0;
     }
 
     VkShaderModuleCreateInfo mesh_shader_info = {
@@ -866,7 +854,7 @@ RHIPipeline vk_create_graphics_meshlet_pipeline(RHIDevice device, u8 *meshlet_ir
 
     if (vkCreateShaderModule(vulkan_device->device, &mesh_shader_info, nullptr, &mesh_shader_module) != VK_SUCCESS) {
         VULKAN_VALIDATE(false, "vk_create_graphics_meshlet_pipeline vkCreateShaderModule failed", VULKAN_VALIDATION_SEVERITY_ERROR);
-        return {};
+        return 0;
     }
 
     if (vkCreateShaderModule(vulkan_device->device, &fragment_shader_info, nullptr, &fragment_shader_module) != VK_SUCCESS) {
@@ -968,7 +956,7 @@ RHIPipeline vk_create_graphics_meshlet_pipeline(RHIDevice device, u8 *meshlet_ir
 
     VkPipelineDynamicStateCreateInfo dynamic_state = {
         .sType = VK_STRUCTURE_TYPE_PIPELINE_DYNAMIC_STATE_CREATE_INFO,
-        .dynamicStateCount = dynamic_states.size(),
+        .dynamicStateCount = (u32) dynamic_states.size(),
         .pDynamicStates = dynamic_states.data(),
     };
     info.pDynamicState = &dynamic_state;
@@ -980,7 +968,7 @@ RHIPipeline vk_create_graphics_meshlet_pipeline(RHIDevice device, u8 *meshlet_ir
 
         VULKAN_VALIDATE(false, "vk_create_graphics_meshlet_pipeline vkCreateGraphicsPipelines failed", VULKAN_VALIDATION_SEVERITY_ERROR);
 
-        return {};
+        return 0;
     }
 
     vkDestroyShaderModule(vulkan_device->device, mesh_shader_module, nullptr);
@@ -1094,7 +1082,7 @@ RHICommandBuffer vk_start_command_recording(RHIQueue queue) {
     VULKAN_VALIDATE(vulkan_queue != nullptr, "vk_start_command_recording called with null queue", VULKAN_VALIDATION_SEVERITY_WARN);
 
     if (vulkan_queue == nullptr) {
-        return;
+        return 0;
     }
 
     VkCommandBufferAllocateInfo alloc_info = {
@@ -1107,7 +1095,7 @@ RHICommandBuffer vk_start_command_recording(RHIQueue queue) {
     VkCommandBuffer cb = nullptr;
     if (vkAllocateCommandBuffers(vulkan_queue->device->device, &alloc_info, &cb) != VK_SUCCESS) {
         VULKAN_VALIDATE(false, "vk_start_command_recording vkAllocateCommandBuffers failed", VULKAN_VALIDATION_SEVERITY_ERROR);
-        return { 0 };
+        return 0;
     }
 
     VkCommandBufferBeginInfo begin_info = {
@@ -1118,7 +1106,7 @@ RHICommandBuffer vk_start_command_recording(RHIQueue queue) {
     if (vkBeginCommandBuffer(cb, &begin_info) != VK_SUCCESS) {
         vkFreeCommandBuffers(vulkan_queue->device->device, vulkan_queue->command_pool, 1, &cb);
         VULKAN_VALIDATE(false, "vk_start_command_recording vkBeginCommandBuffer failed", VULKAN_VALIDATION_SEVERITY_ERROR);
-        return { 0 };
+        return 0;
     }
 
     auto vkcb = (VulkanCommandBuffer *) malloc(sizeof(VulkanCommandBuffer));
@@ -1177,11 +1165,11 @@ void vk_submit(RHIQueue queue, RHICommandBuffer *command_buffers, u32 command_bu
 
     VkSubmitInfo2 info = {
         .sType = VK_STRUCTURE_TYPE_SUBMIT_INFO,
-        .waitSemaphoreInfoCount = waits.size(),
+        .waitSemaphoreInfoCount = (u32) waits.size(),
         .pWaitSemaphoreInfos = waits.data(),
-        .commandBufferInfoCount = cb_infos.size(),
+        .commandBufferInfoCount = (u32) cb_infos.size(),
         .pCommandBufferInfos = cb_infos.data(),
-        .signalSemaphoreInfoCount = signals.size(),
+        .signalSemaphoreInfoCount = (u32) signals.size(),
         .pSignalSemaphoreInfos = signals.data(),
     };
     
@@ -1197,7 +1185,7 @@ RHISemaphore vk_create_semaphore(RHIDevice device, u64 init_value) {
     VULKAN_VALIDATE(vulkan_device != nullptr, "insert_allocation_cpu called with null device", VULKAN_VALIDATION_SEVERITY_WARN);
 
     if (vulkan_device == nullptr) {
-        return;
+        return 0;
     }
 
     VkSemaphore sem = nullptr;
@@ -1217,7 +1205,7 @@ RHISemaphore vk_create_semaphore(RHIDevice device, u64 init_value) {
 
     if (vkCreateSemaphore(vulkan_device->device, &info, nullptr, &sem) != VK_SUCCESS) {
         VULKAN_VALIDATE(false, "vk_create_semaphore vkCreateSemaphore failed", VULKAN_VALIDATION_SEVERITY_ERROR);
-        return { 0 };
+        return 0;
     }
 
     auto semaphore = (VulkanSemaphore *) malloc(sizeof(VulkanSemaphore));
@@ -1650,7 +1638,7 @@ void vk_begin_render_pass(RHICommandBuffer cb, RHIRenderPassDesc desc) {
         .sType = VK_STRUCTURE_TYPE_RENDERING_INFO,
         .renderArea = render_area,
         .layerCount = 1,
-        .colorAttachmentCount = color_attachments.size(),
+        .colorAttachmentCount = (u32) color_attachments.size(),
         .pColorAttachments = color_attachments.data(),
     };
 

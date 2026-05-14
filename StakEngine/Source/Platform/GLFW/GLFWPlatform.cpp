@@ -60,8 +60,6 @@ bool platform_open_window(Window *window, const WindowConfig *cfg) {
 
         data->framebuffer_width = width;
         data->framebuffer_height = height;
-
-        rhi.notify_swapchain_of_resize(data->swapchain);
     });
 
     glfwSetWindowSizeCallback(handle, [](GLFWwindow *window, s32 width, s32 height) {
@@ -89,7 +87,7 @@ bool platform_open_window(Window *window, const WindowConfig *cfg) {
         data->event_function(&e);
     });
 
-    glfwSetKeyCallback(handle, [](GLFWwindow *window, s32 key, s32 Scancode, s32 action, s32 Mods) {
+    glfwSetKeyCallback(handle, [](GLFWwindow *window, s32 key, s32 scancode, s32 action, s32 mods) {
         auto *data = static_cast<Window *>(glfwGetWindowUserPointer(window));
 
         if (!data->event_function) return;
@@ -113,7 +111,7 @@ bool platform_open_window(Window *window, const WindowConfig *cfg) {
         data->event_function(&e);
     });
 
-    glfwSetMouseButtonCallback(handle, [](GLFWwindow *window, s32 button, s32 action, s32 Mods) {
+    glfwSetMouseButtonCallback(handle, [](GLFWwindow *window, s32 button, s32 action, s32 mods) {
         auto *data = static_cast<Window *>(glfwGetWindowUserPointer(window));
 
         if (!data->event_function) return;
@@ -149,12 +147,6 @@ bool platform_open_window(Window *window, const WindowConfig *cfg) {
         data->event_function(&e);
     });
 
-    window->swapchain = rhi.create_swapchain(window);
-    if (!window->swapchain) {
-        SK_LOG_ERROR("Failed to create viewport for window");
-        return false;
-    }
-
     window->open = true;
 
     return true;
@@ -170,8 +162,6 @@ void platform_close_window(Window *window) {
 
     auto glfw = (GLFWwindow *)window->platform_handle;
     assert(glfw);
-
-    rhi.destroy_swapchain(&window->swapchain);
 
     glfwDestroyWindow(glfw);
 

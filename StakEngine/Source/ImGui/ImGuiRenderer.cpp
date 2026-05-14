@@ -17,25 +17,14 @@ bool imgui_renderer_init(ImguiRenderer *imgui_renderer, Renderer *renderer) {
     io.ConfigFlags |= ImGuiConfigFlags_DockingEnable;
     ImGui::StyleColorsDark();
 
-    renderer->gui_render_func = [imgui_renderer] (RHIResourceHandle List) {
-        rhi.cmd_render_imgui_draw_data(List, imgui_renderer->draw_data);
-    };
-
-    if (!renderer_init_imgui(imgui_renderer->renderer)) {
-        SK_LOG_ERROR("Failed to initialize renderer for imgui");
-        return false;
-    }
-
     return true;
 }
 
 void imgui_renderer_shutdown(ImguiRenderer *imgui_renderer) {
-    renderer_shutdown_imgui(imgui_renderer->renderer);
     ImGui::DestroyContext();
 }
 
 void imgui_renderer_begin_frame(ImguiRenderer *imgui_renderer) {
-    renderer_imgui_new_frame(imgui_renderer->renderer);
     ImGui::NewFrame();
 }
 

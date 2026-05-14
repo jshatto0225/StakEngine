@@ -29,7 +29,7 @@ bool engine_init(Engine *engine, EngineSpecification *spec, Application *app) {
         return false;
     }
 
-    if (!rhi_init(RHIBackend::Vulkan)) {
+    if (!rhi_init()) {
         SK_LOG_ERROR("Failed to initialize RHI");
         return false;
     }
