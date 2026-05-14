@@ -249,7 +249,7 @@ struct RHI {
     // Pipelines
     RHIPipeline (*create_compute_pipeline)(RHIDevice device, u8 *compute_ir, u32 ir_size);
     RHIPipeline (*create_graphics_pipeline)(RHIDevice device, u8 *vertex_ir, u32 vertex_ir_size, u8 *pixel_ir, u32 pixel_ir_size, RHIRasterDesc *desc);
-    RHIPipeline (*create_graphics_meshlet_pipeline)(RHIDevice device, u8 meshlet_ir, u32 meshlet_ir_length, u8 *pixel_ir, u32 pixel_ir_size, RHIRasterDesc *desc);
+    RHIPipeline (*create_graphics_meshlet_pipeline)(RHIDevice device, u8 *meshlet_ir, u32 meshlet_ir_size, u8 *pixel_ir, u32 pixel_ir_size, RHIRasterDesc *desc);
     void (*destroy_pipeline)(RHIDevice device, RHIPipeline pipeline);
 
     // State objects
@@ -274,12 +274,12 @@ struct RHI {
     void (*copy_to_texture)(RHICommandBuffer cb, RHITexture texture, void *src_gpu);
     void (*copy_from_texture)(RHICommandBuffer cb, void *dest_gpu, RHITexture texture);
 
-    void (*set_active_texture_heap_ptr)(RHICommandBuffer cb, void *ptr_gpu);
-    void (*set_active_resource_heap_ptr)(RHICommandBuffer cb, void *ptr_gpu);
+    void (*set_active_texture_heap_ptr)(RHICommandBuffer cb, void *ptr_gpu, u64 size);
+    void (*set_active_resource_heap_ptr)(RHICommandBuffer cb, void *ptr_gpu, u64 size);
 
     void (*barrier)(RHICommandBuffer cb, RHIPipelineStage before, RHIPipelineStage after, RHIHazardFlags hazards);
-    void (*signal_after)(RHICommandBuffer cb, RHIPipelineStage before, void *ptr_gpu, u64 value, RHISignal signal);
-    void (*wait_before)(RHICommandBuffer cb, RHIPipelineStage after, void *ptr_gpu, u64 value, RHIOp op, RHIHazardFlags hazards, u64 mask);
+    void (*signal_after)(RHICommandBuffer cb, RHIPipelineStage after, RHISemaphore sem, u64 value);
+    void (*wait_before)(RHICommandBuffer cb, RHIPipelineStage after, RHISemaphore sem, u64 value);
 
     void (*set_pipeline)(RHICommandBuffer cb, RHIPipeline pipeline);
     void (*set_depth_stencil_state)(RHICommandBuffer cb, RHIDepthStencilState state);

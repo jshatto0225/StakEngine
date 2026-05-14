@@ -4,6 +4,8 @@
 
 #include <vulkan/vulkan.h>
 
+#include "VulkanPlatform.h"
+
 enum VulkanValidationSeverity {
     VULKAN_VALIDATION_SEVERITY_TRACE, // NOTE: For technically incorrect but safe operations (vk_free on a nullptr). Behavior is defined but not recommended.
     VULKAN_VALIDATION_SEVERITY_INFO, // NOTE: Information (usually object creation or other sucess, and metrics/statistics)
@@ -15,7 +17,13 @@ enum VulkanValidationSeverity {
 #ifdef SK_DEBUG
 static const bool enable_validation = true;
 static const VulkanValidationSeverity validation_level = VULKAN_VALIDATION_SEVERITY_TRACE;
+const char *validation_layers[] = {
+    "VK_LAYER_KHRONOS_validation"
+};
+const u32 validation_layer_count = 1;
 #endif
+
+
 
 #define VULKAN_VALIDATE(cond, msg, severity) { if (!(cond)) vk_validation_message(msg, severity); if (severity == VULKAN_VALIDATION_SEVERITY_CRITICAL) assert(false); }
 
@@ -140,6 +148,23 @@ struct VulkanDepthStencilState {
 };
 
 Vulkan vulkan;
+
+VkResult create_debug_messenger(VkInstance instance, const VkDebugUtilsMessengerCreateInfoEXT *info, const VkAllocationCallbacks *allocator, VkDebugUtilsMessengerEXT *messenger) {
+    auto func = (PFN_vkCreateDebugUtilsMessengerEXT) vkGetInstanceProcAddr(instance, "vkCreateDebugUtilsMessengerEXT");
+    if (func != nullptr) {
+        return func(instance, info, allocator, messenger);
+    } else {
+        SK_LOG_ERROR("Extension not present");
+        return VK_ERROR_EXTENSION_NOT_PRESENT;
+    }
+}
+
+void destroy_debug_messenger(VkInstance instance, VkDebugUtilsMessengerEXT messenger, const VkAllocationCallbacks *allocator) {
+    auto func = (PFN_vkDestroyDebugUtilsMessengerEXT) vkGetInstanceProcAddr(instance, "vkDestroyDebugUtilsMessengerEXT");
+    if (func != nullptr) {
+        func(instance, messenger, allocator);
+    }
+}
 
 static void vk_validation_message(const char *str, VulkanValidationSeverity severity) {
     if (severity >= validation_level) {
@@ -435,12 +460,184 @@ void insert_allocation_gpu(VulkanDevice *device, AllocBlock in) {
     device->gpu_allocations.insert(device->gpu_allocations.begin() + pos, in);
 }
 
+VKAPI_ATTR VkBool32 VKAPI_CALL debug_messenger(VkDebugUtilsMessageSeverityFlagBitsEXT severity, 
+    VkDebugUtilsMessageTypeFlagsEXT type, 
+    const VkDebugUtilsMessengerCallbackDataEXT *callback_data, 
+    void *user_data) {
+    switch (severity) {
+        case VK_DEBUG_UTILS_MESSAGE_SEVERITY_ERROR_BIT_EXT:
+            SK_LOG_ERROR(callback_data->pMessage);
+            break;
+        case VK_DEBUG_UTILS_MESSAGE_SEVERITY_INFO_BIT_EXT:
+            SK_LOG_INFO(callback_data->pMessage);
+            break;
+        case VK_DEBUG_UTILS_MESSAGE_SEVERITY_VERBOSE_BIT_EXT:
+            SK_LOG_INFO(callback_data->pMessage);
+            break;
+        case VK_DEBUG_UTILS_MESSAGE_SEVERITY_WARNING_BIT_EXT:
+            SK_LOG_WARN(callback_data->pMessage);
+            break;
+        default:
+            break;
+    }
+
+    return VK_FALSE;
+}
+
 bool vulkan_init(RHI *rhi) {
-    return false;
+    bool extensions_supported = false;
+    u32 layer_count = 0;
+
+    vkEnumerateInstanceLayerProperties(&layer_count, nullptr);
+    auto layers = (VkLayerProperties *) malloc(sizeof(VkLayerProperties) * layer_count);
+    vkEnumerateInstanceLayerProperties(&layer_count, layers);
+
+    for (u32 i = 0; i < validation_layer_count; i++) {
+        bool layer_found = false;
+
+        for (u32 k = 0; k < layer_count; k++) {
+            if (strcmp(validation_layers[i], layers[k].layerName) == 0) {
+                layer_found = true;
+                break;
+            }
+        }
+
+        if (!layer_found) {
+            extensions_supported = false;
+            break;
+        }
+    }
+
+    VULKAN_VALIDATE(extensions_supported, "vulkan_init Vulkan extensions are not supported", VULKAN_VALIDATION_SEVERITY_CRITICAL);
+
+    VkApplicationInfo app_info = {
+        .sType = VK_STRUCTURE_TYPE_APPLICATION_INFO,
+        .pApplicationName = "app",
+        .applicationVersion = VK_MAKE_VERSION(0, 0, 1),
+        .pEngineName = "engine",
+        .engineVersion = VK_MAKE_VERSION(0, 0, 1),
+        .apiVersion = VK_API_VERSION_1_4,
+    };
+
+    VkInstanceCreateInfo instance_info = {
+        .sType = VK_STRUCTURE_TYPE_INSTANCE_CREATE_INFO,
+        .pApplicationInfo = &app_info,
+    };
+
+    VkDebugUtilsMessengerCreateInfoEXT debug_info = {};
+
+    if (enable_validation) {
+        instance_info.enabledLayerCount = validation_layer_count;
+        instance_info.ppEnabledLayerNames = validation_layers;
+
+        debug_info.sType = VK_STRUCTURE_TYPE_DEBUG_UTILS_MESSENGER_CREATE_INFO_EXT;
+        debug_info.messageSeverity = VK_DEBUG_UTILS_MESSAGE_SEVERITY_VERBOSE_BIT_EXT | 
+            VK_DEBUG_UTILS_MESSAGE_SEVERITY_WARNING_BIT_EXT | 
+            VK_DEBUG_UTILS_MESSAGE_SEVERITY_INFO_BIT_EXT | 
+            VK_DEBUG_UTILS_MESSAGE_SEVERITY_ERROR_BIT_EXT;
+        debug_info.messageType = VK_DEBUG_UTILS_MESSAGE_TYPE_GENERAL_BIT_EXT |
+            VK_DEBUG_UTILS_MESSAGE_TYPE_VALIDATION_BIT_EXT |
+            VK_DEBUG_UTILS_MESSAGE_TYPE_PERFORMANCE_BIT_EXT;
+        debug_info.pfnUserCallback = debug_messenger;
+
+        instance_info.pNext = &debug_info;
+    }
+
+    std::vector<const char *> extensions = platform_get_required_extensions();
+    if (enable_validation) {
+        extensions.push_back(VK_EXT_DEBUG_UTILS_EXTENSION_NAME);
+    }
+
+    instance_info.enabledExtensionCount = (u32) extensions.size();
+    instance_info.ppEnabledExtensionNames = extensions.data();
+
+    if (vkCreateInstance(&instance_info, nullptr, &vulkan.instance) != VK_SUCCESS) {
+        VULKAN_VALIDATE(extensions_supported, "vulkan_init vkCreateInstance failed", VULKAN_VALIDATION_SEVERITY_ERROR);
+        return false;
+    }
+    
+    if (create_debug_messenger(vulkan.instance, &debug_info, nullptr, &vulkan.debug_messenger) != VK_SUCCESS) {
+        VULKAN_VALIDATE(extensions_supported, "vulkan_init create_debug_messenger failed", VULKAN_VALIDATION_SEVERITY_ERROR);
+        return false;
+    }
+
+    *rhi = {
+        // Memory
+        vk_alloc,
+        vk_free,
+        vk_host_to_device_pointer,
+
+        // Device
+        vk_create_device,
+        vk_destroy_device,
+        vk_device_wait_idle,
+
+        //Textures
+        vk_texture_size_align,
+        vk_create_texture,
+        vk_destroy_texture,
+        vk_texture_view_descriptor,
+        vk_rw_texture_view_descriptor,
+
+        // Pipelines
+        vk_create_compute_pipeline,
+        vk_create_graphics_pipeline,
+        vk_create_graphics_meshlet_pipeline,
+        vk_destroy_pipeline,
+
+        // State objects
+        vk_create_depth_stencil_state,
+        vk_create_blend_state,
+        vk_free_depth_stencil_state,
+        vk_free_blend_state,
+
+        // Queue
+        vk_create_queue,
+        vk_destroy_queue,
+        vk_start_command_recording,
+        vk_submit,
+
+        // Semaphores
+        vk_create_semaphore,
+        vk_wait_semaphore,
+        vk_destroy_semaphore,
+
+        // Commands
+        vk_mem_copy,
+        vk_copy_to_texture,
+        vk_copy_from_texture,
+
+        vk_set_active_texture_heap_ptr,
+        vk_set_active_resource_heap_ptr,
+
+        vk_barrier,
+        vk_signal_after,
+        vk_wait_before,
+
+        vk_set_pipeline,
+        vk_set_depth_stencil_state,
+        vk_set_blend_state,
+
+        vk_dispatch,
+        vk_dispatch_indirect,
+
+        vk_begin_render_pass,
+        vk_end_render_pass,
+
+        vk_draw_indexed_instanced,
+        vk_draw_indexed_instanced_indirect,
+        vk_draw_indexed_instanced_indirect_multi,
+
+        vk_draw_meshlets,
+        vk_draw_meshlets_indirect,
+    };
+
+    return true;
 }
 
 void vulkan_shutdown() {
-
+    destroy_debug_messenger(vulkan.instance, vulkan.debug_messenger, nullptr);
+    vkDestroyInstance(vulkan.instance, nullptr);
 }
 
 // Memory
@@ -591,15 +788,15 @@ void *vk_host_to_device_pointer(RHIDevice device, void *ptr) {
 }
 
 // Textures
-RHITextureSizeAlign vk_texture_size_align(RHIDevice device, RHITextureDesc desc);
+RHITextureSizeAlign vk_texture_size_align(RHIDevice device, RHITextureDesc *desc);
 
-RHITexture vk_create_texture(RHIDevice device, RHITextureDesc desc, void *ptr_gpu);
+RHITexture vk_create_texture(RHIDevice device, RHITextureDesc *desc, void *ptr_gpu);
 
 void vk_destroy_texture(RHIDevice device, RHITexture texture);
 
-RHITextureDescriptor vk_texture_view_descriptor(RHIDevice device, RHITexture texture, RHIViewDesc desc);
+RHITextureDescriptor vk_texture_view_descriptor(RHIDevice device, RHITexture texture, RHIViewDesc *desc);
 
-RHITextureDescriptor vk_rw_texture_view_descriptor(RHIDevice device, RHITexture texture, RHIViewDesc desc);
+RHITextureDescriptor vk_rw_texture_view_descriptor(RHIDevice device, RHITexture texture, RHIViewDesc *desc);
 
 // Pipelines
 RHIPipeline vk_create_compute_pipeline(RHIDevice device, u8 *compute_ir, u32 ir_size) {
@@ -658,7 +855,7 @@ RHIPipeline vk_create_compute_pipeline(RHIDevice device, u8 *compute_ir, u32 ir_
     return (u64) pipeline;
 }
 
-RHIPipeline vk_create_graphics_pipeline(RHIDevice device, u8 *vertex_ir, u32 vertex_ir_size, u8 *pixel_ir, u32 pixel_ir_size, RHIRasterDesc desc) {
+RHIPipeline vk_create_graphics_pipeline(RHIDevice device, u8 *vertex_ir, u32 vertex_ir_size, u8 *pixel_ir, u32 pixel_ir_size, RHIRasterDesc *desc) {
     auto vulkan_device = (VulkanDevice *) device;
 
     VULKAN_VALIDATE(vulkan_device != nullptr, "insert_allocation_cpu called with null device", VULKAN_VALIDATION_SEVERITY_WARN);
@@ -727,21 +924,21 @@ RHIPipeline vk_create_graphics_pipeline(RHIDevice device, u8 *vertex_ir, u32 ver
 
     VkPipelineInputAssemblyStateCreateInfo input_assembly = {
         .sType = VK_STRUCTURE_TYPE_PIPELINE_INPUT_ASSEMBLY_STATE_CREATE_INFO,
-        .topology = vk_get_topology(desc.topology),
+        .topology = vk_get_topology(desc->topology),
         .primitiveRestartEnable = false,
     };
 
     VkPipelineRasterizationStateCreateInfo rasterizer = {
         .sType = VK_STRUCTURE_TYPE_PIPELINE_RASTERIZATION_STATE_CREATE_INFO,
         .polygonMode = VK_POLYGON_MODE_FILL,
-        .cullMode = vk_get_cull_mode(desc.cull),
+        .cullMode = vk_get_cull_mode(desc->cull),
         .frontFace = VK_FRONT_FACE_COUNTER_CLOCKWISE,
     };
 
     VkPipelineMultisampleStateCreateInfo multisampling = {
         .sType = VK_STRUCTURE_TYPE_PIPELINE_MULTISAMPLE_STATE_CREATE_INFO,
-        .rasterizationSamples = (VkSampleCountFlagBits) desc.sample_count,
-        .alphaToCoverageEnable = desc.alpha_to_coverage,
+        .rasterizationSamples = (VkSampleCountFlagBits) desc->sample_count,
+        .alphaToCoverageEnable = desc->alpha_to_coverage,
     };
 
     VkPipelineColorBlendStateCreateInfo color_blending = {};
@@ -771,19 +968,19 @@ RHIPipeline vk_create_graphics_pipeline(RHIDevice device, u8 *vertex_ir, u32 ver
         .pMultisampleState = &multisampling,
     };
 
-    if (desc.blend_state) {
+    if (desc->blend_state) {
         color_blending.sType = VK_STRUCTURE_TYPE_PIPELINE_COLOR_BLEND_STATE_CREATE_INFO;
         color_blending.attachmentCount = 1;
         color_blending.pAttachments = &color_blend_attachment;
 
         color_blend_attachment.blendEnable = true;
-        color_blend_attachment.colorBlendOp = vk_get_blend_op(desc.blend_state->color_op);
-        color_blend_attachment.srcColorBlendFactor = vk_get_blend_factor(desc.blend_state->src_color_factor);
-        color_blend_attachment.dstColorBlendFactor = vk_get_blend_factor(desc.blend_state->dst_color_factor);
-        color_blend_attachment.colorBlendOp = vk_get_blend_op(desc.blend_state->alpha_op);
-        color_blend_attachment.srcColorBlendFactor = vk_get_blend_factor(desc.blend_state->src_alpha_factor);
-        color_blend_attachment.dstColorBlendFactor = vk_get_blend_factor(desc.blend_state->dst_alpha_factor);
-        color_blend_attachment.colorWriteMask = desc.blend_state->color_write_mask;
+        color_blend_attachment.colorBlendOp = vk_get_blend_op(desc->blend_state->color_op);
+        color_blend_attachment.srcColorBlendFactor = vk_get_blend_factor(desc->blend_state->src_color_factor);
+        color_blend_attachment.dstColorBlendFactor = vk_get_blend_factor(desc->blend_state->dst_color_factor);
+        color_blend_attachment.colorBlendOp = vk_get_blend_op(desc->blend_state->alpha_op);
+        color_blend_attachment.srcColorBlendFactor = vk_get_blend_factor(desc->blend_state->src_alpha_factor);
+        color_blend_attachment.dstColorBlendFactor = vk_get_blend_factor(desc->blend_state->dst_alpha_factor);
+        color_blend_attachment.colorWriteMask = desc->blend_state->color_write_mask;
 
         info.pColorBlendState = &color_blending;
     } else {
@@ -819,7 +1016,7 @@ RHIPipeline vk_create_graphics_pipeline(RHIDevice device, u8 *vertex_ir, u32 ver
     return (u64) pipeline;
 }
 
-RHIPipeline vk_create_graphics_meshlet_pipeline(RHIDevice device, u8 *meshlet_ir, u32 meshlet_ir_size, u8 *pixel_ir, u32 pixel_ir_size, RHIRasterDesc desc) {
+RHIPipeline vk_create_graphics_meshlet_pipeline(RHIDevice device, u8 *meshlet_ir, u32 meshlet_ir_size, u8 *pixel_ir, u32 pixel_ir_size, RHIRasterDesc *desc) {
     auto vulkan_device = (VulkanDevice *) device;
 
     VULKAN_VALIDATE(vulkan_device != nullptr, "insert_allocation_cpu called with null device", VULKAN_VALIDATION_SEVERITY_WARN);
@@ -888,21 +1085,21 @@ RHIPipeline vk_create_graphics_meshlet_pipeline(RHIDevice device, u8 *meshlet_ir
 
     VkPipelineInputAssemblyStateCreateInfo input_assembly = {
         .sType = VK_STRUCTURE_TYPE_PIPELINE_INPUT_ASSEMBLY_STATE_CREATE_INFO,
-        .topology = vk_get_topology(desc.topology),
+        .topology = vk_get_topology(desc->topology),
         .primitiveRestartEnable = false,
     };
 
     VkPipelineRasterizationStateCreateInfo rasterizer = {
         .sType = VK_STRUCTURE_TYPE_PIPELINE_RASTERIZATION_STATE_CREATE_INFO,
         .polygonMode = VK_POLYGON_MODE_FILL,
-        .cullMode = vk_get_cull_mode(desc.cull),
+        .cullMode = vk_get_cull_mode(desc->cull),
         .frontFace = VK_FRONT_FACE_COUNTER_CLOCKWISE,
     };
 
     VkPipelineMultisampleStateCreateInfo multisampling = {
         .sType = VK_STRUCTURE_TYPE_PIPELINE_MULTISAMPLE_STATE_CREATE_INFO,
-        .rasterizationSamples = (VkSampleCountFlagBits) desc.sample_count,
-        .alphaToCoverageEnable = desc.alpha_to_coverage,
+        .rasterizationSamples = (VkSampleCountFlagBits) desc->sample_count,
+        .alphaToCoverageEnable = desc->alpha_to_coverage,
     };
 
     VkPipelineColorBlendStateCreateInfo color_blending = {};
@@ -932,19 +1129,19 @@ RHIPipeline vk_create_graphics_meshlet_pipeline(RHIDevice device, u8 *meshlet_ir
         .pMultisampleState = &multisampling,
     };
 
-    if (desc.blend_state) {
+    if (desc->blend_state) {
         color_blending.sType = VK_STRUCTURE_TYPE_PIPELINE_COLOR_BLEND_STATE_CREATE_INFO;
         color_blending.attachmentCount = 1;
         color_blending.pAttachments = &color_blend_attachment;
 
         color_blend_attachment.blendEnable = true;
-        color_blend_attachment.colorBlendOp = vk_get_blend_op(desc.blend_state->color_op);
-        color_blend_attachment.srcColorBlendFactor = vk_get_blend_factor(desc.blend_state->src_color_factor);
-        color_blend_attachment.dstColorBlendFactor = vk_get_blend_factor(desc.blend_state->dst_color_factor);
-        color_blend_attachment.colorBlendOp = vk_get_blend_op(desc.blend_state->alpha_op);
-        color_blend_attachment.srcColorBlendFactor = vk_get_blend_factor(desc.blend_state->src_alpha_factor);
-        color_blend_attachment.dstColorBlendFactor = vk_get_blend_factor(desc.blend_state->dst_alpha_factor);
-        color_blend_attachment.colorWriteMask = desc.blend_state->color_write_mask;
+        color_blend_attachment.colorBlendOp = vk_get_blend_op(desc->blend_state->color_op);
+        color_blend_attachment.srcColorBlendFactor = vk_get_blend_factor(desc->blend_state->src_color_factor);
+        color_blend_attachment.dstColorBlendFactor = vk_get_blend_factor(desc->blend_state->dst_color_factor);
+        color_blend_attachment.colorBlendOp = vk_get_blend_op(desc->blend_state->alpha_op);
+        color_blend_attachment.srcColorBlendFactor = vk_get_blend_factor(desc->blend_state->src_alpha_factor);
+        color_blend_attachment.dstColorBlendFactor = vk_get_blend_factor(desc->blend_state->dst_alpha_factor);
+        color_blend_attachment.colorWriteMask = desc->blend_state->color_write_mask;
 
         info.pColorBlendState = &color_blending;
     } else {
@@ -1002,49 +1199,47 @@ void vk_destroy_pipeline(RHIDevice device, RHIPipeline pipeline) {
 }
 
 // State objects
-
-
-RHIDepthStencilState vk_create_depth_stencil_state(RHIDepthStencilDesc desc) {
+RHIDepthStencilState vk_create_depth_stencil_state(RHIDevice device, RHIDepthStencilDesc *desc) {
     auto state = (VulkanDepthStencilState *) malloc(sizeof(VulkanDepthStencilState));
 
-    state->depth_write_enabled = desc.depth_mode == RHI_DEPTH_WRITE;
-    state->depth_compare_op = vk_get_compare_op(desc.depth_test);
-    state->depth_bias_constant = desc.depth_bias;
-    state->depth_bias_clamp = desc.depth_bias_clamp;
-    state->depth_bias_slope = desc.depth_bias_slope_factor;
+    state->depth_write_enabled = desc->depth_mode == RHI_DEPTH_WRITE;
+    state->depth_compare_op = vk_get_compare_op(desc->depth_test);
+    state->depth_bias_constant = desc->depth_bias;
+    state->depth_bias_clamp = desc->depth_bias_clamp;
+    state->depth_bias_slope = desc->depth_bias_slope_factor;
     
-    state->front.write_mask = desc.stencil_write_mask;
-    state->front.fail_op = vk_get_stencil_op(desc.stencil_front.fail_op);
-    state->front.pass_op = vk_get_stencil_op(desc.stencil_front.pass_op);
-    state->front.depth_fail_op = vk_get_stencil_op(desc.stencil_front.depth_fail_op);
-    state->front.reference = desc.stencil_front.reference;
-    state->front.compare_mask = desc.stencil_read_mask;
+    state->front.write_mask = desc->stencil_write_mask;
+    state->front.fail_op = vk_get_stencil_op(desc->stencil_front.fail_op);
+    state->front.pass_op = vk_get_stencil_op(desc->stencil_front.pass_op);
+    state->front.depth_fail_op = vk_get_stencil_op(desc->stencil_front.depth_fail_op);
+    state->front.reference = desc->stencil_front.reference;
+    state->front.compare_mask = desc->stencil_read_mask;
 
-    state->back.write_mask = desc.stencil_write_mask;
-    state->back.fail_op = vk_get_stencil_op(desc.stencil_back.fail_op);
-    state->back.pass_op = vk_get_stencil_op(desc.stencil_back.pass_op);
-    state->back.depth_fail_op = vk_get_stencil_op(desc.stencil_back.depth_fail_op);
-    state->back.reference = desc.stencil_back.reference;
-    state->back.compare_mask = desc.stencil_read_mask;
+    state->back.write_mask = desc->stencil_write_mask;
+    state->back.fail_op = vk_get_stencil_op(desc->stencil_back.fail_op);
+    state->back.pass_op = vk_get_stencil_op(desc->stencil_back.pass_op);
+    state->back.depth_fail_op = vk_get_stencil_op(desc->stencil_back.depth_fail_op);
+    state->back.reference = desc->stencil_back.reference;
+    state->back.compare_mask = desc->stencil_read_mask;
 
     return (u32) state;
 }
 
-RHIBlendState vk_create_blend_state(RHIBlendDesc desc) {
+RHIBlendState vk_create_blend_state(RHIDevice device, RHIBlendDesc *desc) {
     auto state = (VulkanBlendState *) malloc(sizeof(VulkanBlendState));
 
-    state->src_color_factor = vk_get_blend_factor(desc.src_color_factor);
-    state->dst_color_factor = vk_get_blend_factor(desc.src_color_factor);
-    state->color_op = vk_get_blend_op(desc.color_op);
-    state->src_alpha_factor = vk_get_blend_factor(desc.src_alpha_factor);
-    state->dst_alpha_factor = vk_get_blend_factor(desc.dst_alpha_factor);
-    state->alpha_op = vk_get_blend_op(desc.alpha_op);
-    state->color_write_mask = desc.color_write_mask;
+    state->src_color_factor = vk_get_blend_factor(desc->src_color_factor);
+    state->dst_color_factor = vk_get_blend_factor(desc->src_color_factor);
+    state->color_op = vk_get_blend_op(desc->color_op);
+    state->src_alpha_factor = vk_get_blend_factor(desc->src_alpha_factor);
+    state->dst_alpha_factor = vk_get_blend_factor(desc->dst_alpha_factor);
+    state->alpha_op = vk_get_blend_op(desc->alpha_op);
+    state->color_write_mask = desc->color_write_mask;
 
     return (u64) state;
 }
 
-void vk_free_depth_stencil_state(RHIDepthStencilState state) {
+void vk_free_depth_stencil_state(RHIDevice device, RHIDepthStencilState state) {
     auto depth_stencil = (VulkanDepthStencilState *) state;
 
     VULKAN_VALIDATE(depth_stencil != nullptr, "vk_free_depth_stencil_state called with empty state", VULKAN_VALIDATION_SEVERITY_TRACE);
@@ -1056,7 +1251,7 @@ void vk_free_depth_stencil_state(RHIDepthStencilState state) {
     free(depth_stencil);
 }
 
-void vk_free_blend_state(RHIBlendState state) {
+void vk_free_blend_state(RHIDevice device, RHIBlendState state) {
     auto blend = (VulkanBlendState *) state;
 
     VULKAN_VALIDATE(blend != nullptr, "vk_free_blend_state called with empty state", VULKAN_VALIDATION_SEVERITY_TRACE);
@@ -1072,6 +1267,8 @@ void vk_free_blend_state(RHIBlendState state) {
 RHIDevice vk_create_device();
 
 void vk_destroy_device(RHIDevice device);
+
+void vk_device_wait_idle(RHIDevice device);
 
 // Queue
 RHIQueue vk_create_queue(RHIDevice device);
@@ -1592,7 +1789,7 @@ void vk_dispatch_indirect(RHICommandBuffer cb, void *data_gpu, void *grid_dimens
     vkCmdDispatchIndirect(command_buffer->command_buffer, offset.buffer, offset.offset);
 }
 
-void vk_begin_render_pass(RHICommandBuffer cb, RHIRenderPassDesc desc) {
+void vk_begin_render_pass(RHICommandBuffer cb, RHIRenderPassDesc *desc) {
     auto command_buffer = (VulkanCommandBuffer *) cb;
 
     VULKAN_VALIDATE(command_buffer != nullptr, "vk_begin_render_pass called with null command_buffer", VULKAN_VALIDATION_SEVERITY_WARN);
@@ -1605,9 +1802,9 @@ void vk_begin_render_pass(RHICommandBuffer cb, RHIRenderPassDesc desc) {
     render_area.extent.width = UINT32_MAX;
     render_area.extent.height = UINT32_MAX;
 
-    std::vector<VkRenderingAttachmentInfo> color_attachments(desc.color_attachment_count);
-    for (u32 i = 0; i < desc.color_attachment_count; i++) {
-        auto texture = (VulkanTexture *) desc.color_attachments[i].texture;
+    std::vector<VkRenderingAttachmentInfo> color_attachments(desc->color_attachment_count);
+    for (u32 i = 0; i < desc->color_attachment_count; i++) {
+        auto texture = (VulkanTexture *) desc->color_attachments[i].texture;
         VULKAN_VALIDATE(texture != nullptr, "vk_begin_render_pass called with null texture in render pass description", VULKAN_VALIDATION_SEVERITY_WARN);
         if (texture == nullptr) {
             continue;
@@ -1620,12 +1817,12 @@ void vk_begin_render_pass(RHICommandBuffer cb, RHIRenderPassDesc desc) {
             .storeOp = VK_ATTACHMENT_STORE_OP_STORE
         };
 
-        if (desc.color_attachments[i].clear) {
+        if (desc->color_attachments[i].clear) {
             color_attachments[i].loadOp = VK_ATTACHMENT_LOAD_OP_CLEAR;
-            color_attachments[i].clearValue.color.float32[0] = desc.color_attachments[i].clear_value.color[0];
-            color_attachments[i].clearValue.color.float32[1] = desc.color_attachments[i].clear_value.color[1];
-            color_attachments[i].clearValue.color.float32[2] = desc.color_attachments[i].clear_value.color[2];
-            color_attachments[i].clearValue.color.float32[3] = desc.color_attachments[i].clear_value.color[3];
+            color_attachments[i].clearValue.color.float32[0] = desc->color_attachments[i].clear_value.color[0];
+            color_attachments[i].clearValue.color.float32[1] = desc->color_attachments[i].clear_value.color[1];
+            color_attachments[i].clearValue.color.float32[2] = desc->color_attachments[i].clear_value.color[2];
+            color_attachments[i].clearValue.color.float32[3] = desc->color_attachments[i].clear_value.color[3];
         }
         
         if (texture->extent.width < render_area.extent.width) {
@@ -1644,7 +1841,7 @@ void vk_begin_render_pass(RHICommandBuffer cb, RHIRenderPassDesc desc) {
         .pColorAttachments = color_attachments.data(),
     };
 
-    auto depth_stencil = (VulkanTexture *) desc.depth_stencil_attachment.texture;
+    auto depth_stencil = (VulkanTexture *) desc->depth_stencil_attachment.texture;
     
     VkRenderingAttachmentInfo depth_stencil_attachment;
     if (depth_stencil) {
@@ -1663,10 +1860,10 @@ void vk_begin_render_pass(RHICommandBuffer cb, RHIRenderPassDesc desc) {
             .storeOp = VK_ATTACHMENT_STORE_OP_STORE
         };
 
-        if (desc.depth_stencil_attachment.clear) {
+        if (desc->depth_stencil_attachment.clear) {
             depth_stencil_attachment.loadOp = VK_ATTACHMENT_LOAD_OP_CLEAR;
-            depth_stencil_attachment.clearValue.depthStencil.depth = desc.depth_stencil_attachment.clear_value.depth_stencil.depth;
-            depth_stencil_attachment.clearValue.depthStencil.stencil = desc.depth_stencil_attachment.clear_value.depth_stencil.stencil;
+            depth_stencil_attachment.clearValue.depthStencil.depth = desc->depth_stencil_attachment.clear_value.depth_stencil.depth;
+            depth_stencil_attachment.clearValue.depthStencil.stencil = desc->depth_stencil_attachment.clear_value.depth_stencil.stencil;
         }
 
         info.pDepthAttachment = &depth_stencil_attachment;
