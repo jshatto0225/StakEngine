@@ -15,6 +15,6 @@ void imgui_renderer_begin_frame(ImguiRenderer *imgui_renderer);
 
 void imgui_renderer_end_frame(ImguiRenderer *imgui_renderer);
 
-bool imgui_renderer_init(ImguiRenderer *imgui_renderer, Renderer *renderer);
+ImguiRenderer *create_imgui_renderer(Renderer *renderer);
 
-void imgui_renderer_shutdown(ImguiRenderer *imgui_renderer);
+void destroy_imgui_renderer(ImguiRenderer *imgui_renderer);

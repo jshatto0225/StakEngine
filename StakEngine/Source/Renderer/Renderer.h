@@ -8,10 +8,7 @@
 struct Renderer {
     static const u32 max_frames_in_flight = 2;
 
-    Window *window;
-
-    u32 offscreen_backbuffer_image_index;
-    bool use_offscreen_buffer;
+    Window window;
 
     RHIDevice device;
     RHIQueue queue;
@@ -21,8 +18,8 @@ struct Renderer {
     u64 next_frame;
 };
 
-bool renderer_init(Renderer *renderer, Window *window, bool render_to_offscreen_buffer);
+Renderer *create_renderer(Window window);
 
-void renderer_shutdown(Renderer *renderer);
+void destroy_renderer(Renderer *renderer);
 
-bool renderer_render(Renderer *renderer);
+bool render(Renderer *renderer);

@@ -2,23 +2,25 @@
 
 #include "Window.h"
 #include "RHI.h"
-#include "Platform.h"
 #include "Log.h"
 
-bool renderer_init(Renderer *renderer, Window *Win, bool render_to_offscreen_buffer) {
-    renderer->window = Win;
-    renderer->use_offscreen_buffer = render_to_offscreen_buffer;
+Renderer *create_renderer(Window win) {
+    auto renderer = (Renderer *) malloc(sizeof(Renderer));
+
+    renderer->window = win;
 
     renderer->device = rhi.create_device();
     if (!renderer->device) {
         SK_LOG_ERROR("Failed to create rhi device");
-        return false;
+        free(renderer);
+        return nullptr;
     }
 
     renderer->queue = rhi.create_queue(renderer->device);
     if (!renderer->queue) {
         SK_LOG_ERROR("Failed to initialize pipeline");
-        return false;
+        free(renderer);
+        return nullptr;
     }
 
     std::vector<u8> vertex_ir;
@@ -27,22 +29,28 @@ bool renderer_init(Renderer *renderer, Window *Win, bool render_to_offscreen_buf
     renderer->pipeline = rhi.create_graphics_pipeline(renderer->device, vertex_ir.data(), vertex_ir.size(), pixel_ir.data(), pixel_ir.size(), &raster_description);
     if (!renderer->pipeline) {
         SK_LOG_ERROR("Failed to initialize pipeline");
-        return false;
+        free(renderer);
+        return nullptr;
     }
 
     renderer->next_frame = 1;
 
     renderer->semaphore = rhi.create_semaphore(renderer->device, 0);
 
-    return true;
+    return renderer;
 }
 
-void renderer_shutdown(Renderer *renderer) {
+void destroy_renderer(Renderer *renderer) {
     rhi.device_wait_idle(renderer->device);
     rhi.destroy_pipeline(renderer->device, renderer->pipeline);
+    rhi.destroy_semaphore(renderer->device, renderer->semaphore);
+    rhi.destroy_queue(renderer->device, renderer->queue);
+    rhi.destroy_device(renderer->device);
+
+    free(renderer);
 }
 
-bool renderer_render(Renderer *renderer) {
+bool render(Renderer *renderer) {
     if (renderer->next_frame > renderer->max_frames_in_flight) {
         rhi.wait_semaphore(renderer->device, renderer->semaphore, renderer->next_frame - renderer->max_frames_in_flight);
     }

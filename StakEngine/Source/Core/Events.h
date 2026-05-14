@@ -1,7 +1,7 @@
 #pragma once
 
 #include "Types.h"
-#include "Input.h"
+#include "InputEnums.h"
 
 struct WindowResizeEvent {
     s32 width;

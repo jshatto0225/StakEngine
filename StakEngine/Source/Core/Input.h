@@ -3,169 +3,10 @@
 #include "Types.h"
 #include "Asserts.h"
 
-#include <unordered_map>
 #include <functional>
 
-#undef Delete
-
-struct Window;
-
-enum class KeyCode : s16 {
-    Unknown       = -1,
-    Space         = 32,
-    Apostrophe    = 39, /* ' */
-    Comma         = 44, /* , */
-    Minus         = 45, /* - */
-    Period        = 46, /* . */
-    Slash         = 47, /* / */
-    Zero          = 48,
-    One           = 49,
-    Two           = 50,
-    Three         = 51,
-    Four          = 52,
-    Five          = 53,
-    Six           = 54,
-    Seven         = 55,
-    Eight         = 56,
-    Nine          = 57,
-    Semicolon     = 59, /* ; */
-    Equal         = 61, /* = */
-    A             = 65,
-    B             = 66,
-    C             = 67,
-    D             = 68,
-    E             = 69,
-    F             = 70,
-    G             = 71,
-    H             = 72,
-    I             = 73,
-    J             = 74,
-    K             = 75,
-    L             = 76,
-    M             = 77,
-    N             = 78,
-    O             = 79,
-    P             = 80,
-    Q             = 81,
-    R             = 82,
-    S             = 83,
-    T             = 84,
-    U             = 85,
-    V             = 86,
-    W             = 87,
-    x             = 88,
-    y             = 89,
-    Z             = 90,
-    LeftBracket   = 91,/* [ */
-    Backslash     = 92,/* \ */
-    RightBracket  = 93,/* ] */
-    Grave         = 96,/* ` */
-    World1        = 161, /* non-US #1 */
-    World2        = 162, /* non-US #2 */
-    Escape        = 256,
-    Enter         = 257,
-    Tab           = 258,
-    Backspace     = 259,
-    Insert        = 260,
-    Delete        = 261,
-    Right         = 262,
-    Left          = 263,
-    Down          = 264,
-    Up            = 265,
-    PageUp        = 266,
-    PageDown      = 267,
-    Home          = 268,
-    End           = 269,
-    CapsLock      = 280,
-    ScrollLock    = 281,
-    NumLock       = 282,
-    PrintScreen   = 283,
-    Pause         = 284,
-    F1            = 290,
-    F2            = 291,
-    F3            = 292,
-    F4            = 293,
-    F5            = 294,
-    F6            = 295,
-    F7            = 296,
-    F8            = 297,
-    F9            = 298,
-    F10           = 299,
-    F11           = 300,
-    F12           = 301,
-    F13           = 302,
-    F14           = 303,
-    F15           = 304,
-    F16           = 305,
-    F17           = 306,
-    F18           = 307,
-    F19           = 308,
-    F20           = 309,
-    F21           = 310,
-    F22           = 311,
-    F23           = 312,
-    F24           = 313,
-    F25           = 314,
-    KP_0          = 320,
-    KP_1          = 321,
-    KP_2          = 322,
-    KP_3          = 323,
-    KP_4          = 324,
-    KP_5          = 325,
-    KP_6          = 326,
-    KP_7          = 327,
-    KP_8          = 328,
-    KP_9          = 329,
-    KPDecimal     = 330,
-    KPDivide      = 331,
-    KPMultiply    = 332,
-    KPSubtract    = 333,
-    KPAdd         = 334,
-    KPEnter       = 335,
-    KPEqual       = 336,
-    LeftShift     = 340,
-    LeftControl   = 341,
-    LeftAlt       = 342,
-    LeftSuper     = 343,
-    RightShift    = 344,
-    RightControl  = 345,
-    RightAlt      = 346,
-    RightSuper    = 347,
-    Menu          = 348,
-    Last          = Menu
-};
-
-enum class MouseCode : u8 {
-    One     = 0,
-    Two     = 1,
-    Three   = 2,
-    Four    = 3,
-    Five    = 4,
-    Six     = 5,
-    Seven   = 6,
-    Eight   = 7,
-    Last    = Eight,
-    Left    = One,
-    Right   = Two,
-    Middle  = Three
-};
-
-enum class CursorVisibility : u8 {
-    Normal,
-    Hidden,
-    Disabled
-};
-
-enum class InputState : u8 {
-    Down,
-    Up,
-};
-
-enum class InputCallbackType {
-    Key,
-    MouseButton,
-    MouseMove,
-};
+#include "InputEnums.h"
+#include "Window.h"
 
 struct InputCallbackInfo {
     InputCallbackType type;
@@ -226,10 +67,11 @@ struct Input {
     u64 mouse_move_id = 0;
     std::unordered_map<u64, std::function<void(f32, f32)>> mouse_move_callbacks;
 
-    Window *window;
+    Window window;
 };
 
-bool initialize_input(Input *input, Window *window);
+Input *create_input(Window window);
+void destroy_input(Input *input);
 
 void set_raw_input(Input *input, bool value);
 void set_cursor_visibility(Input *input, CursorVisibility visibility);
@@ -248,7 +90,8 @@ InputCallbackInfo add_mouse_button_any_action_callback(Input *input, MouseCode b
 InputCallbackInfo add_any_mouse_button_any_action_callback(Input *input, std::function<void(InputState, MouseCode)> func);
 InputCallbackInfo add_mouse_move_callback(Input *input, std::function<void(f32, f32)> func);
 
-void RemoveCallback(Input *Input, const InputCallbackInfo &Info);
-void SetKey(Input *Input, KeyCode key, InputState action);
-void SetMouseButton(Input *Input, MouseCode button, InputState action);
-void SetMousePos(Input *Input, f32 x, f32 y);
+void remove_callback(Input *input, const InputCallbackInfo &info);
+void set_key(Input *input, KeyCode key, InputState action);
+void set_mouse_button(Input *input, MouseCode button, InputState action);
+void set_mouse_pos(Input *input, f32 x, f32 y);
+InputState get_key(Input *input, KeyCode key);

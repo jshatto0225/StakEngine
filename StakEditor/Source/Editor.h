@@ -2,10 +2,10 @@
 
 #include <StakEngine.h>
 
-bool init(Engine *engine, Application *app);
-void shutdown(Engine *engine, Application *app);
-void update(Engine *engine, Application *app);
-void on_imgui_render(Engine *engine, Application *app);
+bool init(Application *app, Engine *engine);
+void update(Application *app, Engine *engine);
+void on_imgui_render(Application *app, Engine *engine);
+EngineSpecification get_engine_spec(Application *app);
 
 struct Editor {
     InputCallbackInfo escape_pressed_callback_info;

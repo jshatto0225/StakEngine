@@ -4,7 +4,7 @@
 
 #include <imgui.h>
 
-#define RHI_HANDLE(name) typedef u64 RHI##name;
+#define RHI_HANDLE(name) typedef Handle RHI##name;
 
 // Opaque handles
 RHI_HANDLE(Pipeline);
@@ -260,6 +260,7 @@ struct RHI {
 
     // Queue
     RHIQueue (*create_queue)(RHIDevice device);
+    void (*destroy_queue)(RHIDevice device, RHIQueue queue);
     RHICommandBuffer (*start_command_recording)(RHIQueue queue);
     void (*submit)(RHIQueue queue, RHICommandBuffer *command_buffers, u32 command_buffer_count, RHISemaphore semaphore, u64 semaphore_value);
 

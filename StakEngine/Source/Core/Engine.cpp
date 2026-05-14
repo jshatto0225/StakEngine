@@ -1,28 +1,39 @@
 #include "Engine.h"
 
 #include "Log.h"
-#include "Asserts.h"
 #include "RHI.h"
 #include "Platform.h"
 
-void engine_shutdown(Engine *engine) {
-    engine->app->shutdown(engine, engine->app);
+void destroy_engine(Engine *engine) {
+    if (engine->imgui_renderer) {
+        destroy_imgui_renderer(engine->imgui_renderer);
+    }
 
-    imgui_renderer_shutdown(&engine->imgui_renderer);
+    if (engine->input) {
+        destroy_input(engine->input);
+    }
 
-    platform_close_window(&engine->window);
+    if (engine->window) {
+        platform_destroy_window(engine->window);
+    }
 
-    renderer_shutdown(&engine->renderer);
+    if (engine->renderer) {
+        destroy_renderer(engine->renderer);
+    }
 
     rhi_shutdown();
 
     platform_shutdown();
+
+    free(engine);
+}
+
+Engine *create_engine() {
+    return (Engine *) malloc(sizeof(Engine));
 }
 
 bool engine_init(Engine *engine, EngineSpecification *spec, Application *app) {
     engine->app = app;
-
-    engine->name = spec->app_name;
 
     if (!platform_init()) {
         SK_LOG_ERROR("Failed to initialize platform");
@@ -43,24 +54,34 @@ bool engine_init(Engine *engine, EngineSpecification *spec, Application *app) {
         })
     };
 
-    if (!platform_open_window(&engine->window, &cfg)) {
+    engine->window = platform_create_window(&cfg);
+    if (!engine->window) {
         SK_LOG_ERROR("Failed to create window");
         return false;
     }
 
-    assert(initialize_input(&engine->input, &engine->window));
+    engine->input = create_input(engine->window);
+    if (!engine->input) {
+        SK_LOG_ERROR("Failed to create input");
+        return false;
+    }
 
-    if (!renderer_init(&engine->renderer, &engine->window, spec->render_to_offscreen_buffer)) {
+    engine->renderer = create_renderer(engine->window);
+    if (!engine->renderer) {
         SK_LOG_ERROR("Failed to initialize renderer");
         return false;
     }
 
-    imgui_renderer_init(&engine->imgui_renderer, &engine->renderer);
+    engine->imgui_renderer = create_imgui_renderer(engine->renderer);
+    if (!engine->imgui_renderer) {
+        SK_LOG_ERROR("Failed to initialize renderer");
+        return false;
+    }
 
     engine->running = true;
 
     if (engine->app) {
-        if (!engine->app->init(engine, engine->app)) {
+        if (!engine->app->init(engine->app, engine)) {
             SK_LOG_ERROR("Failed to initialize application");
             return false;
         }
@@ -73,13 +94,17 @@ void engine_run(Engine *engine) {
     while (engine->running) {
         platform_process_messages();
 
-        if (engine->app->update) engine->app->update(engine, engine->app);
+        if (engine->app->update) {
+            engine->app->update(engine->app, engine);
+        }
 
-        imgui_renderer_begin_frame(&engine->imgui_renderer);
-        if (engine->app->on_imgui_render) engine->app->on_imgui_render(engine, engine->app);
-        imgui_renderer_end_frame(&engine->imgui_renderer);
+        imgui_renderer_begin_frame(engine->imgui_renderer);
+        if (engine->app->on_imgui_render) {
+            engine->app->on_imgui_render(engine->app, engine);
+        }
+        imgui_renderer_end_frame(engine->imgui_renderer);
 
-        if (!renderer_render(&engine->renderer)) {
+        if (!render(engine->renderer)) {
             SK_LOG_ERROR("Failed to render");
         }
     }
@@ -91,19 +116,21 @@ void engine_on_event(Engine *engine, Event *event) {
         engine->running = false;
         break;
     case EventType::Key:
-        SetKey(&engine->input, event->ke.key, event->ke.state);
+        set_key(engine->input, event->ke.key, event->ke.state);
         break;
     case EventType::MouseButton:
-        SetMouseButton(&engine->input, event->mbe.button, event->mbe.state);
+        set_mouse_button(engine->input, event->mbe.button, event->mbe.state);
         break;
     case EventType::MouseMove:
-        SetMousePos(&engine->input, event->mme.x, event->mme.y);
+        set_mouse_pos(engine->input, event->mme.x, event->mme.y);
         break;
     default:
         break;
     }
 
-    if (engine->app->on_event) engine->app->on_event(engine, event);
+    if (engine->app->on_event) {
+        engine->app->on_event(engine->app, engine, event);
+    }
 }
 
 void engine_close(Engine *engine) {

@@ -24,3 +24,8 @@ void log_init() {
     client_logger->set_level(spdlog::level::trace);
     client_logger->flush_on(spdlog::level::trace);
 }
+
+void log_shutdown() {
+    core_logger = nullptr;
+    client_logger = nullptr;
+}

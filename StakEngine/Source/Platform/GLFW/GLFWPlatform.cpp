@@ -9,6 +9,19 @@
 
 static bool glfw_initialized = false;
 
+struct GlfwWindow {
+    s32 x;
+    s32 y;
+    s32 width;
+    s32 height;
+    s32 framebuffer_width;
+    s32 framebuffer_height;
+    const char *title;
+    EventFunction event_function;
+
+    GLFWwindow *glfw;
+};
+
 bool platform_init() {
     if (!glfwInit()) {
         return false;
@@ -20,28 +33,12 @@ bool platform_init() {
 }
 
 void platform_shutdown() {
-    assert(glfw_initialized);
-
     glfwTerminate();
     glfw_initialized = false;
 }
 
-bool platform_open_window(Window *window, const WindowConfig *cfg) {
-    assert(glfw_initialized);
-    assert(window);
-
-    if (window->open) {
-        SK_LOG_WARN("Window already open");
-        return true;
-    }
-
+Window platform_create_window(const WindowConfig *cfg) {
     glfwWindowHint(GLFW_CLIENT_API, GLFW_NO_API);
-
-    window->width   = cfg->width;
-    window->height  = cfg->height;
-    window->title   = cfg->title;
-
-    window->event_function = cfg->event_function;
 
     auto handle = glfwCreateWindow(cfg->width, cfg->height, cfg->title, nullptr, nullptr);
 
@@ -50,20 +47,28 @@ bool platform_open_window(Window *window, const WindowConfig *cfg) {
         return false;
     }
 
-    window->platform_handle = (Handle)handle;
+    auto window = (GlfwWindow *) malloc(sizeof(GlfwWindow));
+
+    window->width = cfg->width;
+    window->height = cfg->height;
+    window->title = cfg->title;
+
+    window->event_function = cfg->event_function;
+
+    window->glfw = handle;
 
     glfwSetWindowUserPointer(handle, static_cast<void *>(window));
     glfwGetFramebufferSize(handle, &window->framebuffer_width, &window->framebuffer_height);
 
     glfwSetFramebufferSizeCallback(handle, [](GLFWwindow *window, s32 width, s32 height) {
-        auto *data = static_cast<Window *>(glfwGetWindowUserPointer(window));
+        auto *data = static_cast<GlfwWindow *>(glfwGetWindowUserPointer(window));
 
         data->framebuffer_width = width;
         data->framebuffer_height = height;
     });
 
     glfwSetWindowSizeCallback(handle, [](GLFWwindow *window, s32 width, s32 height) {
-        auto *data = static_cast<Window *>(glfwGetWindowUserPointer(window));
+        auto *data = static_cast<GlfwWindow *>(glfwGetWindowUserPointer(window));
 
         data->width = width;
         data->height = height;
@@ -78,7 +83,7 @@ bool platform_open_window(Window *window, const WindowConfig *cfg) {
     });
 
     glfwSetWindowCloseCallback(handle, [](GLFWwindow *window) {
-        auto *data = static_cast<Window *>(glfwGetWindowUserPointer(window));
+        auto *data = static_cast<GlfwWindow *>(glfwGetWindowUserPointer(window));
 
         if (!data->event_function) return;
 
@@ -88,7 +93,7 @@ bool platform_open_window(Window *window, const WindowConfig *cfg) {
     });
 
     glfwSetKeyCallback(handle, [](GLFWwindow *window, s32 key, s32 scancode, s32 action, s32 mods) {
-        auto *data = static_cast<Window *>(glfwGetWindowUserPointer(window));
+        auto *data = static_cast<GlfwWindow *>(glfwGetWindowUserPointer(window));
 
         if (!data->event_function) return;
 
@@ -112,7 +117,7 @@ bool platform_open_window(Window *window, const WindowConfig *cfg) {
     });
 
     glfwSetMouseButtonCallback(handle, [](GLFWwindow *window, s32 button, s32 action, s32 mods) {
-        auto *data = static_cast<Window *>(glfwGetWindowUserPointer(window));
+        auto *data = static_cast<GlfwWindow *>(glfwGetWindowUserPointer(window));
 
         if (!data->event_function) return;
 
@@ -136,7 +141,7 @@ bool platform_open_window(Window *window, const WindowConfig *cfg) {
     });
 
     glfwSetCursorPosCallback(handle, [](GLFWwindow *window, double x, double y) {
-        auto *data = static_cast<Window *>(glfwGetWindowUserPointer(window));
+        auto *data = static_cast<GlfwWindow *>(glfwGetWindowUserPointer(window));
 
         if (!data->event_function) return;
 
@@ -147,41 +152,21 @@ bool platform_open_window(Window *window, const WindowConfig *cfg) {
         data->event_function(&e);
     });
 
-    window->open = true;
-
     return true;
 }
 
-void platform_close_window(Window *window) {
-    assert(window);
+void platform_destroy_window(Window win) {
+    auto window = (GlfwWindow *) win;
 
-    if (!window->open) {
-        SK_LOG_WARN("Window already closed");
-        return;
-    }
+    glfwDestroyWindow(window->glfw);
 
-    auto glfw = (GLFWwindow *)window->platform_handle;
-    assert(glfw);
-
-    glfwDestroyWindow(glfw);
-
-    window->platform_handle = 0;
-
-    window->open = false;
+    free(window);
 }
 
-bool platform_init_imgui(const Window *window) {
-    assert(window);
+bool platform_init_imgui(Window win) {
+    auto window = (GlfwWindow *) win;
 
-    if (!window->open) {
-        SK_LOG_ERROR("Failed to initialize imgui, window was not open");
-        return false;
-    }
-
-    auto glfw = reinterpret_cast<GLFWwindow *>(window->platform_handle);
-    assert(glfw);
-
-    if (!ImGui_ImplGlfw_InitForVulkan(glfw, true)) {
+    if (!ImGui_ImplGlfw_InitForVulkan(window->glfw, true)) {
         SK_LOG_ERROR("Failed to initialize imgui");
         return false;
     }
@@ -201,44 +186,20 @@ void platform_process_messages() {
     glfwPollEvents();
 }
 
-void platform_enable_raw_input(const Window *window) {
-    assert(window);
+void platform_enable_raw_input(Window win) {
+    auto window = (GlfwWindow *) win;
 
-    if (!window->open) {
-        SK_LOG_WARN("Cannot enable raw input, window is not open");
-        return;
-    }
-
-    auto glfw = reinterpret_cast<GLFWwindow *>(window->platform_handle);
-    assert(glfw);
-
-    glfwSetInputMode(glfw, GLFW_RAW_MOUSE_MOTION, GLFW_TRUE);
+    glfwSetInputMode(window->glfw, GLFW_RAW_MOUSE_MOTION, GLFW_TRUE);
 }
 
-void platform_disable_raw_input(const Window *window) {
-    assert(window);
+void platform_disable_raw_input(Window win) {
+    auto window = (GlfwWindow *) win;
 
-    if (!window->open) {
-        SK_LOG_WARN("Cannot disable raw input, window is not open");
-        return;
-    }
-
-    auto glfw = reinterpret_cast<GLFWwindow *>(window->platform_handle);
-    assert(glfw);
-
-    glfwSetInputMode(glfw, GLFW_RAW_MOUSE_MOTION, GLFW_FALSE);
+    glfwSetInputMode(window->glfw, GLFW_RAW_MOUSE_MOTION, GLFW_FALSE);
 }
 
-void platform_set_cursor_visibility(const Window *window, CursorVisibility visibility) {
-    assert(window);
-
-    if (!window->open) {
-        SK_LOG_WARN("Cannot disable raw input, window is not open");
-        return;
-    }
-
-    auto glfw = reinterpret_cast<GLFWwindow *>(window->platform_handle);
-    assert(glfw);
+void platform_set_cursor_visibility(Window win, CursorVisibility visibility) {
+    auto window = (GlfwWindow *) win;
 
     s32 glfw_visibility;
     switch (visibility) {
@@ -255,5 +216,5 @@ void platform_set_cursor_visibility(const Window *window, CursorVisibility visib
         return;
     }
 
-    glfwSetInputMode(glfw, GLFW_CURSOR, glfw_visibility);
+    glfwSetInputMode(window->glfw, GLFW_CURSOR, glfw_visibility);
 }

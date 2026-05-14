@@ -1,8 +1,5 @@
 #pragma once
 
-#include <vector>
-#include <string>
-
 #include "Events.h"
 #include "Renderer.h"
 #include "Input.h"
@@ -10,38 +7,37 @@
 
 struct Engine;
 
-struct Application {
-    bool (*init)            (Engine *, Application *);
-    void (*shutdown)        (Engine *, Application *);
-    void (*on_imgui_render) (Engine *, Application *);
-    void (*update)          (Engine *, Application *);
-    void (*on_event)        (Engine *, Event *);
-
-    void *user_data;
-};
-
 struct EngineSpecification {
     const char *window_title;
-    const char *app_name;
     s32 window_width;
     s32 window_height;
-    bool render_to_offscreen_buffer;
+};
+
+struct Application {
+    bool (*init)            (Application *app, Engine *engine);
+    void (*on_imgui_render) (Application *app, Engine *engine);
+    void (*update)          (Application *app, Engine *engine);
+    void (*on_event)        (Application *app, Engine *engine, Event *event);
+
+    EngineSpecification (*get_engine_spec)(Application *app);
+
+    void *user_data;
 };
 
 struct Engine {
     Application *app;
     Window window;
-    Renderer renderer;
-    Input input;
+    Renderer *renderer;
+    Input *input;
     bool running;
-    ImguiRenderer imgui_renderer;
-    const char *name;
+    ImguiRenderer *imgui_renderer;
 };
 
+Engine *create_engine();
+
 bool engine_init(Engine *engine, EngineSpecification *spec, Application *app_impl);
-void engine_shutdown(Engine *engine);
+void destroy_engine(Engine *engine);
 
 void engine_run(Engine *engine);
 void engine_close(Engine *engine);
-
 void engine_on_event(Engine *engine, Event *event);

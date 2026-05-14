@@ -6,7 +6,9 @@
 #undef Delete
 
 
-bool initialize_input(Input *input, Window *window) {
+Input *create_input(Window window) {
+    auto input = (Input *) malloc(sizeof(Input));
+
     input->window = window;
 
     input->keyboard[KeyCode::Unknown] = InputState::Up;
@@ -148,7 +150,11 @@ bool initialize_input(Input *input, Window *window) {
     input->using_raw_input = false;
     input->cursor_visibility = CursorVisibility::Normal;
 
-    return true;
+    return input;
+}
+
+void destroy_input(Input *input) {
+    free(input);
 }
 
 InputCallbackInfo add_key_press_callback(Input *input, KeyCode key, std::function<void()> func) {
@@ -344,7 +350,7 @@ InputCallbackInfo add_mouse_move_callback(Input *input, std::function<void(f32, 
     return info;
 }
 
-void SetKey(Input *input, KeyCode key, InputState state) {
+void set_key(Input *input, KeyCode key, InputState state) {
     input->keyboard[key] = state;
 
     switch (state) {
@@ -374,7 +380,7 @@ void SetKey(Input *input, KeyCode key, InputState state) {
     }
 }
 
-void SetMouseButton(Input *input, MouseCode button, InputState state) {
+void set_mouse_button(Input *input, MouseCode button, InputState state) {
     input->mouse.buttons[button] = state;
 
     switch (state) {
@@ -404,7 +410,7 @@ void SetMouseButton(Input *input, MouseCode button, InputState state) {
     }
 }
 
-void SetMousePos(Input *input, f32 x, f32 y) {
+void set_mouse_pos(Input *input, f32 x, f32 y) {
     input->mouse.x = x;
     input->mouse.y = y;
 
@@ -413,7 +419,7 @@ void SetMousePos(Input *input, f32 x, f32 y) {
     }
 }
 
-void RemoveCallback(Input *input, const InputCallbackInfo &info) {
+void remove_callback(Input *input, const InputCallbackInfo &info) {
     switch (info.type) {
     case InputCallbackType::Key:
         if (info.is_any_action && info.is_any_code) {
@@ -477,8 +483,7 @@ void set_raw_input(Input *input, bool value) {
         if (value) {
             if (input->cursor_visibility == CursorVisibility::Disabled) {
                 platform_enable_raw_input(input->window);
-            }
-            else {
+            } else {
                 SK_LOG_ERROR("Cannot enable raw input while cursor is not disabled");
             }
         }
@@ -497,4 +502,8 @@ void set_cursor_visibility(Input *input, CursorVisibility visibility) {
         }
         platform_set_cursor_visibility(input->window, visibility);
     }
+}
+
+InputState get_key(Input *input, KeyCode key) {
+    return input->keyboard[key];
 }

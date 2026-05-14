@@ -15,19 +15,4 @@ struct WindowConfig {
     EventFunction event_function;
 };
 
-struct Window {
-    s32 x;
-    s32 y;
-    s32 width;
-    s32 height;
-    s32 framebuffer_width;
-    s32 framebuffer_height;
-    const char *title;
-    EventFunction event_function;
-    bool open;
-
-    // NOTE: Only platform functions should touch this
-    //   because it is probably implemented as a pointer/handle
-    //   to a platform window
-    Handle platform_handle;
-};
+typedef Handle Window;

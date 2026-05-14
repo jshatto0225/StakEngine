@@ -6,7 +6,9 @@
 #include "Renderer.h"
 #include "Engine.h"
 
-bool imgui_renderer_init(ImguiRenderer *imgui_renderer, Renderer *renderer) {
+ImguiRenderer *create_imgui_renderer(Renderer *renderer) {
+    auto imgui_renderer = (ImguiRenderer *) malloc(sizeof(ImguiRenderer));
+
     imgui_renderer->renderer = renderer;
     imgui_renderer->draw_data = nullptr;
 
@@ -17,11 +19,12 @@ bool imgui_renderer_init(ImguiRenderer *imgui_renderer, Renderer *renderer) {
     io.ConfigFlags |= ImGuiConfigFlags_DockingEnable;
     ImGui::StyleColorsDark();
 
-    return true;
+    return imgui_renderer;
 }
 
-void imgui_renderer_shutdown(ImguiRenderer *imgui_renderer) {
+void destroy_imgui_renderer(ImguiRenderer *imgui_renderer) {
     ImGui::DestroyContext();
+    free(imgui_renderer);
 }
 
 void imgui_renderer_begin_frame(ImguiRenderer *imgui_renderer) {

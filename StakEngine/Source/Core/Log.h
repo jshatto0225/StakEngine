@@ -7,6 +7,7 @@
 #include "Types.h"
 
 void log_init();
+void log_shutdown();
 
 extern std::shared_ptr<spdlog::logger> core_logger;
 extern std::shared_ptr<spdlog::logger> client_logger;

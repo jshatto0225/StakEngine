@@ -1076,6 +1076,8 @@ void vk_destroy_device(RHIDevice device);
 // Queue
 RHIQueue vk_create_queue(RHIDevice device);
 
+void vk_destroy_queue(RHIDevice device, RHIQueue queue);
+
 RHICommandBuffer vk_start_command_recording(RHIQueue queue) {
     auto vulkan_queue = (VulkanQueue *) queue;
 

@@ -4,30 +4,28 @@
 #include "Log.h"
 #include "Types.h"
 
-extern void initialize_application(Application *out_app, EngineSpecification *out_spec);
-extern void destroy_application(Application *app);
-
-extern Engine *global_engine;
+extern Application *create_application();
+extern void destroy_application(Application *app, Engine *engine);
 
 inline s32 stak_main() {
     log_init();
 
-    Engine engine            = {};
-    Application app          = {};
-    EngineSpecification spec = {};
+    Engine *engine = create_engine();
 
-    initialize_application(&app, &spec);
+    Application *app = create_application();
 
-    if (!engine_init(&engine, &spec, &app)) {
+    EngineSpecification spec = app->get_engine_spec(app);
+
+    if (!engine_init(engine, &spec, app)) {
         SK_LOG_CRITICAL("Failed to initialize engine");
         return -1;
     }
 
-    engine_run(&engine);
+    engine_run(engine);
 
-    engine_shutdown(&engine);
+    destroy_application(app, engine);
 
-    destroy_application(engine.app);
+    destroy_engine(engine);
 
     return 0;
 }
