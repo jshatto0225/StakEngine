@@ -19,6 +19,15 @@ const char *device_extensions[] = {
     VK_EXT_DESCRIPTOR_HEAP_EXTENSION_NAME,
 };
 const u32 device_extension_count = 2;
+
+// TODO:
+#define ASSERT_RESOURCE_GPU(device, ptr) assert((ptr) == NULL || find_allocation_gpu((device), (ptr)))
+#define ASSERT_RESOURCE_CPU(device, ptr) assert((ptr) == NULL || find_allocation_cpu((device), (ptr)))
+#define ASSERT_RESOURCE_GPU_STRICT(device, ptr) assert((ptr) && find_allocation_gpu((device), (ptr)))
+#define ASSERT_RESOURCE_CPU_STRICT(device, ptr) assert((ptr) && find_allocation_cpu((device), (ptr)))
+
+#define ASSERT_RESOURCE_IS(device, ptr, Type) ASSERT_RESOURCE_##Type##(device, ptr)
+#define ASSERT_RESOURCE_IS_STRICT(device, ptr, Type) ASSERT_RESOURCE_##Type##_STRICT(device, ptr)
 #endif
 
 struct VulkanQueue;
@@ -635,7 +644,6 @@ void *vk_alloc(RHIDevice device, u64 bytes, RHIMemoryType memory = RHI_MEMORY_TY
 void vk_free(RHIDevice device, void *ptr) {
     assert(device);
     assert(ptr);
-
     auto vulkan_device = (VulkanDevice *) device;
 
     AllocBlock *block = find_allocation_cpu(vulkan_device, ptr);
