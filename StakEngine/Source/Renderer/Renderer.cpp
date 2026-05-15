@@ -77,10 +77,10 @@ bool render(Renderer *renderer) {
         rhi.wait_semaphore(renderer->device, renderer->semaphore, renderer->next_frame - renderer->max_frames_in_flight);
     }
 
+    RHITexture backbuffer = rhi.next_backbuffer(renderer->swapchain);
+
     RHICommandBuffer cb = rhi.start_command_recording(renderer->queue);
     {
-        RHITexture backbuffer = rhi.next_backbuffer(renderer->swapchain);
-        
         RHIRenderPassAttachment color_attachment = {
             .texture = backbuffer,
             .clear = true,
@@ -103,7 +103,7 @@ bool render(Renderer *renderer) {
         rhi.end_render_pass(cb);
     }
     rhi.submit(renderer->queue, &cb, 1, renderer->semaphore, renderer->next_frame++);
-    rhi.present(renderer->swapchain);
+    rhi.present(renderer->swapchain, backbuffer);
 
     return true;
 }

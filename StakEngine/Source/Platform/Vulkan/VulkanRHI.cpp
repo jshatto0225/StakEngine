@@ -49,7 +49,7 @@ struct Vulkan {
 };
 
 struct VulkanSwapchain {
-    VulkanDevice *device;
+    VkDevice device;
 
     VkSurfaceKHR surface;
     VkSwapchainKHR swapchain;
@@ -64,10 +64,6 @@ struct VulkanSwapchain {
     u32 semaphore_index;
     VkSemaphore *acquire_semaphores;
     VkSemaphore *present_semaphores;
-
-    u32 image_index;
-
-    bool presented;
 };
 
 struct VulkanQueueFamilyAssignment {
@@ -117,7 +113,10 @@ struct VulkanBackbufferData {
     VkSemaphore acquire_semaphore;
     VkSemaphore timeline;
     bool acquire_consumed;
-    u64 ready_value; // initially this can be any value >= the initial value, submit will increment it automatically
+    u64 ready_value;
+    u64 present_value;
+
+    u32 image_index;
 };
 
 struct VulkanTexture {
@@ -1685,11 +1684,24 @@ void vk_submit(RHIQueue queue, RHICommandBuffer *command_buffers, u32 command_bu
     struct SemaphoreSubmitInfo {
         VkSemaphore semaphore;
         u64 value;
+        bool operator==(const SemaphoreSubmitInfo &o) const noexcept {
+            return semaphore == o.semaphore && value == o.value;
+        }
+    };
+    
+    struct SemaphoreSubmitInfoHash {
+        size_t operator()(const SemaphoreSubmitInfo & s) const noexcept {
+            // Combine pointer-sized semaphore and 64-bit value into a hash.
+            // Use uintptr_t to hash semaphore handle portably.
+            const auto h1 = std::hash<std::uintptr_t>()((std::uintptr_t) s.semaphore);
+            const auto h2 = std::hash<u64>()(s.value);
+            return h1 ^ (h2 + 0x9e3779b97f4a7c15ULL + (h1 << 6) + (h1 >> 2));
+        }
     };
 
     // Insert into intermediate maps to deduplicate semaphore value pairs
-    std::unordered_map<SemaphoreSubmitInfo, VkPipelineStageFlags2> signals_map;
-    std::unordered_map<SemaphoreSubmitInfo, VkPipelineStageFlags2> waits_map;
+    std::unordered_map<SemaphoreSubmitInfo, VkPipelineStageFlags2, SemaphoreSubmitInfoHash> signals_map;
+    std::unordered_map<SemaphoreSubmitInfo, VkPipelineStageFlags2, SemaphoreSubmitInfoHash> waits_map;
     std::vector<VkCommandBufferSubmitInfo> cb_infos;
     cb_infos.reserve(command_buffer_count);
 
@@ -1714,35 +1726,6 @@ void vk_submit(RHIQueue queue, RHICommandBuffer *command_buffers, u32 command_bu
         if (cb->backbuffer) {
             if (!backbuffer) {
                 backbuffer = cb->backbuffer;
-
-                if (!backbuffer->backbuffer_data->acquire_consumed) {
-                    // TODO: We probably want to track pipeline stage here at some point
-                    SemaphoreSubmitInfo wait = {
-                        .semaphore = backbuffer->backbuffer_data->acquire_semaphore,
-                        .value = 0
-                    };
-                    backbuffer->backbuffer_data->ready_value++; // don't expect ready value to be set up externally
-                    SemaphoreSubmitInfo signal = {
-                        .semaphore = backbuffer->backbuffer_data->acquire_semaphore,
-                        .value = backbuffer->backbuffer_data->ready_value
-                    };
-
-                    waits_map[wait] = waits_map[wait] | VK_PIPELINE_STAGE_2_COLOR_ATTACHMENT_OUTPUT_BIT;
-                    signals_map[signal] = signals_map[signal] | VK_PIPELINE_STAGE_2_COLOR_ATTACHMENT_OUTPUT_BIT;
-                } else {
-                    SemaphoreSubmitInfo wait = {
-                        .semaphore = backbuffer->backbuffer_data->acquire_semaphore,
-                        .value = backbuffer->backbuffer_data->ready_value
-                    };
-                    backbuffer->backbuffer_data->ready_value++;
-                    SemaphoreSubmitInfo signal = {
-                        .semaphore = backbuffer->backbuffer_data->acquire_semaphore,
-                        .value = backbuffer->backbuffer_data->ready_value
-                    };
-
-                    waits_map[wait] = waits_map[wait] | VK_PIPELINE_STAGE_2_COLOR_ATTACHMENT_OUTPUT_BIT;
-                    signals_map[signal] = signals_map[signal] | VK_PIPELINE_STAGE_2_COLOR_ATTACHMENT_OUTPUT_BIT;
-                }
             }
 
             assert(cb->backbuffer == backbuffer);
@@ -1763,6 +1746,34 @@ void vk_submit(RHIQueue queue, RHICommandBuffer *command_buffers, u32 command_bu
             };
             signals_map[new_signal] = waits_map[new_signal] | signal.stageMask;
         }
+    }
+
+    if (!backbuffer->backbuffer_data->acquire_consumed) {
+        // TODO: We probably want to track pipeline stage here at some point
+        SemaphoreSubmitInfo wait = {
+            .semaphore = backbuffer->backbuffer_data->acquire_semaphore,
+            .value = 0
+        };
+        SemaphoreSubmitInfo signal = {
+            .semaphore = backbuffer->backbuffer_data->acquire_semaphore,
+            .value = backbuffer->backbuffer_data->ready_value
+        };
+
+        waits_map[wait] = waits_map[wait] | VK_PIPELINE_STAGE_2_COLOR_ATTACHMENT_OUTPUT_BIT;
+        signals_map[signal] = signals_map[signal] | VK_PIPELINE_STAGE_2_COLOR_ATTACHMENT_OUTPUT_BIT;
+    } else {
+        SemaphoreSubmitInfo wait = {
+            .semaphore = backbuffer->backbuffer_data->acquire_semaphore,
+            .value = backbuffer->backbuffer_data->ready_value
+        };
+        backbuffer->backbuffer_data->present_value++;
+        SemaphoreSubmitInfo signal = {
+            .semaphore = backbuffer->backbuffer_data->acquire_semaphore,
+            .value = backbuffer->backbuffer_data->present_value
+        };
+
+        waits_map[wait] = waits_map[wait] | VK_PIPELINE_STAGE_2_COLOR_ATTACHMENT_OUTPUT_BIT;
+        signals_map[signal] = signals_map[signal] | VK_PIPELINE_STAGE_2_COLOR_ATTACHMENT_OUTPUT_BIT;
     }
 
     // Do the deduplication
@@ -1859,71 +1870,77 @@ void vk_destroy_swapchain(RHIDevice device, RHISwapchain swapchain) {
     free(vulkan_swapchain);
 }
 
+// TODO: remove presented flag, move image index to backbuffer data, and add RHITexture as present parameter
 RHITexture vk_next_backbuffer(RHISwapchain swapchain) {
     assert(swapchain);
 
     auto vulkan_swapchain = (VulkanSwapchain *) swapchain;
 
-    assert(vulkan_swapchain->presented);
-
     VkSemaphore acquire_semaphore = vulkan_swapchain->acquire_semaphores[vulkan_swapchain->semaphore_index];
 
-    if (vkAcquireNextImageKHR(vulkan_swapchain->device->device,
+    u32 index = 0;
+    if (vkAcquireNextImageKHR(vulkan_swapchain->device,
         vulkan_swapchain->swapchain,
         UINT64_MAX,
         acquire_semaphore,
         nullptr,
-        &vulkan_swapchain->image_index) != VK_SUCCESS) 
+        &index) != VK_SUCCESS)
     {
         assert(false);
     }
-    if (vkWaitForFences(vulkan_swapchain->device->device, 1, &vulkan_swapchain->fence, true, UINT64_MAX) != VK_SUCCESS) {
+    if (vkWaitForFences(vulkan_swapchain->device, 1, &vulkan_swapchain->fence, true, UINT64_MAX) != VK_SUCCESS) {
         assert(false);
     }
 
     // Assign semaphores from swapchain ringbuffer
-    VulkanTexture *texture = &vulkan_swapchain->textures[vulkan_swapchain->image_index];
+    VulkanTexture *texture = &vulkan_swapchain->textures[index];
     texture->backbuffer_data->present_semaphore = vulkan_swapchain->present_semaphores[vulkan_swapchain->semaphore_index];
     texture->backbuffer_data->acquire_semaphore = acquire_semaphore;
     texture->backbuffer_data->acquire_consumed = false;
+    texture->backbuffer_data->present_value++;
+    texture->backbuffer_data->ready_value = texture->backbuffer_data->present_value;
 
-    vulkan_swapchain->presented = false;
+    vulkan_swapchain->semaphore_index = (vulkan_swapchain->semaphore_index + 1) % vulkan_swapchain->image_count;
 
     return (RHITexture) texture;
 }
 
 // The shit i have to do to implicitly sync present is dumb
 
-void vk_present(RHISwapchain swapchain) {
+void vk_present(RHISwapchain swapchain, RHITexture texture) {
     assert(swapchain);
+    assert(texture);
 
     auto vulkan_swapchain = (VulkanSwapchain *) swapchain;
+    auto vulkan_texture = (VulkanTexture *) texture;
 
-    assert(!vulkan_swapchain->presented);
-
-    VulkanTexture *texture = &vulkan_swapchain->textures[vulkan_swapchain->image_index];
+    assert(vulkan_texture->backbuffer_data);
+    assert(vulkan_texture->backbuffer_data->acquire_semaphore);
+    assert(vulkan_texture->backbuffer_data->present_semaphore);
 
     // Convert timeline semaphore to binary semaphore for present
-    VkSemaphoreSubmitInfo wait = {
-        .sType = VK_STRUCTURE_TYPE_SEMAPHORE_SUBMIT_INFO,
-        .semaphore = texture->backbuffer_data->timeline,
-        .value = texture->backbuffer_data->ready_value
-    };
+    if (vulkan_texture->backbuffer_data->acquire_consumed) {
+        VkSemaphoreSubmitInfo wait = {
+            .sType = VK_STRUCTURE_TYPE_SEMAPHORE_SUBMIT_INFO,
+            .semaphore = vulkan_texture->backbuffer_data->timeline,
+            .value = vulkan_texture->backbuffer_data->present_value
+        };
 
-    VkSemaphoreSubmitInfo signal = {
-        .sType = VK_STRUCTURE_TYPE_SEMAPHORE_SUBMIT_INFO,
-        .semaphore = texture->backbuffer_data->present_semaphore,
-    };
+        VkSemaphoreSubmitInfo signal = {
+            .sType = VK_STRUCTURE_TYPE_SEMAPHORE_SUBMIT_INFO,
+            .semaphore = vulkan_texture->backbuffer_data->present_semaphore,
+        };
 
-    VkSubmitInfo2 submit_info = {
-        .sType = VK_STRUCTURE_TYPE_SUBMIT_INFO,
-        .waitSemaphoreInfoCount = 1,
-        .pWaitSemaphoreInfos = &wait,
-        .signalSemaphoreInfoCount = 1,
-        .pSignalSemaphoreInfos = &signal,
-    };
+        VkSubmitInfo2 submit_info = {
+            .sType = VK_STRUCTURE_TYPE_SUBMIT_INFO,
+            .waitSemaphoreInfoCount = 1,
+            .pWaitSemaphoreInfos = &wait,
+            .signalSemaphoreInfoCount = 1,
+            .pSignalSemaphoreInfos = &signal,
+        };
 
-    vkQueueSubmit2(vulkan_swapchain->queue, 1, &submit_info, nullptr);
+        vkQueueSubmit2(vulkan_swapchain->queue, 1, &submit_info, nullptr);
+    }
 
     // Present
     VkResult result = VK_SUCCESS;
@@ -1931,20 +1948,25 @@ void vk_present(RHISwapchain swapchain) {
     VkPresentInfoKHR present_info = {
         .sType = VK_STRUCTURE_TYPE_PRESENT_INFO_KHR,
         .waitSemaphoreCount = 1,
-        .pWaitSemaphores = &texture->backbuffer_data->present_semaphore,
         .swapchainCount = 1,
         .pSwapchains = &vulkan_swapchain->swapchain,
-        .pImageIndices = &vulkan_swapchain->image_index,
+        .pImageIndices = &vulkan_texture->backbuffer_data->image_index,
         .pResults = &result,
     };
 
+    if (vulkan_texture->backbuffer_data->acquire_consumed) {
+        present_info.pWaitSemaphores = &vulkan_texture->backbuffer_data->present_semaphore;
+    } else {
+        present_info.pWaitSemaphores = &vulkan_texture->backbuffer_data->acquire_semaphore;
+    }
+
     vkQueuePresentKHR(vulkan_swapchain->queue, &present_info);
 
-    texture->backbuffer_data->acquire_semaphore = nullptr;
-    texture->backbuffer_data->present_semaphore = nullptr;
-    texture->backbuffer_data->acquire_consumed = false;
-
     assert(result == VK_SUCCESS);
+
+    vulkan_texture->backbuffer_data->acquire_semaphore = nullptr;
+    vulkan_texture->backbuffer_data->present_semaphore = nullptr;
+    vulkan_texture->backbuffer_data->acquire_consumed = false;
 }
 
 // Semaphores

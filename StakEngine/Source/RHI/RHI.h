@@ -269,7 +269,7 @@ struct RHI {
     RHISwapchain(*create_swapchain)(RHIDevice device, RHISwapchainDesc *desc);
     void (*destroy_swapchain)(RHIDevice device, RHISwapchain swapchain);
     RHITexture (*next_backbuffer)(RHISwapchain swapchain);
-    void (*present)(RHISwapchain swapchain);
+    void (*present)(RHISwapchain swapchain, RHITexture texture);
 
     // Textures
     RHITextureSizeAlign (*texture_size_align)(RHIDevice device, RHITextureDesc *desc);
