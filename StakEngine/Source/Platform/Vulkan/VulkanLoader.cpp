@@ -114,7 +114,6 @@ PFN_vkCmdBindResourceHeapEXT                vkCmdBindResourceHeapEXT;
 PFN_vkCmdSetColorBlendEnableEXT             vkCmdSetColorBlendEnableEXT;
 PFN_vkCmdSetColorBlendEquationEXT           vkCmdSetColorBlendEquationEXT;
 PFN_vkCmdSetColorWriteMaskEXT               vkCmdSetColorWriteMaskEXT;
-PFN_vkCmdSetColorWriteEnableEXT             vkCmdSetColorWriteEnableEXT;
 PFN_vkCmdDrawMeshTasksEXT                   vkCmdDrawMeshTasksEXT;
 PFN_vkCmdDrawMeshTasksIndirectEXT           vkCmdDrawMeshTasksIndirectEXT;
 
@@ -328,7 +327,6 @@ bool vk_load_device_functions(VkDevice device) {
     vkCmdSetColorBlendEnableEXT = (PFN_vkCmdSetColorBlendEnableEXT) load_device_func(device, "vkCmdSetColorBlendEnableEXT");
     vkCmdSetColorBlendEquationEXT = (PFN_vkCmdSetColorBlendEquationEXT) load_device_func(device, "vkCmdSetColorBlendEquationEXT");
     vkCmdSetColorWriteMaskEXT = (PFN_vkCmdSetColorWriteMaskEXT) load_device_func(device, "vkCmdSetColorWriteMaskEXT");
-    vkCmdSetColorWriteEnableEXT = (PFN_vkCmdSetColorWriteEnableEXT) load_device_func(device, "vkCmdSetColorWriteEnableEXT");
     vkCmdDrawMeshTasksEXT = (PFN_vkCmdDrawMeshTasksEXT) load_device_func(device, "vkCmdDrawMeshTasksEXT");
     vkCmdDrawMeshTasksIndirectEXT = (PFN_vkCmdDrawMeshTasksIndirectEXT) load_device_func(device, "vkCmdDrawMeshTasksIndirectEXT");
 
@@ -348,7 +346,7 @@ bool vk_load_device_functions(VkDevice device) {
         ok = false;
     }
 
-    if (!vkCmdPushDataEXT || !vkWriteResourceDescriptorsEXT || !vkCmdBindResourceHeapEXT || !vkCmdSetColorBlendEnableEXT || !vkCmdSetColorBlendEquationEXT || !vkCmdSetColorWriteMaskEXT || !vkCmdSetColorWriteEnableEXT || !vkCmdDrawMeshTasksEXT || !vkCmdDrawMeshTasksIndirectEXT) {
+    if (!vkCmdPushDataEXT || !vkWriteResourceDescriptorsEXT || !vkCmdBindResourceHeapEXT || !vkCmdSetColorBlendEnableEXT || !vkCmdSetColorBlendEquationEXT || !vkCmdSetColorWriteMaskEXT || !vkCmdDrawMeshTasksEXT || !vkCmdDrawMeshTasksIndirectEXT) {
         SK_LOG_ERROR("vk_load_device_functions: Some EXT functions not available");
         SK_LOG_ERROR("  vkCmdPushDataEXT: {}", (void *) vkCmdPushDataEXT);
         SK_LOG_ERROR("  vkWriteResourceDescriptorsEXT: {}", (void *) vkWriteResourceDescriptorsEXT);
@@ -356,7 +354,6 @@ bool vk_load_device_functions(VkDevice device) {
         SK_LOG_ERROR("  vkCmdSetColorBlendEnableEXT: {}", (void *) vkCmdSetColorBlendEnableEXT);
         SK_LOG_ERROR("  vkCmdSetColorBlendEquationEXT: {}", (void *) vkCmdSetColorBlendEquationEXT);
         SK_LOG_ERROR("  vkCmdSetColorWriteMaskEXT: {}", (void *) vkCmdSetColorWriteMaskEXT);
-        SK_LOG_ERROR("  vkCmdSetColorWriteEnableEXT: {}", (void *) vkCmdSetColorWriteEnableEXT);
         SK_LOG_ERROR("  vkCmdDrawMeshTasksEXT: {}", (void *) vkCmdDrawMeshTasksEXT);
         SK_LOG_ERROR("  vkCmdDrawMeshTasksIndirectEXT: {}", (void *) vkCmdDrawMeshTasksIndirectEXT);
         ok = false;

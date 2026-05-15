@@ -112,7 +112,6 @@ extern PFN_vkCmdBindResourceHeapEXT                vkCmdBindResourceHeapEXT;
 extern PFN_vkCmdSetColorBlendEnableEXT             vkCmdSetColorBlendEnableEXT;
 extern PFN_vkCmdSetColorBlendEquationEXT           vkCmdSetColorBlendEquationEXT;
 extern PFN_vkCmdSetColorWriteMaskEXT               vkCmdSetColorWriteMaskEXT;
-extern PFN_vkCmdSetColorWriteEnableEXT             vkCmdSetColorWriteEnableEXT;
 extern PFN_vkCmdDrawMeshTasksEXT                   vkCmdDrawMeshTasksEXT;
 extern PFN_vkCmdDrawMeshTasksIndirectEXT           vkCmdDrawMeshTasksIndirectEXT;
 

@@ -29,7 +29,16 @@ void destroy_engine(Engine *engine) {
 }
 
 Engine *create_engine() {
-    return (Engine *) malloc(sizeof(Engine));
+    auto e = (Engine *) malloc(sizeof(Engine));
+    
+    if (!e) {
+        SK_LOG_ERROR("create_engine malloc failed");
+        return nullptr;
+    }
+
+    memset(e, 0, sizeof(Engine));
+
+    return e;
 }
 
 bool engine_init(Engine *engine, EngineSpecification *spec, Application *app) {
@@ -98,11 +107,11 @@ void engine_run(Engine *engine) {
             engine->app->update(engine->app, engine);
         }
 
-        imgui_renderer_begin_frame(engine->imgui_renderer);
-        if (engine->app->on_imgui_render) {
-            engine->app->on_imgui_render(engine->app, engine);
-        }
-        imgui_renderer_end_frame(engine->imgui_renderer);
+        //imgui_renderer_begin_frame(engine->imgui_renderer);
+        //if (engine->app->on_imgui_render) {
+        //    engine->app->on_imgui_render(engine->app, engine);
+        //}
+        //imgui_renderer_end_frame(engine->imgui_renderer);
 
         if (!render(engine->renderer)) {
             SK_LOG_ERROR("engine_run render failed");

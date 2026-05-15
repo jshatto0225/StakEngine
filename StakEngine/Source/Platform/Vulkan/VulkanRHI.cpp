@@ -865,11 +865,15 @@ RHIPipeline vk_create_compute_pipeline(RHIDevice device, u8 *compute_ir, u32 ir_
     vkDestroyShaderModule(vulkan_device->device, shader_module, nullptr);
 
     auto pipeline = (VulkanPipeline *) malloc(sizeof(VulkanPipeline));
+
     if (!pipeline) {
         vkDestroyPipeline(vulkan_device->device, vulkan_pipeline, nullptr);
 
         assert(false);
     }
+
+    memset(pipeline, 0, sizeof(VulkanPipeline));
+
     pipeline->pipeline = vulkan_pipeline;
     pipeline->bind_point = VK_PIPELINE_BIND_POINT_COMPUTE;
     return (u64) pipeline;
@@ -1021,11 +1025,15 @@ RHIPipeline vk_create_graphics_pipeline(RHIDevice device, u8 *vertex_ir, u32 ver
     vkDestroyShaderModule(vulkan_device->device, fragment_shader_module, nullptr);
 
     auto pipeline = (VulkanPipeline *) malloc(sizeof(VulkanPipeline));
+
     if (!pipeline) {
         vkDestroyPipeline(vulkan_device->device, vulkan_pipeline, nullptr);
 
         assert(false);
     }
+
+    memset(pipeline, 0, sizeof(VulkanPipeline));
+
     pipeline->pipeline = vulkan_pipeline;
     pipeline->bind_point = VK_PIPELINE_BIND_POINT_GRAPHICS;
     return (u64) pipeline;
@@ -1177,11 +1185,15 @@ RHIPipeline vk_create_graphics_meshlet_pipeline(RHIDevice device, u8 *meshlet_ir
     vkDestroyShaderModule(vulkan_device->device, fragment_shader_module, nullptr);
 
     auto pipeline = (VulkanPipeline *) malloc(sizeof(VulkanPipeline));
+
     if (!pipeline) {
         vkDestroyPipeline(vulkan_device->device, vulkan_pipeline, nullptr);
 
         assert(false);
     }
+
+    memset(pipeline, 0, sizeof(VulkanPipeline));
+
     pipeline->pipeline = vulkan_pipeline;
     pipeline->bind_point = VK_PIPELINE_BIND_POINT_GRAPHICS;
     return (u64) pipeline;
@@ -1204,8 +1216,12 @@ RHIDepthStencilState vk_create_depth_stencil_state(RHIDevice device, RHIDepthSte
     assert(desc);
 
     auto state = (VulkanDepthStencilState *) malloc(sizeof(VulkanDepthStencilState));
+    
+    if (!state) {
+        assert(false);
+    }
 
-    assert(state);
+    memset(state, 0, sizeof(VulkanDepthStencilState));
 
     state->depth_write_enabled = desc->depth_mode == RHI_DEPTH_WRITE;
     state->depth_compare_op = vk_get_compare_op(desc->depth_test);
@@ -1236,7 +1252,11 @@ RHIBlendState vk_create_blend_state(RHIDevice device, RHIBlendDesc *desc) {
 
     auto state = (VulkanBlendState *) malloc(sizeof(VulkanBlendState));
 
-    assert(state);
+    if (!state) {
+        assert(false);
+    }
+
+    memset(state, 0, sizeof(VulkanBlendState));
 
     state->src_color_factor = vk_get_blend_factor(desc->src_color_factor);
     state->dst_color_factor = vk_get_blend_factor(desc->src_color_factor);
@@ -1382,12 +1402,15 @@ RHIDevice vk_create_device(RHIDeviceDesc *desc) {
         vkGetPhysicalDeviceQueueFamilyProperties(gpus[i], &family_count, families);
 
         auto family_infos = (VulkanQueueFamilyInfo *) malloc(sizeof(VulkanQueueFamilyInfo) * family_count);
+
         if (!family_infos) {
             free(gpus);
             free(families);
 
             assert(false);
         }
+
+        memset(family_infos, 0, sizeof(VulkanQueueFamilyInfo) * family_count);
 
         for (u32 j = 0; j < family_count; j++) {
             family_infos[j].total_count = families[j].queueCount;
@@ -1402,12 +1425,15 @@ RHIDevice vk_create_device(RHIDeviceDesc *desc) {
 
         // TODO: Remove hardcoded size
         auto queue_assignments = (VulkanQueueFamilyAssignment *) malloc(sizeof(VulkanQueueFamilyAssignment) * 128);
+
         if (!queue_assignments) {
             free(gpus);
             free(family_infos);
 
             assert(false);
         }
+
+        memset(queue_assignments, 0, sizeof(VulkanQueueFamilyAssignment) * 128);
 
         u32 assignment_count = 0;
 
@@ -1543,6 +1569,8 @@ RHIDevice vk_create_device(RHIDeviceDesc *desc) {
         assert(false);
     }
 
+    memset(queue_infos, 0, sizeof(VkDeviceQueueCreateInfo) *selected_family_count);
+
     u32 queue_info_count = 0;
 
     for (u32 i = 0; i < selected_family_count; i++) {
@@ -1612,6 +1640,7 @@ RHIDevice vk_create_device(RHIDeviceDesc *desc) {
     device->gpu = gpu;
 
     device->queues = (VulkanQueue *) malloc(sizeof(VulkanQueue) * selected_queue_assignment_count);
+
     if (!device->queues) {
         vkDestroyDevice(vk_device, nullptr);
         free(selected_queue_assignments);
@@ -1619,6 +1648,9 @@ RHIDevice vk_create_device(RHIDeviceDesc *desc) {
 
         assert(false);
     }
+
+    memset(device->queues, 0, sizeof(VulkanQueue) * selected_queue_assignment_count);
+
     device->queue_count = selected_queue_assignment_count;
 
     for (u32 i = 0; i < selected_queue_assignment_count; i++) {
@@ -1740,11 +1772,15 @@ RHICommandBuffer vk_start_command_recording(RHIQueue queue) {
     }
 
     auto vkcb = (VulkanCommandBuffer *) malloc(sizeof(VulkanCommandBuffer));
+
     if (!vkcb) {
         vkFreeCommandBuffers(vulkan_queue->device->device, vulkan_queue->command_pool, 1, &cb);
 
         assert(false);
     }
+
+    memset(vkcb, 0, sizeof(VulkanCommandBuffer));
+
     vkcb->command_buffer = cb;
     vkcb->queue = (VulkanQueue *) queue;
 
@@ -1782,7 +1818,7 @@ void vk_submit(RHIQueue queue, RHICommandBuffer *command_buffers, u32 command_bu
     std::unordered_map<SemaphoreSubmitInfo, VkPipelineStageFlags2, SemaphoreSubmitInfoHash> signals_map;
     std::unordered_map<SemaphoreSubmitInfo, VkPipelineStageFlags2, SemaphoreSubmitInfoHash> waits_map;
     std::vector<VkCommandBufferSubmitInfo> cb_infos;
-    cb_infos.reserve(command_buffer_count);
+    cb_infos.resize(command_buffer_count);
 
     SemaphoreSubmitInfo cpu_sem_info = {
         .semaphore = semaphore->semaphore,
@@ -1798,6 +1834,8 @@ void vk_submit(RHIQueue queue, RHICommandBuffer *command_buffers, u32 command_bu
 
         assert(cb);
         assert(cb->queue == vulkan_queue);
+
+        vkEndCommandBuffer(cb->command_buffer);
 
         cb_infos[i].sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_SUBMIT_INFO;
         cb_infos[i].commandBuffer = cb->command_buffer;
@@ -1882,7 +1920,7 @@ void vk_submit(RHIQueue queue, RHICommandBuffer *command_buffers, u32 command_bu
     }
 
     VkSubmitInfo2 info = {
-        .sType = VK_STRUCTURE_TYPE_SUBMIT_INFO,
+        .sType = VK_STRUCTURE_TYPE_SUBMIT_INFO_2,
         .waitSemaphoreInfoCount = (u32) waits.size(),
         .pWaitSemaphoreInfos = waits.data(),
         .commandBufferInfoCount = (u32) cb_infos.size(),
@@ -1933,7 +1971,9 @@ RHISwapchain vk_create_swapchain(RHIDevice device, RHISwapchainDesc *desc) {
 
     auto swapchain = (VulkanSwapchain *) malloc(sizeof(VulkanSwapchain));
 
-    assert(swapchain);
+    if (!swapchain) {
+        assert(false);
+    }
 
     memset(swapchain, 0, sizeof(VulkanSwapchain));
 
@@ -2062,7 +2102,6 @@ RHISwapchain vk_create_swapchain(RHIDevice device, RHISwapchainDesc *desc) {
     }
 
     auto images = (VkImage *) malloc(sizeof(VkImage) * swapchain->image_count);
-
     if (!images) {
         vkDestroySwapchainKHR(vulkan_device->device, swapchain->swapchain, nullptr);
         platform_destroy_surface(vulkan.instance, swapchain->surface);
@@ -2081,6 +2120,7 @@ RHISwapchain vk_create_swapchain(RHIDevice device, RHISwapchainDesc *desc) {
     }
 
     swapchain->textures = (VulkanTexture *) malloc(sizeof(VulkanTexture) * swapchain->image_count);
+
     if (!swapchain->textures) {
         free(images);
         vkDestroySwapchainKHR(vulkan_device->device, swapchain->swapchain, nullptr);
@@ -2090,7 +2130,10 @@ RHISwapchain vk_create_swapchain(RHIDevice device, RHISwapchainDesc *desc) {
         assert(false);
     }
 
+    memset(swapchain->textures, 0, sizeof(VulkanTexture) * swapchain->image_count);
+
     swapchain->acquire_semaphores = (VkSemaphore *) malloc(sizeof(VkSemaphore) * swapchain->image_count);
+
     if (!swapchain->acquire_semaphores) {
         free(images);
         free(swapchain->textures);
@@ -2146,6 +2189,7 @@ RHISwapchain vk_create_swapchain(RHIDevice device, RHISwapchainDesc *desc) {
 
             assert(false);
         }
+
         memset(swapchain->textures[i].backbuffer_data, 0, sizeof(VulkanBackbufferData));
 
         swapchain->textures[i].format = surface_format.format;
@@ -2454,6 +2498,8 @@ RHISemaphore vk_create_semaphore(RHIDevice device, u64 init_value) {
         assert(false);
     }
 
+    memset(semaphore, 0, sizeof(VulkanSemaphore));
+
     semaphore->semaphore = sem;
 
     return (u64) semaphore;
@@ -2692,7 +2738,6 @@ void vk_set_blend_state(RHICommandBuffer cb, RHIBlendState state) {
 
     VkBool32 enable = true;
     vkCmdSetColorBlendEnableEXT(command_buffer->command_buffer, 0, 1, &enable);
-    vkCmdSetColorWriteEnableEXT(command_buffer->command_buffer, 1, &enable);
 
     VkColorBlendEquationEXT eq = {
         .srcColorBlendFactor = blend->src_color_factor,

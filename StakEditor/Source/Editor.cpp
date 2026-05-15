@@ -8,6 +8,8 @@ Application *create_application() {
         return nullptr;
     }
 
+    memset(app, 0, sizeof(Application));
+
     auto editor = (Editor *) malloc(sizeof(Editor));
     if (!editor) {
         free(app);

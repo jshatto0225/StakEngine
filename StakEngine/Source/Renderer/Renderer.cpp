@@ -57,6 +57,7 @@ Renderer *create_renderer(Window win) {
         return nullptr;
     }
 
+    /*
     std::vector<u8> vertex_ir;
     std::vector<u8> pixel_ir;
     RHIRasterDesc raster_description = {};
@@ -66,6 +67,7 @@ Renderer *create_renderer(Window win) {
         free(renderer);
         return nullptr;
     }
+    */
 
     renderer->next_frame = 1;
 
@@ -114,8 +116,10 @@ bool render(Renderer *renderer) {
 
         rhi.begin_render_pass(cb, &rp);
         {
+            /*
             rhi.set_pipeline(cb, renderer->pipeline);
             rhi.draw_indexed_instanced(cb, nullptr, nullptr, nullptr, 0, 0);
+            */
         }
         rhi.end_render_pass(cb);
     }
