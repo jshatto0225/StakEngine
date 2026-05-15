@@ -102,6 +102,7 @@ extern PFN_vkCreateSwapchainKHR                    vkCreateSwapchainKHR;
 extern PFN_vkDestroySwapchainKHR                   vkDestroySwapchainKHR;
 extern PFN_vkAcquireNextImageKHR                   vkAcquireNextImageKHR;
 extern PFN_vkQueuePresentKHR                       vkQueuePresentKHR;
+extern PFN_vkDestroySurfaceKHR                     vkDestroySurfaceKHR;
 
 // EXT / vendor functions used in project
 extern PFN_vkCmdPushDataEXT                        vkCmdPushDataEXT;
@@ -113,6 +114,10 @@ extern PFN_vkCmdSetColorWriteMaskEXT               vkCmdSetColorWriteMaskEXT;
 extern PFN_vkCmdSetColorWriteEnableEXT             vkCmdSetColorWriteEnableEXT;
 extern PFN_vkCmdDrawMeshTasksEXT                   vkCmdDrawMeshTasksEXT;
 extern PFN_vkCmdDrawMeshTasksIndirectEXT           vkCmdDrawMeshTasksIndirectEXT;
+
+#ifdef VK_USE_PLATFORM_WIN32_KHR
+extern PFN_vkCreateWin32SurfaceKHR                 vkCreateWin32SurfaceKHR;
+#endif
 
 #ifdef __cplusplus
 }
