@@ -40,18 +40,21 @@ struct Vulkan {
 };
 
 struct VulkanSwapchain {
-    VkDevice device;
+    VulkanDevice *device;
+
     VkSurfaceKHR surface;
     VkSwapchainKHR swapchain;
-    VkQueue present_queue;
+    VkQueue queue;
+
+    VkFence fence;
+
+    u32 image_count;
+    VulkanTexture *textures;
+    VkExtent2D extent;
 
     u32 semaphore_index;
     VkSemaphore *acquire_semaphores;
     VkSemaphore *present_semaphores;
-
-    u32 image_count;
-    VulkanTexture *backbuffers;
-    VkExtent2D extent;
 
     u32 image_index;
 
@@ -100,6 +103,15 @@ struct VulkanQueue {
     VkCommandPool command_pool;
 };
 
+struct VulkanBackbufferData {
+    VkSemaphore present_semaphore;
+    VkSemaphore acquire_semaphore;
+    VkSemaphore timeline;
+    bool acquire_consumed;
+    u64 ready_value; // This is MUST be starting value + 1
+    u64 present_value;
+};
+
 struct VulkanTexture {
     VkImage image;
     VkImageView image_view; // NOTE: Only used for setting as a render target, not used for descriptors
@@ -112,9 +124,7 @@ struct VulkanTexture {
     VkImageType type;
     VkImageAspectFlags aspect_mask;
 
-    // Swapchain semaphores
-    VkSemaphore acquire_semaphore;
-    VkSemaphore present_semaphore;
+    VulkanBackbufferData *backbuffer_data; // only populated for swapchain images
 };
 
 struct VulkanCommandBuffer {
@@ -122,8 +132,8 @@ struct VulkanCommandBuffer {
     VulkanQueue *queue;
     std::vector<VkSemaphoreSubmitInfo> waits;
     std::vector<VkSemaphoreSubmitInfo> signals;
-    VulkanTexture *backbuffer; // for implicitly tracking backbuffer usage
-    VkPipelineStageFlags2 backbuffer_last_stage_usage;
+
+    VulkanTexture *backbuffer; // swapchain backbuffer if one is used
 };
 
 struct VulkanPipeline {
@@ -1542,7 +1552,7 @@ RHIDevice vk_create_device(RHIDeviceDesc *desc) {
 
         VkCommandPoolCreateInfo pool_info = {
             .sType = VK_STRUCTURE_TYPE_COMMAND_POOL_CREATE_INFO,
-            .flags = VK_COMMAND_POOL_CREATE_RESET_COMMAND_BUFFER_BIT,
+            .flags = VK_COMMAND_POOL_CREATE_RESET_COMMAND_BUFFER_BIT, // TODO: Is there a good way to get rid of this?
             .queueFamilyIndex = assignment->family
         };
 
@@ -1665,22 +1675,27 @@ void vk_submit(RHIQueue queue, RHICommandBuffer *command_buffers, u32 command_bu
     auto vulkan_queue = (VulkanQueue *) queue;
     auto semaphore = (VulkanSemaphore *) sem;
 
-    std::vector<VkSemaphoreSubmitInfo> signals;
+    struct SemaphoreSubmitInfo {
+        VkSemaphore semaphore;
+        u64 value;
+    };
 
-    signals.push_back({
-        .sType = VK_STRUCTURE_TYPE_SEMAPHORE_SUBMIT_INFO,
+    // Insert into intermediate maps to deduplicate semaphore value pairs
+    std::unordered_map<SemaphoreSubmitInfo, VkPipelineStageFlags2> signals_map;
+    std::unordered_map<SemaphoreSubmitInfo, VkPipelineStageFlags2> waits_map;
+    std::vector<VkCommandBufferSubmitInfo> cb_infos;
+    cb_infos.reserve(command_buffer_count);
+
+    SemaphoreSubmitInfo cpu_sem_info = {
         .semaphore = semaphore->semaphore,
         .value = sem_val,
-        .stageMask = VK_PIPELINE_STAGE_2_ALL_COMMANDS_BIT,
-    });
+    };
 
-    std::vector<VkSemaphoreSubmitInfo> waits;
-
-    std::vector<VkCommandBufferSubmitInfo> cb_infos(command_buffer_count);
+    signals_map[cpu_sem_info] = VK_PIPELINE_STAGE_2_ALL_COMMANDS_BIT;
 
     VulkanTexture *backbuffer = nullptr;
 
-    for (u32 i = 0; i < cb_infos.size(); i++) {
+    for (u32 i = 0; i < command_buffer_count; i++) {
         auto cb = (VulkanCommandBuffer*) command_buffers[i];
 
         assert(cb);
@@ -1688,10 +1703,84 @@ void vk_submit(RHIQueue queue, RHICommandBuffer *command_buffers, u32 command_bu
 
         cb_infos[i].sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_SUBMIT_INFO;
         cb_infos[i].commandBuffer = cb->command_buffer;
-        cb_infos[i].deviceMask = 0; // ???
 
-        waits.insert(waits.end(), cb->waits.begin(), cb->waits.end());
-        signals.insert(signals.end(), cb->signals.begin(), cb->signals.end());
+        if (cb->backbuffer) {
+            if (!backbuffer) {
+                backbuffer = cb->backbuffer;
+
+                if (!backbuffer->backbuffer_data->acquire_consumed) {
+                    // TODO: We probably want to track pipeline stage here at some point
+                    SemaphoreSubmitInfo wait = {
+                        .semaphore = backbuffer->backbuffer_data->acquire_semaphore,
+                        .value = 0
+                    };
+                    SemaphoreSubmitInfo signal = {
+                        .semaphore = backbuffer->backbuffer_data->acquire_semaphore,
+                        .value = backbuffer->backbuffer_data->ready_value
+                    };
+
+                    waits_map[wait] = waits_map[wait] | VK_PIPELINE_STAGE_2_COLOR_ATTACHMENT_OUTPUT_BIT;
+                    signals_map[signal] = signals_map[signal] | VK_PIPELINE_STAGE_2_COLOR_ATTACHMENT_OUTPUT_BIT;
+                } else {
+                    SemaphoreSubmitInfo wait = {
+                        .semaphore = backbuffer->backbuffer_data->acquire_semaphore,
+                        .value = backbuffer->backbuffer_data->ready_value
+                    };
+                    backbuffer->backbuffer_data->ready_value++;
+                    SemaphoreSubmitInfo signal = {
+                        .semaphore = backbuffer->backbuffer_data->acquire_semaphore,
+                        .value = backbuffer->backbuffer_data->ready_value
+                    };
+
+                    waits_map[wait] = waits_map[wait] | VK_PIPELINE_STAGE_2_COLOR_ATTACHMENT_OUTPUT_BIT;
+                    signals_map[signal] = signals_map[signal] | VK_PIPELINE_STAGE_2_COLOR_ATTACHMENT_OUTPUT_BIT;
+                }
+            }
+
+            assert(cb->backbuffer == backbuffer);
+        }
+
+        for (const auto &wait : cb->waits) {
+            SemaphoreSubmitInfo new_wait = {
+                .semaphore = wait.semaphore,
+                .value = wait.value
+            };
+            waits_map[new_wait] = waits_map[new_wait] | wait.stageMask;
+        }
+
+        for (const auto &signal : cb->signals) {
+            SemaphoreSubmitInfo new_signal = {
+                .semaphore = signal.semaphore,
+                .value = signal.value
+            };
+            signals_map[new_signal] = waits_map[new_signal] | signal.stageMask;
+        }
+    }
+
+    // Do the deduplication
+    std::vector<VkSemaphoreSubmitInfo> waits;
+    waits.reserve(waits_map.size());
+    std::vector<VkSemaphoreSubmitInfo> signals;
+    signals.reserve(signals_map.size());
+
+    for (const auto &wait : waits_map) {
+        VkSemaphoreSubmitInfo new_wait = {
+            .sType = VK_STRUCTURE_TYPE_SEMAPHORE_SUBMIT_INFO,
+            .semaphore = wait.first.semaphore,
+            .value = wait.first.value,
+            .stageMask = wait.second
+        };
+        waits.push_back(new_wait);
+    }
+
+    for (const auto &signal : signals_map) {
+        VkSemaphoreSubmitInfo new_signal = {
+            .sType = VK_STRUCTURE_TYPE_SEMAPHORE_SUBMIT_INFO,
+            .semaphore = signal.first.semaphore,
+            .value = signal.first.value,
+            .stageMask = signal.second
+        };
+        signals.push_back(new_signal);
     }
 
     VkSubmitInfo2 info = {
@@ -1707,7 +1796,8 @@ void vk_submit(RHIQueue queue, RHICommandBuffer *command_buffers, u32 command_bu
     if (vkQueueSubmit2(vulkan_queue->queue, 1, &info, nullptr) != VK_SUCCESS) {
         assert(false);
     }
-
+    
+    // TODO: Is it worth collecting command buffers into an array and freeing all of them?
     for (u32 i = 0; i < command_buffer_count; i++) {
         auto cb = (VulkanCommandBuffer *) command_buffers[i];
 
@@ -1725,6 +1815,7 @@ void vk_abort(RHIQueue queue, RHICommandBuffer *command_buffers, u32 command_buf
 
     auto vulkan_queue = (VulkanQueue *) queue;
 
+    // TODO: Is it worth collecting command buffers into an array and freeing all of them?
     for (u32 i = 0; i < command_buffer_count; i++) {
         auto cb = (VulkanCommandBuffer *) command_buffers[i];
 
@@ -1746,43 +1837,54 @@ void vk_destroy_swapchain(RHIDevice device, RHISwapchain swapchain) {
     auto vulkan_swapchain = (VulkanSwapchain *) swapchain;
 
     for (u32 i = 0; i < vulkan_swapchain->image_count; i++) {
+        vkDestroyImageView(vulkan_device->device, vulkan_swapchain->textures[i].image_view, nullptr);
+        vkDestroySemaphore(vulkan_device->device, vulkan_swapchain->textures[i].backbuffer_data->timeline, nullptr);
         vkDestroySemaphore(vulkan_device->device, vulkan_swapchain->acquire_semaphores[i], nullptr);
         vkDestroySemaphore(vulkan_device->device, vulkan_swapchain->present_semaphores[i], nullptr);
 
-        vkDestroyImageView(vulkan_device->device, vulkan_swapchain->backbuffers[i].image_view, nullptr);
+        free(vulkan_swapchain->textures[i].backbuffer_data);
     }
 
-    free(vulkan_swapchain->acquire_semaphores);
-    free(vulkan_swapchain->present_semaphores);
-    free(vulkan_swapchain->backbuffers);
+    vkDestroyFence(vulkan_device->device, vulkan_swapchain->fence, nullptr);
+
+    free(vulkan_swapchain->textures);
     free(vulkan_swapchain);
 }
 
-RHITexture vk_get_current_backbuffer(RHISwapchain swapchain) {
+RHITexture vk_next_backbuffer(RHISwapchain swapchain) {
     assert(swapchain);
 
     auto vulkan_swapchain = (VulkanSwapchain *) swapchain;
 
-    if (vulkan_swapchain->presented) {
-        u32 index = 0;
+    assert(vulkan_swapchain->presented);
 
-        if (vkAcquireNextImageKHR(vulkan_swapchain->device, vulkan_swapchain->swapchain, UINT64_MAX, vulkan_swapchain->acquire_semaphores[vulkan_swapchain->semaphore_index], nullptr, &index) != VK_SUCCESS) {
-            assert(false);
-        }
+    VkSemaphore acquire_semaphore = vulkan_swapchain->acquire_semaphores[vulkan_swapchain->semaphore_index];
 
-        vulkan_swapchain->image_index = index;
-
-        VulkanTexture *backbuffer = &vulkan_swapchain->backbuffers[index];
-        backbuffer->present_semaphore = vulkan_swapchain->present_semaphores[vulkan_swapchain->semaphore_index];
-        backbuffer->acquire_semaphore = vulkan_swapchain->acquire_semaphores[vulkan_swapchain->semaphore_index];
-
-        vulkan_swapchain->semaphore_index = (vulkan_swapchain->semaphore_index + 1) % vulkan_swapchain->image_count;
-
-        vulkan_swapchain->presented = false;
+    if (vkAcquireNextImageKHR(vulkan_swapchain->device->device,
+        vulkan_swapchain->swapchain,
+        UINT64_MAX,
+        acquire_semaphore,
+        nullptr,
+        &vulkan_swapchain->image_index) != VK_SUCCESS) 
+    {
+        assert(false);
+    }
+    if (vkWaitForFences(vulkan_swapchain->device->device, 1, &vulkan_swapchain->fence, true, UINT64_MAX) != VK_SUCCESS) {
+        assert(false);
     }
 
-    return (RHITexture) &vulkan_swapchain->backbuffers[vulkan_swapchain->image_index];
+    // Assign semaphores from swapchain ringbuffer
+    VulkanTexture *texture = &vulkan_swapchain->textures[vulkan_swapchain->image_index];
+    texture->backbuffer_data->present_semaphore = vulkan_swapchain->present_semaphores[vulkan_swapchain->semaphore_index];
+    texture->backbuffer_data->acquire_semaphore = acquire_semaphore;
+    texture->backbuffer_data->acquire_consumed = false;
+
+    vulkan_swapchain->presented = false;
+
+    return (RHITexture) texture;
 }
+
+// The shit i have to do to implicitly sync present is dumb
 
 void vk_present(RHISwapchain swapchain) {
     assert(swapchain);
@@ -1791,19 +1893,48 @@ void vk_present(RHISwapchain swapchain) {
 
     assert(!vulkan_swapchain->presented);
 
+    VulkanTexture *texture = &vulkan_swapchain->textures[vulkan_swapchain->image_index];
+
+    // Convert timeline semaphore to binary semaphore for present
+    VkSemaphoreSubmitInfo wait = {
+        .sType = VK_STRUCTURE_TYPE_SEMAPHORE_SUBMIT_INFO,
+        .semaphore = texture->backbuffer_data->timeline,
+        .value = texture->backbuffer_data->present_value
+    };
+
+    VkSemaphoreSubmitInfo signal = {
+        .sType = VK_STRUCTURE_TYPE_SEMAPHORE_SUBMIT_INFO,
+        .semaphore = texture->backbuffer_data->present_semaphore,
+    };
+
+    VkSubmitInfo2 submit_info = {
+        .sType = VK_STRUCTURE_TYPE_SUBMIT_INFO,
+        .waitSemaphoreInfoCount = 1,
+        .pWaitSemaphoreInfos = &wait,
+        .signalSemaphoreInfoCount = 1,
+        .pSignalSemaphoreInfos = &signal,
+    };
+
+    vkQueueSubmit2(vulkan_swapchain->queue, 1, &submit_info, nullptr);
+
+    // Present
     VkResult result = VK_SUCCESS;
 
     VkPresentInfoKHR present_info = {
         .sType = VK_STRUCTURE_TYPE_PRESENT_INFO_KHR,
         .waitSemaphoreCount = 1,
-        .pWaitSemaphores = &vulkan_swapchain->backbuffers[vulkan_swapchain->image_index].present_semaphore,
+        .pWaitSemaphores = &texture->backbuffer_data->present_semaphore,
         .swapchainCount = 1,
         .pSwapchains = &vulkan_swapchain->swapchain,
         .pImageIndices = &vulkan_swapchain->image_index,
         .pResults = &result,
     };
 
-    vkQueuePresentKHR(vulkan_swapchain->present_queue, &present_info);
+    vkQueuePresentKHR(vulkan_swapchain->queue, &present_info);
+
+    texture->backbuffer_data->acquire_semaphore = nullptr;
+    texture->backbuffer_data->present_semaphore = nullptr;
+    texture->backbuffer_data->acquire_consumed = false;
 
     assert(result == VK_SUCCESS);
 }
@@ -2160,19 +2291,28 @@ void vk_begin_render_pass(RHICommandBuffer cb, RHIRenderPassDesc *desc) {
     render_area.extent.width = UINT32_MAX;
     render_area.extent.height = UINT32_MAX;
 
-    std::vector<VkRenderingAttachmentInfo> color_attachments(desc->color_attachment_count);
+    std::vector<VkRenderingAttachmentInfo> color_attachments;
+    color_attachments.reserve(desc->color_attachment_count);
     for (u32 i = 0; i < desc->color_attachment_count; i++) {
         auto texture = (VulkanTexture *) desc->color_attachments[i].texture;
 
         assert(texture);
 
-        color_attachments[i] = VkRenderingAttachmentInfo {
+        // track swapchain backbuffer target
+        if (texture->backbuffer_data) {
+            assert(!command_buffer->backbuffer || command_buffer->backbuffer == texture);
+            command_buffer->backbuffer = texture;
+        }
+
+        VkRenderingAttachmentInfo attachment = {
             .sType = VK_STRUCTURE_TYPE_RENDERING_ATTACHMENT_INFO,
             .imageView = texture->image_view,
             .imageLayout = VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL,
             .loadOp = VK_ATTACHMENT_LOAD_OP_LOAD,
             .storeOp = VK_ATTACHMENT_STORE_OP_STORE
         };
+
+        color_attachments.push_back(attachment);
 
         if (desc->color_attachments[i].clear) {
             color_attachments[i].loadOp = VK_ATTACHMENT_LOAD_OP_CLEAR;
@@ -2497,7 +2637,7 @@ bool vulkan_init(RHI *rhi) {
         //Swapchain
         vk_create_swapchain,
         vk_destroy_swapchain,
-        vk_get_current_backbuffer,
+        vk_next_backbuffer,
         vk_present,
 
         //Textures

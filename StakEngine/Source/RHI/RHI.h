@@ -268,7 +268,7 @@ struct RHI {
     // Swapchain
     RHISwapchain(*create_swapchain)(RHIDevice device, RHISwapchainDesc *desc);
     void (*destroy_swapchain)(RHIDevice device, RHISwapchain swapchain);
-    RHITexture (*get_current_backbuffer)(RHISwapchain swapchain);
+    RHITexture (*next_backbuffer)(RHISwapchain swapchain);
     void (*present)(RHISwapchain swapchain);
 
     // Textures

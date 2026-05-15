@@ -79,7 +79,7 @@ bool render(Renderer *renderer) {
 
     RHICommandBuffer cb = rhi.start_command_recording(renderer->queue);
     {
-        RHITexture backbuffer = rhi.get_current_backbuffer(renderer->swapchain);
+        RHITexture backbuffer = rhi.next_backbuffer(renderer->swapchain);
         
         RHIRenderPassAttachment color_attachment = {
             .texture = backbuffer,
