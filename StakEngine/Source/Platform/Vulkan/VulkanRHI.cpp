@@ -114,9 +114,7 @@ struct VulkanTexture {
 
     // Swapchain semaphores
     VkSemaphore acquire_semaphore;
-    VkSemaphore submit_timeline_semaphore;
     VkSemaphore present_semaphore;
-    u32 submit_count; // # of times texture has been submitted. 0 means use acquire_semaphore, > 0 means wait for submit_count on submit_timeline_semaphore
 };
 
 struct VulkanCommandBuffer {
@@ -1740,7 +1738,25 @@ void vk_abort(RHIQueue queue, RHICommandBuffer *command_buffers, u32 command_buf
 // Swapchain
 RHISwapchain vk_create_swapchain(RHIDevice device, RHISwapchainDesc *desc);
 
-void vk_destroy_swapchain(RHIDevice device, RHISwapchain swapchain);
+void vk_destroy_swapchain(RHIDevice device, RHISwapchain swapchain) {
+    assert(device);
+    assert(swapchain);
+
+    auto vulkan_device = (VulkanDevice *) device;
+    auto vulkan_swapchain = (VulkanSwapchain *) swapchain;
+
+    for (u32 i = 0; i < vulkan_swapchain->image_count; i++) {
+        vkDestroySemaphore(vulkan_device->device, vulkan_swapchain->acquire_semaphores[i], nullptr);
+        vkDestroySemaphore(vulkan_device->device, vulkan_swapchain->present_semaphores[i], nullptr);
+
+        vkDestroyImageView(vulkan_device->device, vulkan_swapchain->backbuffers[i].image_view, nullptr);
+    }
+
+    free(vulkan_swapchain->acquire_semaphores);
+    free(vulkan_swapchain->present_semaphores);
+    free(vulkan_swapchain->backbuffers);
+    free(vulkan_swapchain);
+}
 
 RHITexture vk_get_current_backbuffer(RHISwapchain swapchain) {
     assert(swapchain);
