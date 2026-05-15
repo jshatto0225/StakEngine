@@ -14,10 +14,12 @@ project "StakEngine"
         "Source/ImGui/**.cpp",
         "Source/Renderer/**.h",
         "Source/Renderer/**.cpp",
+        "Source/RHI/**.cpp",
+        "Source/RHI/*.h",
         "Source/Platform/GLFW/**.h",
         "Source/Platform/GLFW/**.cpp",
-	"Source/Platform/Vulkan/*.h",
-	"Source/Platform/Vulkan/*.cpp",
+        "Source/Platform/Vulkan/*.h",
+        "Source/Platform/Vulkan/*.cpp",
         "StakEngine.h"
     }
 
@@ -52,14 +54,10 @@ project "StakEngine"
             "SK_WINDOWS",
             "SK_VULKAN"
         }
-        
-        links { 
-            "$(VULKAN_SDK)/lib/vulkan-1.lib",
-        }
-        
+
         includedirs {
             "$(VULKAN_SDK)/include",
-	    "Source/Platform/Vulkan/Windows"
+            "Source/Platform/Vulkan/Windows"
         }
 
 	files {

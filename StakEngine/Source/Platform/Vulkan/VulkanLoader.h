@@ -40,6 +40,8 @@ extern PFN_vkGetPhysicalDeviceFeatures2            vkGetPhysicalDeviceFeatures2;
 extern PFN_vkGetPhysicalDeviceQueueFamilyProperties vkGetPhysicalDeviceQueueFamilyProperties;
 extern PFN_vkGetPhysicalDeviceMemoryProperties     vkGetPhysicalDeviceMemoryProperties;
 
+extern PFN_vkDestroySurfaceKHR                     vkDestroySurfaceKHR;
+
 // Device-level / core
 extern PFN_vkCreateDevice                          vkCreateDevice;
 extern PFN_vkDestroyDevice                         vkDestroyDevice;
@@ -102,7 +104,6 @@ extern PFN_vkCreateSwapchainKHR                    vkCreateSwapchainKHR;
 extern PFN_vkDestroySwapchainKHR                   vkDestroySwapchainKHR;
 extern PFN_vkAcquireNextImageKHR                   vkAcquireNextImageKHR;
 extern PFN_vkQueuePresentKHR                       vkQueuePresentKHR;
-extern PFN_vkDestroySurfaceKHR                     vkDestroySurfaceKHR;
 
 // EXT / vendor functions used in project
 extern PFN_vkCmdPushDataEXT                        vkCmdPushDataEXT;

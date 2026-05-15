@@ -7,7 +7,7 @@
 
 
 Input *create_input(Window window) {
-    auto input = (Input *) malloc(sizeof(Input));
+    auto input = new Input;
     if (!input) {
         SK_LOG_ERROR("create_input malloc failed");
         return nullptr;

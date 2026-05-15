@@ -59,6 +59,8 @@ Window platform_create_window(const WindowConfig *cfg) {
         return 0;
     }
 
+    memset(window, 0, sizeof(GlfwWindow));
+
     window->width = cfg->width;
     window->height = cfg->height;
     window->title = cfg->title;
@@ -162,7 +164,7 @@ Window platform_create_window(const WindowConfig *cfg) {
         data->event_function(&e);
     });
 
-    return true;
+    return (Window) window;
 }
 
 void platform_destroy_window(Window win) {

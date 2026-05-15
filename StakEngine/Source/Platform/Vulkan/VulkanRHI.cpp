@@ -7,17 +7,17 @@
 
 #ifdef SK_DEBUG
 static const bool enable_validation = true;
-const char *validation_layers[] = {
+const u32 validation_layer_count = 1;
+const char *validation_layers[validation_layer_count] = {
     "VK_LAYER_KHRONOS_validation"
 };
-const u32 validation_layer_count = 1;
-const char *device_extensions[] = {
+const u32 device_extension_count = 4;
+const char *device_extensions[device_extension_count] = {
     VK_KHR_SWAPCHAIN_EXTENSION_NAME,
     VK_EXT_EXTENDED_DYNAMIC_STATE_3_EXTENSION_NAME,
     VK_EXT_MESH_SHADER_EXTENSION_NAME,
     VK_EXT_DESCRIPTOR_HEAP_EXTENSION_NAME,
 };
-const u32 device_extension_count = 2;
 
 #define ASSERT_RESOURCE_GPU(device, ptr) assert((ptr) == NULL || find_allocation_gpu((device), (ptr)))
 #define ASSERT_RESOURCE_CPU(device, ptr) assert((ptr) == NULL || find_allocation_cpu((device), (ptr)))
@@ -716,11 +716,19 @@ void *vk_host_to_device_pointer(RHIDevice device, void *ptr) {
 }
 
 // Textures
-RHITextureSizeAlign vk_texture_size_align(RHIDevice device, RHITextureDesc *desc);
+RHITextureSizeAlign vk_texture_size_align(RHIDevice device, RHITextureDesc *desc) {
+    assert(false);
+    return {};
+}
 
-RHITexture vk_create_texture(RHIDevice device, RHITextureDesc *desc, void *ptr_gpu);
+RHITexture vk_create_texture(RHIDevice device, RHITextureDesc *desc, void *ptr_gpu) {
+    assert(false);
+    return 0;
+}
 
-void vk_destroy_texture(RHIDevice device, RHITexture texture);
+void vk_destroy_texture(RHIDevice device, RHITexture texture) {
+    assert(false);
+}
 
 RHITextureDescriptor vk_texture_view_descriptor(RHIDevice device, RHITexture texture, RHIViewDesc *desc) {
     assert(device);
@@ -1266,7 +1274,13 @@ RHIDevice vk_create_device(RHIDeviceDesc *desc) {
     if (vkEnumeratePhysicalDevices(vulkan.instance, &gpu_count, nullptr) != VK_SUCCESS) {
         assert(false);
     }
+    
     auto gpus = (VkPhysicalDevice *) malloc(sizeof(VkPhysicalDevice) * gpu_count);
+
+    if (!gpus) {
+        assert(false);
+    }
+
     if (vkEnumeratePhysicalDevices(vulkan.instance, &gpu_count, gpus) != VK_SUCCESS) {
         free(gpus);
 
@@ -1289,7 +1303,13 @@ RHIDevice vk_create_device(RHIDeviceDesc *desc) {
 
             assert(false);
         }
+
         auto extensions = (VkExtensionProperties *) malloc(sizeof(VkExtensionProperties) * extension_count);
+        if (!extensions) {
+            free(gpus);
+            assert(false);
+        }
+
         if (vkEnumerateDeviceExtensionProperties(gpus[i], nullptr, &extension_count, extensions) != VK_SUCCESS) {
             free(gpus);
             free(extensions);
@@ -1315,8 +1335,16 @@ RHIDevice vk_create_device(RHIDeviceDesc *desc) {
 
         free(extensions);
 
+        VkPhysicalDeviceDescriptorHeapFeaturesEXT descriptor_heap_features = {
+            .sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_DESCRIPTOR_HEAP_FEATURES_EXT,
+        };
+        VkPhysicalDeviceMeshShaderFeaturesEXT mesh_features = {
+            .sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_MESH_SHADER_FEATURES_EXT,
+            .pNext = &descriptor_heap_features,
+        };
         VkPhysicalDeviceVulkan14Features features14 = {
             .sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_VULKAN_1_4_FEATURES,
+            .pNext = &mesh_features,
         };
         VkPhysicalDeviceVulkan13Features features13 = {
             .sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_VULKAN_1_3_FEATURES,
@@ -1336,6 +1364,10 @@ RHIDevice vk_create_device(RHIDeviceDesc *desc) {
         };
 
         vkGetPhysicalDeviceFeatures2(gpus[i], &features);
+
+        if (!features.features.samplerAnisotropy || !features.features.depthBiasClamp || !features.features.depthClamp || !features.features.drawIndirectFirstInstance || !features.features.fullDrawIndexUint32 || !features12.bufferDeviceAddress || !features12.timelineSemaphore || !features12.drawIndirectCount || !features14.maintenance5 || !mesh_features.meshShader || !mesh_features.taskShader || !descriptor_heap_features.descriptorHeap) {
+            continue;
+        }
 
         u32 family_count = 0;
         vkGetPhysicalDeviceQueueFamilyProperties(gpus[i], &family_count, nullptr);
@@ -1421,6 +1453,15 @@ RHIDevice vk_create_device(RHIDeviceDesc *desc) {
                 break;
             }
         }
+
+        if (extensions_supported && queues_supported) {
+            gpu = gpus[i];
+            selected_queue_assignments = queue_assignments;
+            selected_queue_assignment_count = assignment_count;
+            selected_family_infos = family_infos;
+            selected_family_count = family_count;
+            break;
+        }
     }
 
     free(gpus);
@@ -1432,8 +1473,21 @@ RHIDevice vk_create_device(RHIDeviceDesc *desc) {
         assert(false);
     }
 
+    VkPhysicalDeviceDescriptorHeapFeaturesEXT descriptor_heap_features = {
+        .sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_DESCRIPTOR_HEAP_FEATURES_EXT,
+        .descriptorHeap = true,
+    };
+
+    VkPhysicalDeviceMeshShaderFeaturesEXT mesh_features = {
+        .sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_MESH_SHADER_FEATURES_EXT,
+        .pNext = &descriptor_heap_features,
+        .taskShader = true,
+        .meshShader = true,
+    };
+
     VkPhysicalDeviceVulkan14Features features14 = {
         .sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_VULKAN_1_4_FEATURES,
+        .pNext = &mesh_features,
         .maintenance5 = true,
     };
     VkPhysicalDeviceVulkan13Features features13 = {
@@ -1546,16 +1600,13 @@ RHIDevice vk_create_device(RHIDeviceDesc *desc) {
     free(priorities);
     free(queue_infos);
 
-    auto device = (VulkanDevice *) malloc(sizeof(VulkanDevice));
+    auto device = new VulkanDevice;
     if (!device) {
         free(selected_queue_assignments);
         free(selected_family_infos);
 
         assert(false);
     }
-
-    device->gpu_allocations = {};
-    device->cpu_allocations = {};
 
     device->device = vk_device;
     device->gpu = gpu;
@@ -1911,8 +1962,9 @@ RHISwapchain vk_create_swapchain(RHIDevice device, RHISwapchainDesc *desc) {
     }
 
     VkPresentModeKHR present_mode = VK_PRESENT_MODE_FIFO_KHR;
-    bool present_mode_found = false;
+    bool present_mode_found = true;
     if (!desc->vsync) {
+        present_mode_found = false;
         for (auto mode : support.present_modes) {
             // Mailbox is the best option for no vsync, but if it's not available we can settle for immediate
             if (mode == VK_PRESENT_MODE_MAILBOX_KHR) {
@@ -2019,8 +2071,54 @@ RHISwapchain vk_create_swapchain(RHIDevice device, RHISwapchainDesc *desc) {
         assert(false);
     }
 
+    if (vkGetSwapchainImagesKHR(vulkan_device->device, swapchain->swapchain, &swapchain->image_count, images) != VK_SUCCESS) {
+        free(images);
+        vkDestroySwapchainKHR(vulkan_device->device, swapchain->swapchain, nullptr);
+        platform_destroy_surface(vulkan.instance, swapchain->surface);
+        free(swapchain);
+
+        assert(false);
+    }
+
     swapchain->textures = (VulkanTexture *) malloc(sizeof(VulkanTexture) * swapchain->image_count);
     if (!swapchain->textures) {
+        free(images);
+        vkDestroySwapchainKHR(vulkan_device->device, swapchain->swapchain, nullptr);
+        platform_destroy_surface(vulkan.instance, swapchain->surface);
+        free(swapchain);
+
+        assert(false);
+    }
+
+    swapchain->acquire_semaphores = (VkSemaphore *) malloc(sizeof(VkSemaphore) * swapchain->image_count);
+    if (!swapchain->acquire_semaphores) {
+        free(images);
+        free(swapchain->textures);
+        vkDestroySwapchainKHR(vulkan_device->device, swapchain->swapchain, nullptr);
+        platform_destroy_surface(vulkan.instance, swapchain->surface);
+        free(swapchain);
+
+        assert(false);
+    }
+
+    swapchain->present_semaphores = (VkSemaphore *) malloc(sizeof(VkSemaphore) * swapchain->image_count);
+    if (!swapchain->present_semaphores) {
+        free(images);
+        free(swapchain->acquire_semaphores);
+        free(swapchain->textures);
+        vkDestroySwapchainKHR(vulkan_device->device, swapchain->swapchain, nullptr);
+        platform_destroy_surface(vulkan.instance, swapchain->surface);
+        free(swapchain);
+
+        assert(false);
+    }
+
+    swapchain->fences = (VkFence *) malloc(sizeof(VkFence) * swapchain->image_count);
+    if (!swapchain->fences) {
+        free(images);
+        free(swapchain->acquire_semaphores);
+        free(swapchain->present_semaphores);
+        free(swapchain->textures);
         vkDestroySwapchainKHR(vulkan_device->device, swapchain->swapchain, nullptr);
         platform_destroy_surface(vulkan.instance, swapchain->surface);
         free(swapchain);
@@ -2036,6 +2134,11 @@ RHISwapchain vk_create_swapchain(RHIDevice device, RHISwapchainDesc *desc) {
                 free(swapchain->textures[j].backbuffer_data);
             }
 
+            free(images);
+            free(swapchain->fences);
+            free(swapchain->present_semaphores);
+            free(swapchain->acquire_semaphores);
+            free(images);
             free(swapchain->textures);
             vkDestroySwapchainKHR(vulkan_device->device, swapchain->swapchain, nullptr);
             platform_destroy_surface(vulkan.instance, swapchain->surface);
@@ -2070,10 +2173,14 @@ RHISwapchain vk_create_swapchain(RHIDevice device, RHISwapchainDesc *desc) {
         };
 
         if (vkCreateSemaphore(vulkan_device->device, &timeline_info, nullptr, &swapchain->textures[i].backbuffer_data->timeline) != VK_SUCCESS) {
-            free(swapchain->textures[i].backbuffer_data);
             for (u32 j = 0; j < i; j++) {
                 free(swapchain->textures[j].backbuffer_data);
             }
+            free(swapchain->textures[i].backbuffer_data);
+            free(images);
+            free(swapchain->fences);
+            free(swapchain->present_semaphores);
+            free(swapchain->acquire_semaphores);
             free(swapchain->textures);
             vkDestroySwapchainKHR(vulkan_device->device, swapchain->swapchain, nullptr);
             platform_destroy_surface(vulkan.instance, swapchain->surface);
@@ -2098,11 +2205,15 @@ RHISwapchain vk_create_swapchain(RHIDevice device, RHISwapchainDesc *desc) {
 
         if (vkCreateImageView(vulkan_device->device, &view_info, nullptr, &swapchain->textures[i].image_view) != VK_SUCCESS) {
             vkDestroySemaphore(vulkan_device->device, swapchain->textures[i].backbuffer_data->timeline, nullptr);
-            free(swapchain->textures[i].backbuffer_data);
             for (u32 j = 0; j < i; j++) {
                 vkDestroySemaphore(vulkan_device->device, swapchain->textures[j].backbuffer_data->timeline, nullptr);
                 free(swapchain->textures[j].backbuffer_data);
             }
+            free(swapchain->textures[i].backbuffer_data);
+            free(images);
+            free(swapchain->fences);
+            free(swapchain->present_semaphores);
+            free(swapchain->acquire_semaphores);
             free(swapchain->textures);
             vkDestroySwapchainKHR(vulkan_device->device, swapchain->swapchain, nullptr);
             platform_destroy_surface(vulkan.instance, swapchain->surface);
@@ -2126,6 +2237,11 @@ RHISwapchain vk_create_swapchain(RHIDevice device, RHISwapchainDesc *desc) {
                 vkDestroySemaphore(vulkan_device->device, swapchain->textures[j].backbuffer_data->timeline, nullptr);
                 free(swapchain->textures[j].backbuffer_data);
             }
+            free(swapchain->textures[i].backbuffer_data);
+            free(images);
+            free(swapchain->fences);
+            free(swapchain->present_semaphores);
+            free(swapchain->acquire_semaphores);
             free(swapchain->textures);
             vkDestroySwapchainKHR(vulkan_device->device, swapchain->swapchain, nullptr);
             platform_destroy_surface(vulkan.instance, swapchain->surface);
@@ -2141,6 +2257,11 @@ RHISwapchain vk_create_swapchain(RHIDevice device, RHISwapchainDesc *desc) {
                 vkDestroySemaphore(vulkan_device->device, swapchain->textures[j].backbuffer_data->timeline, nullptr);
                 free(swapchain->textures[j].backbuffer_data);
             }
+            free(swapchain->textures[i].backbuffer_data);
+            free(images);
+            free(swapchain->fences);
+            free(swapchain->present_semaphores);
+            free(swapchain->acquire_semaphores);
             free(swapchain->textures);
             vkDestroySwapchainKHR(vulkan_device->device, swapchain->swapchain, nullptr);
             platform_destroy_surface(vulkan.instance, swapchain->surface);
@@ -2157,6 +2278,11 @@ RHISwapchain vk_create_swapchain(RHIDevice device, RHISwapchainDesc *desc) {
                 vkDestroySemaphore(vulkan_device->device, swapchain->textures[j].backbuffer_data->timeline, nullptr);
                 free(swapchain->textures[j].backbuffer_data);
             }
+            free(swapchain->textures[i].backbuffer_data);
+            free(images);
+            free(swapchain->fences);
+            free(swapchain->present_semaphores);
+            free(swapchain->acquire_semaphores);
             free(swapchain->textures);
             vkDestroySwapchainKHR(vulkan_device->device, swapchain->swapchain, nullptr);
             platform_destroy_surface(vulkan.instance, swapchain->surface);
@@ -2868,9 +2994,10 @@ void vk_draw_meshlets_indirect(RHICommandBuffer cb, void *meshlet_data_gpu, void
     vkCmdDrawMeshTasksIndirectEXT(command_buffer->command_buffer, offset.buffer, offset.offset, 1, 0);
 }
 
-
 bool vulkan_init(RHI *rhi) {
-    bool extensions_supported = false;
+    vk_loader_init();
+
+    bool extensions_supported = true;
     u32 layer_count = 0;
 
     if (vkEnumerateInstanceLayerProperties(&layer_count, nullptr) != VK_SUCCESS) {
@@ -2929,7 +3056,7 @@ bool vulkan_init(RHI *rhi) {
         instance_info.ppEnabledLayerNames = validation_layers;
 
         debug_info.sType = VK_STRUCTURE_TYPE_DEBUG_UTILS_MESSENGER_CREATE_INFO_EXT;
-        debug_info.messageSeverity = VK_DEBUG_UTILS_MESSAGE_SEVERITY_VERBOSE_BIT_EXT | VK_DEBUG_UTILS_MESSAGE_SEVERITY_WARNING_BIT_EXT | VK_DEBUG_UTILS_MESSAGE_SEVERITY_INFO_BIT_EXT | VK_DEBUG_UTILS_MESSAGE_SEVERITY_ERROR_BIT_EXT;
+        debug_info.messageSeverity = VK_DEBUG_UTILS_MESSAGE_SEVERITY_WARNING_BIT_EXT | VK_DEBUG_UTILS_MESSAGE_SEVERITY_ERROR_BIT_EXT;
         debug_info.messageType = VK_DEBUG_UTILS_MESSAGE_TYPE_GENERAL_BIT_EXT | VK_DEBUG_UTILS_MESSAGE_TYPE_VALIDATION_BIT_EXT | VK_DEBUG_UTILS_MESSAGE_TYPE_PERFORMANCE_BIT_EXT;
         debug_info.pfnUserCallback = debug_messenger;
 
