@@ -117,8 +117,7 @@ struct VulkanBackbufferData {
     VkSemaphore acquire_semaphore;
     VkSemaphore timeline;
     bool acquire_consumed;
-    u64 ready_value; // This is MUST be starting value + 1
-    u64 present_value;
+    u64 ready_value; // initially this can be any value >= the initial value, submit will increment it automatically
 };
 
 struct VulkanTexture {
@@ -1722,6 +1721,7 @@ void vk_submit(RHIQueue queue, RHICommandBuffer *command_buffers, u32 command_bu
                         .semaphore = backbuffer->backbuffer_data->acquire_semaphore,
                         .value = 0
                     };
+                    backbuffer->backbuffer_data->ready_value++; // don't expect ready value to be set up externally
                     SemaphoreSubmitInfo signal = {
                         .semaphore = backbuffer->backbuffer_data->acquire_semaphore,
                         .value = backbuffer->backbuffer_data->ready_value
@@ -1907,7 +1907,7 @@ void vk_present(RHISwapchain swapchain) {
     VkSemaphoreSubmitInfo wait = {
         .sType = VK_STRUCTURE_TYPE_SEMAPHORE_SUBMIT_INFO,
         .semaphore = texture->backbuffer_data->timeline,
-        .value = texture->backbuffer_data->present_value
+        .value = texture->backbuffer_data->ready_value
     };
 
     VkSemaphoreSubmitInfo signal = {
