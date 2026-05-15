@@ -56,7 +56,7 @@ Renderer *create_renderer(Window win) {
     if (!renderer->semaphore) {
         SK_LOG_ERROR("create_renderer Failed to create semaphore");
         free(renderer);
-        return false;
+        return nullptr;
     }
 
     return renderer;
@@ -79,8 +79,7 @@ bool render(Renderer *renderer) {
 
     RHICommandBuffer cb = rhi.start_command_recording(renderer->queue);
     {
-        u32 image_index = rhi.get_current_image_index(renderer->swapchain);
-        RHITexture backbuffer = rhi.get_image(renderer->swapchain, image_index);
+        RHITexture backbuffer = rhi.get_current_backbuffer(renderer->swapchain);
         
         RHIRenderPassAttachment color_attachment = {
             .texture = backbuffer,

@@ -22,6 +22,7 @@ const u32 device_extension_count = 2;
 #endif
 
 struct VulkanQueue;
+struct VulkanTexture;
 
 struct AllocBlock {
     VkBuffer buffer;
