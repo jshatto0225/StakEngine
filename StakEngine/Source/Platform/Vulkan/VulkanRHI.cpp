@@ -20,13 +20,14 @@ const char *device_extensions[] = {
 };
 const u32 device_extension_count = 2;
 
-// TODO:
 #define ASSERT_RESOURCE_GPU(device, ptr) assert((ptr) == NULL || find_allocation_gpu((device), (ptr)))
 #define ASSERT_RESOURCE_CPU(device, ptr) assert((ptr) == NULL || find_allocation_cpu((device), (ptr)))
 #define ASSERT_RESOURCE_GPU_STRICT(device, ptr) assert((ptr) && find_allocation_gpu((device), (ptr)))
 #define ASSERT_RESOURCE_CPU_STRICT(device, ptr) assert((ptr) && find_allocation_cpu((device), (ptr)))
 
+// Check if a resouce is CPU or GPU allocated, but allow null pointers
 #define ASSERT_RESOURCE_IS(device, ptr, Type) ASSERT_RESOURCE_##Type##(device, ptr)
+// Check if a resource is CPU or GPU allocated, and assert if it's not (including null pointers)
 #define ASSERT_RESOURCE_IS_STRICT(device, ptr, Type) ASSERT_RESOURCE_##Type##_STRICT(device, ptr)
 #endif
 
@@ -2050,14 +2051,12 @@ void vk_destroy_semaphore(RHIDevice device, RHISemaphore sem) {
 // Commands
 void vk_mem_copy(RHICommandBuffer cb, void *dst_gpu, void *src_gpu, u64 size) {
     assert(cb);
-    assert(dst_gpu);
-    assert(src_gpu);
     assert(size);
 
     auto command_buffer = (VulkanCommandBuffer *) cb;
 
-    ASSERT_RESOURCE_IS(command_buffer->queue->device, dst_gpu, GPU);
-    ASSERT_RESOURCE_IS(command_buffer->queue->device, src_gpu, GPU);
+    ASSERT_RESOURCE_IS_STRICT(command_buffer->queue->device, dst_gpu, GPU);
+    ASSERT_RESOURCE_IS_STRICT(command_buffer->queue->device, src_gpu, GPU);
 
     VulkanBufferOffset dst = get_buffer_offset_gpu(command_buffer->queue->device, dst_gpu);
     VulkanBufferOffset src = get_buffer_offset_gpu(command_buffer->queue->device, src_gpu);
@@ -2073,12 +2072,11 @@ void vk_mem_copy(RHICommandBuffer cb, void *dst_gpu, void *src_gpu, u64 size) {
 void vk_copy_to_texture(RHICommandBuffer cb, RHITexture texture, void *src_gpu) {
     assert(cb);
     assert(texture);
-    assert(src_gpu);
 
     auto command_buffer = (VulkanCommandBuffer *) cb;
     auto tex = (VulkanTexture *) texture;
 
-    ASSERT_RESOURCE_IS(command_buffer->queue->device, src_gpu, GPU);
+    ASSERT_RESOURCE_IS_STRICT(command_buffer->queue->device, src_gpu, GPU);
 
     VulkanBufferOffset offset = get_buffer_offset_gpu(command_buffer->queue->device, src_gpu);
 
@@ -2097,13 +2095,12 @@ void vk_copy_to_texture(RHICommandBuffer cb, RHITexture texture, void *src_gpu) 
 
 void vk_copy_from_texture(RHICommandBuffer cb, void *dst_gpu, RHITexture texture) {
     assert(cb);
-    assert(dst_gpu);
     assert(texture);
 
     auto command_buffer = (VulkanCommandBuffer *) cb;
     auto tex = (VulkanTexture *) texture;
 
-    ASSERT_RESOURCE_IS(command_buffer->queue->device, dst_gpu, GPU);
+    ASSERT_RESOURCE_IS_STRICT(command_buffer->queue->device, dst_gpu, GPU);
 
     VulkanBufferOffset offset = get_buffer_offset_gpu(command_buffer->queue->device, dst_gpu);
 
@@ -2122,12 +2119,11 @@ void vk_copy_from_texture(RHICommandBuffer cb, void *dst_gpu, RHITexture texture
 
 void vk_set_active_texture_heap_ptr(RHICommandBuffer cb, void *ptr_gpu, u64 size) {
     assert(cb);
-    assert(ptr_gpu);
     assert(size);
 
     auto command_buffer = (VulkanCommandBuffer *) cb;
 
-    ASSERT_RESOURCE_IS(command_buffer->queue->device, ptr_gpu, GPU);
+    ASSERT_RESOURCE_IS_STRICT(command_buffer->queue->device, ptr_gpu, GPU);
 
     VkBindHeapInfoEXT info = {
         .sType = VK_STRUCTURE_TYPE_BIND_HEAP_INFO_EXT,
@@ -2296,13 +2292,11 @@ void vk_dispatch(RHICommandBuffer cb, void *data_gpu, u32 grid_dimensions[3]) {
 
 void vk_dispatch_indirect(RHICommandBuffer cb, void *data_gpu, void *grid_dimensions_gpu) {
     assert(cb);
-    assert(data_gpu);
-    assert(grid_dimensions_gpu);
 
     auto command_buffer = (VulkanCommandBuffer *) cb;
 
-    ASSERT_RESOURCE_IS(command_buffer->queue->device, data_gpu, GPU);
-    ASSERT_RESOURCE_IS(command_buffer->queue->device, grid_dimensions_gpu, GPU);
+    ASSERT_RESOURCE_IS_STRICT(command_buffer->queue->device, data_gpu, GPU);
+    ASSERT_RESOURCE_IS_STRICT(command_buffer->queue->device, grid_dimensions_gpu, GPU);
 
     VulkanComputePushConstants pc = {
         .data = data_gpu,
@@ -2420,15 +2414,12 @@ void vk_end_render_pass(RHICommandBuffer cb) {
 
 void vk_draw_indexed_instanced(RHICommandBuffer cb, void *vertex_data_gpu, void *pixel_data_gpu, void *indices_gpu, u32 index_count, u32 instance_count) {
     assert(cb);
-    assert(vertex_data_gpu);
-    assert(pixel_data_gpu);
-    assert(indices_gpu);
 
     auto command_buffer = (VulkanCommandBuffer *) cb;
 
-    ASSERT_RESOURCE_IS(command_buffer->queue->device, vertex_data_gpu, GPU);
-    ASSERT_RESOURCE_IS(command_buffer->queue->device, pixel_data_gpu, GPU);
-    ASSERT_RESOURCE_IS(command_buffer->queue->device, indices_gpu, GPU);
+    ASSERT_RESOURCE_IS_STRICT(command_buffer->queue->device, vertex_data_gpu, GPU);
+    ASSERT_RESOURCE_IS_STRICT(command_buffer->queue->device, pixel_data_gpu, GPU);
+    ASSERT_RESOURCE_IS_STRICT(command_buffer->queue->device, indices_gpu, GPU);
 
     VulkanRasterPushConstants pc = {
         .vert_data = vertex_data_gpu,
@@ -2452,17 +2443,13 @@ void vk_draw_indexed_instanced(RHICommandBuffer cb, void *vertex_data_gpu, void 
 
 void vk_draw_indexed_instanced_indirect(RHICommandBuffer cb, void *vertex_data_gpu, void *pixel_data_gpu, void *indices_gpu, void *args_gpu) {
     assert(cb);
-    assert(vertex_data_gpu);
-    assert(pixel_data_gpu);
-    assert(indices_gpu);
-    assert(args_gpu);
 
     auto command_buffer = (VulkanCommandBuffer *) cb;
 
-    ASSERT_RESOURCE_IS(command_buffer->queue->device, vertex_data_gpu, GPU);
-    ASSERT_RESOURCE_IS(command_buffer->queue->device, pixel_data_gpu, GPU);
-    ASSERT_RESOURCE_IS(command_buffer->queue->device, indices_gpu, GPU);
-    ASSERT_RESOURCE_IS(command_buffer->queue->device, args_gpu, GPU);
+    ASSERT_RESOURCE_IS_STRICT(command_buffer->queue->device, vertex_data_gpu, GPU);
+    ASSERT_RESOURCE_IS_STRICT(command_buffer->queue->device, pixel_data_gpu, GPU);
+    ASSERT_RESOURCE_IS_STRICT(command_buffer->queue->device, indices_gpu, GPU);
+    ASSERT_RESOURCE_IS_STRICT(command_buffer->queue->device, args_gpu, GPU);
 
     VulkanRasterPushConstants pc = {
         .vert_data = vertex_data_gpu,
@@ -2487,17 +2474,13 @@ vkCmdDrawIndexedIndirect(command_buffer->command_buffer, indirect_offset.buffer,
 
 void vk_draw_indexed_instanced_indirect_multi(RHICommandBuffer cb, void *vertex_data_gpu, void *pixel_data_gpu, void *args_gpu, void *draw_count_gpu, u32 stride) {
     assert(cb);
-    assert(vertex_data_gpu);
-    assert(pixel_data_gpu);
-    assert(args_gpu);
-    assert(draw_count_gpu);
 
     auto command_buffer = (VulkanCommandBuffer *) cb;
 
-    ASSERT_RESOURCE_IS(command_buffer->queue->device, vertex_data_gpu, GPU);
-    ASSERT_RESOURCE_IS(command_buffer->queue->device, pixel_data_gpu, GPU);
-    ASSERT_RESOURCE_IS(command_buffer->queue->device, args_gpu, GPU);
-    ASSERT_RESOURCE_IS(command_buffer->queue->device, draw_count_gpu, GPU);
+    ASSERT_RESOURCE_IS_STRICT(command_buffer->queue->device, vertex_data_gpu, GPU);
+    ASSERT_RESOURCE_IS_STRICT(command_buffer->queue->device, pixel_data_gpu, GPU);
+    ASSERT_RESOURCE_IS_STRICT(command_buffer->queue->device, args_gpu, GPU);
+    ASSERT_RESOURCE_IS_STRICT(command_buffer->queue->device, draw_count_gpu, GPU);
 
     VulkanRasterPushConstants pc = {
         .vert_data = vertex_data_gpu,
@@ -2520,12 +2503,11 @@ void vk_draw_indexed_instanced_indirect_multi(RHICommandBuffer cb, void *vertex_
 
 void vk_draw_meshlets(RHICommandBuffer cb, void *meshlet_data_gpu, void *pixel_data_gpu, u32 dim[3]) {
     assert(cb);
-    assert(meshlet_data_gpu);
 
     auto command_buffer = (VulkanCommandBuffer *) cb;
 
-    ASSERT_RESOURCE_IS(command_buffer->queue->device, meshlet_data_gpu, GPU);
-    ASSERT_RESOURCE_IS(command_buffer->queue->device, pixel_data_gpu, GPU);
+    ASSERT_RESOURCE_IS_STRICT(command_buffer->queue->device, meshlet_data_gpu, GPU);
+    ASSERT_RESOURCE_IS_STRICT(command_buffer->queue->device, pixel_data_gpu, GPU);
 
     VulkanMeshPushConstants pc = {
         .mesh_data = meshlet_data_gpu,
@@ -2546,15 +2528,12 @@ void vk_draw_meshlets(RHICommandBuffer cb, void *meshlet_data_gpu, void *pixel_d
 
 void vk_draw_meshlets_indirect(RHICommandBuffer cb, void *meshlet_data_gpu, void *pixel_data_gpu, void *dim_gpu) {
     assert(cb);
-    assert(meshlet_data_gpu);
-    assert(pixel_data_gpu);
-    assert(dim_gpu);
 
     auto command_buffer = (VulkanCommandBuffer *) cb;
 
-    ASSERT_RESOURCE_IS(command_buffer->queue->device, meshlet_data_gpu, GPU);
-    ASSERT_RESOURCE_IS(command_buffer->queue->device, pixel_data_gpu, GPU);
-    ASSERT_RESOURCE_IS(command_buffer->queue->device, dim_gpu, GPU);
+    ASSERT_RESOURCE_IS_STRICT(command_buffer->queue->device, meshlet_data_gpu, GPU);
+    ASSERT_RESOURCE_IS_STRICT(command_buffer->queue->device, pixel_data_gpu, GPU);
+    ASSERT_RESOURCE_IS_STRICT(command_buffer->queue->device, dim_gpu, GPU);
 
     VulkanMeshPushConstants pc = {
         .mesh_data = meshlet_data_gpu,
