@@ -125,6 +125,10 @@ enum RHIStencilOp {
     RHI_STENCIL_OP_DECREMENT_AND_WRAP,
 };
 
+enum RHIPlatform {
+    RHI_PLATFORM_WIN32,
+};
+
 // Structs
 struct RHIStencil {
     RHIOp test;
@@ -251,7 +255,10 @@ struct RHIQueueDesc {
 };
 
 struct RHISwapchainDesc {
+    RHIPlatform platform;
 
+    void *window;
+    void *display; // optional, for platforms that require it
 };
 
 struct RHI {
