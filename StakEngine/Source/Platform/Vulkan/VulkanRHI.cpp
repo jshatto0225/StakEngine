@@ -101,6 +101,13 @@ struct VulkanSemaphore {
     VkSemaphore semaphore;
 };
 
+// TODO: Could this use a VulkanCommandBufer instead of VkCommandBuffer to reduce allocs and frees?
+struct VulkanSubmissionBatch {
+    u64 wait_value;
+    u32 command_buffer_count;
+    VkCommandBuffer *command_buffers;
+};
+
 struct VulkanQueue {
     VkQueue queue;
 
@@ -108,9 +115,16 @@ struct VulkanQueue {
     u32 index;
     u32 capabilities;
 
-    struct VulkanDevice *device;
+    VulkanDevice *device;
 
     VkCommandPool command_pool;
+
+    VkSemaphore batch_semaphore;
+    u64 next_semaphore_value;
+    
+    std::deque<VulkanSubmissionBatch> batches;
+
+    std::deque<VkCommandBuffer> free_command_buffers;
 };
 
 struct VulkanBackbufferData {
@@ -1629,6 +1643,7 @@ RHIDevice vk_create_device(RHIDeviceDesc *desc) {
     free(queue_infos);
 
     auto device = new VulkanDevice;
+
     if (!device) {
         free(selected_queue_assignments);
         free(selected_family_infos);
@@ -1639,17 +1654,16 @@ RHIDevice vk_create_device(RHIDeviceDesc *desc) {
     device->device = vk_device;
     device->gpu = gpu;
 
-    device->queues = (VulkanQueue *) malloc(sizeof(VulkanQueue) * selected_queue_assignment_count);
+    device->queues = new VulkanQueue[selected_queue_assignment_count];
 
     if (!device->queues) {
         vkDestroyDevice(vk_device, nullptr);
         free(selected_queue_assignments);
         free(selected_family_infos);
+        delete device;
 
         assert(false);
     }
-
-    memset(device->queues, 0, sizeof(VulkanQueue) * selected_queue_assignment_count);
 
     device->queue_count = selected_queue_assignment_count;
 
@@ -1657,7 +1671,6 @@ RHIDevice vk_create_device(RHIDeviceDesc *desc) {
         VulkanQueueFamilyAssignment *assignment = &selected_queue_assignments[i];
 
         VulkanQueue *queue = &device->queues[i];
-        memset(queue, 0, sizeof(VulkanQueue));
 
         queue->family = assignment->family;
         queue->index = assignment->index;
@@ -1681,10 +1694,35 @@ RHIDevice vk_create_device(RHIDeviceDesc *desc) {
             free(selected_queue_assignments);
             free(selected_family_infos);
             free(device->queues);
-            free(device);
+            delete device;
 
             assert(false);
         }
+
+        VkSemaphoreTypeCreateInfo timeline_info = {
+            .sType = VK_STRUCTURE_TYPE_SEMAPHORE_TYPE_CREATE_INFO,
+            .semaphoreType = VK_SEMAPHORE_TYPE_TIMELINE,
+            .initialValue = 0,
+        };
+        VkSemaphoreCreateInfo semaphore_info = {
+            .sType = VK_STRUCTURE_TYPE_SEMAPHORE_CREATE_INFO,
+            .pNext = &timeline_info,
+        };
+
+        if (vkCreateSemaphore(device->device, &semaphore_info, nullptr, &queue->batch_semaphore) != VK_SUCCESS) {
+            for (u32 j = 0; j <= i; j++) {
+                vkDestroyCommandPool(vk_device, device->queues[j].command_pool, nullptr);
+            }
+            vkDestroyDevice(vk_device, nullptr);
+            free(selected_queue_assignments);
+            free(selected_family_infos);
+            free(device->queues);
+            delete device;
+
+            assert(false);
+        }
+
+        queue->next_semaphore_value = 1;
     }
 
     free(selected_queue_assignments);
@@ -1701,14 +1739,15 @@ void vk_destroy_device(RHIDevice device) {
     for (u32 i = 0; i < vulkan_device->queue_count; i++) {
         vkDestroyCommandPool(vulkan_device->device, vulkan_device->queues[i].command_pool, nullptr);
     }
-    free(vulkan_device->queues);
+
+    delete[] vulkan_device->queues;
 
     vulkan_device->cpu_allocations.~vector();
     vulkan_device->gpu_allocations.~vector();
 
     vkDestroyDevice(vulkan_device->device, nullptr);
 
-    free(vulkan_device);
+    delete vulkan_device;
 }
 
 void vk_device_wait_idle(RHIDevice device) {
@@ -1748,21 +1787,46 @@ RHICommandBuffer vk_start_command_recording(RHIQueue queue) {
 
     auto vulkan_queue = (VulkanQueue *) queue;
 
-    VkCommandBufferAllocateInfo alloc_info = {
-        .sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_ALLOCATE_INFO,
-        .commandPool = vulkan_queue->command_pool,
-        .level = VK_COMMAND_BUFFER_LEVEL_PRIMARY,
-        .commandBufferCount = 1,
-    };
+    // Check if we can free any batches before allocating new command buffers
+    bool batch_finished = true;
+    while (batch_finished && vulkan_queue->batches.size() > 0) {
+        auto &batch = vulkan_queue->batches.front();
+        u64 value = 0;
+        if (vkGetSemaphoreCounterValue(vulkan_queue->device->device, vulkan_queue->batch_semaphore, &value) != VK_SUCCESS) {
+            assert(false);
+        }
+        
+        if (value >= batch.wait_value) {
+            for (u32 i = 0; i < batch.command_buffer_count; i++) {
+                vkResetCommandBuffer(batch.command_buffers[i], VK_COMMAND_BUFFER_RESET_RELEASE_RESOURCES_BIT);
+                vulkan_queue->free_command_buffers.push_back(batch.command_buffers[i]);
+            }
+            vulkan_queue->batches.pop_front();
+        } else {
+            batch_finished = false;
+        }
+    }
 
     VkCommandBuffer cb = nullptr;
-    if (vkAllocateCommandBuffers(vulkan_queue->device->device, &alloc_info, &cb) != VK_SUCCESS) {
-        assert(false);
+
+    if (vulkan_queue->free_command_buffers.size() > 0) {
+        cb = vulkan_queue->free_command_buffers.front();
+        vulkan_queue->free_command_buffers.pop_front();
+    } else {
+        VkCommandBufferAllocateInfo alloc_info = {
+            .sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_ALLOCATE_INFO,
+            .commandPool = vulkan_queue->command_pool,
+            .level = VK_COMMAND_BUFFER_LEVEL_PRIMARY,
+            .commandBufferCount = 1,
+        };
+
+        if (vkAllocateCommandBuffers(vulkan_queue->device->device, &alloc_info, &cb) != VK_SUCCESS) {
+            assert(false);
+        }
     }
 
     VkCommandBufferBeginInfo begin_info = {
-        .sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_BEGIN_INFO,
-        .flags = VK_COMMAND_BUFFER_USAGE_ONE_TIME_SUBMIT_BIT
+            .sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_BEGIN_INFO,
     };
 
     if (vkBeginCommandBuffer(cb, &begin_info) != VK_SUCCESS) {
@@ -1771,15 +1835,15 @@ RHICommandBuffer vk_start_command_recording(RHIQueue queue) {
         assert(false);
     }
 
-    auto vkcb = (VulkanCommandBuffer *) malloc(sizeof(VulkanCommandBuffer));
+    auto vkcb = new VulkanCommandBuffer;
+    vkcb->backbuffer = nullptr;
 
     if (!vkcb) {
+        vulkan_queue->free_command_buffers.push_back(cb);
         vkFreeCommandBuffers(vulkan_queue->device->device, vulkan_queue->command_pool, 1, &cb);
 
         assert(false);
     }
-
-    memset(vkcb, 0, sizeof(VulkanCommandBuffer));
 
     vkcb->command_buffer = cb;
     vkcb->queue = (VulkanQueue *) queue;
@@ -1815,8 +1879,15 @@ void vk_submit(RHIQueue queue, RHICommandBuffer *command_buffers, u32 command_bu
     };
 
     // Insert into intermediate maps to deduplicate semaphore value pairs
+    // Duplication is possible because we implicitly track semaphore usages at the command buffer level, 
+    //   and the caller should be allowed to call wait/signal on whatever command buffer they want without having to worry 
+    //   about the implicit synchronization that we track for them, and deduplicating on our end allows us to simplify the implementation 
+    //   for the caller while still ensuring correctness and avoiding redundant waits/signals.
     std::unordered_map<SemaphoreSubmitInfo, VkPipelineStageFlags2, SemaphoreSubmitInfoHash> signals_map;
     std::unordered_map<SemaphoreSubmitInfo, VkPipelineStageFlags2, SemaphoreSubmitInfoHash> waits_map;
+    // We do not deduplicate command buffers, 
+    //   because the caller is able to manage that themselves by merging command buffers if they choose to, 
+    //   and it simplifies the implementation on our end to just submit them as is.
     std::vector<VkCommandBufferSubmitInfo> cb_infos;
     cb_infos.resize(command_buffer_count);
 
@@ -1863,8 +1934,13 @@ void vk_submit(RHIQueue queue, RHICommandBuffer *command_buffers, u32 command_bu
             };
             signals_map[new_signal] = waits_map[new_signal] | signal.stageMask;
         }
+
+        // We no longer need the VulkanCommandBuffer object after extracting the synchronization info and command buffer handle, 
+        //   so we can free it now to avoid having to track it later when we want to reuse the command buffer handle.
+        delete cb;
     }
 
+    // I Dont think it is possible to duplicate the backbuffer semaphores, but just in case, we will insert them into the maps as well. 
     if (backbuffer && !backbuffer->backbuffer_data->acquire_consumed) {
         // TODO: We probably want to track pipeline stage here at some point
         SemaphoreSubmitInfo wait = {
@@ -1919,6 +1995,28 @@ void vk_submit(RHIQueue queue, RHICommandBuffer *command_buffers, u32 command_bu
         signals.push_back(new_signal);
     }
 
+    VulkanSubmissionBatch batch = {
+        .wait_value = vulkan_queue->next_semaphore_value,
+        .command_buffer_count = 0,
+        .command_buffers = (VkCommandBuffer *) malloc(sizeof(VkCommandBuffer) * cb_infos.size()),
+    };
+
+    for (auto &cb_info : cb_infos) {
+        batch.command_buffers[batch.command_buffer_count++] = cb_info.commandBuffer;
+    }
+
+    vulkan_queue->batches.push_back(batch);
+
+    // This definitely can't be duplicated so we add it directly to the list of signals
+    VkSemaphoreSubmitInfo queue_timeline_signal = {
+        .sType = VK_STRUCTURE_TYPE_SEMAPHORE_SUBMIT_INFO,
+        .semaphore = vulkan_queue->batch_semaphore,
+        .value = vulkan_queue->next_semaphore_value,
+    };
+    signals.push_back(queue_timeline_signal);
+
+    vulkan_queue->next_semaphore_value += 1;
+
     VkSubmitInfo2 info = {
         .sType = VK_STRUCTURE_TYPE_SUBMIT_INFO_2,
         .waitSemaphoreInfoCount = (u32) waits.size(),
@@ -1931,16 +2029,6 @@ void vk_submit(RHIQueue queue, RHICommandBuffer *command_buffers, u32 command_bu
     
     if (vkQueueSubmit2(vulkan_queue->queue, 1, &info, nullptr) != VK_SUCCESS) {
         assert(false);
-    }
-    
-    // TODO: Is it worth collecting command buffers into an array and freeing all of them?
-    for (u32 i = 0; i < command_buffer_count; i++) {
-        auto cb = (VulkanCommandBuffer *) command_buffers[i];
-
-        assert(cb);
-        assert(cb->queue == vulkan_queue);
-
-        vkFreeCommandBuffers(vulkan_queue->device->device, vulkan_queue->command_pool, 1, &cb->command_buffer);
     }
 }
 
@@ -3211,4 +3299,5 @@ bool vulkan_init(RHI *rhi) {
 void vulkan_shutdown() {
     vkDestroyDebugUtilsMessengerEXT(vulkan.instance, vulkan.debug_messenger, nullptr);
     vkDestroyInstance(vulkan.instance, nullptr);
+    vk_loader_shutdown();
 }

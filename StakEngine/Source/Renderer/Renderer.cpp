@@ -83,7 +83,7 @@ Renderer *create_renderer(Window win) {
 
 void destroy_renderer(Renderer *renderer) {
     rhi.device_wait_idle(renderer->device);
-    rhi.destroy_pipeline(renderer->device, renderer->pipeline);
+    //rhi.destroy_pipeline(renderer->device, renderer->pipeline);
     rhi.destroy_semaphore(renderer->device, renderer->semaphore);
     rhi.destroy_swapchain(renderer->device, renderer->swapchain);
     rhi.destroy_device(renderer->device);

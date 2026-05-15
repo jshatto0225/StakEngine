@@ -98,6 +98,8 @@ extern PFN_vkCmdDrawIndexedIndirect                vkCmdDrawIndexedIndirect;
 extern PFN_vkCmdDrawIndexedIndirectCount           vkCmdDrawIndexedIndirectCount;
 extern PFN_vkDestroyPipeline                       vkDestroyPipeline;
 extern PFN_vkWaitSemaphores                        vkWaitSemaphores;
+extern PFN_vkGetSemaphoreCounterValue              vkGetSemaphoreCounterValue;
+extern PFN_vkResetCommandBuffer                    vkResetCommandBuffer;
 
 extern PFN_vkGetSwapchainImagesKHR                 vkGetSwapchainImagesKHR;
 extern PFN_vkCreateSwapchainKHR                    vkCreateSwapchainKHR;

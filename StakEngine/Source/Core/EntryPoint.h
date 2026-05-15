@@ -12,13 +12,13 @@ inline s32 stak_main() {
 
     Engine *engine = create_engine();
     if (!engine) {
-        fprintf(stderr, "stak_main create_engine failed");
+        SK_LOG_ERROR("stak_main create_engine failed");
         return -1;
     }
 
     Application *app = create_application();
     if (!app) {
-        fprintf(stderr, "stak_main create_application failed");
+        SK_LOG_ERROR("stak_main create_application failed");
         return -1;
     }
 
@@ -34,6 +34,8 @@ inline s32 stak_main() {
     destroy_application(app, engine);
 
     destroy_engine(engine);
+
+    log_shutdown();
 
     return 0;
 }

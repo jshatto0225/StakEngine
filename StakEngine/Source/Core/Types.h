@@ -6,6 +6,7 @@
 #include <unordered_map>
 #include <unordered_set>
 #include <set>
+#include <deque>
 
 typedef float f32;
 typedef double f64;

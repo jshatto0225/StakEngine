@@ -43,6 +43,11 @@ void platform_shutdown() {
 }
 
 Window platform_create_window(const WindowConfig *cfg) {
+    if (!glfw_initialized) {
+        SK_LOG_ERROR("platform_create_window glfw not initialized");
+        return 0;
+    }
+
     glfwWindowHint(GLFW_CLIENT_API, GLFW_NO_API);
 
     auto handle = glfwCreateWindow(cfg->width, cfg->height, cfg->title, nullptr, nullptr);
@@ -168,6 +173,10 @@ Window platform_create_window(const WindowConfig *cfg) {
 }
 
 void platform_destroy_window(Window win) {
+    if (!win) {
+        return;
+    }
+
     auto window = (GlfwWindow *) win;
 
     glfwDestroyWindow(window->glfw);
@@ -176,6 +185,10 @@ void platform_destroy_window(Window win) {
 }
 
 bool platform_init_imgui(Window win) {
+    if (!win) {
+        return false;
+    }
+
     auto window = (GlfwWindow *) win;
 
     if (!ImGui_ImplGlfw_InitForVulkan(window->glfw, true)) {
@@ -199,18 +212,30 @@ void platform_process_messages() {
 }
 
 void platform_enable_raw_input(Window win) {
+    if (!win) {
+        return;
+    }
+
     auto window = (GlfwWindow *) win;
 
     glfwSetInputMode(window->glfw, GLFW_RAW_MOUSE_MOTION, GLFW_TRUE);
 }
 
 void platform_disable_raw_input(Window win) {
+    if (!win) {
+        return;
+    }
+
     auto window = (GlfwWindow *) win;
 
     glfwSetInputMode(window->glfw, GLFW_RAW_MOUSE_MOTION, GLFW_FALSE);
 }
 
 void platform_set_cursor_visibility(Window win, CursorVisibility visibility) {
+    if (!win) {
+        return;
+    }
+
     auto window = (GlfwWindow *) win;
 
     s32 glfw_visibility = 0;
@@ -232,16 +257,29 @@ void platform_set_cursor_visibility(Window win, CursorVisibility visibility) {
 }
 
 u32 platform_get_window_width(Window window) {
+    if (!window) {
+        return 0;
+    }
+
     auto win = (GlfwWindow *) window;
     return win->width;
 }
 
 u32 platform_get_window_height(Window window) {
+    if (!window) {
+        return 0;
+    }
+
     auto win = (GlfwWindow *) window;
     return win->height;
 }
 
 void *platform_get_window_handle(Window window) {
+    if (!window) {
+        SK_LOG_ERROR("platform_get_window_handle window is null");
+        return nullptr;
+    }
+
     auto win = (GlfwWindow *) window;
 #ifdef SK_WINDOWS
     return glfwGetWin32Window(win->glfw);

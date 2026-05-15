@@ -99,6 +99,8 @@ PFN_vkCmdDrawIndexedIndirect                vkCmdDrawIndexedIndirect;
 PFN_vkCmdDrawIndexedIndirectCount           vkCmdDrawIndexedIndirectCount;
 PFN_vkDestroyPipeline                       vkDestroyPipeline;
 PFN_vkWaitSemaphores                        vkWaitSemaphores;
+PFN_vkGetSemaphoreCounterValue              vkGetSemaphoreCounterValue;
+PFN_vkResetCommandBuffer                    vkResetCommandBuffer;
 
 PFN_vkGetSwapchainImagesKHR                 vkGetSwapchainImagesKHR;
 PFN_vkCreateSwapchainKHR                    vkCreateSwapchainKHR;
@@ -146,6 +148,13 @@ bool vk_loader_init() {
 
     vkCreateInstance = (PFN_vkCreateInstance) GetProcAddress(g_vulkan_module, "vkCreateInstance");
     if (!vkCreateInstance) {
+        FreeLibrary(g_vulkan_module);
+        g_vulkan_module = nullptr;
+        return false;
+    }
+
+    vkDestroyInstance = (PFN_vkDestroyInstance) GetProcAddress(g_vulkan_module, "vkDestroyInstance");
+    if (!vkDestroyInstance) {
         FreeLibrary(g_vulkan_module);
         g_vulkan_module = nullptr;
         return false;
@@ -329,8 +338,10 @@ bool vk_load_device_functions(VkDevice device) {
     vkCmdSetColorWriteMaskEXT = (PFN_vkCmdSetColorWriteMaskEXT) load_device_func(device, "vkCmdSetColorWriteMaskEXT");
     vkCmdDrawMeshTasksEXT = (PFN_vkCmdDrawMeshTasksEXT) load_device_func(device, "vkCmdDrawMeshTasksEXT");
     vkCmdDrawMeshTasksIndirectEXT = (PFN_vkCmdDrawMeshTasksIndirectEXT) load_device_func(device, "vkCmdDrawMeshTasksIndirectEXT");
+    vkGetSemaphoreCounterValue = (PFN_vkGetSemaphoreCounterValue) load_device_func(device, "vkGetSemaphoreCounterValue");
+    vkResetCommandBuffer = (PFN_vkResetCommandBuffer) load_device_func(device, "vkResetCommandBuffer");
 
-    if (!vkGetDeviceQueue || !vkCreateCommandPool || !vkDestroyCommandPool || !vkAllocateCommandBuffers || !vkFreeCommandBuffers || !vkBeginCommandBuffer || !vkEndCommandBuffer || !vkCreateBuffer || !vkDestroyBuffer || !vkGetBufferMemoryRequirements || !vkAllocateMemory || !vkFreeMemory || !vkMapMemory || !vkUnmapMemory || !vkBindBufferMemory || !vkGetBufferDeviceAddress || !vkCreateImageView || !vkDestroyImageView || !vkCreateSemaphore || !vkDestroySemaphore || !vkCreateFence || !vkDestroyFence || !vkWaitForFences || !vkQueueSubmit || !vkQueueSubmit2 || !vkDeviceWaitIdle || !vkCreateShaderModule || !vkDestroyShaderModule || !vkCreateComputePipelines || !vkCreateGraphicsPipelines || !vkCmdCopyBuffer || !vkCmdCopyBufferToImage || !vkCmdCopyImageToBuffer || !vkCmdBindPipeline || !vkCmdBindIndexBuffer || !vkCmdDrawIndexed || !vkCmdDispatch || !vkCmdDispatchIndirect || !vkCmdBeginRendering || !vkCmdEndRendering || !vkCmdPipelineBarrier2 || !vkCmdSetDepthWriteEnable || !vkCmdSetDepthCompareOp || !vkCmdSetDepthBiasEnable || !vkCmdSetDepthBias || !vkCmdSetStencilWriteMask || !vkCmdSetStencilOp || !vkCmdSetStencilReference || !vkCmdSetStencilCompareMask || !vkCmdDrawIndexedIndirect || !vkCmdDrawIndexedIndirectCount) {
+    if (!vkResetCommandBuffer || !vkGetSemaphoreCounterValue || !vkGetDeviceQueue || !vkCreateCommandPool || !vkDestroyCommandPool || !vkAllocateCommandBuffers || !vkFreeCommandBuffers || !vkBeginCommandBuffer || !vkEndCommandBuffer || !vkCreateBuffer || !vkDestroyBuffer || !vkGetBufferMemoryRequirements || !vkAllocateMemory || !vkFreeMemory || !vkMapMemory || !vkUnmapMemory || !vkBindBufferMemory || !vkGetBufferDeviceAddress || !vkCreateImageView || !vkDestroyImageView || !vkCreateSemaphore || !vkDestroySemaphore || !vkCreateFence || !vkDestroyFence || !vkWaitForFences || !vkQueueSubmit || !vkQueueSubmit2 || !vkDeviceWaitIdle || !vkCreateShaderModule || !vkDestroyShaderModule || !vkCreateComputePipelines || !vkCreateGraphicsPipelines || !vkCmdCopyBuffer || !vkCmdCopyBufferToImage || !vkCmdCopyImageToBuffer || !vkCmdBindPipeline || !vkCmdBindIndexBuffer || !vkCmdDrawIndexed || !vkCmdDispatch || !vkCmdDispatchIndirect || !vkCmdBeginRendering || !vkCmdEndRendering || !vkCmdPipelineBarrier2 || !vkCmdSetDepthWriteEnable || !vkCmdSetDepthCompareOp || !vkCmdSetDepthBiasEnable || !vkCmdSetDepthBias || !vkCmdSetStencilWriteMask || !vkCmdSetStencilOp || !vkCmdSetStencilReference || !vkCmdSetStencilCompareMask || !vkCmdDrawIndexedIndirect || !vkCmdDrawIndexedIndirectCount) {
         SK_LOG_ERROR("vk_load_device_functions: Failed to load one or more device-level Vulkan functions");
         ok = false;
     }

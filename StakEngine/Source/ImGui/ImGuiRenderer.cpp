@@ -12,6 +12,7 @@ ImguiRenderer *create_imgui_renderer(Renderer *renderer) {
         SK_LOG_ERROR("create_imgui_renderer malloc failed");
         return nullptr;
     }
+    memset(imgui_renderer, 0, sizeof(ImguiRenderer));
 
     imgui_renderer->renderer = renderer;
     imgui_renderer->draw_data = nullptr;
@@ -27,15 +28,27 @@ ImguiRenderer *create_imgui_renderer(Renderer *renderer) {
 }
 
 void destroy_imgui_renderer(ImguiRenderer *imgui_renderer) {
+    if (!imgui_renderer) {
+        return;
+    }
+
     ImGui::DestroyContext();
     free(imgui_renderer);
 }
 
 void imgui_renderer_begin_frame(ImguiRenderer *imgui_renderer) {
+    if (!imgui_renderer) {
+        return;
+    }
+
     ImGui::NewFrame();
 }
 
 void imgui_renderer_end_frame(ImguiRenderer *imgui_renderer) {
+    if (!imgui_renderer) {
+        return;
+    }
+
     ImGui::Render();
     ImDrawData *data = ImGui::GetDrawData();
     const bool minimized = (data->DisplaySize.x <= 0.0f || data->DisplaySize.y <= 0.0f);

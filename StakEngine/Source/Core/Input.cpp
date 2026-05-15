@@ -158,10 +158,18 @@ Input *create_input(Window window) {
 }
 
 void destroy_input(Input *input) {
-    free(input);
+    if (!input) {
+        return;
+    }
+
+    delete input;
 }
 
 InputCallbackInfo add_key_press_callback(Input *input, KeyCode key, std::function<void()> func) {
+    if (!input) {
+        return {};
+    }
+
     input->key_press_callbacks[key][input->key_press_id] = func;
 
     InputCallbackInfo info = {};
@@ -177,6 +185,10 @@ InputCallbackInfo add_key_press_callback(Input *input, KeyCode key, std::functio
 }
 
 InputCallbackInfo add_key_release_callback(Input *input, KeyCode key, std::function<void()> func) {
+    if (!input) {
+        return {};
+    }
+
     input->key_release_callbacks[key][input->key_release_id] = func;
 
     InputCallbackInfo info = {};
@@ -192,6 +204,10 @@ InputCallbackInfo add_key_release_callback(Input *input, KeyCode key, std::funct
 }
 
 InputCallbackInfo add_any_key_press_callback(Input *input, std::function<void(KeyCode)> func) {
+    if (!input) {
+        return {};
+    }
+
     input->any_key_press_callbacks[input->any_key_press_id] = func;
 
     InputCallbackInfo info = {};
@@ -207,6 +223,10 @@ InputCallbackInfo add_any_key_press_callback(Input *input, std::function<void(Ke
 }
 
 InputCallbackInfo add_any_key_release_callback(Input *input, std::function<void(KeyCode)> func) {
+    if (!input) {
+        return {};
+    }
+
     input->any_key_release_callbacks[input->any_key_release_id] = func;
 
     InputCallbackInfo info = {};
@@ -222,6 +242,10 @@ InputCallbackInfo add_any_key_release_callback(Input *input, std::function<void(
 }
 
 InputCallbackInfo add_key_any_action_callback(Input *input, KeyCode key, std::function<void(InputState)> func) {
+    if (!input) {
+        return {};
+    }
+
     input->key_any_action_callbacks[key][input->key_any_action_id] = func;
 
     InputCallbackInfo info = {};
@@ -237,6 +261,10 @@ InputCallbackInfo add_key_any_action_callback(Input *input, KeyCode key, std::fu
 }
 
 InputCallbackInfo add_any_key_any_action_callback(Input *input, std::function<void(InputState, KeyCode)> func) {
+    if (!input) {
+        return {};
+    }
+
     input->any_key_any_action_callbacks[input->any_key_any_action_id] = func;
 
     InputCallbackInfo info = {};
@@ -252,6 +280,10 @@ InputCallbackInfo add_any_key_any_action_callback(Input *input, std::function<vo
 }
 
 InputCallbackInfo add_mouse_button_press_callback(Input *input, MouseCode button, std::function<void()> func) {
+    if (!input) {
+        return {};
+    }
+
     input->mouse_button_press_callbacks[button][input->mouse_button_press_id] = func;
 
     InputCallbackInfo info = {};
@@ -267,6 +299,10 @@ InputCallbackInfo add_mouse_button_press_callback(Input *input, MouseCode button
 }
 
 InputCallbackInfo add_mouse_button_release_callback(Input *input, MouseCode button, std::function<void()> func) {
+    if (!input) {
+        return {};
+    }
+
     input->mouse_button_release_callbacks[button][input->mouse_button_release_id] = func;
 
     InputCallbackInfo info = {};
@@ -282,6 +318,10 @@ InputCallbackInfo add_mouse_button_release_callback(Input *input, MouseCode butt
 }
 
 InputCallbackInfo add_any_mouse_button_press_callback(Input *input, std::function<void(MouseCode)> func) {
+    if (!input) {
+        return {};
+    }
+
     input->any_mouse_button_press_callbacks[input->any_mouse_button_press_id] = func;
 
     InputCallbackInfo info = {};
@@ -297,6 +337,10 @@ InputCallbackInfo add_any_mouse_button_press_callback(Input *input, std::functio
 }
 
 InputCallbackInfo add_any_mouse_button_release_callback(Input *input, std::function<void(MouseCode)> func) {
+    if (!input) {
+        return {};
+    }
+
     input->any_mouse_button_release_callbacks[input->any_mouse_button_release_id] = func;
 
     InputCallbackInfo info = {};
@@ -312,6 +356,10 @@ InputCallbackInfo add_any_mouse_button_release_callback(Input *input, std::funct
 }
 
 InputCallbackInfo add_mouse_button_any_action_callback(Input *input, MouseCode button, std::function<void(InputState)> func) {
+    if (!input) {
+        return {};
+    }
+
     input->mouse_button_any_action_callbakcs[button][input->mouse_button_any_action_id] = func;
 
     InputCallbackInfo info = {};
@@ -327,6 +375,10 @@ InputCallbackInfo add_mouse_button_any_action_callback(Input *input, MouseCode b
 }
 
 InputCallbackInfo add_any_mouse_button_any_action_callback(Input *input, std::function<void(InputState, MouseCode)> func) {
+    if (!input) {
+        return {};
+    }
+
     input->any_mouse_button_any_action_callbacks[input->any_mouse_button_any_action_id] = func;
 
     InputCallbackInfo info = {};
@@ -342,6 +394,10 @@ InputCallbackInfo add_any_mouse_button_any_action_callback(Input *input, std::fu
 }
 
 InputCallbackInfo add_mouse_move_callback(Input *input, std::function<void(f32, f32)> func) {
+    if (!input) {
+        return {};
+    }
+
     input->mouse_move_callbacks[input->mouse_move_id] = func;
 
     InputCallbackInfo info = {};
@@ -355,6 +411,10 @@ InputCallbackInfo add_mouse_move_callback(Input *input, std::function<void(f32, 
 }
 
 void set_key(Input *input, KeyCode key, InputState state) {
+    if (!input) {
+        return;
+    }
+
     input->keyboard[key] = state;
 
     switch (state) {
@@ -385,6 +445,10 @@ void set_key(Input *input, KeyCode key, InputState state) {
 }
 
 void set_mouse_button(Input *input, MouseCode button, InputState state) {
+    if (!input) {
+        return;
+    }
+
     input->mouse.buttons[button] = state;
 
     switch (state) {
@@ -415,6 +479,10 @@ void set_mouse_button(Input *input, MouseCode button, InputState state) {
 }
 
 void set_mouse_pos(Input *input, f32 x, f32 y) {
+    if (!input) {
+        return;
+    }
+
     input->mouse.x = x;
     input->mouse.y = y;
 
@@ -424,6 +492,10 @@ void set_mouse_pos(Input *input, f32 x, f32 y) {
 }
 
 void remove_callback(Input *input, const InputCallbackInfo &info) {
+    if (!input) {
+        return;
+    }
+
     switch (info.type) {
     case InputCallbackType::Key:
         if (info.is_any_action && info.is_any_code) {
@@ -482,6 +554,10 @@ void remove_callback(Input *input, const InputCallbackInfo &info) {
 }
 
 void set_raw_input(Input *input, bool value) {
+    if (!input) {
+        return;
+    }
+
     if (input->using_raw_input != value) {
         input->using_raw_input = value;
         if (value) {
@@ -498,6 +574,10 @@ void set_raw_input(Input *input, bool value) {
 }
 
 void set_cursor_visibility(Input *input, CursorVisibility visibility) {
+    if (!input) {
+        return;
+    }
+
     if (visibility != input->cursor_visibility) {
         input->cursor_visibility = visibility;
         if (input->cursor_visibility != CursorVisibility::Disabled && input->using_raw_input) {
@@ -509,5 +589,9 @@ void set_cursor_visibility(Input *input, CursorVisibility visibility) {
 }
 
 InputState get_key(Input *input, KeyCode key) {
+    if (!input) {
+        return InputState::Up;
+    }
+
     return input->keyboard[key];
 }
