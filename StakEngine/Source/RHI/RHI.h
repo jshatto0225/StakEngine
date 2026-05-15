@@ -257,6 +257,15 @@ struct RHIQueueDesc {
 struct RHISwapchainDesc {
     RHIPlatform platform;
 
+    u32 width;
+    u32 height;
+
+    RHIFormat format;
+
+    u32 image_count;
+
+    bool vsync;
+
     void *window;
     void *display; // optional, for platforms that require it
 };

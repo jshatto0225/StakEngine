@@ -80,6 +80,12 @@ struct VulkanQueueFamilyInfo {
     bool supports_present;
 };
 
+struct VulkanSwapchainSupport {
+    VkSurfaceCapabilitiesKHR capabilities;
+    std::vector<VkSurfaceFormatKHR> formats;
+    std::vector<VkPresentModeKHR> present_modes;
+};
+
 struct VulkanDevice {
     VkDevice device;
     VkPhysicalDevice gpu;
@@ -202,6 +208,54 @@ struct VulkanDepthStencilState {
 };
 
 static Vulkan vulkan;
+
+bool platform_create_surface(VkInstance instance, void *window_handle, VkSurfaceKHR *surface);
+void platform_destroy_surface(VkInstance instance, VkSurfaceKHR surface);
+
+static s64 find_present_queue_family(VulkanDevice *device, VkSurfaceKHR surface) {
+    for (u32 i = 0; i < device->queue_count; i++) {
+        VkBool32 supports_present = false;
+        if (vkGetPhysicalDeviceSurfaceSupportKHR(device->gpu, device->queues[i].family, surface, &supports_present) != VK_SUCCESS) {
+            assert(false);
+        }
+
+        if (supports_present) {
+            return device->queues[i].family;
+        }
+    }
+
+    return -1;
+}
+
+static VulkanSwapchainSupport get_swapchain_support(VkPhysicalDevice gpu, VkSurfaceKHR surface) {
+    VulkanSwapchainSupport support = {};
+
+    if (vkGetPhysicalDeviceSurfaceCapabilitiesKHR(gpu, surface, &support.capabilities) != VK_SUCCESS) {
+        assert(false);
+    }
+
+    u32 format_count = 0;
+    if (vkGetPhysicalDeviceSurfaceFormatsKHR(gpu, surface, &format_count, nullptr) != VK_SUCCESS) {
+        assert(false);
+    }
+
+    support.formats.resize(format_count);
+    if (vkGetPhysicalDeviceSurfaceFormatsKHR(gpu, surface, &format_count, support.formats.data()) != VK_SUCCESS) {
+        assert(false);
+    }
+
+    u32 present_mode_count = 0;
+    if (vkGetPhysicalDeviceSurfacePresentModesKHR(gpu, surface, &present_mode_count, nullptr) != VK_SUCCESS) {
+        assert(false);
+    }
+
+    support.present_modes.resize(present_mode_count);
+    if (vkGetPhysicalDeviceSurfacePresentModesKHR(gpu, surface, &present_mode_count, support.present_modes.data()) != VK_SUCCESS) {
+        assert(false);
+    }
+
+    return support;
+}
 
 static VkImageViewType get_view_type(VkImageType type) {
     switch (type) {
@@ -456,7 +510,7 @@ static bool find_memory_type(VkPhysicalDevice gpu, u32 *memory_type_index, u32 f
     VkPhysicalDeviceMemoryProperties mem_props;
     vkGetPhysicalDeviceMemoryProperties(gpu, &mem_props);
 
-    for (auto i = 0; i < mem_props.memoryTypeCount; i++) {
+    for (u32 i = 0; i < mem_props.memoryTypeCount; i++) {
         if (((filter & (1 << i)) != 0) && ((mem_props.memoryTypes[i].propertyFlags & flags) == flags)) {
             *memory_type_index = i;
             return true;
@@ -1185,7 +1239,7 @@ RHIDepthStencilState vk_create_depth_stencil_state(RHIDevice device, RHIDepthSte
     state->back.reference = desc->stencil_back.reference;
     state->back.compare_mask = desc->stencil_read_mask;
 
-    return (u32) state;
+    return (u64) state;
 }
 
 RHIBlendState vk_create_blend_state(RHIDevice device, RHIBlendDesc *desc) {
@@ -1605,7 +1659,7 @@ RHIQueue vk_get_queue(RHIDevice device, RHIQueueDesc *desc) {
         }
 
         if (found == desc->index) {
-            return (u32)  &vulkan_device->queues[i];
+            return (u64)  &vulkan_device->queues[i];
         }
 
         found++;
@@ -1829,7 +1883,298 @@ void vk_abort(RHIQueue queue, RHICommandBuffer *command_buffers, u32 command_buf
 
 // Swapchain
 RHISwapchain vk_create_swapchain(RHIDevice device, RHISwapchainDesc *desc) {
-    
+    assert(device);
+    assert(desc);
+
+    auto vulkan_device = (VulkanDevice *) device;
+
+    auto swapchain = (VulkanSwapchain *) malloc(sizeof(VulkanSwapchain));
+
+    assert(swapchain);
+
+    memset(swapchain, 0, sizeof(VulkanSwapchain));
+
+    swapchain->device = vulkan_device->device;
+    if (!platform_create_surface(vulkan.instance, desc->window, &swapchain->surface)) {
+        assert(false);
+    }
+
+    VulkanSwapchainSupport support = get_swapchain_support(vulkan_device->gpu, swapchain->surface);
+
+    VkSurfaceFormatKHR surface_format = {};
+    bool format_found = false;
+    for (auto format : support.formats) {
+        if (format.format == get_format(desc->format) && format.colorSpace == VK_COLOR_SPACE_SRGB_NONLINEAR_KHR) {
+            surface_format = format;
+            format_found = true;
+            break;
+        }
+    }
+
+    if (!format_found) {
+        platform_destroy_surface(vulkan.instance, swapchain->surface);
+        free(swapchain);
+     
+        assert(false);
+    }
+
+    VkPresentModeKHR present_mode = VK_PRESENT_MODE_FIFO_KHR;
+    bool present_mode_found = false;
+    if (!desc->vsync) {
+        for (auto mode : support.present_modes) {
+            // Mailbox is the best option for no vsync, but if it's not available we can settle for immediate
+            if (mode == VK_PRESENT_MODE_MAILBOX_KHR) {
+                present_mode = mode;
+                present_mode_found = true;
+                break;
+            } else if (mode == VK_PRESENT_MODE_IMMEDIATE_KHR) {
+                present_mode = mode;
+                present_mode_found = true;
+            }
+        }
+    }
+
+    if (present_mode == VK_PRESENT_MODE_FIFO_KHR && !desc->vsync) {
+        platform_destroy_surface(vulkan.instance, swapchain->surface);
+        free(swapchain);
+
+        assert(false);
+    }
+
+    if (!present_mode_found) {
+        platform_destroy_surface(vulkan.instance, swapchain->surface);
+        free(swapchain);
+     
+        assert(false);
+    }
+
+    if (support.capabilities.currentExtent.width == UINT32_MAX) {
+        swapchain->extent.width = desc->width;
+        swapchain->extent.height = desc->height;
+    } else {
+        swapchain->extent.width = support.capabilities.currentExtent.width;
+        swapchain->extent.height = support.capabilities.currentExtent.height;
+    }
+
+    if (desc->image_count < support.capabilities.minImageCount) {
+        swapchain->image_count = support.capabilities.minImageCount;
+    } else if (desc->image_count > support.capabilities.maxImageCount) {
+        swapchain->image_count = support.capabilities.maxImageCount;
+    } else {
+        swapchain->image_count = desc->image_count;
+    }
+
+    VkSwapchainCreateInfoKHR create_info = {
+        .sType = VK_STRUCTURE_TYPE_SWAPCHAIN_CREATE_INFO_KHR,
+        .surface = swapchain->surface,
+        .minImageCount = swapchain->image_count,
+        .imageFormat = surface_format.format,
+        .imageColorSpace = VK_COLOR_SPACE_SRGB_NONLINEAR_KHR,
+        .imageExtent = swapchain->extent,
+        .imageArrayLayers = 1,
+        .imageUsage = VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT | VK_IMAGE_USAGE_TRANSFER_DST_BIT,
+        .preTransform = support.capabilities.currentTransform,
+        .compositeAlpha = VK_COMPOSITE_ALPHA_OPAQUE_BIT_KHR,
+        .presentMode = present_mode,
+        .clipped = true,
+    };
+
+    std::vector<u32> queue_family_indices;
+    for (u32 i = 0; i < vulkan_device->queue_count; i++) {
+        queue_family_indices.push_back(vulkan_device->queues[i].family);
+    }
+
+    if (vulkan_device->queue_count > 1) {
+        create_info.imageSharingMode = VK_SHARING_MODE_CONCURRENT;
+        create_info.queueFamilyIndexCount = (u32) queue_family_indices.size();
+        create_info.pQueueFamilyIndices = queue_family_indices.data();
+    } else {
+        create_info.imageSharingMode = VK_SHARING_MODE_EXCLUSIVE;
+    }
+
+    s64 present_queue_family = find_present_queue_family(vulkan_device, swapchain->surface);
+    if (present_queue_family < 0) {
+        platform_destroy_surface(vulkan.instance, swapchain->surface);
+        free(swapchain);
+
+        assert(false);
+    }
+
+    vkGetDeviceQueue(vulkan_device->device, (u32) present_queue_family, 0, &swapchain->queue);
+
+    if (vkCreateSwapchainKHR(vulkan_device->device, &create_info, nullptr, &swapchain->swapchain) != VK_SUCCESS) {
+        platform_destroy_surface(vulkan.instance, swapchain->surface);
+        free(swapchain);
+
+        assert(false);
+    }
+
+    if (vkGetSwapchainImagesKHR(vulkan_device->device, swapchain->swapchain, &swapchain->image_count, nullptr) != VK_SUCCESS) {
+        vkDestroySwapchainKHR(vulkan_device->device, swapchain->swapchain, nullptr);
+        platform_destroy_surface(vulkan.instance, swapchain->surface);
+        free(swapchain);
+
+        assert(false);
+    }
+
+    auto images = (VkImage *) malloc(sizeof(VkImage) * swapchain->image_count);
+
+    if (!images) {
+        vkDestroySwapchainKHR(vulkan_device->device, swapchain->swapchain, nullptr);
+        platform_destroy_surface(vulkan.instance, swapchain->surface);
+        free(swapchain);
+
+        assert(false);
+    }
+
+    swapchain->textures = (VulkanTexture *) malloc(sizeof(VulkanTexture) * swapchain->image_count);
+    if (!swapchain->textures) {
+        vkDestroySwapchainKHR(vulkan_device->device, swapchain->swapchain, nullptr);
+        platform_destroy_surface(vulkan.instance, swapchain->surface);
+        free(swapchain);
+
+        assert(false);
+    }
+
+    for (u32 i = 0; i < swapchain->image_count; i++) {
+        swapchain->textures[i].backbuffer_data = (VulkanBackbufferData *) malloc(sizeof(VulkanBackbufferData));
+
+        if (!swapchain->textures[i].backbuffer_data) {
+            for (u32 j = 0; j < i; j++) {
+                free(swapchain->textures[j].backbuffer_data);
+            }
+
+            free(swapchain->textures);
+            vkDestroySwapchainKHR(vulkan_device->device, swapchain->swapchain, nullptr);
+            platform_destroy_surface(vulkan.instance, swapchain->surface);
+            free(swapchain);
+
+            assert(false);
+        }
+        memset(swapchain->textures[i].backbuffer_data, 0, sizeof(VulkanBackbufferData));
+
+        swapchain->textures[i].format = surface_format.format;
+        swapchain->textures[i].extent = { swapchain->extent.width, swapchain->extent.height, 0 };
+        swapchain->textures[i].image = images[i];
+        swapchain->textures[i].aspect_mask = VK_IMAGE_ASPECT_COLOR_BIT;
+        swapchain->textures[i].layers = 1;
+        swapchain->textures[i].mip_count = 1;
+        swapchain->textures[i].sample_count = 1;
+        swapchain->textures[i].usage = VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT | VK_IMAGE_USAGE_TRANSFER_DST_BIT;
+        swapchain->textures[i].type = VK_IMAGE_TYPE_2D;
+
+        VkSemaphoreTypeCreateInfo timeline_type_info = {
+            .sType = VK_STRUCTURE_TYPE_SEMAPHORE_TYPE_CREATE_INFO,
+            .semaphoreType = VK_SEMAPHORE_TYPE_TIMELINE,
+            .initialValue = 0,
+        };
+
+        swapchain->textures[i].backbuffer_data->ready_value = 1;
+        swapchain->textures[i].backbuffer_data->present_value = 1;
+
+        VkSemaphoreCreateInfo timeline_info = {
+            .sType = VK_STRUCTURE_TYPE_SEMAPHORE_CREATE_INFO,
+            .pNext = &timeline_type_info,
+        };
+
+        if (vkCreateSemaphore(vulkan_device->device, &timeline_info, nullptr, &swapchain->textures[i].backbuffer_data->timeline) != VK_SUCCESS) {
+            free(swapchain->textures[i].backbuffer_data);
+            for (u32 j = 0; j < i; j++) {
+                free(swapchain->textures[j].backbuffer_data);
+            }
+            free(swapchain->textures);
+            vkDestroySwapchainKHR(vulkan_device->device, swapchain->swapchain, nullptr);
+            platform_destroy_surface(vulkan.instance, swapchain->surface);
+            free(swapchain);
+
+            assert(false);
+        }
+
+        VkImageViewCreateInfo view_info = {
+            .sType = VK_STRUCTURE_TYPE_IMAGE_VIEW_CREATE_INFO,
+            .image = swapchain->textures[i].image,
+            .viewType = VK_IMAGE_VIEW_TYPE_2D,
+            .format = surface_format.format,
+            .subresourceRange = {
+                .aspectMask = VK_IMAGE_ASPECT_COLOR_BIT,
+                .baseMipLevel = 0,
+                .levelCount = 1,
+                .baseArrayLayer = 0,
+                .layerCount = 1,
+            },
+        };
+
+        if (vkCreateImageView(vulkan_device->device, &view_info, nullptr, &swapchain->textures[i].image_view) != VK_SUCCESS) {
+            vkDestroySemaphore(vulkan_device->device, swapchain->textures[i].backbuffer_data->timeline, nullptr);
+            free(swapchain->textures[i].backbuffer_data);
+            for (u32 j = 0; j < i; j++) {
+                vkDestroySemaphore(vulkan_device->device, swapchain->textures[j].backbuffer_data->timeline, nullptr);
+                free(swapchain->textures[j].backbuffer_data);
+            }
+            free(swapchain->textures);
+            vkDestroySwapchainKHR(vulkan_device->device, swapchain->swapchain, nullptr);
+            platform_destroy_surface(vulkan.instance, swapchain->surface);
+            free(swapchain);
+
+            assert(false);
+        }
+        
+        VkSemaphoreCreateInfo semaphore_info = {
+            .sType = VK_STRUCTURE_TYPE_SEMAPHORE_CREATE_INFO,
+        };
+
+        VkFenceCreateInfo fence_info = {
+            .sType = VK_STRUCTURE_TYPE_FENCE_CREATE_INFO,
+            .flags = VK_FENCE_CREATE_SIGNALED_BIT,
+        };
+
+        if (vkCreateSemaphore(vulkan_device->device, &semaphore_info, nullptr, &swapchain->acquire_semaphores[i]) != VK_SUCCESS) {
+            for (u32 j = 0; j <= i; j++) {
+                vkDestroyImageView(vulkan_device->device, swapchain->textures[j].image_view, nullptr);
+                vkDestroySemaphore(vulkan_device->device, swapchain->textures[j].backbuffer_data->timeline, nullptr);
+                free(swapchain->textures[j].backbuffer_data);
+            }
+            free(swapchain->textures);
+            vkDestroySwapchainKHR(vulkan_device->device, swapchain->swapchain, nullptr);
+            platform_destroy_surface(vulkan.instance, swapchain->surface);
+            free(swapchain);
+
+            assert(false);
+        }
+
+        if (vkCreateSemaphore(vulkan_device->device, &semaphore_info, nullptr, &swapchain->present_semaphores[i]) != VK_SUCCESS) {
+            vkDestroySemaphore(vulkan_device->device, swapchain->acquire_semaphores[i], nullptr);
+            for (u32 j = 0; j <= i; j++) {
+                vkDestroyImageView(vulkan_device->device, swapchain->textures[j].image_view, nullptr);
+                vkDestroySemaphore(vulkan_device->device, swapchain->textures[j].backbuffer_data->timeline, nullptr);
+                free(swapchain->textures[j].backbuffer_data);
+            }
+            free(swapchain->textures);
+            vkDestroySwapchainKHR(vulkan_device->device, swapchain->swapchain, nullptr);
+            platform_destroy_surface(vulkan.instance, swapchain->surface);
+            free(swapchain);
+
+            assert(false);
+        }
+
+        if (vkCreateFence(vulkan_device->device, &fence_info, nullptr, &swapchain->fences[i]) != VK_SUCCESS) {
+            vkDestroySemaphore(vulkan_device->device, swapchain->present_semaphores[i], nullptr);
+            vkDestroySemaphore(vulkan_device->device, swapchain->acquire_semaphores[i], nullptr);
+            for (u32 j = 0; j <= i; j++) {
+                vkDestroyImageView(vulkan_device->device, swapchain->textures[j].image_view, nullptr);
+                vkDestroySemaphore(vulkan_device->device, swapchain->textures[j].backbuffer_data->timeline, nullptr);
+                free(swapchain->textures[j].backbuffer_data);
+            }
+            free(swapchain->textures);
+            vkDestroySwapchainKHR(vulkan_device->device, swapchain->swapchain, nullptr);
+            platform_destroy_surface(vulkan.instance, swapchain->surface);
+            free(swapchain);
+
+            assert(false);
+        }
+    }
+
+    return (RHISwapchain) swapchain;
 }
 
 void vk_destroy_swapchain(RHIDevice device, RHISwapchain swapchain) {
@@ -1844,22 +2189,24 @@ void vk_destroy_swapchain(RHIDevice device, RHISwapchain swapchain) {
 
     for (u32 i = 0; i < vulkan_swapchain->image_count; i++) {
         vkDestroyImageView(vulkan_device->device, vulkan_swapchain->textures[i].image_view, nullptr);
-        vkDestroySemaphore(vulkan_device->device, vulkan_swapchain->textures[i].backbuffer_data->timeline, nullptr);
         vkDestroySemaphore(vulkan_device->device, vulkan_swapchain->acquire_semaphores[i], nullptr);
         vkDestroySemaphore(vulkan_device->device, vulkan_swapchain->present_semaphores[i], nullptr);
         vkDestroyFence(vulkan_device->device, vulkan_swapchain->fences[i], nullptr);
 
-        assert(vulkan_swapchain->textures[i].backbuffer_data);
-
-        free(vulkan_swapchain->textures[i].backbuffer_data);
+        if (vulkan_swapchain->textures[i].backbuffer_data) {
+            vkDestroySemaphore(vulkan_device->device, vulkan_swapchain->textures[i].backbuffer_data->timeline, nullptr);
+            free(vulkan_swapchain->textures[i].backbuffer_data);
+            vulkan_swapchain->textures[i].backbuffer_data = nullptr;
+        } else {
+            // This should never happen, but if it does we want to know about it
+            assert(false);
+        }
     }
-
 
     free(vulkan_swapchain->textures);
     free(vulkan_swapchain);
 }
 
-// TODO: remove presented flag, move image index to backbuffer data, and add RHITexture as present parameter
 RHITexture vk_next_backbuffer(RHISwapchain swapchain) {
     assert(swapchain);
 
