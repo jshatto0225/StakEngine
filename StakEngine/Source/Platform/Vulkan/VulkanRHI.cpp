@@ -2,9 +2,8 @@
 
 #include "Log.h"
 
-#include <vulkan/vulkan.h>
-
 #include "VulkanPlatform.h"
+#include "VulkanLoader.h"
 
 #ifdef SK_DEBUG
 static const bool enable_validation = true;
@@ -209,9 +208,6 @@ struct VulkanDepthStencilState {
 
 static Vulkan vulkan;
 
-bool platform_create_surface(VkInstance instance, void *window_handle, VkSurfaceKHR *surface);
-void platform_destroy_surface(VkInstance instance, VkSurfaceKHR surface);
-
 static s64 find_present_queue_family(VulkanDevice *device, VkSurfaceKHR surface) {
     for (u32 i = 0; i < device->queue_count; i++) {
         VkBool32 supports_present = false;
@@ -299,22 +295,6 @@ static VkImageAspectFlags get_aspect_mask(RHIFormat format) {
             return VK_IMAGE_ASPECT_DEPTH_BIT;
         default:
             assert(false);
-    }
-}
-
-static VkResult create_debug_messenger(VkInstance instance, const VkDebugUtilsMessengerCreateInfoEXT *info, const VkAllocationCallbacks *allocator, VkDebugUtilsMessengerEXT *messenger) {
-    auto func = (PFN_vkCreateDebugUtilsMessengerEXT) vkGetInstanceProcAddr(instance, "vkCreateDebugUtilsMessengerEXT");
-    if (func != nullptr) {
-        return func(instance, info, allocator, messenger);
-    }
-    SK_LOG_ERROR("Extension not present");
-    return VK_ERROR_EXTENSION_NOT_PRESENT;
-}
-
-static void destroy_debug_messenger(VkInstance instance, VkDebugUtilsMessengerEXT messenger, const VkAllocationCallbacks *allocator) {
-    auto func = (PFN_vkDestroyDebugUtilsMessengerEXT) vkGetInstanceProcAddr(instance, "vkDestroyDebugUtilsMessengerEXT");
-    if (func != nullptr) {
-        func(instance, messenger, allocator);
     }
 }
 
@@ -1548,6 +1528,18 @@ RHIDevice vk_create_device(RHIDeviceDesc *desc) {
         free(selected_queue_assignments);
         free(selected_family_infos);
 
+        assert(false);
+    }
+
+    // load device-level extension symbols (required for swapchain / EXT functions used later)
+    if (!vk_load_device_functions(vk_device)) {
+        SK_LOG_ERROR("Failed to load device-level Vulkan functions");
+        // Proceeding to assert because core device functionality is required by this RHI
+        vkDestroyDevice(vk_device, nullptr);
+        free(priorities);
+        free(queue_infos);
+        free(selected_queue_assignments);
+        free(selected_family_infos);
         assert(false);
     }
 
@@ -2791,8 +2783,8 @@ void vk_draw_indexed_instanced_indirect(RHICommandBuffer cb, void *vertex_data_g
     VulkanBufferOffset index_offset = get_buffer_offset_gpu(command_buffer->queue->device, indices_gpu);
     vkCmdBindIndexBuffer(command_buffer->command_buffer, index_offset.buffer, index_offset.offset, VK_INDEX_TYPE_UINT16);
 
-VulkanBufferOffset indirect_offset = get_buffer_offset_gpu(command_buffer->queue->device, args_gpu);
-vkCmdDrawIndexedIndirect(command_buffer->command_buffer, indirect_offset.buffer, indirect_offset.offset, 1, 0);
+    VulkanBufferOffset indirect_offset = get_buffer_offset_gpu(command_buffer->queue->device, args_gpu);
+    vkCmdDrawIndexedIndirect(command_buffer->command_buffer, indirect_offset.buffer, indirect_offset.offset, 1, 0);
 }
 
 void vk_draw_indexed_instanced_indirect_multi(RHICommandBuffer cb, void *vertex_data_gpu, void *pixel_data_gpu, void *args_gpu, void *draw_count_gpu, u32 stride) {
@@ -2956,7 +2948,13 @@ bool vulkan_init(RHI *rhi) {
         assert(false);
     }
 
-    if (create_debug_messenger(vulkan.instance, &debug_info, nullptr, &vulkan.debug_messenger) != VK_SUCCESS) {
+    // load instance-level extension symbols
+    if (!vk_load_instance_functions(vulkan.instance)) {
+        SK_LOG_ERROR("Failed to load instance-level Vulkan functions");
+        assert(false);
+    }
+
+    if (vkCreateDebugUtilsMessengerEXT(vulkan.instance, &debug_info, nullptr, &vulkan.debug_messenger) != VK_SUCCESS) {
         assert(false);
     }
 
@@ -3039,6 +3037,6 @@ bool vulkan_init(RHI *rhi) {
 }
 
 void vulkan_shutdown() {
-    destroy_debug_messenger(vulkan.instance, vulkan.debug_messenger, nullptr);
+    vkDestroyDebugUtilsMessengerEXT(vulkan.instance, vulkan.debug_messenger, nullptr);
     vkDestroyInstance(vulkan.instance, nullptr);
 }

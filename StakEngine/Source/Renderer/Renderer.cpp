@@ -1,6 +1,7 @@
 #include "Renderer.h"
 
 #include "Window.h"
+#include "Platform.h"
 #include "RHI.h"
 #include "Log.h"
 
@@ -25,6 +26,22 @@ Renderer *create_renderer(Window win) {
     renderer->device = rhi.create_device(&device_desc);
     if (!renderer->device) {
         SK_LOG_ERROR("create_renderer Failed to create rhi device");
+        free(renderer);
+        return nullptr;
+    }
+
+    RHISwapchainDesc swapchain_desc = {
+        .platform = RHI_PLATFORM_WIN32,
+        .width = platform_get_window_width(win),
+        .height = platform_get_window_height(win),
+        .format = RHI_FORMAT_RGBA8_SRGB,
+        .image_count = Renderer::max_frames_in_flight,
+        .vsync = true,
+        .window = platform_get_window_handle(win),
+    };
+    renderer->swapchain = rhi.create_swapchain(renderer->device, &swapchain_desc);
+    if (!renderer->swapchain) {
+        SK_LOG_ERROR("create_renderer Failed to create swapchain");
         free(renderer);
         return nullptr;
     }
@@ -103,6 +120,7 @@ bool render(Renderer *renderer) {
         rhi.end_render_pass(cb);
     }
     rhi.submit(renderer->queue, &cb, 1, renderer->semaphore, renderer->next_frame++);
+
     rhi.present(renderer->swapchain, backbuffer);
 
     return true;

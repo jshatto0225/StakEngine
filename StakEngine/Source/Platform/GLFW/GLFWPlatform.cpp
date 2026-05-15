@@ -1,7 +1,11 @@
 #include <imgui.h>
 #include <backends/imgui_impl_glfw.h>
 #define GLFW_INCLUDE_NONE
+#ifdef SK_WINDOWS
+#define GLFW_EXPOSE_NATIVE_WIN32
+#endif
 #include <glfw/glfw3.h>
+#include <glfw/glfw3native.h>
 
 #include "RHI.h"
 #include "Window.h"
@@ -223,4 +227,21 @@ void platform_set_cursor_visibility(Window win, CursorVisibility visibility) {
     }
 
     glfwSetInputMode(window->glfw, GLFW_CURSOR, glfw_visibility);
+}
+
+u32 platform_get_window_width(Window window) {
+    auto win = (GlfwWindow *) window;
+    return win->width;
+}
+
+u32 platform_get_window_height(Window window) {
+    auto win = (GlfwWindow *) window;
+    return win->height;
+}
+
+void *platform_get_window_handle(Window window) {
+    auto win = (GlfwWindow *) window;
+#ifdef SK_WINDOWS
+    return glfwGetWin32Window(win->glfw);
+#endif
 }

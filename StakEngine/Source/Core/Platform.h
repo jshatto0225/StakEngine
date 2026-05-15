@@ -17,3 +17,8 @@ void platform_process_messages();
 void platform_enable_raw_input(Window window);
 void platform_disable_raw_input(Window window);
 void platform_set_cursor_visibility(Window window, CursorVisibility visibility);
+
+u32 platform_get_window_width(Window window);
+u32 platform_get_window_height(Window window);
+
+void *platform_get_window_handle(Window window);
