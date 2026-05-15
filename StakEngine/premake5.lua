@@ -8,8 +8,16 @@ project "StakEngine"
     objdir ("%{wks.location}/bin-int/" .. outputdir .. "/%{prj.name}")
 
     files {
-        "Source/**.h",
-        "Source/**.cpp",
+        "Source/Core/**.h",
+        "Source/Core/**.cpp",
+        "Source/ImGui/**.h",
+        "Source/ImGui/**.cpp",
+        "Source/Renderer/**.h",
+        "Source/Renderer/**.cpp",
+        "Source/Platform/GLFW/**.h",
+        "Source/Platform/GLFW/**.cpp",
+	"Source/Platform/Vulkan/*.h",
+	"Source/Platform/Vulkan/*.cpp",
         "StakEngine.h"
     }
 
@@ -50,8 +58,14 @@ project "StakEngine"
         }
         
         includedirs {
-            "$(VULKAN_SDK)/include"
+            "$(VULKAN_SDK)/include",
+	    "Source/Platform/Vulkan/Windows"
         }
+
+	files {
+	    "Source/Platform/Vulkan/Windows/*.h",
+	    "Source/Platform/Vulkan/Windows/*.cpp",
+	}
 
     filter "configurations:Debug"
         runtime "Debug"
