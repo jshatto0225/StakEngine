@@ -15,6 +15,7 @@ RHI_HANDLE(Queue);
 RHI_HANDLE(CommandBuffer);
 RHI_HANDLE(Semaphore);
 RHI_HANDLE(Device);
+RHI_HANDLE(Swapchain);
 
 // Enums
 enum RHIMemoryType { 
@@ -80,9 +81,9 @@ enum RHITextureType {
 enum RHIFormat { 
     RHI_FORMAT_NONE, 
     RHI_FORMAT_RGBA8_UNORM,
+    RHI_FORMAT_RGBA8_SRGB,
     RHI_FORMAT_D32_FLOAT,
-    RHI_FORMAT_RG11B10_FLOAT,
-    RHI_FORMAT_RGB10_A2_UNORM 
+    RHI_FORMAT_RGB10_A2_UNORM,
 };
 
 enum RHIUsageFlags { 
@@ -232,7 +233,6 @@ enum RHIQueueCapability {
     RHI_QUEUE_GRAPHICS = 1 << 0,
     RHI_QUEUE_COMPUTE = 1 << 1,
     RHI_QUEUE_TRANSFER = 1 << 2,
-    RHI_QUEUE_PRESENT = 1 << 3,
 };
 
 struct RHIQueueRequest {
@@ -250,6 +250,10 @@ struct RHIQueueDesc {
     u32 index;
 };
 
+struct RHISwapchainDesc {
+
+};
+
 struct RHI {
     // Memory
     void *(*alloc)(RHIDevice device, u64 bytes, RHIMemoryType memory);
@@ -260,6 +264,12 @@ struct RHI {
     RHIDevice (*create_device)(RHIDeviceDesc *desc);
     void (*destroy_device)(RHIDevice device);
     void (*device_wait_idle)(RHIDevice device);
+
+    // Swapchain
+    RHISwapchain(*create_swapchain)(RHIDevice device, RHISwapchainDesc *desc);
+    void (*destroy_swapchain)(RHIDevice device, RHISwapchain swapchain);
+    RHITexture (*get_current_backbuffer)(RHISwapchain swapchain);
+    void (*present)(RHISwapchain swapchain);
 
     // Textures
     RHITextureSizeAlign (*texture_size_align)(RHIDevice device, RHITextureDesc *desc);
@@ -296,7 +306,6 @@ struct RHI {
     void (*copy_from_texture)(RHICommandBuffer cb, void *dest_gpu, RHITexture texture);
 
     void (*set_active_texture_heap_ptr)(RHICommandBuffer cb, void *ptr_gpu, u64 size);
-    void (*set_active_resource_heap_ptr)(RHICommandBuffer cb, void *ptr_gpu, u64 size);
 
     void (*barrier)(RHICommandBuffer cb, RHIPipelineStage before, RHIPipelineStage after, RHIHazardFlags hazards);
     void (*signal_after)(RHICommandBuffer cb, RHIPipelineStage after, RHISemaphore sem, u64 value);

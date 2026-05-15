@@ -14,6 +14,7 @@ struct Renderer {
     RHIQueue queue;
     RHIPipeline pipeline;
     RHISemaphore semaphore;
+    RHISwapchain swapchain;
 
     u64 next_frame;
 };

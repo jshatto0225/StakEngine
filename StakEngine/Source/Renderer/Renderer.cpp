@@ -15,7 +15,7 @@ Renderer *create_renderer(Window win) {
     renderer->window = win;
 
     RHIQueueRequest queue_request = {
-        .capabilities = RHI_QUEUE_PRESENT | RHI_QUEUE_GRAPHICS,
+        .capabilities = RHI_QUEUE_GRAPHICS,
         .count = 1
     };
     RHIDeviceDesc device_desc = {
@@ -30,7 +30,7 @@ Renderer *create_renderer(Window win) {
     }
 
     RHIQueueDesc queue_desc = {
-        .capabilities = RHI_QUEUE_PRESENT | RHI_QUEUE_GRAPHICS,
+        .capabilities = RHI_QUEUE_GRAPHICS,
         .index = 0
     };
     renderer->queue = rhi.get_queue(renderer->device, &queue_desc);
@@ -53,6 +53,11 @@ Renderer *create_renderer(Window win) {
     renderer->next_frame = 1;
 
     renderer->semaphore = rhi.create_semaphore(renderer->device, 0);
+    if (!renderer->semaphore) {
+        SK_LOG_ERROR("create_renderer Failed to create semaphore");
+        free(renderer);
+        return false;
+    }
 
     return renderer;
 }
@@ -61,6 +66,7 @@ void destroy_renderer(Renderer *renderer) {
     rhi.device_wait_idle(renderer->device);
     rhi.destroy_pipeline(renderer->device, renderer->pipeline);
     rhi.destroy_semaphore(renderer->device, renderer->semaphore);
+    rhi.destroy_swapchain(renderer->device, renderer->swapchain);
     rhi.destroy_device(renderer->device);
 
     free(renderer);
@@ -73,7 +79,23 @@ bool render(Renderer *renderer) {
 
     RHICommandBuffer cb = rhi.start_command_recording(renderer->queue);
     {
-        RHIRenderPassDesc rp = {};
+        u32 image_index = rhi.get_current_image_index(renderer->swapchain);
+        RHITexture backbuffer = rhi.get_image(renderer->swapchain, image_index);
+        
+        RHIRenderPassAttachment color_attachment = {
+            .texture = backbuffer,
+            .clear = true,
+            .clear_value = {
+                .type = RHI_CLEAR_VALUE_TYPE_COLOR,
+                .color = { 1.0f, 1.0f, 0.0f, 1.0f },
+            }
+        };
+
+        RHIRenderPassDesc rp = {
+            .color_attachments = &color_attachment,
+            .color_attachment_count = 1,
+        };
+
         rhi.begin_render_pass(cb, &rp);
         {
             rhi.set_pipeline(cb, renderer->pipeline);
@@ -82,6 +104,7 @@ bool render(Renderer *renderer) {
         rhi.end_render_pass(cb);
     }
     rhi.submit(renderer->queue, &cb, 1, renderer->semaphore, renderer->next_frame++);
+    rhi.present(renderer->swapchain);
 
     return true;
 }
