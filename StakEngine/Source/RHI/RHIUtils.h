@@ -141,6 +141,26 @@ template<typename T>
 bool set_contains(Set<T> *set, T item);
 
 // Map
+
+/**
+ * FNV-1a
+ * 
+ * Generic hash over any struct. hash_bytes(&struct, sizeof(struct)).
+ * 
+ * uint64_t hash_bytes(const void *data, size_t size) {
+ *     const uint8_t *bytes = (const uint8_t *)data;
+ *
+ *     uint64_t hash = 14695981039346656037ull; // FNV offset basis
+ *
+ *     for (size_t i = 0; i < size; i++) {
+ *         hash ^= (uint64_t)bytes[i];
+ *         hash *= 1099511628211ull; // FNV prime
+ *     }
+ *
+ *     return hash;
+ * }
+ */
+
 template<typename K, typename V>
 Map<K, V> map_from_carr_clone(const K *ckeys, const V *cvalues, u64 count, RHIAllocator *alloc_callbacks);
 
