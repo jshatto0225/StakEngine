@@ -8,8 +8,8 @@
 
 static RHI rhi;
 
-bool rhi_init(_nullable RHIAllocator *alloc, _nullable RHIAllocator *temp_alloc) {
-    return rhi_impl_init(&rhi, alloc, temp_alloc);
+bool rhi_init(_nullable RHIAllocator *alloc, _nullable RHIAllocator *temp_alloc, _nullable RHILog log) {
+    return rhi_impl_init(&rhi, alloc, temp_alloc, log);
 }
 
 void rhi_shutdown() {

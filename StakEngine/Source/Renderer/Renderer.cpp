@@ -13,7 +13,25 @@ Renderer *create_renderer(Window win) {
         return nullptr;
     }
 
-    if (!rhi_init(nullptr, nullptr)) {
+    if (!rhi_init(nullptr, nullptr, [](const char *msg, RHISeverity severity) { 
+        switch (severity) {
+            case RHI_SEVERITY_TRACE:
+                SK_LOG_TRACE(msg);
+                break;
+            case RHI_SEVERITY_INFO:
+                SK_LOG_INFO(msg);
+                break;
+            case RHI_SEVERITY_WARN:
+                SK_LOG_WARN(msg);
+                break;
+            case RHI_SEVERITY_ERROR:
+                SK_LOG_ERROR(msg);
+                break;
+            case RHI_SEVERITY_CRITICAL:
+                SK_LOG_CRITICAL(msg);
+                break;
+        }
+    })) {
         SK_LOG_ERROR("create_renderer rhi_init failed");
         free(renderer);
         return nullptr;

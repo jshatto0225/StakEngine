@@ -1,7 +1,4 @@
-
-#include <cstring>
-#include "Asserts.h"
-#include "Log.h"
+#include <assert.h>
 
 #ifdef _WIN32
 #define WIN32_LEAN_AND_MEAN
@@ -120,14 +117,14 @@ PFN_vkCmdSetColorWriteMaskEXT               vkCmdSetColorWriteMaskEXT;
 PFN_vkCmdDrawMeshTasksEXT                   vkCmdDrawMeshTasksEXT;
 PFN_vkCmdDrawMeshTasksIndirectEXT           vkCmdDrawMeshTasksIndirectEXT;
 
-#ifdef _WIN32
+#ifdef VK_USE_PLATFORM_WIN32_KHR
 static HMODULE g_vulkan_module = nullptr;
 #else
 static void* g_vulkan_module = nullptr;
 #endif
 
 bool loader_init() {
-#ifdef _WIN32
+#ifdef VK_USE_PLATFORM_WIN32_KHR
 
     if (g_vulkan_module) return true;
     g_vulkan_module = LoadLibraryA("vulkan-1.dll");
@@ -194,7 +191,7 @@ bool loader_init() {
 }
 
 void loader_shutdown() {
-#ifdef _WIN32
+#ifdef VK_USE_PLATFORM_WIN32_KHR
     if (g_vulkan_module) {
         FreeLibrary(g_vulkan_module);
         g_vulkan_module = nullptr;
@@ -246,22 +243,21 @@ bool load_instance_functions(VkInstance instance) {
     vkDestroySurfaceKHR = (PFN_vkDestroySurfaceKHR) load_instance_func(instance, "vkDestroySurfaceKHR");
 
     if (!vkEnumeratePhysicalDevices || !vkEnumerateDeviceExtensionProperties || !vkGetPhysicalDeviceFeatures2 || !vkGetPhysicalDeviceQueueFamilyProperties || !vkGetPhysicalDeviceMemoryProperties || !vkCreateDevice || !vkDestroyDevice) {
-        SK_LOG_ERROR("vk_loader_init: Failed to load one or more instance-level Vulkan functions");
         ok = false;
     }
 
     if (!vkGetPhysicalDeviceSurfaceCapabilitiesKHR || !vkGetPhysicalDeviceSurfaceFormatsKHR || !vkGetPhysicalDeviceSurfacePresentModesKHR || !vkGetPhysicalDeviceSurfaceSupportKHR || !vkDestroySurfaceKHR) {
-        SK_LOG_WARN("vk_loader_init: Surface extension not available");
+        ok = false;
     }
 
     if (!vkCreateDebugUtilsMessengerEXT || !vkDestroyDebugUtilsMessengerEXT) {
-        SK_LOG_WARN("vk_loader_init: Debug utils extension not available");
+        ok = false;
     }
 
 #ifdef VK_USE_PLATFORM_WIN32_KHR
     vkCreateWin32SurfaceKHR = (PFN_vkCreateWin32SurfaceKHR) load_instance_func(instance, "vkCreateWin32SurfaceKHR");
     if (!vkCreateWin32SurfaceKHR) {
-        SK_LOG_WARN("vk_loader_init: Win32 surface extension not available");
+        ok = false;
     }
 #endif
 
@@ -344,31 +340,14 @@ bool load_device_functions(VkDevice device) {
     vkResetFences = (PFN_vkResetFences) load_device_func(device, "vkResetFences");
 
     if (!vkResetFences || !vkResetCommandBuffer || !vkGetSemaphoreCounterValue || !vkGetDeviceQueue || !vkCreateCommandPool || !vkDestroyCommandPool || !vkAllocateCommandBuffers || !vkFreeCommandBuffers || !vkBeginCommandBuffer || !vkEndCommandBuffer || !vkCreateBuffer || !vkDestroyBuffer || !vkGetBufferMemoryRequirements || !vkAllocateMemory || !vkFreeMemory || !vkMapMemory || !vkUnmapMemory || !vkBindBufferMemory || !vkGetBufferDeviceAddress || !vkCreateImageView || !vkDestroyImageView || !vkCreateSemaphore || !vkDestroySemaphore || !vkCreateFence || !vkDestroyFence || !vkWaitForFences || !vkQueueSubmit || !vkQueueSubmit2 || !vkDeviceWaitIdle || !vkCreateShaderModule || !vkDestroyShaderModule || !vkCreateComputePipelines || !vkCreateGraphicsPipelines || !vkCmdCopyBuffer || !vkCmdCopyBufferToImage || !vkCmdCopyImageToBuffer || !vkCmdBindPipeline || !vkCmdBindIndexBuffer || !vkCmdDrawIndexed || !vkCmdDispatch || !vkCmdDispatchIndirect || !vkCmdBeginRendering || !vkCmdEndRendering || !vkCmdPipelineBarrier2 || !vkCmdSetDepthWriteEnable || !vkCmdSetDepthCompareOp || !vkCmdSetDepthBiasEnable || !vkCmdSetDepthBias || !vkCmdSetStencilWriteMask || !vkCmdSetStencilOp || !vkCmdSetStencilReference || !vkCmdSetStencilCompareMask || !vkCmdDrawIndexedIndirect || !vkCmdDrawIndexedIndirectCount) {
-        SK_LOG_ERROR("vk_load_device_functions: Failed to load one or more device-level Vulkan functions");
         ok = false;
     }
 
     if (!vkGetSwapchainImagesKHR || !vkCreateSwapchainKHR || !vkDestroySwapchainKHR || !vkAcquireNextImageKHR || !vkQueuePresentKHR) {
-        SK_LOG_ERROR("vk_load_device_functions: Swapchain extension not available");
-        SK_LOG_ERROR("  vkGetSwapchainImagesKHR: {}", (void *) vkGetSwapchainImagesKHR);
-        SK_LOG_ERROR("  vkCreateSwapchainKHR: {}", (void *) vkCreateSwapchainKHR);
-        SK_LOG_ERROR("  vkDestroySwapchainKHR: {}", (void *) vkDestroySwapchainKHR);
-        SK_LOG_ERROR("  vkAcquireNextImageKHR: {}", (void *) vkAcquireNextImageKHR);
-        SK_LOG_ERROR("  vkQueuePresentKHR: {}", (void *) vkQueuePresentKHR);
-
         ok = false;
     }
 
     if (!vkCmdPushDataEXT || !vkWriteResourceDescriptorsEXT || !vkCmdBindResourceHeapEXT || !vkCmdSetColorBlendEnableEXT || !vkCmdSetColorBlendEquationEXT || !vkCmdSetColorWriteMaskEXT || !vkCmdDrawMeshTasksEXT || !vkCmdDrawMeshTasksIndirectEXT) {
-        SK_LOG_ERROR("vk_load_device_functions: Some EXT functions not available");
-        SK_LOG_ERROR("  vkCmdPushDataEXT: {}", (void *) vkCmdPushDataEXT);
-        SK_LOG_ERROR("  vkWriteResourceDescriptorsEXT: {}", (void *) vkWriteResourceDescriptorsEXT);
-        SK_LOG_ERROR("  vkCmdBindResourceHeapEXT: {}", (void *) vkCmdBindResourceHeapEXT);
-        SK_LOG_ERROR("  vkCmdSetColorBlendEnableEXT: {}", (void *) vkCmdSetColorBlendEnableEXT);
-        SK_LOG_ERROR("  vkCmdSetColorBlendEquationEXT: {}", (void *) vkCmdSetColorBlendEquationEXT);
-        SK_LOG_ERROR("  vkCmdSetColorWriteMaskEXT: {}", (void *) vkCmdSetColorWriteMaskEXT);
-        SK_LOG_ERROR("  vkCmdDrawMeshTasksEXT: {}", (void *) vkCmdDrawMeshTasksEXT);
-        SK_LOG_ERROR("  vkCmdDrawMeshTasksIndirectEXT: {}", (void *) vkCmdDrawMeshTasksIndirectEXT);
         ok = false;
     }
 

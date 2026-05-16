@@ -1,12 +1,11 @@
 #include "VulkanRHI.h"
 
-// TODO: Remove dependency
-#include "Log.h"
-
 #include "VulkanPlatform.h"
 #include "VulkanLoader.h"
 
 #include "RHIUtils.h"
+
+#include <assert.h>
 
 #ifdef SK_DEBUG
 static const bool enable_validation = true;
@@ -34,6 +33,8 @@ const char *device_extensions[device_extension_count] = {
 #endif
 
 #define COMMAND_BUFFER_INITIAL_SEMAPHORE_COUNT 8
+
+#define LOG(msg, severity) if (vk.log) vk.log(msg, severity)
 
 #define palloc(x) vk.alloc->alloc(x, vk.alloc->user_data)
 #define pfree(x)  vk.alloc->free((void *)(x), vk.alloc->user_data)
@@ -69,6 +70,8 @@ struct Vulkan {
 
     bool default_alloc;
     bool default_temp_alloc;
+
+    RHILog log;
 };
 
 struct Swapchain {
@@ -604,16 +607,16 @@ static void insert_allocation_gpu(Device *device, AllocBlock in) {
 static VKAPI_ATTR VkBool32 VKAPI_CALL debug_messenger(VkDebugUtilsMessageSeverityFlagBitsEXT severity, VkDebugUtilsMessageTypeFlagsEXT type, const VkDebugUtilsMessengerCallbackDataEXT *callback_data, void *user_data) {
     switch (severity) {
         case VK_DEBUG_UTILS_MESSAGE_SEVERITY_ERROR_BIT_EXT:
-            SK_LOG_ERROR(callback_data->pMessage);
+            LOG(callback_data->pMessage, RHI_SEVERITY_ERROR);
             break;
         case VK_DEBUG_UTILS_MESSAGE_SEVERITY_INFO_BIT_EXT:
-            SK_LOG_INFO(callback_data->pMessage);
+            LOG(callback_data->pMessage, RHI_SEVERITY_INFO);
             break;
         case VK_DEBUG_UTILS_MESSAGE_SEVERITY_VERBOSE_BIT_EXT:
-            SK_LOG_INFO(callback_data->pMessage);
+            LOG(callback_data->pMessage, RHI_SEVERITY_TRACE);
             break;
         case VK_DEBUG_UTILS_MESSAGE_SEVERITY_WARNING_BIT_EXT:
-            SK_LOG_WARN(callback_data->pMessage);
+            LOG(callback_data->pMessage, RHI_SEVERITY_WARN);
             break;
         default:
             break;
@@ -1575,7 +1578,7 @@ RHIDevice vk_create_device(RHIDeviceDesc *desc) {
     if (!load_device_functions(vk_device)) {
         vkDestroyDevice(vk_device, nullptr);
 
-        SK_LOG_ERROR("Failed to load device-level Vulkan functions");
+        LOG("Failed to load device-level Vulkan functions", RHI_SEVERITY_ERROR);
 
         assert(false);
     }
@@ -3142,18 +3145,20 @@ void vk_draw_meshlets_indirect(RHICommandBuffer cb, void *meshlet_data_gpu, void
     vkCmdDrawMeshTasksIndirectEXT(command_buffer->command_buffer, offset.buffer, offset.offset, 1, 0);
 }
 
-bool vulkan_init(RHI *rhi, RHIAllocator *alloc, RHIAllocator *temp_alloc) {
+bool vulkan_init(RHI *rhi, _nullable RHIAllocator *alloc, _nullable RHIAllocator *temp_alloc, _nullable RHILog log) {
     loader_init();
+
+    vk.log = log;
 
     if (alloc && alloc->alloc && alloc->free && alloc->reset) {
         vk.alloc = alloc;
     } else if (alloc) {
-        SK_LOG_WARN("vulkan_init alloc incomplete");
-        assert(false);
+        LOG("vulkan_init alloc incomplete", RHI_SEVERITY_ERROR);
+        return false;
     } else {
         vk.alloc = (RHIAllocator *) malloc(sizeof(RHIAllocator));
         if (!vk.alloc) {
-            SK_LOG_ERROR("vulkan_init malloc failed");
+            LOG("vulkan_init malloc failed", RHI_SEVERITY_ERROR);
             return false;
         }
         vk.alloc->alloc = [](u64 size, void *user_data) -> void * {
@@ -3175,20 +3180,20 @@ bool vulkan_init(RHI *rhi, RHIAllocator *alloc, RHIAllocator *temp_alloc) {
     if (temp_alloc && temp_alloc->alloc && temp_alloc->free && temp_alloc->reset) {
         vk.temp_alloc = temp_alloc;
     } else if (temp_alloc) {
-        SK_LOG_WARN("vulkan_init temp_alloc incomplete");
-        assert(false);
+        LOG("vulkan_init temp_alloc incomplete", RHI_SEVERITY_ERROR);
+        return false;
     } else {
         const u64 default_tem_alloc_size = 1024 * 1024;
 
         TempAllocatorData *data = (TempAllocatorData *) malloc(sizeof(TempAllocatorData));
         if (!data) {
-            SK_LOG_ERROR("vulkan_init malloc failed");
+            LOG("vulkan_init malloc failed", RHI_SEVERITY_ERROR);
             return false;
         }
         data->capacity = default_tem_alloc_size;
         data->base = (u8 *) malloc(data->capacity);
         if (!data->base) {
-            SK_LOG_ERROR("vulkan_init malloc failed");
+            LOG("vulkan_init malloc failed", RHI_SEVERITY_ERROR);
             free(data);
             return false;
         }
@@ -3196,7 +3201,7 @@ bool vulkan_init(RHI *rhi, RHIAllocator *alloc, RHIAllocator *temp_alloc) {
 
         vk.temp_alloc = (RHIAllocator *) malloc(sizeof(RHIAllocator));
         if (!vk.temp_alloc) {
-            SK_LOG_ERROR("vulkan_init malloc failed");
+            LOG("vulkan_init malloc failed", RHI_SEVERITY_ERROR);
             free(data->base);
             free(data);
             return false;
@@ -3230,7 +3235,7 @@ bool vulkan_init(RHI *rhi, RHIAllocator *alloc, RHIAllocator *temp_alloc) {
     }
     rhi::Array<VkLayerProperties> layers = rhi::array<VkLayerProperties>(layer_count, vk.temp_alloc);
     if (vkEnumerateInstanceLayerProperties(&layer_count, layers.data) != VK_SUCCESS) {
-        SK_LOG_ERROR("vulkan_init vkEnumerateInstanceLayerProperties failed");
+        LOG("vulkan_init vkEnumerateInstanceLayerProperties failed", RHI_SEVERITY_ERROR);
         return false;
     }
 
@@ -3251,7 +3256,7 @@ bool vulkan_init(RHI *rhi, RHIAllocator *alloc, RHIAllocator *temp_alloc) {
     }
 
     if (!extensions_supported) {
-        SK_LOG_ERROR("vulkan_init !extensions_supported");
+        LOG("vulkan_init !extensions_supported", RHI_SEVERITY_ERROR);
         return false;
     }
 
@@ -3297,18 +3302,18 @@ bool vulkan_init(RHI *rhi, RHIAllocator *alloc, RHIAllocator *temp_alloc) {
     instance_info.ppEnabledExtensionNames = extensions.data;
 
     if (vkCreateInstance(&instance_info, nullptr, &vk.instance) != VK_SUCCESS) {
-        SK_LOG_ERROR("vulkan_init vkCreateInstance failed");
+        LOG("vulkan_init vkCreateInstance failed", RHI_SEVERITY_ERROR);
         return false;
     }
 
     // load instance-level extension symbols
     if (!load_instance_functions(vk.instance)) {
-        SK_LOG_ERROR("vulkan_init load_instance_functions failed");
+        LOG("vulkan_init load_instance_functions failed", RHI_SEVERITY_ERROR);
         return false;
     }
 
     if (vkCreateDebugUtilsMessengerEXT(vk.instance, &debug_info, nullptr, &vk.debug_messenger) != VK_SUCCESS) {
-        SK_LOG_ERROR("vulkan_init vkCreateDebugUtilsMessengerEXT failed");
+        LOG("vulkan_init vkCreateDebugUtilsMessengerEXT failed", RHI_SEVERITY_ERROR);
         return false;
     }
 

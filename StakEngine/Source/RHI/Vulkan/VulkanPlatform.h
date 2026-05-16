@@ -1,8 +1,6 @@
 #pragma once
 
-#include "RHIUtils.h"
-
-#include "VulkanLoader.h"
+#include <vulkan/vulkan.h>
 
 void platform_get_required_extensions(const char **extensions);
 u32 platform_get_required_extension_count();

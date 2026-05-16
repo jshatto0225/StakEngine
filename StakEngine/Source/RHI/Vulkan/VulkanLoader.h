@@ -2,7 +2,6 @@
 
 #define VK_NO_PROTOTYPES
 #include <vulkan/vulkan.h>
-#include <cstdint>
 
 #ifdef __cplusplus
 extern "C" {

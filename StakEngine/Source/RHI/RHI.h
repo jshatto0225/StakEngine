@@ -52,6 +52,16 @@ struct RHIAllocator {
     void *user_data;
 };
 
+enum RHISeverity {
+    RHI_SEVERITY_TRACE,
+    RHI_SEVERITY_INFO,
+    RHI_SEVERITY_WARN,
+    RHI_SEVERITY_ERROR,
+    RHI_SEVERITY_CRITICAL,
+};
+
+typedef void (*RHILog)(const char *message, RHISeverity severity);
+
 #define RHI_HANDLE(name) typedef void *RHI##name;
 
 // Opaque handles
@@ -398,7 +408,7 @@ struct RHI {
 // The user_data field of the allocation callbacks can be used to pass additional information to the allocator functions, such as a pointer to a custom allocator object or a logging function. 
 // The RHI will not modify the allocation callbacks or the user_data pointer, so it is the responsibility of the caller to ensure that they remain valid for the lifetime of the RHI.
 // The allocation_callbacks cannot be changed after initialization.
-bool rhi_init(_nullable RHIAllocator *alloc, _nullable RHIAllocator *temp_alloc);
+bool rhi_init(_nullable RHIAllocator *alloc, _nullable RHIAllocator *temp_alloc, _nullable RHILog log);
 void rhi_shutdown();
 
 // Memory
