@@ -1704,7 +1704,7 @@ RHIQueue vk_get_queue(RHIDevice device, RHIQueueDesc *desc) {
 RHICommandBuffer vk_start_command_recording(RHIQueue queue) {
     assert(queue);
 
-    Device *vulkan_queue = (Queue *) queue;
+    Queue *vulkan_queue = (Queue *) queue;
 
     // Check if we can free any batches before allocating new command buffers
     bool batch_finished = true;

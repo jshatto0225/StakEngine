@@ -25,7 +25,6 @@ project "StakEngine"
         "Source",
         "Source/Core",
         "Source/Platform/GLFW",
-        "Source/Platform/Vulkan",
         "Source/Renderer",
         "Source/RHI",
         "Source/ImGui",
@@ -55,17 +54,18 @@ project "StakEngine"
 
         includedirs {
             "$(VULKAN_SDK)/include",
-            "Source/Platform/Vulkan/Windows"
+            "Source/RHI/Vulkan/Windows",
+            "Source/RHI/Vulkan",
         }
 
-	files {
-	    "Source/Platform/Vulkan/Windows/*.h",
-	    "Source/Platform/Vulkan/Windows/*.cpp",
-        "Source/RHI/Vulkan/*.h",
-        "Source/RHI/Vulkan/*.cpp",
-        "Source/RHI/Vulkan/Windows/*.h",
-        "Source/RHI/Vulkan/Windows/*.cpp",
-	}
+        files {
+            "Source/Platform/Vulkan/Windows/*.h",
+            "Source/Platform/Vulkan/Windows/*.cpp",
+            "Source/RHI/Vulkan/*.h",
+            "Source/RHI/Vulkan/*.cpp",
+            "Source/RHI/Vulkan/Windows/*.h",
+            "Source/RHI/Vulkan/Windows/*.cpp",
+        }
 
     filter "configurations:Debug"
         runtime "Debug"
