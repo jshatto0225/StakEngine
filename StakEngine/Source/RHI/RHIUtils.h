@@ -146,6 +146,8 @@ bool set_contains(Set<T> *set, T item);
  * FNV-1a
  * 
  * Generic hash over any struct. hash_bytes(&struct, sizeof(struct)).
+ * Still need to do a memcmp over the struct bytes.
+ * RHIAllocator spec of ZII makes padding bytes irrelevant.
  * 
  * uint64_t hash_bytes(const void *data, size_t size) {
  *     const uint8_t *bytes = (const uint8_t *)data;
