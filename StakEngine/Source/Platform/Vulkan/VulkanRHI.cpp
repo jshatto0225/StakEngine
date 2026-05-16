@@ -33,6 +33,8 @@ const char *device_extensions[device_extension_count] = {
 #define ASSERT_RESOURCE_IS_STRICT(device, ptr, Type) ASSERT_RESOURCE_##Type##_STRICT(device, ptr)
 #endif
 
+#define COMMAND_BUFFER_INITIAL_SEMAPHORE_COUNT 8
+
 #define palloc(x) vk.alloc->alloc(x, vk.alloc->user_data)
 #define pfree(x)  vk.alloc->free((void *)(x), vk.alloc->user_data)
 
@@ -1755,6 +1757,8 @@ RHICommandBuffer vk_start_command_recording(RHIQueue queue) {
 
     vkcb->command_buffer = cb;
     vkcb->queue = (Queue *) queue;
+    vkcb->waits = rhi::dyn_array<VkSemaphoreSubmitInfo>(0, COMMAND_BUFFER_INITIAL_SEMAPHORE_COUNT, vk.alloc);
+    vkcb->signals = rhi::dyn_array<VkSemaphoreSubmitInfo>(0, COMMAND_BUFFER_INITIAL_SEMAPHORE_COUNT, vk.alloc);
 
     return vkcb;
 }
@@ -1775,19 +1779,6 @@ void vk_submit(RHIQueue queue, RHICommandBuffer *command_buffers, u32 command_bu
     struct SemaphoreSubmitInfo {
         VkSemaphore semaphore;
         u64 value;
-        bool operator==(const SemaphoreSubmitInfo &o) const noexcept {
-            return semaphore == o.semaphore && value == o.value;
-        }
-    };
-    
-    struct SemaphoreSubmitInfoHash {
-        size_t operator()(const SemaphoreSubmitInfo & s) const noexcept {
-            // Combine pointer-sized semaphore and 64-bit value into a hash.
-            // Use uintptr_t to hash semaphore handle portably.
-            const auto h1 = std::hash<std::uintptr_t>()((std::uintptr_t) s.semaphore);
-            const auto h2 = std::hash<u64>()(s.value);
-            return h1 ^ (h2 + 0x9e3779b97f4a7c15ULL + (h1 << 6) + (h1 >> 2));
-        }
     };
 
     // Insert into intermediate maps to deduplicate semaphore value pairs
@@ -1795,8 +1786,9 @@ void vk_submit(RHIQueue queue, RHICommandBuffer *command_buffers, u32 command_bu
     //   and the caller should be allowed to call wait/signal on whatever command buffer they want without having to worry 
     //   about the implicit synchronization that we track for them, and deduplicating on our end allows us to simplify the implementation 
     //   for the caller while still ensuring correctness and avoiding redundant waits/signals.
-    std::unordered_map<SemaphoreSubmitInfo, VkPipelineStageFlags2, SemaphoreSubmitInfoHash> signals_map;
-    std::unordered_map<SemaphoreSubmitInfo, VkPipelineStageFlags2, SemaphoreSubmitInfoHash> waits_map;
+    rhi::Map<SemaphoreSubmitInfo, VkPipelineStageFlags2> signals_map = rhi::map<SemaphoreSubmitInfo, VkPipelineStageFlags2>(command_buffer_count * COMMAND_BUFFER_INITIAL_SEMAPHORE_COUNT, vk.temp_alloc);
+    rhi::Map<SemaphoreSubmitInfo, VkPipelineStageFlags2> waits_map = rhi::map<SemaphoreSubmitInfo, VkPipelineStageFlags2>(command_buffer_count * COMMAND_BUFFER_INITIAL_SEMAPHORE_COUNT, vk.temp_alloc);
+    
     // We do not deduplicate command buffers, 
     //   because the caller is able to manage that themselves by merging command buffers if they choose to, 
     //   and it simplifies the implementation on our end to just submit them as is.
@@ -1807,7 +1799,7 @@ void vk_submit(RHIQueue queue, RHICommandBuffer *command_buffers, u32 command_bu
         .value = sem_val,
     };
 
-    signals_map[cpu_sem_info] = VK_PIPELINE_STAGE_2_ALL_COMMANDS_BIT;
+    rhi::map_insert(&signals_map, cpu_sem_info, VK_PIPELINE_STAGE_2_ALL_COMMANDS_BIT, vk.temp_alloc);
 
     Texture *backbuffer = nullptr;
 
@@ -1835,7 +1827,12 @@ void vk_submit(RHIQueue queue, RHICommandBuffer *command_buffers, u32 command_bu
                 .semaphore = cb->waits.data[i].semaphore,
                 .value = cb->waits.data[i].value
             };
-            waits_map[new_wait] = waits_map[new_wait] | cb->waits.data[i].stageMask;
+            VkPipelineStageFlags2 *flags = rhi::map_get(&waits_map, new_wait);
+            if (flags) {
+                *flags |= cb->waits.data[i].stageMask;
+            } else {
+                rhi::map_insert(&waits_map, new_wait, cb->waits.data[i].stageMask, vk.temp_alloc);
+            }
         }
 
         for (u32 i = 0; i < cb->signals.count; i++) {
@@ -1843,17 +1840,23 @@ void vk_submit(RHIQueue queue, RHICommandBuffer *command_buffers, u32 command_bu
                 .semaphore = cb->signals.data[i].semaphore,
                 .value = cb->signals.data[i].value
             };
-            signals_map[new_signal] = waits_map[new_signal] | cb->signals.data[i].stageMask;
+            VkPipelineStageFlags2 *flags = rhi::map_get(&signals_map, new_signal);
+            if (flags) {
+                *flags |= cb->waits.data[i].stageMask;
+            } else {
+                rhi::map_insert(&signals_map, new_signal, cb->waits.data[i].stageMask, vk.temp_alloc);
+            }
         }
 
         // We no longer need the CommandBuffer object after extracting the synchronization info and command buffer handle, 
         //   so we can free it now to avoid having to track it later when we want to reuse the command buffer handle.
+        rhi::dyn_array_free(&cb->waits, vk.alloc);
+        rhi::dyn_array_free(&cb->signals, vk.alloc);
         pfree(cb);
     }
 
     assert(!backbuffer || backbuffer->backbuffer_data->valid);
 
-    // I Dont think it is possible to duplicate the backbuffer semaphores, but just in case, we will insert them into the maps as well. 
     if (backbuffer) {
         // TODO: We probably want to track pipeline stage here at some point
         SemaphoreSubmitInfo wait = {
@@ -1866,35 +1869,38 @@ void vk_submit(RHIQueue queue, RHICommandBuffer *command_buffers, u32 command_bu
             .value = backbuffer->backbuffer_data->ready_value
         };
 
-        waits_map[wait] = waits_map[wait] | VK_PIPELINE_STAGE_2_COLOR_ATTACHMENT_OUTPUT_BIT;
-        signals_map[signal] = signals_map[signal] | VK_PIPELINE_STAGE_2_COLOR_ATTACHMENT_OUTPUT_BIT;
+        rhi::map_insert(&waits_map, wait, VK_PIPELINE_STAGE_2_COLOR_ATTACHMENT_OUTPUT_BIT, vk.temp_alloc);
+        rhi::map_insert(&signals_map, signal, VK_PIPELINE_STAGE_2_COLOR_ATTACHMENT_OUTPUT_BIT, vk.temp_alloc);
     }
 
     // Do the deduplication
-    u32 wait_count = waits_map.size();
-    u32 signal_count = signals_map.size() + 1;
+    u32 wait_count = waits_map.count;
+    u32 signal_count = signals_map.count + 1;
 
     rhi::Array<VkSemaphoreSubmitInfo> waits = rhi::array<VkSemaphoreSubmitInfo>(wait_count, vk.temp_alloc);
     rhi::Array<VkSemaphoreSubmitInfo> signals = rhi::array<VkSemaphoreSubmitInfo>(signal_count, vk.temp_alloc);
 
+    SemaphoreSubmitInfo *it1;
+    VkPipelineStageFlags2 *it2;
+
     u32 wait_index = 0;
-    for (const auto &wait : waits_map) {
+    for_map(it1, it2, waits_map) {
         waits.data[wait_index] = {
             .sType = VK_STRUCTURE_TYPE_SEMAPHORE_SUBMIT_INFO,
-            .semaphore = wait.first.semaphore,
-            .value = wait.first.value,
-            .stageMask = wait.second
+            .semaphore = it1->semaphore,
+            .value = it1->value,
+            .stageMask = *it2
         };
         wait_index += 1;
     }
-
+    
     u32 signal_index = 0;
-    for (const auto &signal : signals_map) {
+    for_map(it1, it2, signals_map) {
         signals.data[signal_index] = {
             .sType = VK_STRUCTURE_TYPE_SEMAPHORE_SUBMIT_INFO,
-            .semaphore = signal.first.semaphore,
-            .value = signal.first.value,
-            .stageMask = signal.second
+            .semaphore = it1->semaphore,
+            .value = it1->value,
+            .stageMask = *it2
         };
         signal_index += 1;
     }

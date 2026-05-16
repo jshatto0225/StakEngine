@@ -9,6 +9,16 @@
 
 #define defer ::rhi::Defer DEFER_CONCAT(_defer_var_, __LINE__); DEFER_CONCAT(_defer_var_, __LINE__).func = [&]() 
 
+#define for_set(it, set) \
+    for (u64 i = 0; i < (set).capacity; ++i) \
+        if ((set).data[i].present && ((it) = &(set).data[i].value, true))
+
+#define for_map(k, v, map) \
+    for (u64 i = 0; i < (map).capacity; ++i) \
+        if ((map).data[i].present && \
+            ((k) = &(map).data[i].key, true) && \
+            ((v) = &(map).data[i].value, true))
+
 namespace rhi {
 
 struct Defer {
@@ -35,16 +45,28 @@ struct DynamicArray {
 };
 
 template<typename T>
+struct SetSlot {
+    T value;
+    bool present;
+};
+
+template<typename T>
 struct Set {
-    T *data;
+    SetSlot<T> *data;
     u64 count;
     u64 capacity;
 };
 
 template<typename K, typename V>
+struct MapSlot {
+    K key;
+    V value;
+    bool present;
+};
+
+template<typename K, typename V>
 struct Map {
-    K *keys;
-    V *values;
+    MapSlot<K, V> *data;
     u64 count;
     u64 capacity;
 };
@@ -167,7 +189,7 @@ template<typename K, typename V>
 Map<K, V> map_from_carr_clone(const K *ckeys, const V *cvalues, u64 count, RHIAllocator *alloc_callbacks);
 
 template<typename K, typename V>
-Map<K, V> map(u64 size, u64 capacity, RHIAllocator *alloc_callbacks);
+Map<K, V> map(u64 capacity, RHIAllocator *alloc_callbacks);
 
 template<typename K, typename V>
 Map<K, V> map_clone(Map<K, V> map, RHIAllocator *alloc_callbacks);
@@ -183,5 +205,8 @@ void map_erase(Map<K, V> *map, K key, RHIAllocator *alloc_callbacks);
 
 template<typename K, typename V>
 bool map_contains(Map<K, V> *map, K key);
+
+template<typename K, typename V>
+V *map_get(Map<K, V> *map, K key);
 
 }
