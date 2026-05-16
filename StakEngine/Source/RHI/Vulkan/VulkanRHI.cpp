@@ -719,7 +719,7 @@ void *vk_alloc(RHIDevice device, u64 bytes, RHIMemoryType memory = RHI_MEMORY_TY
     return alloc_block.gpu;
 }
 
-void vk_free(RHIDevice device, void *ptr) {
+void vk_free(RHIDevice device, _nullable void *ptr) {
     assert(device);
 
     if (!ptr) {
@@ -1355,10 +1355,10 @@ RHIDevice vk_create_device(RHIDeviceDesc *desc) {
 
         bool extensions_supported = true;
 
-        for (u32 k = 0; k < device_extension_count; k++) {
+        for (auto &required_extension : device_extensions) {
             bool extension_supported = false;
             for (u32 j = 0; j < extension_count; j++) {
-                if (strcmp(device_extensions[k], extensions.data[j].extensionName) == 0) {
+                if (strcmp(required_extension, extensions.data[j].extensionName) == 0) {
                     extension_supported = true;
                 }
             }
@@ -1883,8 +1883,8 @@ void vk_submit(RHIQueue queue, RHICommandBuffer *command_buffers, u32 command_bu
     rhi::Array<VkSemaphoreSubmitInfo> waits = rhi::array<VkSemaphoreSubmitInfo>(wait_count, vk.temp_alloc);
     rhi::Array<VkSemaphoreSubmitInfo> signals = rhi::array<VkSemaphoreSubmitInfo>(signal_count, vk.temp_alloc);
 
-    SemaphoreSubmitInfo *it1;
-    VkPipelineStageFlags2 *it2;
+    SemaphoreSubmitInfo *it1 = nullptr;
+    VkPipelineStageFlags2 *it2 = nullptr;
 
     u32 wait_index = 0;
     for_map(it1, it2, waits_map) {
@@ -3162,7 +3162,7 @@ bool vulkan_init(RHI *rhi, RHIAllocator *alloc, RHIAllocator *temp_alloc) {
             memset(ptr, 0, size);
             return ptr;
         };
-        vk.alloc->free = [](void *ptr, void *user_data) {
+        vk.alloc->free = [](_nullable void *ptr, void *user_data) {
             if (!ptr) {
                 return;
             }

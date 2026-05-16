@@ -27,21 +27,32 @@ typedef u8 b8;
 typedef u16 b16;
 typedef u32 b32;
 
+#define _nullable
+
+//
 // Allocator requirements:
-//   - alloc: Allocates a block of memory of the given size. Returns a pointer to the allocated memory, or nullptr if allocation fails. The allocated memory should always be set to 0.
-//   - realloc: Changes the size of the memory block pointed to by ptr to new_size bytes. Returns a pointer to the newly allocated memory, which may be the same as ptr or a new location. If allocation fails, returns nullptr and leaves the original block unchanged.
+//   - alloc: Allocates a block of memory of the given size.
+//       Returns a pointer to the allocated memory, or nullptr if allocation fails.
+//       The allocated memory should always be set to 0.
+//   - realloc: Changes the size of the memory block pointed to by ptr to new_size bytes.
+//       Returns a pointer to the newly allocated memory, which may be the same as ptr or a new location.
+//       If allocation fails, returns nullptr and leaves the original block unchanged.
 //   - free: Frees the memory block pointed to by *ptr and sets *ptr to nullptr. If *ptr is already nullptr, does nothing.
-//   reset is only valid for temp_alloc in rhi_init
-//   free is only valid for alloc in rhi_init
+//   reset is only valid for temp_alloc in rhi_init.
+//   free is only valid for alloc in rhi_init.
+//   One of reset/free must exist.
+//   The lifetime of allocators passed to rhi_init must be greater than the lifetime of rhi_init->rhi_shutdown.
+//   Allocators should be reset/freed by the user after rhi_shutdown, the rhi will not do this automatically.
+//   
 struct RHIAllocator {
     void *(*alloc)(u64 bytes, void *user_data);
-    void (*free)(void *ptr, void *user_data);
-    void (*reset)(void *user_data);
+    void (_nullable *free)(_nullable void *ptr, void *user_data);
+    void (_nullable *reset)(void *user_data);
 
     void *user_data;
 };
 
-#define RHI_HANDLE(name) typedef void * RHI##name;
+#define RHI_HANDLE(name) typedef void *RHI##name;
 
 // Opaque handles
 RHI_HANDLE(Pipeline);
@@ -304,52 +315,52 @@ struct RHISwapchainDesc {
     bool vsync;
 
     void *window;
-    void *display; // optional, for platforms that require it
+    _nullable void *display;
 };
 
 struct RHI {
     // Memory
     void *(*alloc)(RHIDevice device, u64 bytes, RHIMemoryType memory);
-    void (*free)(RHIDevice device, void *ptr);
+    void (*free)(RHIDevice device, _nullable void *ptr);
     void *(*host_to_device_pointer)(RHIDevice device, void *ptr);
 
     // Device
-    RHIDevice(*create_device)(RHIDeviceDesc *desc);
+    RHIDevice (*create_device)(RHIDeviceDesc *desc);
     void (*destroy_device)(RHIDevice device);
     void (*device_wait_idle)(RHIDevice device);
 
     // Swapchain
-    RHISwapchain(*create_swapchain)(RHIDevice device, RHISwapchainDesc *desc);
+    RHISwapchain (*create_swapchain)(RHIDevice device, RHISwapchainDesc *desc);
     void (*destroy_swapchain)(RHIDevice device, RHISwapchain swapchain);
-    RHITexture(*next_backbuffer)(RHISwapchain swapchain);
+    RHITexture (*next_backbuffer)(RHISwapchain swapchain);
     void (*present)(RHISwapchain swapchain, RHITexture texture);
 
     // Textures
-    RHITextureSizeAlign(*texture_size_align)(RHIDevice device, RHITextureDesc *desc);
-    RHITexture(*create_texture)(RHIDevice device, RHITextureDesc *desc, void *ptr_gpu);
+    RHITextureSizeAlign (*texture_size_align)(RHIDevice device, RHITextureDesc *desc);
+    RHITexture (*create_texture)(RHIDevice device, RHITextureDesc *desc, void *ptr_gpu);
     void (*destroy_texture)(RHIDevice device, RHITexture texture);
-    RHITextureDescriptor(*texture_view_descriptor)(RHIDevice device, RHITexture texture, RHIViewDesc *desc);
-    RHITextureDescriptor(*rw_texture_view_descriptor)(RHIDevice device, RHITexture texture, RHIViewDesc *desc);
+    RHITextureDescriptor (*texture_view_descriptor)(RHIDevice device, RHITexture texture, RHIViewDesc *desc);
+    RHITextureDescriptor (*rw_texture_view_descriptor)(RHIDevice device, RHITexture texture, RHIViewDesc *desc);
 
     // Pipelines
-    RHIPipeline(*create_compute_pipeline)(RHIDevice device, u8 *compute_ir, u32 ir_size);
-    RHIPipeline(*create_graphics_pipeline)(RHIDevice device, u8 *vertex_ir, u32 vertex_ir_size, u8 *pixel_ir, u32 pixel_ir_size, RHIRasterDesc *desc);
-    RHIPipeline(*create_graphics_meshlet_pipeline)(RHIDevice device, u8 *meshlet_ir, u32 meshlet_ir_size, u8 *pixel_ir, u32 pixel_ir_size, RHIRasterDesc *desc);
+    RHIPipeline (*create_compute_pipeline)(RHIDevice device, u8 *compute_ir, u32 ir_size);
+    RHIPipeline (*create_graphics_pipeline)(RHIDevice device, u8 *vertex_ir, u32 vertex_ir_size, u8 *pixel_ir, u32 pixel_ir_size, RHIRasterDesc *desc);
+    RHIPipeline (*create_graphics_meshlet_pipeline)(RHIDevice device, u8 *meshlet_ir, u32 meshlet_ir_size, u8 *pixel_ir, u32 pixel_ir_size, RHIRasterDesc *desc);
     void (*destroy_pipeline)(RHIDevice device, RHIPipeline pipeline);
 
     // State objects
-    RHIDepthStencilState(*create_depth_stencil_state)(RHIDevice device, RHIDepthStencilDesc *desc);
-    RHIBlendState(*create_blend_state)(RHIDevice device, RHIBlendDesc *desc);
+    RHIDepthStencilState (*create_depth_stencil_state)(RHIDevice device, RHIDepthStencilDesc *desc);
+    RHIBlendState (*create_blend_state)(RHIDevice device, RHIBlendDesc *desc);
     void (*free_depth_stencil_state)(RHIDevice device, RHIDepthStencilState state);
     void (*free_blend_state)(RHIDevice device, RHIBlendState state);
 
     // Queue
-    RHIQueue(*get_queue)(RHIDevice device, RHIQueueDesc *desc);
-    RHICommandBuffer(*start_command_recording)(RHIQueue queue);
+    RHIQueue (*get_queue)(RHIDevice device, RHIQueueDesc *desc);
+    RHICommandBuffer (*start_command_recording)(RHIQueue queue);
     void (*submit)(RHIQueue queue, RHICommandBuffer *command_buffers, u32 command_buffer_count, RHISemaphore semaphore, u64 semaphore_value);
 
     // Semaphores
-    RHISemaphore(*create_semaphore)(RHIDevice device, u64 init_value);
+    RHISemaphore (*create_semaphore)(RHIDevice device, u64 init_value);
     void (*wait_semaphore)(RHIDevice device, RHISemaphore semaphore, u64 value);
     void (*destroy_semaphore)(RHIDevice device, RHISemaphore semaphore);
 
@@ -387,12 +398,12 @@ struct RHI {
 // The user_data field of the allocation callbacks can be used to pass additional information to the allocator functions, such as a pointer to a custom allocator object or a logging function. 
 // The RHI will not modify the allocation callbacks or the user_data pointer, so it is the responsibility of the caller to ensure that they remain valid for the lifetime of the RHI.
 // The allocation_callbacks cannot be changed after initialization.
-bool rhi_init(RHIAllocator *alloc, RHIAllocator *temp_alloc);
+bool rhi_init(_nullable RHIAllocator *alloc, _nullable RHIAllocator *temp_alloc);
 void rhi_shutdown();
 
 // Memory
 void *rhi_alloc(RHIDevice device, u64 bytes, RHIMemoryType memory);
-void rhi_free(RHIDevice device, void *ptr);
+void rhi_free(RHIDevice device, _nullable void *ptr);
 void *rhi_host_to_device_pointer(RHIDevice device, void *ptr);
 
 // Device

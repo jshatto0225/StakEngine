@@ -8,7 +8,7 @@
 
 static RHI rhi;
 
-bool rhi_init(RHIAllocator *alloc, RHIAllocator *temp_alloc) {
+bool rhi_init(_nullable RHIAllocator *alloc, _nullable RHIAllocator *temp_alloc) {
     return rhi_impl_init(&rhi, alloc, temp_alloc);
 }
 
@@ -21,7 +21,7 @@ void *rhi_alloc(RHIDevice device, u64 bytes, RHIMemoryType memory) {
     return rhi.alloc(device, bytes, memory);
 }
 
-void rhi_free(RHIDevice device, void *ptr) {
+void rhi_free(RHIDevice device, _nullable void *ptr) {
     rhi.free(device, ptr);
 }
 

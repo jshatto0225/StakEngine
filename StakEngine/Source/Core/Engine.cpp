@@ -21,8 +21,6 @@ void destroy_engine(Engine *engine) {
         destroy_renderer(engine->renderer);
     }
 
-    rhi_shutdown();
-
     platform_shutdown();
 
     free(engine);
@@ -46,11 +44,6 @@ bool engine_init(Engine *engine, EngineSpecification *spec, Application *app) {
 
     if (!platform_init()) {
         SK_LOG_ERROR("engine_init platform_init failed");
-        return false;
-    }
-
-    if (!rhi_init(nullptr, nullptr)) {
-        SK_LOG_ERROR("engine_init rhi_init failed");
         return false;
     }
 

@@ -13,6 +13,12 @@ Renderer *create_renderer(Window win) {
         return nullptr;
     }
 
+    if (!rhi_init(nullptr, nullptr)) {
+        SK_LOG_ERROR("create_renderer rhi_init failed");
+        free(renderer);
+        return nullptr;
+    }
+
     renderer->window = win;
 
     RHIQueueRequest queue_request = {
@@ -88,7 +94,10 @@ void destroy_renderer(Renderer *renderer) {
     rhi_destroy_swapchain(renderer->device, renderer->swapchain);
     rhi_destroy_device(renderer->device);
 
+    rhi_shutdown();
+
     free(renderer);
+
 }
 
 bool render(Renderer *renderer) {
