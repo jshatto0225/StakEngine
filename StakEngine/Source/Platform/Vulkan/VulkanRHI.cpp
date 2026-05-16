@@ -54,6 +54,7 @@ struct VulkanSwapchain {
     VkSurfaceKHR surface;
     VkSwapchainKHR swapchain;
     VkQueue queue;
+    u32 queue_family;
 
     u32 image_count;
     VulkanTexture *textures;
@@ -63,6 +64,10 @@ struct VulkanSwapchain {
     VkSemaphore *acquire_semaphores;
     VkSemaphore *present_semaphores;
     VkFence *fences;
+
+    // Used for backbuffer layout transitions
+    VkCommandPool command_pool;
+    VkCommandBuffer *command_buffers;
 };
 
 struct VulkanQueueFamilyAssignment {
@@ -128,18 +133,19 @@ struct VulkanQueue {
 };
 
 struct VulkanBackbufferData {
+    bool valid;
+
     VkSemaphore timeline;
-    bool acquire_consumed;
 
     u64 ready_value;
-    u64 present_value;
 
     u32 image_index;
 
     // Set by the swapchain when the backbuffer is acquired, used by the queue to know which semaphores to wait/signal on
     VkSemaphore present_semaphore;
-    VkSemaphore acquire_semaphore;
     VkFence present_fence;
+
+    VkCommandBuffer command_buffer; // used for layout transitions
 };
 
 struct VulkanTexture {
@@ -153,6 +159,9 @@ struct VulkanTexture {
     VkImageUsageFlags usage;
     VkImageType type;
     VkImageAspectFlags aspect_mask;
+
+    VkImageLayout layout;
+    u32 queue_index;
 
     VulkanBackbufferData *backbuffer_data; // only populated for swapchain images
 };
@@ -1738,6 +1747,7 @@ void vk_destroy_device(RHIDevice device) {
 
     for (u32 i = 0; i < vulkan_device->queue_count; i++) {
         vkDestroyCommandPool(vulkan_device->device, vulkan_device->queues[i].command_pool, nullptr);
+        vkDestroySemaphore(vulkan_device->device, vulkan_device->queues[i].batch_semaphore, nullptr);
     }
 
     delete[] vulkan_device->queues;
@@ -1940,29 +1950,19 @@ void vk_submit(RHIQueue queue, RHICommandBuffer *command_buffers, u32 command_bu
         delete cb;
     }
 
+    assert(!backbuffer || backbuffer->backbuffer_data->valid);
+
     // I Dont think it is possible to duplicate the backbuffer semaphores, but just in case, we will insert them into the maps as well. 
-    if (backbuffer && !backbuffer->backbuffer_data->acquire_consumed) {
+    if (backbuffer) {
         // TODO: We probably want to track pipeline stage here at some point
         SemaphoreSubmitInfo wait = {
-            .semaphore = backbuffer->backbuffer_data->acquire_semaphore,
+            .semaphore = backbuffer->backbuffer_data->timeline,
             .value = 0
         };
+        backbuffer->backbuffer_data->ready_value++;
         SemaphoreSubmitInfo signal = {
-            .semaphore = backbuffer->backbuffer_data->acquire_semaphore,
+            .semaphore = backbuffer->backbuffer_data->timeline,
             .value = backbuffer->backbuffer_data->ready_value
-        };
-
-        waits_map[wait] = waits_map[wait] | VK_PIPELINE_STAGE_2_COLOR_ATTACHMENT_OUTPUT_BIT;
-        signals_map[signal] = signals_map[signal] | VK_PIPELINE_STAGE_2_COLOR_ATTACHMENT_OUTPUT_BIT;
-    } else if (backbuffer) {
-        SemaphoreSubmitInfo wait = {
-            .semaphore = backbuffer->backbuffer_data->acquire_semaphore,
-            .value = backbuffer->backbuffer_data->ready_value
-        };
-        backbuffer->backbuffer_data->present_value++;
-        SemaphoreSubmitInfo signal = {
-            .semaphore = backbuffer->backbuffer_data->acquire_semaphore,
-            .value = backbuffer->backbuffer_data->present_value
         };
 
         waits_map[wait] = waits_map[wait] | VK_PIPELINE_STAGE_2_COLOR_ATTACHMENT_OUTPUT_BIT;
@@ -2172,6 +2172,8 @@ RHISwapchain vk_create_swapchain(RHIDevice device, RHISwapchainDesc *desc) {
         assert(false);
     }
 
+    swapchain->queue_family = present_queue_family;
+
     vkGetDeviceQueue(vulkan_device->device, (u32) present_queue_family, 0, &swapchain->queue);
 
     if (vkCreateSwapchainKHR(vulkan_device->device, &create_info, nullptr, &swapchain->swapchain) != VK_SUCCESS) {
@@ -2269,7 +2271,6 @@ RHISwapchain vk_create_swapchain(RHIDevice device, RHISwapchainDesc *desc) {
             free(swapchain->fences);
             free(swapchain->present_semaphores);
             free(swapchain->acquire_semaphores);
-            free(images);
             free(swapchain->textures);
             vkDestroySwapchainKHR(vulkan_device->device, swapchain->swapchain, nullptr);
             platform_destroy_surface(vulkan.instance, swapchain->surface);
@@ -2296,8 +2297,7 @@ RHISwapchain vk_create_swapchain(RHIDevice device, RHISwapchainDesc *desc) {
             .initialValue = 0,
         };
 
-        swapchain->textures[i].backbuffer_data->ready_value = 1;
-        swapchain->textures[i].backbuffer_data->present_value = 1;
+        swapchain->textures[i].backbuffer_data->ready_value = 0;
 
         VkSemaphoreCreateInfo timeline_info = {
             .sType = VK_STRUCTURE_TYPE_SEMAPHORE_CREATE_INFO,
@@ -2424,6 +2424,64 @@ RHISwapchain vk_create_swapchain(RHIDevice device, RHISwapchainDesc *desc) {
         }
     }
 
+    VkCommandPoolCreateInfo pool_info = {
+        .sType = VK_STRUCTURE_TYPE_COMMAND_POOL_CREATE_INFO,
+        .flags = VK_COMMAND_POOL_CREATE_RESET_COMMAND_BUFFER_BIT,
+        .queueFamilyIndex = (u32) swapchain->queue_family,
+    };
+    if (vkCreateCommandPool(vulkan_device->device, &pool_info, nullptr, &swapchain->command_pool) != VK_SUCCESS) {
+        for (u32 j = 0; j < swapchain->image_count; j++) {
+            vkDestroySemaphore(vulkan_device->device, swapchain->present_semaphores[j], nullptr);
+            vkDestroySemaphore(vulkan_device->device, swapchain->acquire_semaphores[j], nullptr);
+            vkDestroyFence(vulkan_device->device, swapchain->fences[j], nullptr);
+            vkDestroyImageView(vulkan_device->device, swapchain->textures[j].image_view, nullptr);
+            vkDestroySemaphore(vulkan_device->device, swapchain->textures[j].backbuffer_data->timeline, nullptr);
+            free(swapchain->textures[j].backbuffer_data);
+        }
+        free(images);
+        free(swapchain->fences);
+        free(swapchain->present_semaphores);
+        free(swapchain->acquire_semaphores);
+        free(swapchain->textures);
+        vkDestroySwapchainKHR(vulkan_device->device, swapchain->swapchain, nullptr);
+        platform_destroy_surface(vulkan.instance, swapchain->surface);
+        free(swapchain);
+
+        assert(false);
+    }
+
+    swapchain->command_buffers = (VkCommandBuffer *) malloc(sizeof(VkCommandBuffer) * swapchain->image_count);
+    for (u32 i = 0; i < swapchain->image_count; i++) {
+        VkCommandBufferAllocateInfo alloc_info = {
+            .sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_ALLOCATE_INFO,
+            .commandPool = swapchain->command_pool,
+            .level = VK_COMMAND_BUFFER_LEVEL_PRIMARY,
+            .commandBufferCount = 1,
+        };
+        if (vkAllocateCommandBuffers(vulkan_device->device, &alloc_info, &swapchain->command_buffers[i]) != VK_SUCCESS) {
+            for (u32 j = 0; j <= i; j++) {
+                vkFreeCommandBuffers(vulkan_device->device, swapchain->command_pool, 1, &swapchain->command_buffers[j]);
+                vkDestroySemaphore(vulkan_device->device, swapchain->present_semaphores[j], nullptr);
+                vkDestroySemaphore(vulkan_device->device, swapchain->acquire_semaphores[j], nullptr);
+                vkDestroyFence(vulkan_device->device, swapchain->fences[j], nullptr);
+                vkDestroyImageView(vulkan_device->device, swapchain->textures[j].image_view, nullptr);
+                vkDestroySemaphore(vulkan_device->device, swapchain->textures[j].backbuffer_data->timeline, nullptr);
+                free(swapchain->textures[j].backbuffer_data);
+            }
+            free(swapchain->command_buffers);
+            free(images);
+            free(swapchain->fences);
+            free(swapchain->present_semaphores);
+            free(swapchain->acquire_semaphores);
+            free(swapchain->textures);
+            vkDestroySwapchainKHR(vulkan_device->device, swapchain->swapchain, nullptr);
+            platform_destroy_surface(vulkan.instance, swapchain->surface);
+            free(swapchain);
+
+            assert(false);
+        }
+    }
+
     return (RHISwapchain) swapchain;
 }
 
@@ -2442,6 +2500,7 @@ void vk_destroy_swapchain(RHIDevice device, RHISwapchain swapchain) {
         vkDestroySemaphore(vulkan_device->device, vulkan_swapchain->acquire_semaphores[i], nullptr);
         vkDestroySemaphore(vulkan_device->device, vulkan_swapchain->present_semaphores[i], nullptr);
         vkDestroyFence(vulkan_device->device, vulkan_swapchain->fences[i], nullptr);
+        vkFreeCommandBuffers(vulkan_device->device, vulkan_swapchain->command_pool, 1, &vulkan_swapchain->command_buffers[i]);
 
         if (vulkan_swapchain->textures[i].backbuffer_data) {
             vkDestroySemaphore(vulkan_device->device, vulkan_swapchain->textures[i].backbuffer_data->timeline, nullptr);
@@ -2452,6 +2511,10 @@ void vk_destroy_swapchain(RHIDevice device, RHISwapchain swapchain) {
             assert(false);
         }
     }
+
+    vkDestroyCommandPool(vulkan_device->device, vulkan_swapchain->command_pool, nullptr);
+    vkDestroySwapchainKHR(vulkan_device->device, vulkan_swapchain->swapchain, nullptr);
+    vkDestroySurfaceKHR(vulkan.instance, vulkan_swapchain->surface, nullptr);
 
     free(vulkan_swapchain->textures);
     free(vulkan_swapchain);
@@ -2468,6 +2531,10 @@ RHITexture vk_next_backbuffer(RHISwapchain swapchain) {
         assert(false);
     }
 
+    if (vkResetFences(vulkan_swapchain->device, 1, &vulkan_swapchain->fences[semaphore_index]) != VK_SUCCESS) {
+        assert(false);
+    }
+
     VkSemaphore acquire_semaphore = vulkan_swapchain->acquire_semaphores[vulkan_swapchain->semaphore_index];
 
     u32 index = 0;
@@ -2477,12 +2544,32 @@ RHITexture vk_next_backbuffer(RHISwapchain swapchain) {
 
     // Assign semaphores from swapchain ringbuffer
     VulkanTexture *texture = &vulkan_swapchain->textures[index];
+    assert(!texture->backbuffer_data->valid);
     texture->backbuffer_data->present_semaphore = vulkan_swapchain->present_semaphores[vulkan_swapchain->semaphore_index];
-    texture->backbuffer_data->acquire_semaphore = acquire_semaphore;
-    texture->backbuffer_data->acquire_consumed = false;
+    texture->backbuffer_data->present_fence = vulkan_swapchain->fences[vulkan_swapchain->semaphore_index];
+    texture->backbuffer_data->valid = true;
     texture->backbuffer_data->image_index = index;
-    texture->backbuffer_data->present_value++;
-    texture->backbuffer_data->ready_value = texture->backbuffer_data->present_value;
+    texture->backbuffer_data->command_buffer = vulkan_swapchain->command_buffers[vulkan_swapchain->semaphore_index];
+
+    // Convert binary acquire semaphore to timeline semaphore for synchronization with command buffer submission
+    VkSemaphoreSubmitInfo wait = {
+        .sType = VK_STRUCTURE_TYPE_SEMAPHORE_SUBMIT_INFO,
+        .semaphore = acquire_semaphore,
+    };
+    texture->backbuffer_data->ready_value += 1;
+    VkSemaphoreSubmitInfo signal = {
+        .sType = VK_STRUCTURE_TYPE_SEMAPHORE_SUBMIT_INFO,
+        .semaphore = texture->backbuffer_data->timeline,
+        .value = texture->backbuffer_data->ready_value,
+    };
+    VkSubmitInfo2 submit_info = {
+        .sType = VK_STRUCTURE_TYPE_SUBMIT_INFO_2,
+        .waitSemaphoreInfoCount = 1,
+        .pWaitSemaphoreInfos = &wait,
+        .signalSemaphoreInfoCount = 1,
+        .pSignalSemaphoreInfos = &signal,
+    };
+    vkQueueSubmit2(vulkan_swapchain->queue, 1, &submit_info, nullptr);
 
     vulkan_swapchain->semaphore_index = (vulkan_swapchain->semaphore_index + 1) % vulkan_swapchain->image_count;
 
@@ -2499,31 +2586,94 @@ void vk_present(RHISwapchain swapchain, RHITexture texture) {
     auto vulkan_texture = (VulkanTexture *) texture;
 
     assert(vulkan_texture->backbuffer_data);
-    assert(vulkan_texture->backbuffer_data->acquire_semaphore);
-    assert(vulkan_texture->backbuffer_data->present_semaphore);
+    assert(vulkan_texture->backbuffer_data->valid);
 
     // Convert timeline semaphore to binary semaphore for present
-    if (vulkan_texture->backbuffer_data->acquire_consumed) {
-        VkSemaphoreSubmitInfo wait = {
-            .sType = VK_STRUCTURE_TYPE_SEMAPHORE_SUBMIT_INFO,
-            .semaphore = vulkan_texture->backbuffer_data->timeline,
-            .value = vulkan_texture->backbuffer_data->present_value
-        };
+    VkCommandBufferSubmitInfo command_buffer_info = {};
+    bool use_command_buffer = false;
 
-        VkSemaphoreSubmitInfo signal = {
-            .sType = VK_STRUCTURE_TYPE_SEMAPHORE_SUBMIT_INFO,
-            .semaphore = vulkan_texture->backbuffer_data->present_semaphore,
-        };
+    if (vulkan_texture->layout != VK_IMAGE_LAYOUT_PRESENT_SRC_KHR || vulkan_texture->queue_index != vulkan_swapchain->queue_family) {
+        // For the sake of simplicity we manage the command buffer here
+        if (vkResetCommandBuffer(vulkan_texture->backbuffer_data->command_buffer, VK_COMMAND_BUFFER_RESET_RELEASE_RESOURCES_BIT) != VK_SUCCESS) {
+            assert(false);
+        }
 
-        VkSubmitInfo2 submit_info = {
-            .sType = VK_STRUCTURE_TYPE_SUBMIT_INFO,
-            .waitSemaphoreInfoCount = 1,
-            .pWaitSemaphoreInfos = &wait,
-            .signalSemaphoreInfoCount = 1,
-            .pSignalSemaphoreInfos = &signal,
+        VkCommandBufferBeginInfo begin_info = {
+            .sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_BEGIN_INFO,
         };
+        if (vkBeginCommandBuffer(vulkan_texture->backbuffer_data->command_buffer, &begin_info) != VK_SUCCESS) {
+            assert(false);
+        }
 
-        vkQueueSubmit2(vulkan_swapchain->queue, 1, &submit_info, vulkan_texture->backbuffer_data->present_fence);
+        VkImageMemoryBarrier2 image_barrier = {
+            .sType = VK_STRUCTURE_TYPE_IMAGE_MEMORY_BARRIER_2,
+            .srcStageMask = VK_PIPELINE_STAGE_2_TOP_OF_PIPE_BIT,
+            .srcAccessMask = 0,
+            .dstStageMask = VK_PIPELINE_STAGE_2_COLOR_ATTACHMENT_OUTPUT_BIT,
+            .dstAccessMask = 0,
+            .oldLayout = vulkan_texture->layout,
+            .newLayout = VK_IMAGE_LAYOUT_PRESENT_SRC_KHR,
+            .srcQueueFamilyIndex = vulkan_texture->queue_index,
+            .dstQueueFamilyIndex = vulkan_swapchain->queue_family,
+            .image = vulkan_texture->image,
+            .subresourceRange = {
+                .aspectMask = vulkan_texture->aspect_mask,
+                .baseMipLevel = 0,
+                .levelCount = vulkan_texture->mip_count,
+                .baseArrayLayer = 0,
+                .layerCount = vulkan_texture->layers
+            },
+        };
+        if (vulkan_texture->layout == VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL) {
+            image_barrier.srcStageMask = VK_PIPELINE_STAGE_2_COLOR_ATTACHMENT_OUTPUT_BIT;
+            image_barrier.srcAccessMask = VK_ACCESS_COLOR_ATTACHMENT_READ_BIT | VK_ACCESS_COLOR_ATTACHMENT_WRITE_BIT;
+        }
+
+        vulkan_texture->layout = VK_IMAGE_LAYOUT_PRESENT_SRC_KHR;
+        vulkan_texture->queue_index = vulkan_swapchain->queue_family;
+
+        VkDependencyInfo dep = {
+            .sType = VK_STRUCTURE_TYPE_DEPENDENCY_INFO,
+            .imageMemoryBarrierCount = 1,
+            .pImageMemoryBarriers = &image_barrier,
+        };
+        vkCmdPipelineBarrier2(vulkan_texture->backbuffer_data->command_buffer, &dep);
+
+        if (vkEndCommandBuffer(vulkan_texture->backbuffer_data->command_buffer) != VK_SUCCESS) {
+            assert(false);
+        }
+
+        use_command_buffer = true;
+        command_buffer_info.sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_SUBMIT_INFO;
+        command_buffer_info.commandBuffer = vulkan_texture->backbuffer_data->command_buffer;
+    }
+
+    VkSemaphoreSubmitInfo wait = {
+        .sType = VK_STRUCTURE_TYPE_SEMAPHORE_SUBMIT_INFO,
+        .semaphore = vulkan_texture->backbuffer_data->timeline,
+        .value = vulkan_texture->backbuffer_data->ready_value
+    };
+
+    VkSemaphoreSubmitInfo signal = {
+        .sType = VK_STRUCTURE_TYPE_SEMAPHORE_SUBMIT_INFO,
+        .semaphore = vulkan_texture->backbuffer_data->present_semaphore,
+    };
+
+    VkSubmitInfo2 submit_info = {
+        .sType = VK_STRUCTURE_TYPE_SUBMIT_INFO_2,
+        .waitSemaphoreInfoCount = 1,
+        .pWaitSemaphoreInfos = &wait,
+        .signalSemaphoreInfoCount = 1,
+        .pSignalSemaphoreInfos = &signal,
+    };
+
+    if (use_command_buffer) {
+        submit_info.commandBufferInfoCount = 1;
+        submit_info.pCommandBufferInfos = &command_buffer_info;
+    }
+
+    if (vkQueueSubmit2(vulkan_swapchain->queue, 1, &submit_info, vulkan_texture->backbuffer_data->present_fence) != VK_SUCCESS) {
+        assert(false);
     }
 
     // Present
@@ -2532,25 +2682,22 @@ void vk_present(RHISwapchain swapchain, RHITexture texture) {
     VkPresentInfoKHR present_info = {
         .sType = VK_STRUCTURE_TYPE_PRESENT_INFO_KHR,
         .waitSemaphoreCount = 1,
+        .pWaitSemaphores = &vulkan_texture->backbuffer_data->present_semaphore,
         .swapchainCount = 1,
         .pSwapchains = &vulkan_swapchain->swapchain,
         .pImageIndices = &vulkan_texture->backbuffer_data->image_index,
         .pResults = &result,
     };
 
-    if (vulkan_texture->backbuffer_data->acquire_consumed) {
-        present_info.pWaitSemaphores = &vulkan_texture->backbuffer_data->present_semaphore;
-    } else {
-        present_info.pWaitSemaphores = &vulkan_texture->backbuffer_data->acquire_semaphore;
+    if (vkQueuePresentKHR(vulkan_swapchain->queue, &present_info) != VK_SUCCESS) {
+        assert(false);
     }
-
-    vkQueuePresentKHR(vulkan_swapchain->queue, &present_info);
 
     assert(result == VK_SUCCESS);
 
-    vulkan_texture->backbuffer_data->acquire_semaphore = nullptr;
     vulkan_texture->backbuffer_data->present_semaphore = nullptr;
-    vulkan_texture->backbuffer_data->acquire_consumed = false;
+    vulkan_texture->backbuffer_data->command_buffer = nullptr;
+    vulkan_texture->backbuffer_data->valid = false;
 }
 
 // Semaphores
@@ -2909,7 +3056,39 @@ void vk_begin_render_pass(RHICommandBuffer cb, RHIRenderPassDesc *desc) {
         // track swapchain backbuffer target
         if (texture->backbuffer_data) {
             assert(!command_buffer->backbuffer || command_buffer->backbuffer == texture);
+            assert(texture->backbuffer_data->valid);
             command_buffer->backbuffer = texture;
+        }
+
+        if (texture->layout != VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL || texture->queue_index != command_buffer->queue->family) {
+            VkImageMemoryBarrier2 image_barrier = {
+                .sType = VK_STRUCTURE_TYPE_IMAGE_MEMORY_BARRIER_2,
+                .srcStageMask = VK_PIPELINE_STAGE_2_TOP_OF_PIPE_BIT,
+                .srcAccessMask = 0,
+                .dstStageMask = VK_PIPELINE_STAGE_2_COLOR_ATTACHMENT_OUTPUT_BIT,
+                .dstAccessMask = VK_ACCESS_2_COLOR_ATTACHMENT_WRITE_BIT,
+                .oldLayout = texture->layout,
+                .newLayout = VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL,
+                .srcQueueFamilyIndex = texture->queue_index,
+                .dstQueueFamilyIndex = command_buffer->queue->family,
+                .image = texture->image,
+                .subresourceRange = {
+                    .aspectMask = texture->aspect_mask,
+                    .baseMipLevel = 0,
+                    .levelCount = texture->mip_count,
+                    .baseArrayLayer = 0,
+                    .layerCount = texture->layers
+                },
+            };
+            texture->layout = VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL;
+            texture->queue_index = command_buffer->queue->family;
+            VkDependencyInfo dep = {
+                .sType = VK_STRUCTURE_TYPE_DEPENDENCY_INFO,
+                .imageMemoryBarrierCount = 1,
+                .pImageMemoryBarriers = &image_barrier,
+            };
+
+            vkCmdPipelineBarrier2(command_buffer->command_buffer, &dep);
         }
 
         VkRenderingAttachmentInfo attachment = {
