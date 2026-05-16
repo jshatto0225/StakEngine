@@ -23,7 +23,7 @@ Renderer *create_renderer(Window win) {
         .queues = &queue_request,
         .queue_count = 1
     };
-    renderer->device = rhi.create_device(&device_desc);
+    renderer->device = rhi_create_device(&device_desc);
     if (!renderer->device) {
         SK_LOG_ERROR("create_renderer Failed to create rhi device");
         free(renderer);
@@ -39,7 +39,7 @@ Renderer *create_renderer(Window win) {
         .vsync = true,
         .window = platform_get_window_handle(win),
     };
-    renderer->swapchain = rhi.create_swapchain(renderer->device, &swapchain_desc);
+    renderer->swapchain = rhi_create_swapchain(renderer->device, &swapchain_desc);
     if (!renderer->swapchain) {
         SK_LOG_ERROR("create_renderer Failed to create swapchain");
         free(renderer);
@@ -50,7 +50,7 @@ Renderer *create_renderer(Window win) {
         .capabilities = RHI_QUEUE_GRAPHICS,
         .index = 0
     };
-    renderer->queue = rhi.get_queue(renderer->device, &queue_desc);
+    renderer->queue = rhi_get_queue(renderer->device, &queue_desc);
     if (!renderer->queue) {
         SK_LOG_ERROR("create_renderer Failed to initialize pipeline");
         free(renderer);
@@ -61,7 +61,7 @@ Renderer *create_renderer(Window win) {
     std::vector<u8> vertex_ir;
     std::vector<u8> pixel_ir;
     RHIRasterDesc raster_description = {};
-    renderer->pipeline = rhi.create_graphics_pipeline(renderer->device, vertex_ir.data(), vertex_ir.size(), pixel_ir.data(), pixel_ir.size(), &raster_description);
+    renderer->pipeline = rhi_create_graphics_pipeline(renderer->device, vertex_ir.data(), vertex_ir.size(), pixel_ir.data(), pixel_ir.size(), &raster_description);
     if (!renderer->pipeline) {
         SK_LOG_ERROR("create_renderer Failed to initialize pipeline");
         free(renderer);
@@ -71,7 +71,7 @@ Renderer *create_renderer(Window win) {
 
     renderer->next_frame = 1;
 
-    renderer->semaphore = rhi.create_semaphore(renderer->device, 0);
+    renderer->semaphore = rhi_create_semaphore(renderer->device, 0);
     if (!renderer->semaphore) {
         SK_LOG_ERROR("create_renderer Failed to create semaphore");
         free(renderer);
@@ -82,23 +82,23 @@ Renderer *create_renderer(Window win) {
 }
 
 void destroy_renderer(Renderer *renderer) {
-    rhi.device_wait_idle(renderer->device);
+    rhi_device_wait_idle(renderer->device);
     //rhi.destroy_pipeline(renderer->device, renderer->pipeline);
-    rhi.destroy_semaphore(renderer->device, renderer->semaphore);
-    rhi.destroy_swapchain(renderer->device, renderer->swapchain);
-    rhi.destroy_device(renderer->device);
+    rhi_destroy_semaphore(renderer->device, renderer->semaphore);
+    rhi_destroy_swapchain(renderer->device, renderer->swapchain);
+    rhi_destroy_device(renderer->device);
 
     free(renderer);
 }
 
 bool render(Renderer *renderer) {
     if (renderer->next_frame > renderer->max_frames_in_flight) {
-        rhi.wait_semaphore(renderer->device, renderer->semaphore, renderer->next_frame - renderer->max_frames_in_flight);
+        rhi_wait_semaphore(renderer->device, renderer->semaphore, renderer->next_frame - renderer->max_frames_in_flight);
     }
 
-    RHITexture backbuffer = rhi.next_backbuffer(renderer->swapchain);
+    RHITexture backbuffer = rhi_next_backbuffer(renderer->swapchain);
 
-    RHICommandBuffer cb = rhi.start_command_recording(renderer->queue);
+    RHICommandBuffer cb = rhi_start_command_recording(renderer->queue);
     {
         RHIRenderPassAttachment color_attachment = {
             .texture = backbuffer,
@@ -114,18 +114,18 @@ bool render(Renderer *renderer) {
             .color_attachment_count = 1,
         };
 
-        rhi.begin_render_pass(cb, &rp);
+        rhi_begin_render_pass(cb, &rp);
         {
             /*
-            rhi.set_pipeline(cb, renderer->pipeline);
-            rhi.draw_indexed_instanced(cb, nullptr, nullptr, nullptr, 0, 0);
+            rhi_set_pipeline(cb, renderer->pipeline);
+            rhi_draw_indexed_instanced(cb, nullptr, nullptr, nullptr, 0, 0);
             */
         }
-        rhi.end_render_pass(cb);
+        rhi_end_render_pass(cb);
     }
-    rhi.submit(renderer->queue, &cb, 1, renderer->semaphore, renderer->next_frame++);
+    rhi_submit(renderer->queue, &cb, 1, renderer->semaphore, renderer->next_frame++);
 
-    rhi.present(renderer->swapchain, backbuffer);
+    rhi_present(renderer->swapchain, backbuffer);
 
     return true;
 }

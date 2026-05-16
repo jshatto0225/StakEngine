@@ -1,10 +1,47 @@
-#pragma once
+#ifndef RHI_H
+#define RHI_H
 
-#include "Types.h"
+// RHI - Rendering Hardware Interface
+// C interface for interacting with the GPU, implemented by different backends (Vulkan, DirectX, etc)
 
-#include <imgui.h>
+#ifndef __cplusplus
+extern "C" {
+#endif
 
-#define RHI_HANDLE(name) typedef Handle RHI##name;
+#include <stdint.h>
+
+typedef float f32;
+typedef double f64;
+
+typedef int64_t s64;
+typedef int32_t s32;
+typedef int16_t s16;
+typedef int8_t  s8;
+
+typedef uint64_t u64;
+typedef uint32_t u32;
+typedef uint16_t u16;
+typedef uint8_t  u8;
+
+typedef u8 b8;
+typedef u16 b16;
+typedef u32 b32;
+
+// Allocator requirements:
+//   - alloc: Allocates a block of memory of the given size. Returns a pointer to the allocated memory, or nullptr if allocation fails. The allocated memory should always be set to 0.
+//   - realloc: Changes the size of the memory block pointed to by ptr to new_size bytes. Returns a pointer to the newly allocated memory, which may be the same as ptr or a new location. If allocation fails, returns nullptr and leaves the original block unchanged.
+//   - free: Frees the memory block pointed to by *ptr and sets *ptr to nullptr. If *ptr is already nullptr, does nothing.
+//   reset is only valid for temp_alloc in rhi_init
+//   free is only valid for alloc in rhi_init
+struct RHIAllocator {
+    void *(*alloc)(u64 bytes, void *user_data);
+    void (*free)(void *ptr, void *user_data);
+    void (*reset)(void *user_data);
+
+    void *user_data;
+};
+
+#define RHI_HANDLE(name) typedef void * RHI##name;
 
 // Opaque handles
 RHI_HANDLE(Pipeline);
@@ -18,58 +55,58 @@ RHI_HANDLE(Device);
 RHI_HANDLE(Swapchain);
 
 // Enums
-enum RHIMemoryType { 
-    RHI_MEMORY_TYPE_DEFAULT, 
+enum RHIMemoryType {
+    RHI_MEMORY_TYPE_DEFAULT,
     RHI_MEMORY_TYPE_GPU,
     RHI_MEMORY_TYPE_READBACK
 };
 
-enum RHICullMode { 
-    RHI_CULL_MODE_CCW, 
+enum RHICullMode {
+    RHI_CULL_MODE_CCW,
     RHI_CULL_MODE_CW,
     RHI_CULL_MODE_ALL,
     RHI_CULL_MODE_NONE
 };
 
-enum RHIDepthFlags { 
-    RHI_DEPTH_READ = 0x1, 
-    RHI_DEPTH_WRITE = 0x2 
+enum RHIDepthFlags {
+    RHI_DEPTH_READ = 0x1,
+    RHI_DEPTH_WRITE = 0x2
 };
 
-enum RHIOp { 
-    RHI_OP_NEVER, 
-    RHI_OP_LESS, 
+enum RHIOp {
+    RHI_OP_NEVER,
+    RHI_OP_LESS,
     RHI_OP_EQUAL,
-    RHI_OP_LESS_EQUAL, 
-    RHI_OP_GREATER, 
-    RHI_OP_NOT_EQUAL, 
-    RHI_OP_GREATER_EQUAL, 
-    RHI_OP_ALWAYS 
+    RHI_OP_LESS_EQUAL,
+    RHI_OP_GREATER,
+    RHI_OP_NOT_EQUAL,
+    RHI_OP_GREATER_EQUAL,
+    RHI_OP_ALWAYS
 };
 
-enum RHIBlendOp { 
-    RHI_BLEND_OP_ADD, 
+enum RHIBlendOp {
+    RHI_BLEND_OP_ADD,
     RHI_BLEND_OP_SUBTRACT,
     RHI_BLEND_OP_REV_SUBTRACT,
     RHI_BLEND_OP_MIN,
     RHI_BLEND_OP_MAX
 };
 
-enum RHIBlendFactor { 
-    RHI_BLEND_FACTOR_ZERO, 
-    RHI_BLEND_FACTOR_ONE, 
-    RHI_BLEND_FACTOR_SRC_COLOR, 
-    RHI_BLEND_FACTOR_DST_COLOR, 
-    RHI_BLEND_FACTOR_SRC_ALPHA 
+enum RHIBlendFactor {
+    RHI_BLEND_FACTOR_ZERO,
+    RHI_BLEND_FACTOR_ONE,
+    RHI_BLEND_FACTOR_SRC_COLOR,
+    RHI_BLEND_FACTOR_DST_COLOR,
+    RHI_BLEND_FACTOR_SRC_ALPHA
 };
 
-enum RHITopology { 
-    RHI_TOPOLOGY_TRIANGLE_LIST, 
-    RHI_TOPOLOGY_TRIANGLE_STRIP, 
-    RHI_TOPOLOGY_TRIANGLE_FAN 
+enum RHITopology {
+    RHI_TOPOLOGY_TRIANGLE_LIST,
+    RHI_TOPOLOGY_TRIANGLE_STRIP,
+    RHI_TOPOLOGY_TRIANGLE_FAN
 };
 
-enum RHITextureType { 
+enum RHITextureType {
     RHI_TEXTURE_TYPE_1D,
     RHI_TEXTURE_TYPE_2D,
     RHI_TEXTURE_TYPE_3D,
@@ -78,15 +115,15 @@ enum RHITextureType {
     RHI_TEXTURE_TYPE_CUBE_ARRAY
 };
 
-enum RHIFormat { 
-    RHI_FORMAT_NONE, 
+enum RHIFormat {
+    RHI_FORMAT_NONE,
     RHI_FORMAT_RGBA8_UNORM,
     RHI_FORMAT_RGBA8_SRGB,
     RHI_FORMAT_D32_FLOAT,
     RHI_FORMAT_RGB10_A2_UNORM,
 };
 
-enum RHIUsageFlags { 
+enum RHIUsageFlags {
     RHI_USAGE_SAMPLED,
     RHI_USAGE_STORAGE,
     RHI_USAGE_COLOR_ATTACHMENT,
@@ -196,12 +233,12 @@ struct RHIViewDesc {
     u16 layer_count;
 };
 
-struct RHITextureSizeAlign { 
-    size_t size; 
-    size_t align; 
+struct RHITextureSizeAlign {
+    size_t size;
+    size_t align;
 };
 
-struct RHITextureDescriptor { 
+struct RHITextureDescriptor {
     u64 data[4];
 };
 
@@ -277,42 +314,42 @@ struct RHI {
     void *(*host_to_device_pointer)(RHIDevice device, void *ptr);
 
     // Device
-    RHIDevice (*create_device)(RHIDeviceDesc *desc);
+    RHIDevice(*create_device)(RHIDeviceDesc *desc);
     void (*destroy_device)(RHIDevice device);
     void (*device_wait_idle)(RHIDevice device);
 
     // Swapchain
     RHISwapchain(*create_swapchain)(RHIDevice device, RHISwapchainDesc *desc);
     void (*destroy_swapchain)(RHIDevice device, RHISwapchain swapchain);
-    RHITexture (*next_backbuffer)(RHISwapchain swapchain);
+    RHITexture(*next_backbuffer)(RHISwapchain swapchain);
     void (*present)(RHISwapchain swapchain, RHITexture texture);
 
     // Textures
-    RHITextureSizeAlign (*texture_size_align)(RHIDevice device, RHITextureDesc *desc);
-    RHITexture (*create_texture)(RHIDevice device, RHITextureDesc *desc, void *ptr_gpu);
+    RHITextureSizeAlign(*texture_size_align)(RHIDevice device, RHITextureDesc *desc);
+    RHITexture(*create_texture)(RHIDevice device, RHITextureDesc *desc, void *ptr_gpu);
     void (*destroy_texture)(RHIDevice device, RHITexture texture);
-    RHITextureDescriptor (*texture_view_descriptor)(RHIDevice device, RHITexture texture, RHIViewDesc *desc);
-    RHITextureDescriptor (*rw_texture_view_descriptor)(RHIDevice device, RHITexture texture, RHIViewDesc *desc);
+    RHITextureDescriptor(*texture_view_descriptor)(RHIDevice device, RHITexture texture, RHIViewDesc *desc);
+    RHITextureDescriptor(*rw_texture_view_descriptor)(RHIDevice device, RHITexture texture, RHIViewDesc *desc);
 
     // Pipelines
-    RHIPipeline (*create_compute_pipeline)(RHIDevice device, u8 *compute_ir, u32 ir_size);
-    RHIPipeline (*create_graphics_pipeline)(RHIDevice device, u8 *vertex_ir, u32 vertex_ir_size, u8 *pixel_ir, u32 pixel_ir_size, RHIRasterDesc *desc);
-    RHIPipeline (*create_graphics_meshlet_pipeline)(RHIDevice device, u8 *meshlet_ir, u32 meshlet_ir_size, u8 *pixel_ir, u32 pixel_ir_size, RHIRasterDesc *desc);
+    RHIPipeline(*create_compute_pipeline)(RHIDevice device, u8 *compute_ir, u32 ir_size);
+    RHIPipeline(*create_graphics_pipeline)(RHIDevice device, u8 *vertex_ir, u32 vertex_ir_size, u8 *pixel_ir, u32 pixel_ir_size, RHIRasterDesc *desc);
+    RHIPipeline(*create_graphics_meshlet_pipeline)(RHIDevice device, u8 *meshlet_ir, u32 meshlet_ir_size, u8 *pixel_ir, u32 pixel_ir_size, RHIRasterDesc *desc);
     void (*destroy_pipeline)(RHIDevice device, RHIPipeline pipeline);
 
     // State objects
-    RHIDepthStencilState (*create_depth_stencil_state)(RHIDevice device, RHIDepthStencilDesc *desc);
-    RHIBlendState (*create_blend_state)(RHIDevice device, RHIBlendDesc *desc);
+    RHIDepthStencilState(*create_depth_stencil_state)(RHIDevice device, RHIDepthStencilDesc *desc);
+    RHIBlendState(*create_blend_state)(RHIDevice device, RHIBlendDesc *desc);
     void (*free_depth_stencil_state)(RHIDevice device, RHIDepthStencilState state);
     void (*free_blend_state)(RHIDevice device, RHIBlendState state);
 
     // Queue
-    RHIQueue (*get_queue)(RHIDevice device, RHIQueueDesc *desc);
-    RHICommandBuffer (*start_command_recording)(RHIQueue queue);
+    RHIQueue(*get_queue)(RHIDevice device, RHIQueueDesc *desc);
+    RHICommandBuffer(*start_command_recording)(RHIQueue queue);
     void (*submit)(RHIQueue queue, RHICommandBuffer *command_buffers, u32 command_buffer_count, RHISemaphore semaphore, u64 semaphore_value);
 
     // Semaphores
-    RHISemaphore (*create_semaphore)(RHIDevice device, u64 init_value);
+    RHISemaphore(*create_semaphore)(RHIDevice device, u64 init_value);
     void (*wait_semaphore)(RHIDevice device, RHISemaphore semaphore, u64 value);
     void (*destroy_semaphore)(RHIDevice device, RHISemaphore semaphore);
 
@@ -345,7 +382,89 @@ struct RHI {
     void (*draw_meshlets_indirect)(RHICommandBuffer cb, void *meshlet_data_gpu, void *pixel_data_gpu, void *dim_gpu);
 };
 
-bool rhi_init();
+// allocation_callbacks can be nullptr, in which case the RHI will use a default allocator that uses malloc/free. 
+// If allocation_callbacks is not nullptr, the RHI will use the provided allocator for all memory allocations and deallocations. 
+// The user_data field of the allocation callbacks can be used to pass additional information to the allocator functions, such as a pointer to a custom allocator object or a logging function. 
+// The RHI will not modify the allocation callbacks or the user_data pointer, so it is the responsibility of the caller to ensure that they remain valid for the lifetime of the RHI.
+// The allocation_callbacks cannot be changed after initialization.
+bool rhi_init(RHIAllocator *alloc, RHIAllocator *temp_alloc);
 void rhi_shutdown();
 
-extern RHI rhi;
+// Memory
+void *rhi_alloc(RHIDevice device, u64 bytes, RHIMemoryType memory);
+void rhi_free(RHIDevice device, void *ptr);
+void *rhi_host_to_device_pointer(RHIDevice device, void *ptr);
+
+// Device
+RHIDevice rhi_create_device(RHIDeviceDesc *desc);
+void rhi_destroy_device(RHIDevice device);
+void rhi_device_wait_idle(RHIDevice device);
+
+// Swapchain
+RHISwapchain rhi_create_swapchain(RHIDevice device, RHISwapchainDesc *desc);
+void rhi_destroy_swapchain(RHIDevice device, RHISwapchain swapchain);
+RHITexture rhi_next_backbuffer(RHISwapchain swapchain);
+void rhi_present(RHISwapchain swapchain, RHITexture texture);
+
+// Textures
+RHITextureSizeAlign rhi_texture_size_align(RHIDevice device, RHITextureDesc *desc);
+RHITexture rhi_create_texture(RHIDevice device, RHITextureDesc *desc, void *ptr_gpu);
+void rhi_destroy_texture(RHIDevice device, RHITexture texture);
+RHITextureDescriptor rhi_texture_view_descriptor(RHIDevice device, RHITexture texture, RHIViewDesc *desc);
+RHITextureDescriptor rhi_rw_texture_view_descriptor(RHIDevice device, RHITexture texture, RHIViewDesc *desc);
+
+// Pipelines
+RHIPipeline rhi_create_compute_pipeline(RHIDevice device, u8 *compute_ir, u32 ir_size);
+RHIPipeline rhi_create_graphics_pipeline(RHIDevice device, u8 *vertex_ir, u32 vertex_ir_size, u8 *pixel_ir, u32 pixel_ir_size, RHIRasterDesc *desc);
+RHIPipeline rhi_create_graphics_meshlet_pipeline(RHIDevice device, u8 *meshlet_ir, u32 meshlet_ir_size, u8 *pixel_ir, u32 pixel_ir_size, RHIRasterDesc *desc);
+void rhi_destroy_pipeline(RHIDevice device, RHIPipeline pipeline);
+
+// State objects
+RHIDepthStencilState rhi_create_depth_stencil_state(RHIDevice device, RHIDepthStencilDesc *desc);
+RHIBlendState rhi_create_blend_state(RHIDevice device, RHIBlendDesc *desc);
+void rhi_free_depth_stencil_state(RHIDevice device, RHIDepthStencilState state);
+void rhi_free_blend_state(RHIDevice device, RHIBlendState state);
+
+// Queue
+RHIQueue rhi_get_queue(RHIDevice device, RHIQueueDesc *desc);
+RHICommandBuffer rhi_start_command_recording(RHIQueue queue);
+void rhi_submit(RHIQueue queue, RHICommandBuffer *command_buffers, u32 command_buffer_count, RHISemaphore semaphore, u64 semaphore_value);
+
+// Semaphores
+RHISemaphore rhi_create_semaphore(RHIDevice device, u64 init_value);
+void rhi_wait_semaphore(RHIDevice device, RHISemaphore semaphore, u64 value);
+void rhi_destroy_semaphore(RHIDevice device, RHISemaphore semaphore);
+
+// Commands
+void rhi_mem_copy(RHICommandBuffer cb, void *dest_gpu, void *src_gpu, u64 size);
+void rhi_copy_to_texture(RHICommandBuffer cb, RHITexture texture, void *src_gpu);
+void rhi_copy_from_texture(RHICommandBuffer cb, void *dest_gpu, RHITexture texture);
+
+void rhi_set_active_texture_heap_ptr(RHICommandBuffer cb, void *ptr_gpu, u64 size);
+
+void rhi_barrier(RHICommandBuffer cb, RHIPipelineStage before, RHIPipelineStage after, RHIHazardFlags hazards);
+void rhi_signal_after(RHICommandBuffer cb, RHIPipelineStage after, RHISemaphore sem, u64 value);
+void rhi_wait_before(RHICommandBuffer cb, RHIPipelineStage after, RHISemaphore sem, u64 value);
+
+void rhi_set_pipeline(RHICommandBuffer cb, RHIPipeline pipeline);
+void rhi_set_depth_stencil_state(RHICommandBuffer cb, RHIDepthStencilState state);
+void rhi_set_blend_state(RHICommandBuffer cb, RHIBlendState state);
+
+void rhi_dispatch(RHICommandBuffer cb, void *dataGpu, u32 grid_dimensions[3]);
+void rhi_dispatch_indirect(RHICommandBuffer cb, void *dataGpu, void *grid_dimensions_gpu);
+
+void rhi_begin_render_pass(RHICommandBuffer cb, RHIRenderPassDesc *desc);
+void rhi_end_render_pass(RHICommandBuffer cb);
+
+void rhi_draw_indexed_instanced(RHICommandBuffer cb, void *vertex_data_gpu, void *pixel_data_gpu, void *indices_gpu, u32 index_count, u32 instance_count);
+void rhi_draw_indexed_instanced_indirect(RHICommandBuffer cb, void *vertex_data_gpu, void *pixel_data_gpu, void *indices_gpu, void *args_gpu);
+void rhi_draw_indexed_instanced_indirect_multi(RHICommandBuffer cb, void *vertex_data_gpu, void *pixel_data_gpu, void *args_gpu, void *draw_count_gpu, u32 stride);
+
+void rhi_draw_meshlets(RHICommandBuffer cb, void *meshlet_data_gpu, void *pixel_data_gpu, u32 dim[3]);
+void rhi_draw_meshlets_indirect(RHICommandBuffer cb, void *meshlet_data_gpu, void *pixel_data_gpu, void *dim_gpu);
+
+#ifndef __cplusplus
+}
+#endif
+
+#endif // RHI_H

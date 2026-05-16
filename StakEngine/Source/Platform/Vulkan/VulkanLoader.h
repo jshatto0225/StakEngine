@@ -9,12 +9,12 @@ extern "C" {
 #endif
 
 // Loader init / shutdown
-bool vk_loader_init();
-void vk_loader_shutdown();
+bool loader_init();
+void loader_shutdown();
 
 // Loaders
-bool vk_load_instance_functions(VkInstance instance);
-bool vk_load_device_functions(VkDevice device);
+bool load_instance_functions(VkInstance instance);
+bool load_device_functions(VkDevice device);
 
 // Expose proc-address pointers
 extern PFN_vkGetInstanceProcAddr vkGetInstanceProcAddr;

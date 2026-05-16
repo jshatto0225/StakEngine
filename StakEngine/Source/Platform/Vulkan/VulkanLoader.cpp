@@ -126,7 +126,7 @@ static HMODULE g_vulkan_module = nullptr;
 static void* g_vulkan_module = nullptr;
 #endif
 
-bool vk_loader_init() {
+bool loader_init() {
 #ifdef _WIN32
 
     if (g_vulkan_module) return true;
@@ -193,7 +193,7 @@ bool vk_loader_init() {
     return vkGetInstanceProcAddr != nullptr;
 }
 
-void vk_loader_shutdown() {
+void loader_shutdown() {
 #ifdef _WIN32
     if (g_vulkan_module) {
         FreeLibrary(g_vulkan_module);
@@ -223,7 +223,7 @@ static PFN_vkVoidFunction load_device_func(VkDevice device, const char* name) {
     return nullptr;
 }
 
-bool vk_load_instance_functions(VkInstance instance) {
+bool load_instance_functions(VkInstance instance) {
     if (!vkGetInstanceProcAddr) return false;
     bool ok = true;
 
@@ -268,7 +268,7 @@ bool vk_load_instance_functions(VkInstance instance) {
     return ok;
 }
 
-bool vk_load_device_functions(VkDevice device) {
+bool load_device_functions(VkDevice device) {
     if (!vkGetInstanceProcAddr) return false;
     bool ok = true;
 
