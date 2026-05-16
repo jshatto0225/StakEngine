@@ -14,12 +14,10 @@ project "StakEngine"
         "Source/ImGui/**.cpp",
         "Source/Renderer/**.h",
         "Source/Renderer/**.cpp",
-        "Source/RHI/**.cpp",
+        "Source/RHI/*.cpp",
         "Source/RHI/*.h",
         "Source/Platform/GLFW/**.h",
         "Source/Platform/GLFW/**.cpp",
-        "Source/Platform/Vulkan/*.h",
-        "Source/Platform/Vulkan/*.cpp",
         "StakEngine.h"
     }
 
@@ -63,6 +61,10 @@ project "StakEngine"
 	files {
 	    "Source/Platform/Vulkan/Windows/*.h",
 	    "Source/Platform/Vulkan/Windows/*.cpp",
+        "Source/RHI/Vulkan/*.h",
+        "Source/RHI/Vulkan/*.cpp",
+        "Source/RHI/Vulkan/Windows/*.h",
+        "Source/RHI/Vulkan/Windows/*.cpp",
 	}
 
     filter "configurations:Debug"

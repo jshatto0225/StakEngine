@@ -66,6 +66,9 @@ struct Vulkan {
 
     RHIAllocator *alloc;
     RHIAllocator *temp_alloc;
+
+    bool default_alloc;
+    bool default_temp_alloc;
 };
 
 struct Swapchain {
@@ -475,7 +478,7 @@ static AllocBlock *find_allocation_gpu(Device *device, void *gpu) {
     while (low <= high) {
         u64 mid = low + (high - low) / 2;
 
-        auto block = &device->gpu_allocations.data[mid];
+        AllocBlock *block = &device->gpu_allocations.data[mid];
         if ((u64) gpu >= (u64) block->gpu && (u64) gpu < (u64) block->gpu + block->size) {
             return block;
         }
@@ -500,7 +503,7 @@ static AllocBlock *find_allocation_cpu(Device *device, void *cpu) {
     while (low <= high) {
         u64 mid = low + (high - low) / 2;
 
-        auto block = &device->cpu_allocations.data[mid];
+        AllocBlock *block = &device->cpu_allocations.data[mid];
         if ((u64) cpu >= (u64) block->cpu && (u64) cpu < (u64) block->cpu + block->size) {
             return block;
         }
@@ -587,14 +590,14 @@ static u64 find_insert_pos_gpu(Device *device, void *gpu) {
 static void insert_allocation_cpu(Device *device, AllocBlock in) {
     assert(device);
 
-    auto pos = find_insert_pos_cpu(device, in.cpu);
+    u64 pos = find_insert_pos_cpu(device, in.cpu);
     rhi::dyn_array_insert(&device->cpu_allocations, pos, in, vk.alloc);
 }
 
 static void insert_allocation_gpu(Device *device, AllocBlock in) {
     assert(device);
 
-    auto pos = find_insert_pos_gpu(device, in.gpu);
+    u64 pos = find_insert_pos_gpu(device, in.gpu);
     rhi::dyn_array_insert(&device->gpu_allocations, pos, in, vk.alloc);
 }
 
@@ -643,7 +646,7 @@ void *vk_alloc(RHIDevice device, u64 bytes, RHIMemoryType memory = RHI_MEMORY_TY
         return nullptr;
     }
 
-    auto vulkan_device = (Device *) device;
+    Device *vulkan_device = (Device *) device;
 
     AllocBlock alloc_block = {};
     alloc_block.size = bytes;
@@ -723,7 +726,7 @@ void vk_free(RHIDevice device, void *ptr) {
         return;
     }
 
-    auto vulkan_device = (Device *) device;
+    Device *vulkan_device = (Device *) device;
 
     AllocBlock *block = find_allocation_cpu(vulkan_device, ptr);
     if (!block) {
@@ -746,7 +749,7 @@ void *vk_host_to_device_pointer(RHIDevice device, void *ptr) {
         return nullptr;
     }
 
-    auto vulkan_device = (Device *) device;
+    Device *vulkan_device = (Device *) device;
 
     ASSERT_RESOURCE_IS(vulkan_device, ptr, CPU);
 
@@ -777,8 +780,8 @@ RHITextureDescriptor vk_texture_view_descriptor(RHIDevice device, RHITexture tex
     assert(texture);
     assert(desc);
 
-    auto vulkan_device = (Device *) device;
-    auto vulkan_texture = (Texture *) texture;
+    Device *vulkan_device = (Device *) device;
+    Texture *vulkan_texture = (Texture *) texture;
 
     RHITextureDescriptor descriptor = {};
 
@@ -825,8 +828,8 @@ RHITextureDescriptor vk_rw_texture_view_descriptor(RHIDevice device, RHITexture 
     assert(texture);
     assert(desc);
 
-    auto vulkan_device = (Device *) device;
-    auto vulkan_texture = (Texture *) texture;
+    Device *vulkan_device = (Device *) device;
+    Texture *vulkan_texture = (Texture *) texture;
 
     RHITextureDescriptor descriptor = {};
 
@@ -874,7 +877,7 @@ RHIPipeline vk_create_compute_pipeline(RHIDevice device, u8 *compute_ir, u32 ir_
     assert(compute_ir);
     assert(ir_size);
 
-    auto vulkan_device = (Device *) device;
+    Device *vulkan_device = (Device *) device;
 
     VkShaderModuleCreateInfo shader_info = {
         .sType = VK_STRUCTURE_TYPE_SHADER_MODULE_CREATE_INFO,
@@ -922,7 +925,7 @@ RHIPipeline vk_create_graphics_pipeline(RHIDevice device, u8 *vertex_ir, u32 ver
     assert(pixel_ir_size);
     assert(desc);
 
-    auto vulkan_device = (Device *) device;
+    Device *vulkan_device = (Device *) device;
 
     VkShaderModuleCreateInfo vertex_shader_info = {
         .sType = VK_STRUCTURE_TYPE_SHADER_MODULE_CREATE_INFO,
@@ -1082,7 +1085,7 @@ RHIPipeline vk_create_graphics_meshlet_pipeline(RHIDevice device, u8 *meshlet_ir
     assert(pixel_ir_size);
     assert(desc);
 
-    auto vulkan_device = (Device *) device;
+    Device *vulkan_device = (Device *) device;
 
     VkShaderModuleCreateInfo mesh_shader_info = {
         .sType = VK_STRUCTURE_TYPE_SHADER_MODULE_CREATE_INFO,
@@ -1646,7 +1649,7 @@ RHIDevice vk_create_device(RHIDeviceDesc *desc) {
 void vk_destroy_device(RHIDevice device) {
     assert(device);
 
-    auto vulkan_device = (Device *) device;
+    Device *vulkan_device = (Device *) device;
 
     for (u32 i = 0; i < vulkan_device->queues.count; i++) {
         vkDestroyCommandPool(vulkan_device->device, vulkan_device->queues.data[i].command_pool, nullptr);
@@ -1667,7 +1670,7 @@ void vk_destroy_device(RHIDevice device) {
 void vk_device_wait_idle(RHIDevice device) {
     assert(device);
 
-    auto vulkan_device = (Device *) device;
+    Device *vulkan_device = (Device *) device;
 
     vkDeviceWaitIdle(vulkan_device->device);
 }
@@ -1677,7 +1680,7 @@ RHIQueue vk_get_queue(RHIDevice device, RHIQueueDesc *desc) {
     assert(device);
     assert(desc);
 
-    auto vulkan_device = (Device *) device;
+    Device *vulkan_device = (Device *) device;
 
     u32 found = 0;
 
@@ -1701,7 +1704,7 @@ RHIQueue vk_get_queue(RHIDevice device, RHIQueueDesc *desc) {
 RHICommandBuffer vk_start_command_recording(RHIQueue queue) {
     assert(queue);
 
-    auto vulkan_queue = (Queue *) queue;
+    Device *vulkan_queue = (Queue *) queue;
 
     // Check if we can free any batches before allocating new command buffers
     bool batch_finished = true;
@@ -1773,8 +1776,8 @@ void vk_submit(RHIQueue queue, RHICommandBuffer *command_buffers, u32 command_bu
     assert(command_buffer_count);
     assert(sem);
 
-    auto vulkan_queue = (Queue *) queue;
-    auto semaphore = (Semaphore *) sem;
+    Queue *vulkan_queue = (Queue *) queue;
+    Semaphore *semaphore = (Semaphore *) sem;
 
     struct SemaphoreSubmitInfo {
         VkSemaphore semaphore;
@@ -1804,7 +1807,7 @@ void vk_submit(RHIQueue queue, RHICommandBuffer *command_buffers, u32 command_bu
     Texture *backbuffer = nullptr;
 
     for (u32 i = 0; i < command_buffer_count; i++) {
-        auto cb = (CommandBuffer*) command_buffers[i];
+        CommandBuffer *cb = (CommandBuffer *) command_buffers[i];
 
         assert(cb);
         assert(cb->queue == vulkan_queue);
@@ -2327,8 +2330,8 @@ void vk_destroy_swapchain(RHIDevice device, RHISwapchain swapchain) {
     assert(device);
     assert(swapchain);
 
-    auto vulkan_device = (Device *) device;
-    auto vulkan_swapchain = (Swapchain *) swapchain;
+    Device *vulkan_device = (Device *) device;
+    Swapchain *vulkan_swapchain = (Swapchain *) swapchain;
 
     assert(vulkan_swapchain->device == vulkan_device->device);
     assert(vulkan_swapchain->textures);
@@ -2360,7 +2363,7 @@ void vk_destroy_swapchain(RHIDevice device, RHISwapchain swapchain) {
 RHITexture vk_next_backbuffer(RHISwapchain swapchain) {
     assert(swapchain);
 
-    auto vulkan_swapchain = (Swapchain *) swapchain;
+    Swapchain *vulkan_swapchain = (Swapchain *) swapchain;
 
     u32 semaphore_index = vulkan_swapchain->semaphore_index;
 
@@ -2419,8 +2422,8 @@ void vk_present(RHISwapchain swapchain, RHITexture texture) {
     assert(swapchain);
     assert(texture);
 
-    auto vulkan_swapchain = (Swapchain *) swapchain;
-    auto vulkan_texture = (Texture *) texture;
+    Swapchain *vulkan_swapchain = (Swapchain *) swapchain;
+    Texture *vulkan_texture = (Texture *) texture;
 
     assert(vulkan_texture->backbuffer_data);
     assert(vulkan_texture->backbuffer_data->valid);
@@ -2541,7 +2544,7 @@ void vk_present(RHISwapchain swapchain, RHITexture texture) {
 RHISemaphore vk_create_semaphore(RHIDevice device, u64 init_value) {
     assert(device);
 
-    auto vulkan_device = (Device *) device;
+    Device *vulkan_device = (Device *) device;
 
     VkSemaphore sem = nullptr;
 
@@ -2562,7 +2565,7 @@ RHISemaphore vk_create_semaphore(RHIDevice device, u64 init_value) {
         assert(false);
     }
 
-    auto semaphore = (Semaphore *) palloc(sizeof(Semaphore));
+    Semaphore *semaphore = (Semaphore *) palloc(sizeof(Semaphore));
 
     semaphore->semaphore = sem;
 
@@ -2573,8 +2576,8 @@ void vk_wait_semaphore(RHIDevice device, RHISemaphore sem, u64 value) {
     assert(device);
     assert(sem);
 
-    auto vulkan_device = (Device *) device;
-    auto semaphore = (Semaphore *) sem;
+    Device *vulkan_device = (Device *) device;
+    Semaphore *semaphore = (Semaphore *) sem;
 
     VkSemaphoreWaitInfo info = {
         .sType = VK_STRUCTURE_TYPE_SEMAPHORE_WAIT_INFO,
@@ -2592,8 +2595,8 @@ void vk_destroy_semaphore(RHIDevice device, RHISemaphore sem) {
     assert(device);
     assert(sem);
 
-    auto vulkan_device = (Device *) device;
-    auto semaphore = (Semaphore *) sem;
+    Device *vulkan_device = (Device *) device;
+    Semaphore *semaphore = (Semaphore *) sem;
 
     vkDestroySemaphore(vulkan_device->device, semaphore->semaphore, nullptr);
     pfree(semaphore);
@@ -2604,7 +2607,7 @@ void vk_mem_copy(RHICommandBuffer cb, void *dst_gpu, void *src_gpu, u64 size) {
     assert(cb);
     assert(size);
 
-    auto command_buffer = (CommandBuffer *) cb;
+    CommandBuffer *command_buffer = (CommandBuffer *) cb;
 
     ASSERT_RESOURCE_IS_STRICT(command_buffer->queue->device, dst_gpu, GPU);
     ASSERT_RESOURCE_IS_STRICT(command_buffer->queue->device, src_gpu, GPU);
@@ -2624,8 +2627,8 @@ void vk_copy_to_texture(RHICommandBuffer cb, RHITexture texture, void *src_gpu) 
     assert(cb);
     assert(texture);
 
-    auto command_buffer = (CommandBuffer *) cb;
-    auto tex = (Texture *) texture;
+    CommandBuffer *command_buffer = (CommandBuffer *) cb;
+    Texture *tex = (Texture *) texture;
 
     ASSERT_RESOURCE_IS_STRICT(command_buffer->queue->device, src_gpu, GPU);
 
@@ -2648,8 +2651,8 @@ void vk_copy_from_texture(RHICommandBuffer cb, void *dst_gpu, RHITexture texture
     assert(cb);
     assert(texture);
 
-    auto command_buffer = (CommandBuffer *) cb;
-    auto tex = (Texture *) texture;
+    CommandBuffer *command_buffer = (CommandBuffer *) cb;
+    Texture *tex = (Texture *) texture;
 
     ASSERT_RESOURCE_IS_STRICT(command_buffer->queue->device, dst_gpu, GPU);
 
@@ -2672,7 +2675,7 @@ void vk_set_active_texture_heap_ptr(RHICommandBuffer cb, void *ptr_gpu, u64 size
     assert(cb);
     assert(size);
 
-    auto command_buffer = (CommandBuffer *) cb;
+    CommandBuffer *command_buffer = (CommandBuffer *) cb;
 
     ASSERT_RESOURCE_IS_STRICT(command_buffer->queue->device, ptr_gpu, GPU);
 
@@ -2690,7 +2693,7 @@ void vk_set_active_texture_heap_ptr(RHICommandBuffer cb, void *ptr_gpu, u64 size
 void vk_barrier(RHICommandBuffer cb, RHIPipelineStage before, RHIPipelineStage after, RHIHazardFlags hazards) {
     assert(cb);
 
-    auto command_buffer = (CommandBuffer *) cb;
+    CommandBuffer *command_buffer = (CommandBuffer *) cb;
 
     VkDependencyInfo dep = {
         .sType = VK_STRUCTURE_TYPE_DEPENDENCY_INFO
@@ -2730,8 +2733,8 @@ void vk_signal_after(RHICommandBuffer cb, RHIPipelineStage before, RHISemaphore 
     assert(cb);
     assert(sem);
 
-    auto command_buffer = (CommandBuffer *) cb;
-    auto semaphore = (Semaphore *) sem;
+    CommandBuffer *command_buffer = (CommandBuffer *) cb;
+    Semaphore *semaphore = (Semaphore *) sem;
 
     VkSemaphoreSubmitInfo semaphore_info = {
         .sType = VK_STRUCTURE_TYPE_SEMAPHORE_SUBMIT_INFO,
@@ -2746,8 +2749,8 @@ void vk_wait_before(RHICommandBuffer cb, RHIPipelineStage after, RHISemaphore se
     assert(cb);
     assert(sem);
 
-    auto command_buffer = (CommandBuffer *) cb;
-    auto semaphore = (Semaphore *) sem;
+    CommandBuffer *command_buffer = (CommandBuffer *) cb;
+    Semaphore *semaphore = (Semaphore *) sem;
 
     VkSemaphoreSubmitInfo semaphore_info = {
         .sType = VK_STRUCTURE_TYPE_SEMAPHORE_SUBMIT_INFO,
@@ -2762,8 +2765,8 @@ void vk_set_pipeline(RHICommandBuffer cb, RHIPipeline pipeline) {
     assert(cb);
     assert(pipeline);
 
-    auto command_buffer = (CommandBuffer *) cb;
-    auto p = (Pipeline *) pipeline;
+    CommandBuffer *command_buffer = (CommandBuffer *) cb;
+    Pipeline *p = (Pipeline *) pipeline;
 
     if (command_buffer == nullptr || p == nullptr) {
         return;
@@ -2776,8 +2779,8 @@ void vk_set_depth_stencil_state(RHICommandBuffer cb, RHIDepthStencilState state)
     assert(cb);
     assert(state);
 
-    auto command_buffer = (CommandBuffer *) cb;
-    auto depth_stencil = (DepthStencilState *) state;
+    CommandBuffer *command_buffer = (CommandBuffer *) cb;
+    DepthStencilState *depth_stencil = (DepthStencilState *) state;
 
     vkCmdSetDepthWriteEnable(command_buffer->command_buffer, depth_stencil->depth_write_enabled);
     vkCmdSetDepthCompareOp(command_buffer->command_buffer, depth_stencil->depth_compare_op);
@@ -2799,8 +2802,8 @@ void vk_set_blend_state(RHICommandBuffer cb, RHIBlendState state) {
     assert(cb);
     assert(state);
 
-    auto command_buffer = (CommandBuffer *) cb;
-    auto blend = (BlendState *) state;
+    CommandBuffer *command_buffer = (CommandBuffer *) cb;
+    BlendState *blend = (BlendState *) state;
 
     VkBool32 enable = true;
     vkCmdSetColorBlendEnableEXT(command_buffer->command_buffer, 0, 1, &enable);
@@ -2821,7 +2824,7 @@ void vk_set_blend_state(RHICommandBuffer cb, RHIBlendState state) {
 void vk_dispatch(RHICommandBuffer cb, void *data_gpu, u32 grid_dimensions[3]) {
     assert(cb);
 
-    auto command_buffer = (CommandBuffer *) cb;
+    CommandBuffer *command_buffer = (CommandBuffer *) cb;
 
     ASSERT_RESOURCE_IS_STRICT(command_buffer->queue->device, data_gpu, GPU);
 
@@ -2844,7 +2847,7 @@ void vk_dispatch(RHICommandBuffer cb, void *data_gpu, u32 grid_dimensions[3]) {
 void vk_dispatch_indirect(RHICommandBuffer cb, void *data_gpu, void *grid_dimensions_gpu) {
     assert(cb);
 
-    auto command_buffer = (CommandBuffer *) cb;
+    CommandBuffer *command_buffer = (CommandBuffer *) cb;
 
     ASSERT_RESOURCE_IS_STRICT(command_buffer->queue->device, data_gpu, GPU);
     ASSERT_RESOURCE_IS_STRICT(command_buffer->queue->device, grid_dimensions_gpu, GPU);
@@ -2874,7 +2877,7 @@ void vk_begin_render_pass(RHICommandBuffer cb, RHIRenderPassDesc *desc) {
         vk.temp_alloc->reset(vk.temp_alloc->user_data);
     };
 
-    auto command_buffer = (CommandBuffer *) cb;
+    CommandBuffer *command_buffer = (CommandBuffer *) cb;
 
     VkRect2D render_area = {};
     render_area.extent.width = UINT32_MAX;
@@ -2884,7 +2887,7 @@ void vk_begin_render_pass(RHICommandBuffer cb, RHIRenderPassDesc *desc) {
     rhi::Array<VkRenderingAttachmentInfo> color_attachments = rhi::array<VkRenderingAttachmentInfo>(color_attachment_count, vk.temp_alloc);
 
     for (u32 i = 0; i < desc->color_attachment_count; i++) {
-        auto texture = (Texture *) desc->color_attachments[i].texture;
+        Texture *texture = (Texture *) desc->color_attachments[i].texture;
 
         assert(texture);
 
@@ -2958,7 +2961,7 @@ void vk_begin_render_pass(RHICommandBuffer cb, RHIRenderPassDesc *desc) {
         .pColorAttachments = color_attachments.data,
     };
 
-    auto depth_stencil = (Texture *) desc->depth_stencil_attachment.texture;
+    Texture *depth_stencil = (Texture *) desc->depth_stencil_attachment.texture;
     
     VkRenderingAttachmentInfo depth_stencil_attachment;
     if (depth_stencil) {
@@ -2993,7 +2996,7 @@ void vk_begin_render_pass(RHICommandBuffer cb, RHIRenderPassDesc *desc) {
 void vk_end_render_pass(RHICommandBuffer cb) {
     assert(cb);
 
-    auto command_buffer = (CommandBuffer *) cb;
+    CommandBuffer *command_buffer = (CommandBuffer *) cb;
 
     vkCmdEndRendering(command_buffer->command_buffer);
 }
@@ -3001,7 +3004,7 @@ void vk_end_render_pass(RHICommandBuffer cb) {
 void vk_draw_indexed_instanced(RHICommandBuffer cb, void *vertex_data_gpu, void *pixel_data_gpu, void *indices_gpu, u32 index_count, u32 instance_count) {
     assert(cb);
 
-    auto command_buffer = (CommandBuffer *) cb;
+    CommandBuffer *command_buffer = (CommandBuffer *) cb;
 
     ASSERT_RESOURCE_IS_STRICT(command_buffer->queue->device, vertex_data_gpu, GPU);
     ASSERT_RESOURCE_IS_STRICT(command_buffer->queue->device, pixel_data_gpu, GPU);
@@ -3030,7 +3033,7 @@ void vk_draw_indexed_instanced(RHICommandBuffer cb, void *vertex_data_gpu, void 
 void vk_draw_indexed_instanced_indirect(RHICommandBuffer cb, void *vertex_data_gpu, void *pixel_data_gpu, void *indices_gpu, void *args_gpu) {
     assert(cb);
 
-    auto command_buffer = (CommandBuffer *) cb;
+    CommandBuffer *command_buffer = (CommandBuffer *) cb;
 
     ASSERT_RESOURCE_IS_STRICT(command_buffer->queue->device, vertex_data_gpu, GPU);
     ASSERT_RESOURCE_IS_STRICT(command_buffer->queue->device, pixel_data_gpu, GPU);
@@ -3061,7 +3064,7 @@ void vk_draw_indexed_instanced_indirect(RHICommandBuffer cb, void *vertex_data_g
 void vk_draw_indexed_instanced_indirect_multi(RHICommandBuffer cb, void *vertex_data_gpu, void *pixel_data_gpu, void *args_gpu, void *draw_count_gpu, u32 stride) {
     assert(cb);
 
-    auto command_buffer = (CommandBuffer *) cb;
+    CommandBuffer *command_buffer = (CommandBuffer *) cb;
 
     ASSERT_RESOURCE_IS_STRICT(command_buffer->queue->device, vertex_data_gpu, GPU);
     ASSERT_RESOURCE_IS_STRICT(command_buffer->queue->device, pixel_data_gpu, GPU);
@@ -3090,7 +3093,7 @@ void vk_draw_indexed_instanced_indirect_multi(RHICommandBuffer cb, void *vertex_
 void vk_draw_meshlets(RHICommandBuffer cb, void *meshlet_data_gpu, void *pixel_data_gpu, u32 dim[3]) {
     assert(cb);
 
-    auto command_buffer = (CommandBuffer *) cb;
+    CommandBuffer *command_buffer = (CommandBuffer *) cb;
 
     ASSERT_RESOURCE_IS_STRICT(command_buffer->queue->device, meshlet_data_gpu, GPU);
     ASSERT_RESOURCE_IS_STRICT(command_buffer->queue->device, pixel_data_gpu, GPU);
@@ -3115,7 +3118,7 @@ void vk_draw_meshlets(RHICommandBuffer cb, void *meshlet_data_gpu, void *pixel_d
 void vk_draw_meshlets_indirect(RHICommandBuffer cb, void *meshlet_data_gpu, void *pixel_data_gpu, void *dim_gpu) {
     assert(cb);
 
-    auto command_buffer = (CommandBuffer *) cb;
+    CommandBuffer *command_buffer = (CommandBuffer *) cb;
 
     ASSERT_RESOURCE_IS_STRICT(command_buffer->queue->device, meshlet_data_gpu, GPU);
     ASSERT_RESOURCE_IS_STRICT(command_buffer->queue->device, pixel_data_gpu, GPU);
@@ -3148,48 +3151,25 @@ bool vulkan_init(RHI *rhi, RHIAllocator *alloc, RHIAllocator *temp_alloc) {
         SK_LOG_WARN("vulkan_init alloc incomplete");
         assert(false);
     } else {
-        RHIAllocator *default_alloc = (RHIAllocator *) malloc(sizeof(RHIAllocator));
-        if (!default_alloc) {
+        vk.alloc = (RHIAllocator *) malloc(sizeof(RHIAllocator));
+        if (!vk.alloc) {
             SK_LOG_ERROR("vulkan_init malloc failed");
             return false;
         }
-        default_alloc->alloc = [](u64 size, void *user_data) -> void * {
+        vk.alloc->alloc = [](u64 size, void *user_data) -> void * {
             void *ptr = malloc(size);
             assert(ptr);
             memset(ptr, 0, size);
             return ptr;
         };
-        default_alloc->free = [](void *ptr, void *user_data) {
+        vk.alloc->free = [](void *ptr, void *user_data) {
             if (!ptr) {
                 return;
             }
             free(ptr);
         };
 
-        TempAllocatorData *data = (TempAllocatorData *) malloc(sizeof(TempAllocatorData));
-        data->capacity = 1024 * 1024;
-        data->base = (u8 *) malloc(data->capacity);
-        data->curr = data->base;
-
-        RHIAllocator *default_temp_allocator = (RHIAllocator *) malloc(sizeof(RHIAllocator));
-        if (!default_temp_allocator) {
-            SK_LOG_ERROR("vulkan_init malloc failed");
-            free(default_alloc);
-            return false;
-        }
-        default_temp_allocator->alloc = [](u64 size, void *user_data) -> void * {
-            TempAllocatorData *data = (TempAllocatorData *) user_data;
-            assert(data->curr + size <= data->base + data->capacity);
-            void *ret = data->curr;
-            data->curr += size;
-            memset(ret, 0, size);
-            return ret;
-        };
-        default_temp_allocator->reset = [](void *user_data) {
-            TempAllocatorData *data = (TempAllocatorData *) user_data;
-            data->curr = data->base;
-        };
-        default_temp_allocator->user_data = data;
+        vk.default_alloc = true;
     }
 
     if (temp_alloc && temp_alloc->alloc && temp_alloc->free && temp_alloc->reset) {
@@ -3197,6 +3177,45 @@ bool vulkan_init(RHI *rhi, RHIAllocator *alloc, RHIAllocator *temp_alloc) {
     } else if (temp_alloc) {
         SK_LOG_WARN("vulkan_init temp_alloc incomplete");
         assert(false);
+    } else {
+        const u64 default_tem_alloc_size = 1024 * 1024;
+
+        TempAllocatorData *data = (TempAllocatorData *) malloc(sizeof(TempAllocatorData));
+        if (!data) {
+            SK_LOG_ERROR("vulkan_init malloc failed");
+            return false;
+        }
+        data->capacity = default_tem_alloc_size;
+        data->base = (u8 *) malloc(data->capacity);
+        if (!data->base) {
+            SK_LOG_ERROR("vulkan_init malloc failed");
+            free(data);
+            return false;
+        }
+        data->curr = data->base;
+
+        vk.temp_alloc = (RHIAllocator *) malloc(sizeof(RHIAllocator));
+        if (!vk.temp_alloc) {
+            SK_LOG_ERROR("vulkan_init malloc failed");
+            free(data->base);
+            free(data);
+            return false;
+        }
+        vk.temp_alloc->alloc = [](u64 size, void *user_data) -> void * {
+            TempAllocatorData *data = (TempAllocatorData *) user_data;
+            assert(data->curr + size <= data->base + data->capacity);
+            void *ret = data->curr;
+            data->curr += size;
+            memset(ret, 0, size);
+            return ret;
+        };
+        vk.temp_alloc->reset = [](void *user_data) {
+            TempAllocatorData *data = (TempAllocatorData *) user_data;
+            data->curr = data->base;
+        };
+        vk.temp_alloc->user_data = data;
+
+        vk.default_temp_alloc = true;
     }
 
     defer {
@@ -3377,6 +3396,15 @@ void vulkan_shutdown() {
             vkDestroyDebugUtilsMessengerEXT(vk.instance, vk.debug_messenger, nullptr);
         }
         vkDestroyInstance(vk.instance, nullptr);
+        if (vk.default_alloc) {
+            free(vk.alloc);
+        }
+        if (vk.default_temp_alloc) {
+            TempAllocatorData *data = (TempAllocatorData *) vk.temp_alloc->user_data;
+            free(data->base);
+            free(data);
+            free(vk.temp_alloc);
+        }
         loader_shutdown();
     }
 }
