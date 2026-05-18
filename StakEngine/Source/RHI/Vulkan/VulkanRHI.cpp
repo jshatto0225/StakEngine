@@ -151,9 +151,9 @@ struct Queue {
     VkSemaphore batch_semaphore;
     u64 next_semaphore_value;
     
-    rhi::DynamicArray<SubmissionBatch> batches;
+    rhi::Ringbuffer<SubmissionBatch> batches;
 
-    rhi::DynamicArray<VkCommandBuffer> free_command_buffers;
+    rhi::Ringbuffer<VkCommandBuffer> free_command_buffers;
 };
 
 struct BackbufferData {
@@ -1712,7 +1712,7 @@ RHICommandBuffer vk_start_command_recording(RHIQueue queue) {
     // Check if we can free any batches before allocating new command buffers
     bool batch_finished = true;
     while (batch_finished && vulkan_queue->batches.count > 0) {
-        SubmissionBatch *batch = rhi::dyn_array_front(&vulkan_queue->batches);
+        SubmissionBatch *batch = rhi::ringbuffer_front(&vulkan_queue->batches);
 
         u64 value = 0;
         if (vkGetSemaphoreCounterValue(vulkan_queue->device->device, vulkan_queue->batch_semaphore, &value) != VK_SUCCESS) {
@@ -1722,10 +1722,10 @@ RHICommandBuffer vk_start_command_recording(RHIQueue queue) {
         if (value >= batch->wait_value) {
             for (u32 i = 0; i < batch->command_buffers.count; i++) {
                 vkResetCommandBuffer(batch->command_buffers.data[i], VK_COMMAND_BUFFER_RESET_RELEASE_RESOURCES_BIT);
-                rhi::dyn_array_push_back<VkCommandBuffer>(&vulkan_queue->free_command_buffers, batch->command_buffers.data[i], vk.alloc);
+                rhi::ringbuffer_push_back<VkCommandBuffer>(&vulkan_queue->free_command_buffers, batch->command_buffers.data[i], vk.alloc);
             }
             rhi::array_free(&batch->command_buffers, vk.alloc);
-            rhi::dyn_array_pop_front(&vulkan_queue->batches);
+            rhi::ringbuffer_pop_front(&vulkan_queue->batches);
         } else {
             batch_finished = false;
         }
@@ -1734,8 +1734,8 @@ RHICommandBuffer vk_start_command_recording(RHIQueue queue) {
     VkCommandBuffer cb = nullptr;
 
     if (vulkan_queue->free_command_buffers.count > 0) {
-        cb = *rhi::dyn_array_front(&vulkan_queue->free_command_buffers);
-        rhi::dyn_array_pop_front(&vulkan_queue->free_command_buffers);
+        cb = *rhi::ringbuffer_front(&vulkan_queue->free_command_buffers);
+        rhi::ringbuffer_pop_front(&vulkan_queue->free_command_buffers);
     } else {
         VkCommandBufferAllocateInfo alloc_info = {
             .sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_ALLOCATE_INFO,
@@ -1943,7 +1943,7 @@ void vk_submit(RHIQueue queue, RHICommandBuffer *command_buffers, u32 command_bu
         assert(false);
     }
 
-    rhi::dyn_array_push_back(&vulkan_queue->batches, batch, vk.alloc);
+    rhi::ringbuffer_push_back(&vulkan_queue->batches, batch, vk.alloc);
 }
 
 // Swapchain
@@ -3224,7 +3224,7 @@ bool vulkan_init(RHI *rhi, _nullable RHIAllocator *alloc, _nullable RHIAllocator
     }
 
     defer {
-        temp_alloc->reset(temp_alloc->user_data);
+        vk.temp_alloc->reset(vk.temp_alloc->user_data);
     };
 
     bool extensions_supported = true;

@@ -1,6 +1,7 @@
 #define VK_USE_PLATFORM_WIN32_KHR
 
 #include "VulkanPlatform.h"
+#include "VulkanLoader.h"
 
 #include "Asserts.h"
 
