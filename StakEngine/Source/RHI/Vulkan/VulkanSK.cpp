@@ -131,7 +131,7 @@ struct Semaphore {
     VkSemaphore semaphore;
 };
 
-// TODO: Could this use a VulkanCommandBufer instead of VkCommandBuffer to reduce allocs and frees?
+// TODO: Could this use a CommandBufer instead of VkCommandBuffer to reduce allocs and frees?
 struct SubmissionBatch {
     u64 wait_value;
     sk::Array<VkCommandBuffer> command_buffers;
@@ -3232,7 +3232,7 @@ bool vk_init(_nullable SKAllocator *alloc, _nullable SKAllocator *temp_alloc, _n
     }
 
     defer {
-        vk.temp_alloc->reset(vk.temp_alloc->user_data);
+        treset();
     };
 
     bool extensions_supported = true;

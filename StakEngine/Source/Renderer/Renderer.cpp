@@ -61,7 +61,7 @@ Renderer *create_renderer(Window win) {
         .width = platform_get_window_width(win),
         .height = platform_get_window_height(win),
         .format = SK_FORMAT_RGBA8_SRGB,
-        .image_count = Renderer::max_frames_in_flight,
+        .image_count = renderer->max_frames_in_flight,
         .vsync = true,
         .window = platform_get_window_handle(win),
     };
