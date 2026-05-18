@@ -4,7 +4,6 @@
 
 #include "Events.h"
 #include "Types.h"
-#include "RHI.h"
 
 using EventFunction = std::function<void(Event *)>;
 

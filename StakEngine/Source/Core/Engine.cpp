@@ -1,7 +1,6 @@
 #include "Engine.h"
 
 #include "Log.h"
-#include "RHI.h"
 #include "Platform.h"
 
 void destroy_engine(Engine *engine) {

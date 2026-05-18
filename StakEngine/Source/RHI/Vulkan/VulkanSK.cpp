@@ -1,9 +1,9 @@
-#include "VulkanRHI.h"
+#include "VulkanSK.h"
 
 #include "VulkanPlatform.h"
 #include "VulkanLoader.h"
 
-#include "RHIUtils.h"
+#include "SKUtils.h"
 
 #include <assert.h>
 
@@ -65,13 +65,13 @@ struct Vulkan {
     VkInstance instance;
     VkDebugUtilsMessengerEXT debug_messenger;
 
-    RHIAllocator *alloc;
-    RHIAllocator *temp_alloc;
+    SKAllocator *alloc;
+    SKAllocator *temp_alloc;
 
     bool default_alloc;
     bool default_temp_alloc;
 
-    RHILog log;
+    SKLog log;
 };
 
 struct Swapchain {
@@ -112,8 +112,8 @@ struct QueueFamilyInfo {
 
 struct SwapchainSupport {
     VkSurfaceCapabilitiesKHR capabilities;
-    rhi::Array<VkSurfaceFormatKHR> formats;
-    rhi::Array<VkPresentModeKHR> present_modes;
+    sk::Array<VkSurfaceFormatKHR> formats;
+    sk::Array<VkPresentModeKHR> present_modes;
 };
 
 struct Device {
@@ -121,10 +121,10 @@ struct Device {
     VkPhysicalDevice gpu;
     VkCommandPool command_pool;
 
-    rhi::DynamicArray<AllocBlock> cpu_allocations;
-    rhi::DynamicArray<AllocBlock> gpu_allocations;
+    sk::DynamicArray<AllocBlock> cpu_allocations;
+    sk::DynamicArray<AllocBlock> gpu_allocations;
 
-    rhi::Array<Queue> queues;
+    sk::Array<Queue> queues;
 };
 
 struct Semaphore {
@@ -134,7 +134,7 @@ struct Semaphore {
 // TODO: Could this use a VulkanCommandBufer instead of VkCommandBuffer to reduce allocs and frees?
 struct SubmissionBatch {
     u64 wait_value;
-    rhi::Array<VkCommandBuffer> command_buffers;
+    sk::Array<VkCommandBuffer> command_buffers;
 };
 
 struct Queue {
@@ -151,9 +151,9 @@ struct Queue {
     VkSemaphore batch_semaphore;
     u64 next_semaphore_value;
     
-    rhi::Ringbuffer<SubmissionBatch> batches;
+    sk::Ringbuffer<SubmissionBatch> batches;
 
-    rhi::Ringbuffer<VkCommandBuffer> free_command_buffers;
+    sk::Ringbuffer<VkCommandBuffer> free_command_buffers;
 };
 
 struct BackbufferData {
@@ -193,8 +193,8 @@ struct Texture {
 struct CommandBuffer {
     VkCommandBuffer command_buffer;
     Queue *queue;
-    rhi::DynamicArray<VkSemaphoreSubmitInfo> waits;
-    rhi::DynamicArray<VkSemaphoreSubmitInfo> signals;
+    sk::DynamicArray<VkSemaphoreSubmitInfo> waits;
+    sk::DynamicArray<VkSemaphoreSubmitInfo> signals;
 
     Texture *backbuffer; // swapchain backbuffer if one is used
 };
@@ -283,7 +283,7 @@ static SwapchainSupport get_swapchain_support(VkPhysicalDevice gpu, VkSurfaceKHR
         assert(false);
     }
 
-    support.formats = rhi::array<VkSurfaceFormatKHR>(format_count, vk.temp_alloc);
+    support.formats = sk::array<VkSurfaceFormatKHR>(format_count, vk.temp_alloc);
     if (vkGetPhysicalDeviceSurfaceFormatsKHR(gpu, surface, &format_count, support.formats.data) != VK_SUCCESS) {
         assert(false);
     }
@@ -293,7 +293,7 @@ static SwapchainSupport get_swapchain_support(VkPhysicalDevice gpu, VkSurfaceKHR
         assert(false);
     }
 
-    support.present_modes = rhi::array<VkPresentModeKHR>(present_mode_count, vk.temp_alloc);
+    support.present_modes = sk::array<VkPresentModeKHR>(present_mode_count, vk.temp_alloc);
     if (vkGetPhysicalDeviceSurfacePresentModesKHR(gpu, surface, &present_mode_count, support.present_modes.data) != VK_SUCCESS) {
         assert(false);
     }
@@ -314,157 +314,157 @@ static VkImageViewType get_view_type(VkImageType type) {
     }
 }
 
-static VkFormat get_format(RHIFormat format) {
+static VkFormat get_format(SKFormat format) {
     switch (format) {
-        case RHI_FORMAT_NONE:
+        case SK_FORMAT_NONE:
             return VK_FORMAT_UNDEFINED;
-        case RHI_FORMAT_RGBA8_UNORM:
+        case SK_FORMAT_RGBA8_UNORM:
             return VK_FORMAT_R8G8B8A8_UNORM;
-        case RHI_FORMAT_D32_FLOAT:
+        case SK_FORMAT_D32_FLOAT:
             return VK_FORMAT_D32_SFLOAT;
-        case RHI_FORMAT_RGB10_A2_UNORM:
+        case SK_FORMAT_RGB10_A2_UNORM:
             return VK_FORMAT_A2R10G10B10_UNORM_PACK32;
-        case RHI_FORMAT_RGBA8_SRGB:
+        case SK_FORMAT_RGBA8_SRGB:
             return VK_FORMAT_R8G8B8A8_SRGB;
         default:
             assert(false);
     }
 }
 
-static VkImageAspectFlags get_aspect_mask(RHIFormat format) {
+static VkImageAspectFlags get_aspect_mask(SKFormat format) {
     switch (format) {
-        case RHI_FORMAT_NONE:
+        case SK_FORMAT_NONE:
             return VK_IMAGE_ASPECT_NONE;
-        case RHI_FORMAT_RGB10_A2_UNORM:
-        case RHI_FORMAT_RGBA8_UNORM:
-        case RHI_FORMAT_RGBA8_SRGB:
+        case SK_FORMAT_RGB10_A2_UNORM:
+        case SK_FORMAT_RGBA8_UNORM:
+        case SK_FORMAT_RGBA8_SRGB:
             return VK_IMAGE_ASPECT_COLOR_BIT;
-        case RHI_FORMAT_D32_FLOAT:
+        case SK_FORMAT_D32_FLOAT:
             return VK_IMAGE_ASPECT_DEPTH_BIT;
         default:
             assert(false);
     }
 }
 
-static VkStencilOp vk_get_stencil_op(RHIStencilOp op) {
+static VkStencilOp vk_get_stencil_op(SKStencilOp op) {
     switch (op) {
-        case RHI_STENCIL_OP_KEEP:
+        case SK_STENCIL_OP_KEEP:
             return VK_STENCIL_OP_KEEP;
-        case RHI_STENCIL_OP_ZERO:
+        case SK_STENCIL_OP_ZERO:
             return VK_STENCIL_OP_ZERO;
-        case RHI_STENCIL_OP_REPLACE:
+        case SK_STENCIL_OP_REPLACE:
             return VK_STENCIL_OP_REPLACE;
-        case RHI_STENCIL_OP_INCREMENT_AND_CLAMP:
+        case SK_STENCIL_OP_INCREMENT_AND_CLAMP:
             return VK_STENCIL_OP_INCREMENT_AND_CLAMP;
-        case RHI_STENCIL_OP_DECREMENT_AND_CLAMP:
+        case SK_STENCIL_OP_DECREMENT_AND_CLAMP:
             return VK_STENCIL_OP_DECREMENT_AND_CLAMP;
-        case RHI_STENCIL_OP_INVERT:
+        case SK_STENCIL_OP_INVERT:
             return VK_STENCIL_OP_INVERT;
-        case RHI_STENCIL_OP_INCREMENT_AND_WRAP:
+        case SK_STENCIL_OP_INCREMENT_AND_WRAP:
             return VK_STENCIL_OP_INCREMENT_AND_WRAP;
-        case RHI_STENCIL_OP_DECREMENT_AND_WRAP:
+        case SK_STENCIL_OP_DECREMENT_AND_WRAP:
             return VK_STENCIL_OP_DECREMENT_AND_WRAP;
         default:
             assert(false);
     }
 }
 
-static VkCompareOp vk_get_compare_op(RHIOp op) {
+static VkCompareOp vk_get_compare_op(SKOp op) {
     switch (op) {
-        case RHI_OP_NEVER:
+        case SK_OP_NEVER:
             return VK_COMPARE_OP_NEVER;
-        case RHI_OP_LESS:
+        case SK_OP_LESS:
             return VK_COMPARE_OP_LESS;
-        case RHI_OP_EQUAL:
+        case SK_OP_EQUAL:
             return VK_COMPARE_OP_EQUAL;
-        case RHI_OP_LESS_EQUAL:
+        case SK_OP_LESS_EQUAL:
             return VK_COMPARE_OP_LESS_OR_EQUAL;
-        case RHI_OP_GREATER:
+        case SK_OP_GREATER:
             return VK_COMPARE_OP_GREATER;
-        case RHI_OP_NOT_EQUAL:
+        case SK_OP_NOT_EQUAL:
             return VK_COMPARE_OP_NOT_EQUAL;
-        case RHI_OP_GREATER_EQUAL:
+        case SK_OP_GREATER_EQUAL:
             return VK_COMPARE_OP_GREATER_OR_EQUAL;
-        case RHI_OP_ALWAYS:
+        case SK_OP_ALWAYS:
             return VK_COMPARE_OP_ALWAYS;
         default:
             assert(false);
     }
 }
 
-static VkPipelineStageFlags2 vk_get_pipeline_stage(RHIPipelineStage stage) {
+static VkPipelineStageFlags2 vk_get_pipeline_stage(SKPipelineStage stage) {
     switch (stage) {
-        case RHI_PIPELINE_STAGE_COMPUTE:
+        case SK_PIPELINE_STAGE_COMPUTE:
             return VK_PIPELINE_STAGE_2_COMPUTE_SHADER_BIT;
-        case RHI_PIPELINE_STAGE_PIXEL_SHADER:
+        case SK_PIPELINE_STAGE_PIXEL_SHADER:
             return VK_PIPELINE_STAGE_2_FRAGMENT_SHADER_BIT;
-        case RHI_PIPELINE_STAGE_RASTER_COLOR_OUT:
+        case SK_PIPELINE_STAGE_RASTER_COLOR_OUT:
             return VK_PIPELINE_STAGE_2_COLOR_ATTACHMENT_OUTPUT_BIT;
-        case RHI_PIPELINE_STAGE_TRANSFER:
+        case SK_PIPELINE_STAGE_TRANSFER:
             return VK_PIPELINE_STAGE_2_TRANSFER_BIT;
-        case RHI_PIPELINE_STAGE_VERTEX_SHADER:
+        case SK_PIPELINE_STAGE_VERTEX_SHADER:
             return VK_PIPELINE_STAGE_2_VERTEX_SHADER_BIT;
         default:
             assert(false);
     }
 }
 
-static VkPrimitiveTopology vk_get_topology(RHITopology t) {
+static VkPrimitiveTopology vk_get_topology(SKTopology t) {
     switch (t) {
-        case RHI_TOPOLOGY_TRIANGLE_FAN:
+        case SK_TOPOLOGY_TRIANGLE_FAN:
             return VK_PRIMITIVE_TOPOLOGY_TRIANGLE_FAN;
-        case RHI_TOPOLOGY_TRIANGLE_LIST:
+        case SK_TOPOLOGY_TRIANGLE_LIST:
             return VK_PRIMITIVE_TOPOLOGY_TRIANGLE_LIST;
-        case RHI_TOPOLOGY_TRIANGLE_STRIP:
+        case SK_TOPOLOGY_TRIANGLE_STRIP:
             return VK_PRIMITIVE_TOPOLOGY_TRIANGLE_STRIP;
         default:
             assert(false);
     }
 }
 
-static VkBlendFactor vk_get_blend_factor(RHIBlendFactor factor) {
+static VkBlendFactor vk_get_blend_factor(SKBlendFactor factor) {
     switch (factor) {
-        case RHI_BLEND_FACTOR_DST_COLOR:
+        case SK_BLEND_FACTOR_DST_COLOR:
             return VK_BLEND_FACTOR_DST_COLOR;
-        case RHI_BLEND_FACTOR_ONE:
+        case SK_BLEND_FACTOR_ONE:
             return VK_BLEND_FACTOR_ONE;
-        case RHI_BLEND_FACTOR_SRC_ALPHA:
+        case SK_BLEND_FACTOR_SRC_ALPHA:
             return VK_BLEND_FACTOR_SRC_ALPHA;
-        case RHI_BLEND_FACTOR_SRC_COLOR:
+        case SK_BLEND_FACTOR_SRC_COLOR:
             return VK_BLEND_FACTOR_SRC_COLOR;
-        case RHI_BLEND_FACTOR_ZERO:
+        case SK_BLEND_FACTOR_ZERO:
             return VK_BLEND_FACTOR_ZERO;
         default:
             assert(false);
     }
 }
 
-static VkBlendOp vk_get_blend_op(RHIBlendOp op) {
+static VkBlendOp vk_get_blend_op(SKBlendOp op) {
     switch (op) {
-        case RHI_BLEND_OP_ADD:
+        case SK_BLEND_OP_ADD:
             return VK_BLEND_OP_ADD;
-        case RHI_BLEND_OP_MAX:
+        case SK_BLEND_OP_MAX:
             return VK_BLEND_OP_MAX;
-        case RHI_BLEND_OP_MIN:
+        case SK_BLEND_OP_MIN:
             return VK_BLEND_OP_MIN;
-        case RHI_BLEND_OP_REV_SUBTRACT:
+        case SK_BLEND_OP_REV_SUBTRACT:
             return VK_BLEND_OP_REVERSE_SUBTRACT;
-        case RHI_BLEND_OP_SUBTRACT:
+        case SK_BLEND_OP_SUBTRACT:
             return VK_BLEND_OP_SUBTRACT;
         default:
             assert(false);
     }
 }
 
-static VkCullModeFlags vk_get_cull_mode(RHICullMode mode) {
+static VkCullModeFlags vk_get_cull_mode(SKCullMode mode) {
     switch (mode) {
-        case RHI_CULL_MODE_ALL:
+        case SK_CULL_MODE_ALL:
             return VK_CULL_MODE_FRONT_AND_BACK;
-        case RHI_CULL_MODE_NONE:
+        case SK_CULL_MODE_NONE:
             return VK_CULL_MODE_NONE;
-        case RHI_CULL_MODE_CCW:
+        case SK_CULL_MODE_CCW:
             return VK_CULL_MODE_FRONT_BIT;
-        case RHI_CULL_MODE_CW:
+        case SK_CULL_MODE_CW:
             return VK_CULL_MODE_BACK_BIT;
         default:
             assert(false);
@@ -594,29 +594,29 @@ static void insert_allocation_cpu(Device *device, AllocBlock in) {
     assert(device);
 
     u64 pos = find_insert_pos_cpu(device, in.cpu);
-    rhi::dyn_array_insert(&device->cpu_allocations, pos, in, vk.alloc);
+    sk::dyn_array_insert(&device->cpu_allocations, pos, in, vk.alloc);
 }
 
 static void insert_allocation_gpu(Device *device, AllocBlock in) {
     assert(device);
 
     u64 pos = find_insert_pos_gpu(device, in.gpu);
-    rhi::dyn_array_insert(&device->gpu_allocations, pos, in, vk.alloc);
+    sk::dyn_array_insert(&device->gpu_allocations, pos, in, vk.alloc);
 }
 
 static VKAPI_ATTR VkBool32 VKAPI_CALL debug_messenger(VkDebugUtilsMessageSeverityFlagBitsEXT severity, VkDebugUtilsMessageTypeFlagsEXT type, const VkDebugUtilsMessengerCallbackDataEXT *callback_data, void *user_data) {
     switch (severity) {
         case VK_DEBUG_UTILS_MESSAGE_SEVERITY_ERROR_BIT_EXT:
-            LOG(callback_data->pMessage, RHI_SEVERITY_ERROR);
+            LOG(callback_data->pMessage, SK_SEVERITY_ERROR);
             break;
         case VK_DEBUG_UTILS_MESSAGE_SEVERITY_INFO_BIT_EXT:
-            LOG(callback_data->pMessage, RHI_SEVERITY_INFO);
+            LOG(callback_data->pMessage, SK_SEVERITY_INFO);
             break;
         case VK_DEBUG_UTILS_MESSAGE_SEVERITY_VERBOSE_BIT_EXT:
-            LOG(callback_data->pMessage, RHI_SEVERITY_TRACE);
+            LOG(callback_data->pMessage, SK_SEVERITY_TRACE);
             break;
         case VK_DEBUG_UTILS_MESSAGE_SEVERITY_WARNING_BIT_EXT:
-            LOG(callback_data->pMessage, RHI_SEVERITY_WARN);
+            LOG(callback_data->pMessage, SK_SEVERITY_WARN);
             break;
         default:
             break;
@@ -626,15 +626,15 @@ static VKAPI_ATTR VkBool32 VKAPI_CALL debug_messenger(VkDebugUtilsMessageSeverit
 }
 
 static bool queue_family_supports(QueueFamilyInfo *family, u32 capabilities) {
-    if ((capabilities & RHI_QUEUE_GRAPHICS) && !(family->flags & VK_QUEUE_GRAPHICS_BIT)) {
+    if ((capabilities & SK_QUEUE_GRAPHICS) && !(family->flags & VK_QUEUE_GRAPHICS_BIT)) {
         return false;
     }
 
-    if ((capabilities & RHI_QUEUE_COMPUTE) && !(family->flags & VK_QUEUE_COMPUTE_BIT)) {
+    if ((capabilities & SK_QUEUE_COMPUTE) && !(family->flags & VK_QUEUE_COMPUTE_BIT)) {
         return false;
     }
 
-    if ((capabilities & RHI_QUEUE_TRANSFER) && !(family->flags & VK_QUEUE_TRANSFER_BIT)) {
+    if ((capabilities & SK_QUEUE_TRANSFER) && !(family->flags & VK_QUEUE_TRANSFER_BIT)) {
         return false;
     }
 
@@ -642,7 +642,7 @@ static bool queue_family_supports(QueueFamilyInfo *family, u32 capabilities) {
 }
 
 // Memory
-void *vk_alloc(RHIDevice device, u64 bytes, RHIMemoryType memory = RHI_MEMORY_TYPE_DEFAULT) {
+void *vk_alloc(SKDevice device, u64 bytes, SKMemoryType memory = SK_MEMORY_TYPE_DEFAULT) {
     assert(device);
 
     if (bytes == 0) {
@@ -676,13 +676,13 @@ void *vk_alloc(RHIDevice device, u64 bytes, RHIMemoryType memory = RHI_MEMORY_TY
 
     VkMemoryPropertyFlags properties = {};
     switch (memory) {
-        case RHI_MEMORY_TYPE_GPU:
+        case SK_MEMORY_TYPE_GPU:
             properties = VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT;
             break;
-        case RHI_MEMORY_TYPE_DEFAULT:
+        case SK_MEMORY_TYPE_DEFAULT:
             properties = VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT;
             break;
-        case RHI_MEMORY_TYPE_READBACK:
+        case SK_MEMORY_TYPE_READBACK:
             properties = VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT | VK_MEMORY_PROPERTY_HOST_CACHED_BIT;
             break;
         default:
@@ -706,7 +706,7 @@ void *vk_alloc(RHIDevice device, u64 bytes, RHIMemoryType memory = RHI_MEMORY_TY
     };
     alloc_block.gpu = (void *)vkGetBufferDeviceAddress(vulkan_device->device, &addr_info);
 
-    if (memory == RHI_MEMORY_TYPE_DEFAULT || memory == RHI_MEMORY_TYPE_READBACK) {
+    if (memory == SK_MEMORY_TYPE_DEFAULT || memory == SK_MEMORY_TYPE_READBACK) {
         if (vkMapMemory(vulkan_device->device, alloc_block.memory, 0, alloc_block.size, 0, &alloc_block.cpu) != VK_SUCCESS) {
             vkFreeMemory(vulkan_device->device, alloc_block.memory, nullptr);
             vkDestroyBuffer(vulkan_device->device, alloc_block.buffer, nullptr);
@@ -722,7 +722,7 @@ void *vk_alloc(RHIDevice device, u64 bytes, RHIMemoryType memory = RHI_MEMORY_TY
     return alloc_block.gpu;
 }
 
-void vk_free(RHIDevice device, _nullable void *ptr) {
+void vk_free(SKDevice device, _nullable void *ptr) {
     assert(device);
 
     if (!ptr) {
@@ -745,7 +745,7 @@ void vk_free(RHIDevice device, _nullable void *ptr) {
     vkDestroyBuffer(vulkan_device->device, block->buffer, nullptr);
 }
 
-void *vk_host_to_device_pointer(RHIDevice device, void *ptr) {
+void *vk_host_to_device_pointer(SKDevice device, void *ptr) {
     assert(device);
 
     if (!ptr) {
@@ -764,21 +764,21 @@ void *vk_host_to_device_pointer(RHIDevice device, void *ptr) {
 }
 
 // Textures
-RHITextureSizeAlign vk_texture_size_align(RHIDevice device, RHITextureDesc *desc) {
+SKTextureSizeAlign vk_texture_size_align(SKDevice device, SKTextureDesc *desc) {
     assert(false);
     return {};
 }
 
-RHITexture vk_create_texture(RHIDevice device, RHITextureDesc *desc, void *ptr_gpu) {
+SKTexture vk_create_texture(SKDevice device, SKTextureDesc *desc, void *ptr_gpu) {
     assert(false);
     return nullptr;
 }
 
-void vk_destroy_texture(RHIDevice device, RHITexture texture) {
+void vk_destroy_texture(SKDevice device, SKTexture texture) {
     assert(false);
 }
 
-RHITextureDescriptor vk_texture_view_descriptor(RHIDevice device, RHITexture texture, RHIViewDesc *desc) {
+SKTextureDescriptor vk_texture_view_descriptor(SKDevice device, SKTexture texture, SKViewDesc *desc) {
     assert(device);
     assert(texture);
     assert(desc);
@@ -786,7 +786,7 @@ RHITextureDescriptor vk_texture_view_descriptor(RHIDevice device, RHITexture tex
     Device *vulkan_device = (Device *) device;
     Texture *vulkan_texture = (Texture *) texture;
 
-    RHITextureDescriptor descriptor = {};
+    SKTextureDescriptor descriptor = {};
 
     VkImageViewCreateInfo view_info = {
         .sType = VK_STRUCTURE_TYPE_IMAGE_VIEW_CREATE_INFO,
@@ -826,7 +826,7 @@ RHITextureDescriptor vk_texture_view_descriptor(RHIDevice device, RHITexture tex
     return descriptor;
 }
 
-RHITextureDescriptor vk_rw_texture_view_descriptor(RHIDevice device, RHITexture texture, RHIViewDesc *desc) {
+SKTextureDescriptor vk_rw_texture_view_descriptor(SKDevice device, SKTexture texture, SKViewDesc *desc) {
     assert(device);
     assert(texture);
     assert(desc);
@@ -834,7 +834,7 @@ RHITextureDescriptor vk_rw_texture_view_descriptor(RHIDevice device, RHITexture 
     Device *vulkan_device = (Device *) device;
     Texture *vulkan_texture = (Texture *) texture;
 
-    RHITextureDescriptor descriptor = {};
+    SKTextureDescriptor descriptor = {};
 
     VkImageViewCreateInfo view_info = {
         .sType = VK_STRUCTURE_TYPE_IMAGE_VIEW_CREATE_INFO,
@@ -875,7 +875,7 @@ RHITextureDescriptor vk_rw_texture_view_descriptor(RHIDevice device, RHITexture 
 }
 
 // Pipelines
-RHIPipeline vk_create_compute_pipeline(RHIDevice device, u8 *compute_ir, u32 ir_size) {
+SKPipeline vk_create_compute_pipeline(SKDevice device, u8 *compute_ir, u32 ir_size) {
     assert(device);
     assert(compute_ir);
     assert(ir_size);
@@ -920,7 +920,7 @@ RHIPipeline vk_create_compute_pipeline(RHIDevice device, u8 *compute_ir, u32 ir_
     return pipeline;
 }
 
-RHIPipeline vk_create_graphics_pipeline(RHIDevice device, u8 *vertex_ir, u32 vertex_ir_size, u8 *pixel_ir, u32 pixel_ir_size, RHIRasterDesc *desc) {
+SKPipeline vk_create_graphics_pipeline(SKDevice device, u8 *vertex_ir, u32 vertex_ir_size, u8 *pixel_ir, u32 pixel_ir_size, SKRasterDesc *desc) {
     assert(device);
     assert(vertex_ir);
     assert(vertex_ir_size);
@@ -977,11 +977,11 @@ RHIPipeline vk_create_graphics_pipeline(RHIDevice device, u8 *vertex_ir, u32 ver
         }
     };
 
-    struct RHIRasterDesc {
+    struct SKRasterDesc {
         bool support_dual_source_blending;
-        RHIFormat depth_format;
-        RHIFormat stencil_format;
-        RHIColorTarget *color_targets;
+        SKFormat depth_format;
+        SKFormat stencil_format;
+        SKColorTarget *color_targets;
         u32 color_target_count;
     };
 
@@ -1080,7 +1080,7 @@ RHIPipeline vk_create_graphics_pipeline(RHIDevice device, u8 *vertex_ir, u32 ver
     return pipeline;
 }
 
-RHIPipeline vk_create_graphics_meshlet_pipeline(RHIDevice device, u8 *meshlet_ir, u32 meshlet_ir_size, u8 *pixel_ir, u32 pixel_ir_size, RHIRasterDesc *desc) {
+SKPipeline vk_create_graphics_meshlet_pipeline(SKDevice device, u8 *meshlet_ir, u32 meshlet_ir_size, u8 *pixel_ir, u32 pixel_ir_size, SKRasterDesc *desc) {
     assert(device);
     assert(meshlet_ir);
     assert(meshlet_ir_size);
@@ -1137,11 +1137,11 @@ RHIPipeline vk_create_graphics_meshlet_pipeline(RHIDevice device, u8 *meshlet_ir
         }
     };
 
-    struct RHIRasterDesc {
+    struct SKRasterDesc {
         bool support_dual_source_blending;
-        RHIFormat depth_format;
-        RHIFormat stencil_format;
-        RHIColorTarget *color_targets;
+        SKFormat depth_format;
+        SKFormat stencil_format;
+        SKColorTarget *color_targets;
         u32 color_target_count;
     };
 
@@ -1240,7 +1240,7 @@ RHIPipeline vk_create_graphics_meshlet_pipeline(RHIDevice device, u8 *meshlet_ir
     return pipeline;
 }
 
-void vk_destroy_pipeline(RHIDevice device, RHIPipeline pipeline) {
+void vk_destroy_pipeline(SKDevice device, SKPipeline pipeline) {
     assert(device);
     assert(pipeline);
 
@@ -1253,13 +1253,13 @@ void vk_destroy_pipeline(RHIDevice device, RHIPipeline pipeline) {
 }
 
 // State objects
-RHIDepthStencilState vk_create_depth_stencil_state(RHIDevice device, RHIDepthStencilDesc *desc) {
+SKDepthStencilState vk_create_depth_stencil_state(SKDevice device, SKDepthStencilDesc *desc) {
     assert(device);
     assert(desc);
 
     DepthStencilState *state = (DepthStencilState *) palloc(sizeof(DepthStencilState));
 
-    state->depth_write_enabled = desc->depth_mode == RHI_DEPTH_WRITE;
+    state->depth_write_enabled = desc->depth_mode == SK_DEPTH_WRITE;
     state->depth_compare_op = vk_get_compare_op(desc->depth_test);
     state->depth_bias_constant = desc->depth_bias;
     state->depth_bias_clamp = desc->depth_bias_clamp;
@@ -1282,7 +1282,7 @@ RHIDepthStencilState vk_create_depth_stencil_state(RHIDevice device, RHIDepthSte
     return state;
 }
 
-RHIBlendState vk_create_blend_state(RHIDevice device, RHIBlendDesc *desc) {
+SKBlendState vk_create_blend_state(SKDevice device, SKBlendDesc *desc) {
     assert(device);
     assert(desc);
 
@@ -1299,7 +1299,7 @@ RHIBlendState vk_create_blend_state(RHIDevice device, RHIBlendDesc *desc) {
     return state;
 }
 
-void vk_free_depth_stencil_state(RHIDevice device, RHIDepthStencilState state) {
+void vk_free_depth_stencil_state(SKDevice device, SKDepthStencilState state) {
     assert(device);
     assert(state);
 
@@ -1308,7 +1308,7 @@ void vk_free_depth_stencil_state(RHIDevice device, RHIDepthStencilState state) {
     pfree(depth_stencil);
 }
 
-void vk_free_blend_state(RHIDevice device, RHIBlendState state) {
+void vk_free_blend_state(SKDevice device, SKBlendState state) {
     assert(device);
     assert(state);
 
@@ -1319,7 +1319,7 @@ void vk_free_blend_state(RHIDevice device, RHIBlendState state) {
 
 // Device
 // TODO: Make sure device has present queue built in for swapchain support
-RHIDevice vk_create_device(RHIDeviceDesc *desc) {
+SKDevice vk_create_device(SKDeviceDesc *desc) {
     defer {
         treset();
     };
@@ -1329,7 +1329,7 @@ RHIDevice vk_create_device(RHIDeviceDesc *desc) {
         assert(false);
     }
     
-    rhi::Array<VkPhysicalDevice> gpus = rhi::array<VkPhysicalDevice>(gpu_count, vk.temp_alloc);
+    sk::Array<VkPhysicalDevice> gpus = sk::array<VkPhysicalDevice>(gpu_count, vk.temp_alloc);
 
     if (vkEnumeratePhysicalDevices(vk.instance, &gpu_count, gpus.data) != VK_SUCCESS) {
         assert(false);
@@ -1337,10 +1337,10 @@ RHIDevice vk_create_device(RHIDeviceDesc *desc) {
 
     VkPhysicalDevice gpu = nullptr;
 
-    rhi::Array<QueueFamilyAssignment> selected_queue_assignments;
+    sk::Array<QueueFamilyAssignment> selected_queue_assignments;
     u32 selected_queue_assignment_count = 0;
 
-    rhi::Array<QueueFamilyInfo> selected_family_infos;
+    sk::Array<QueueFamilyInfo> selected_family_infos;
     u32 selected_family_count = 0;
 
     for (u32 i = 0; i < gpu_count; i++) {
@@ -1350,7 +1350,7 @@ RHIDevice vk_create_device(RHIDeviceDesc *desc) {
             assert(false);
         }
 
-        rhi::Array<VkExtensionProperties> extensions = rhi::array<VkExtensionProperties>(extension_count, vk.temp_alloc);
+        sk::Array<VkExtensionProperties> extensions = sk::array<VkExtensionProperties>(extension_count, vk.temp_alloc);
 
         if (vkEnumerateDeviceExtensionProperties(gpus.data[i], nullptr, &extension_count, extensions.data) != VK_SUCCESS) {
             assert(false);
@@ -1409,11 +1409,11 @@ RHIDevice vk_create_device(RHIDeviceDesc *desc) {
         u32 family_count = 0;
         vkGetPhysicalDeviceQueueFamilyProperties(gpus.data[i], &family_count, nullptr);
 
-        rhi::Array<VkQueueFamilyProperties> families = rhi::array<VkQueueFamilyProperties>(family_count, vk.temp_alloc);
+        sk::Array<VkQueueFamilyProperties> families = sk::array<VkQueueFamilyProperties>(family_count, vk.temp_alloc);
 
         vkGetPhysicalDeviceQueueFamilyProperties(gpus.data[i], &family_count, families.data);
 
-        rhi::Array<QueueFamilyInfo> family_infos = rhi::array<QueueFamilyInfo>(family_count, vk.temp_alloc);
+        sk::Array<QueueFamilyInfo> family_infos = sk::array<QueueFamilyInfo>(family_count, vk.temp_alloc);
 
         for (u32 j = 0; j < family_count; j++) {
             family_infos.data[j].total_count = families.data[j].queueCount;
@@ -1425,14 +1425,14 @@ RHIDevice vk_create_device(RHIDeviceDesc *desc) {
         }
 
         // TODO: Remove hardcoded size
-        rhi::Array<QueueFamilyAssignment> queue_assignments = rhi::array<QueueFamilyAssignment>(family_count, vk.temp_alloc);
+        sk::Array<QueueFamilyAssignment> queue_assignments = sk::array<QueueFamilyAssignment>(family_count, vk.temp_alloc);
 
         u32 assignment_count = 0;
 
         bool queues_supported = true;
 
         for (u32 j = 0; j < desc->queue_count; j++) {
-            RHIQueueRequest *request = &desc->queues[j];
+            SKQueueRequest *request = &desc->queues[j];
 
             for (u32 k = 0; k < request->count; k++) {
                 bool found = false;
@@ -1531,13 +1531,13 @@ RHIDevice vk_create_device(RHIDeviceDesc *desc) {
     };
 
     // TODO: Max queues per family
-    rhi::Array<float> priorities = rhi::array<float>(64, vk.temp_alloc);
+    sk::Array<float> priorities = sk::array<float>(64, vk.temp_alloc);
 
     for (u32 i = 0; i < 64; i++) {
         priorities.data[i] = 1.0f;
     }
 
-    rhi::DynamicArray<VkDeviceQueueCreateInfo> queue_infos = rhi::dyn_array<VkDeviceQueueCreateInfo>(0, selected_family_count, vk.temp_alloc);
+    sk::DynamicArray<VkDeviceQueueCreateInfo> queue_infos = sk::dyn_array<VkDeviceQueueCreateInfo>(0, selected_family_count, vk.temp_alloc);
 
     for (u32 i = 0; i < selected_family_count; i++) {
 
@@ -1554,7 +1554,7 @@ RHIDevice vk_create_device(RHIDeviceDesc *desc) {
             .pQueuePriorities = priorities.data
         };
 
-        rhi::dyn_array_push_back(&queue_infos, info, vk.temp_alloc);
+        sk::dyn_array_push_back(&queue_infos, info, vk.temp_alloc);
     }
 
     VkDeviceCreateInfo create_info = {
@@ -1578,7 +1578,7 @@ RHIDevice vk_create_device(RHIDeviceDesc *desc) {
     if (!load_device_functions(vk_device)) {
         vkDestroyDevice(vk_device, nullptr);
 
-        LOG("Failed to load device-level Vulkan functions", RHI_SEVERITY_ERROR);
+        LOG("Failed to load device-level Vulkan functions", SK_SEVERITY_ERROR);
 
         assert(false);
     }
@@ -1588,7 +1588,7 @@ RHIDevice vk_create_device(RHIDeviceDesc *desc) {
     device->device = vk_device;
     device->gpu = gpu;
 
-    device->queues = rhi::array<Queue>(selected_queue_assignment_count, vk.alloc);
+    device->queues = sk::array<Queue>(selected_queue_assignment_count, vk.alloc);
 
     for (u32 i = 0; i < selected_queue_assignment_count; i++) {
         QueueFamilyAssignment *assignment = &selected_queue_assignments.data[i];
@@ -1615,7 +1615,7 @@ RHIDevice vk_create_device(RHIDeviceDesc *desc) {
             }
             vkDestroyDevice(vk_device, nullptr);
 
-            rhi::array_free(&device->queues, vk.alloc);
+            sk::array_free(&device->queues, vk.alloc);
             pfree(device);
 
             assert(false);
@@ -1637,7 +1637,7 @@ RHIDevice vk_create_device(RHIDeviceDesc *desc) {
             }
             vkDestroyDevice(vk_device, nullptr);
 
-            rhi::array_free(&device->queues, vk.alloc);
+            sk::array_free(&device->queues, vk.alloc);
             pfree(device);
 
             assert(false);
@@ -1649,7 +1649,7 @@ RHIDevice vk_create_device(RHIDeviceDesc *desc) {
     return device;
 }
 
-void vk_destroy_device(RHIDevice device) {
+void vk_destroy_device(SKDevice device) {
     assert(device);
 
     Device *vulkan_device = (Device *) device;
@@ -1659,18 +1659,18 @@ void vk_destroy_device(RHIDevice device) {
         vkDestroySemaphore(vulkan_device->device, vulkan_device->queues.data[i].batch_semaphore, nullptr);
     }
 
-    rhi::array_free(&vulkan_device->queues, vk.alloc);
+    sk::array_free(&vulkan_device->queues, vk.alloc);
 
     // TODO: Add memory leak detection
-    rhi::dyn_array_free(&vulkan_device->gpu_allocations, vk.alloc);
-    rhi::dyn_array_free(&vulkan_device->cpu_allocations, vk.alloc);
+    sk::dyn_array_free(&vulkan_device->gpu_allocations, vk.alloc);
+    sk::dyn_array_free(&vulkan_device->cpu_allocations, vk.alloc);
 
     vkDestroyDevice(vulkan_device->device, nullptr);
 
     pfree(vulkan_device);
 }
 
-void vk_device_wait_idle(RHIDevice device) {
+void vk_device_wait_idle(SKDevice device) {
     assert(device);
 
     Device *vulkan_device = (Device *) device;
@@ -1679,7 +1679,7 @@ void vk_device_wait_idle(RHIDevice device) {
 }
 
 // Queue
-RHIQueue vk_get_queue(RHIDevice device, RHIQueueDesc *desc) {
+SKQueue vk_get_queue(SKDevice device, SKQueueDesc *desc) {
     assert(device);
     assert(desc);
 
@@ -1704,7 +1704,7 @@ RHIQueue vk_get_queue(RHIDevice device, RHIQueueDesc *desc) {
     return nullptr;
 }
 
-RHICommandBuffer vk_start_command_recording(RHIQueue queue) {
+SKCommandBuffer vk_start_command_recording(SKQueue queue) {
     assert(queue);
 
     Queue *vulkan_queue = (Queue *) queue;
@@ -1712,7 +1712,7 @@ RHICommandBuffer vk_start_command_recording(RHIQueue queue) {
     // Check if we can free any batches before allocating new command buffers
     bool batch_finished = true;
     while (batch_finished && vulkan_queue->batches.count > 0) {
-        SubmissionBatch *batch = rhi::ringbuffer_front(&vulkan_queue->batches);
+        SubmissionBatch *batch = sk::ringbuffer_front(&vulkan_queue->batches);
 
         u64 value = 0;
         if (vkGetSemaphoreCounterValue(vulkan_queue->device->device, vulkan_queue->batch_semaphore, &value) != VK_SUCCESS) {
@@ -1722,10 +1722,10 @@ RHICommandBuffer vk_start_command_recording(RHIQueue queue) {
         if (value >= batch->wait_value) {
             for (u32 i = 0; i < batch->command_buffers.count; i++) {
                 vkResetCommandBuffer(batch->command_buffers.data[i], VK_COMMAND_BUFFER_RESET_RELEASE_RESOURCES_BIT);
-                rhi::ringbuffer_push_back<VkCommandBuffer>(&vulkan_queue->free_command_buffers, batch->command_buffers.data[i], vk.alloc);
+                sk::ringbuffer_push_back<VkCommandBuffer>(&vulkan_queue->free_command_buffers, batch->command_buffers.data[i], vk.alloc);
             }
-            rhi::array_free(&batch->command_buffers, vk.alloc);
-            rhi::ringbuffer_pop_front(&vulkan_queue->batches);
+            sk::array_free(&batch->command_buffers, vk.alloc);
+            sk::ringbuffer_pop_front(&vulkan_queue->batches);
         } else {
             batch_finished = false;
         }
@@ -1734,8 +1734,8 @@ RHICommandBuffer vk_start_command_recording(RHIQueue queue) {
     VkCommandBuffer cb = nullptr;
 
     if (vulkan_queue->free_command_buffers.count > 0) {
-        cb = *rhi::ringbuffer_front(&vulkan_queue->free_command_buffers);
-        rhi::ringbuffer_pop_front(&vulkan_queue->free_command_buffers);
+        cb = *sk::ringbuffer_front(&vulkan_queue->free_command_buffers);
+        sk::ringbuffer_pop_front(&vulkan_queue->free_command_buffers);
     } else {
         VkCommandBufferAllocateInfo alloc_info = {
             .sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_ALLOCATE_INFO,
@@ -1763,13 +1763,13 @@ RHICommandBuffer vk_start_command_recording(RHIQueue queue) {
 
     vkcb->command_buffer = cb;
     vkcb->queue = (Queue *) queue;
-    vkcb->waits = rhi::dyn_array<VkSemaphoreSubmitInfo>(0, COMMAND_BUFFER_INITIAL_SEMAPHORE_COUNT, vk.alloc);
-    vkcb->signals = rhi::dyn_array<VkSemaphoreSubmitInfo>(0, COMMAND_BUFFER_INITIAL_SEMAPHORE_COUNT, vk.alloc);
+    vkcb->waits = sk::dyn_array<VkSemaphoreSubmitInfo>(0, COMMAND_BUFFER_INITIAL_SEMAPHORE_COUNT, vk.alloc);
+    vkcb->signals = sk::dyn_array<VkSemaphoreSubmitInfo>(0, COMMAND_BUFFER_INITIAL_SEMAPHORE_COUNT, vk.alloc);
 
     return vkcb;
 }
 
-void vk_submit(RHIQueue queue, RHICommandBuffer *command_buffers, u32 command_buffer_count, RHISemaphore sem, u64 sem_val) {
+void vk_submit(SKQueue queue, SKCommandBuffer *command_buffers, u32 command_buffer_count, SKSemaphore sem, u64 sem_val) {
     defer {
         treset();
     };
@@ -1792,20 +1792,20 @@ void vk_submit(RHIQueue queue, RHICommandBuffer *command_buffers, u32 command_bu
     //   and the caller should be allowed to call wait/signal on whatever command buffer they want without having to worry 
     //   about the implicit synchronization that we track for them, and deduplicating on our end allows us to simplify the implementation 
     //   for the caller while still ensuring correctness and avoiding redundant waits/signals.
-    rhi::Map<SemaphoreSubmitInfo, VkPipelineStageFlags2> signals_map = rhi::map<SemaphoreSubmitInfo, VkPipelineStageFlags2>(command_buffer_count * COMMAND_BUFFER_INITIAL_SEMAPHORE_COUNT, vk.temp_alloc);
-    rhi::Map<SemaphoreSubmitInfo, VkPipelineStageFlags2> waits_map = rhi::map<SemaphoreSubmitInfo, VkPipelineStageFlags2>(command_buffer_count * COMMAND_BUFFER_INITIAL_SEMAPHORE_COUNT, vk.temp_alloc);
+    sk::Map<SemaphoreSubmitInfo, VkPipelineStageFlags2> signals_map = sk::map<SemaphoreSubmitInfo, VkPipelineStageFlags2>(command_buffer_count * COMMAND_BUFFER_INITIAL_SEMAPHORE_COUNT, vk.temp_alloc);
+    sk::Map<SemaphoreSubmitInfo, VkPipelineStageFlags2> waits_map = sk::map<SemaphoreSubmitInfo, VkPipelineStageFlags2>(command_buffer_count * COMMAND_BUFFER_INITIAL_SEMAPHORE_COUNT, vk.temp_alloc);
     
     // We do not deduplicate command buffers, 
     //   because the caller is able to manage that themselves by merging command buffers if they choose to, 
     //   and it simplifies the implementation on our end to just submit them as is.
-    rhi::Array<VkCommandBufferSubmitInfo> cb_infos = rhi::array<VkCommandBufferSubmitInfo>(command_buffer_count, vk.temp_alloc);
+    sk::Array<VkCommandBufferSubmitInfo> cb_infos = sk::array<VkCommandBufferSubmitInfo>(command_buffer_count, vk.temp_alloc);
 
     SemaphoreSubmitInfo cpu_sem_info = {
         .semaphore = semaphore->semaphore,
         .value = sem_val,
     };
 
-    rhi::map_insert(&signals_map, cpu_sem_info, VK_PIPELINE_STAGE_2_ALL_COMMANDS_BIT, vk.temp_alloc);
+    sk::map_insert(&signals_map, cpu_sem_info, VK_PIPELINE_STAGE_2_ALL_COMMANDS_BIT, vk.temp_alloc);
 
     Texture *backbuffer = nullptr;
 
@@ -1833,11 +1833,11 @@ void vk_submit(RHIQueue queue, RHICommandBuffer *command_buffers, u32 command_bu
                 .semaphore = cb->waits.data[i].semaphore,
                 .value = cb->waits.data[i].value
             };
-            VkPipelineStageFlags2 *flags = rhi::map_get(&waits_map, new_wait);
+            VkPipelineStageFlags2 *flags = sk::map_get(&waits_map, new_wait);
             if (flags) {
                 *flags |= cb->waits.data[i].stageMask;
             } else {
-                rhi::map_insert(&waits_map, new_wait, cb->waits.data[i].stageMask, vk.temp_alloc);
+                sk::map_insert(&waits_map, new_wait, cb->waits.data[i].stageMask, vk.temp_alloc);
             }
         }
 
@@ -1846,18 +1846,18 @@ void vk_submit(RHIQueue queue, RHICommandBuffer *command_buffers, u32 command_bu
                 .semaphore = cb->signals.data[i].semaphore,
                 .value = cb->signals.data[i].value
             };
-            VkPipelineStageFlags2 *flags = rhi::map_get(&signals_map, new_signal);
+            VkPipelineStageFlags2 *flags = sk::map_get(&signals_map, new_signal);
             if (flags) {
                 *flags |= cb->waits.data[i].stageMask;
             } else {
-                rhi::map_insert(&signals_map, new_signal, cb->waits.data[i].stageMask, vk.temp_alloc);
+                sk::map_insert(&signals_map, new_signal, cb->waits.data[i].stageMask, vk.temp_alloc);
             }
         }
 
         // We no longer need the CommandBuffer object after extracting the synchronization info and command buffer handle, 
         //   so we can free it now to avoid having to track it later when we want to reuse the command buffer handle.
-        rhi::dyn_array_free(&cb->waits, vk.alloc);
-        rhi::dyn_array_free(&cb->signals, vk.alloc);
+        sk::dyn_array_free(&cb->waits, vk.alloc);
+        sk::dyn_array_free(&cb->signals, vk.alloc);
         pfree(cb);
     }
 
@@ -1875,16 +1875,16 @@ void vk_submit(RHIQueue queue, RHICommandBuffer *command_buffers, u32 command_bu
             .value = backbuffer->backbuffer_data->ready_value
         };
 
-        rhi::map_insert(&waits_map, wait, VK_PIPELINE_STAGE_2_COLOR_ATTACHMENT_OUTPUT_BIT, vk.temp_alloc);
-        rhi::map_insert(&signals_map, signal, VK_PIPELINE_STAGE_2_COLOR_ATTACHMENT_OUTPUT_BIT, vk.temp_alloc);
+        sk::map_insert(&waits_map, wait, VK_PIPELINE_STAGE_2_COLOR_ATTACHMENT_OUTPUT_BIT, vk.temp_alloc);
+        sk::map_insert(&signals_map, signal, VK_PIPELINE_STAGE_2_COLOR_ATTACHMENT_OUTPUT_BIT, vk.temp_alloc);
     }
 
     // Do the deduplication
     u32 wait_count = waits_map.count;
     u32 signal_count = signals_map.count + 1;
 
-    rhi::Array<VkSemaphoreSubmitInfo> waits = rhi::array<VkSemaphoreSubmitInfo>(wait_count, vk.temp_alloc);
-    rhi::Array<VkSemaphoreSubmitInfo> signals = rhi::array<VkSemaphoreSubmitInfo>(signal_count, vk.temp_alloc);
+    sk::Array<VkSemaphoreSubmitInfo> waits = sk::array<VkSemaphoreSubmitInfo>(wait_count, vk.temp_alloc);
+    sk::Array<VkSemaphoreSubmitInfo> signals = sk::array<VkSemaphoreSubmitInfo>(signal_count, vk.temp_alloc);
 
     SemaphoreSubmitInfo *it1 = nullptr;
     VkPipelineStageFlags2 *it2 = nullptr;
@@ -1913,7 +1913,7 @@ void vk_submit(RHIQueue queue, RHICommandBuffer *command_buffers, u32 command_bu
 
     SubmissionBatch batch = {
         .wait_value = vulkan_queue->next_semaphore_value,
-        .command_buffers = rhi::array<VkCommandBuffer>(command_buffer_count, vk.alloc),
+        .command_buffers = sk::array<VkCommandBuffer>(command_buffer_count, vk.alloc),
     };
 
     for (u32 i = 0; i < batch.command_buffers.count; i++) {
@@ -1943,11 +1943,11 @@ void vk_submit(RHIQueue queue, RHICommandBuffer *command_buffers, u32 command_bu
         assert(false);
     }
 
-    rhi::ringbuffer_push_back(&vulkan_queue->batches, batch, vk.alloc);
+    sk::ringbuffer_push_back(&vulkan_queue->batches, batch, vk.alloc);
 }
 
 // Swapchain
-RHISwapchain vk_create_swapchain(RHIDevice device, RHISwapchainDesc *desc) {
+SKSwapchain vk_create_swapchain(SKDevice device, SKSwapchainDesc *desc) {
     defer {
         treset();
     };
@@ -2047,7 +2047,7 @@ RHISwapchain vk_create_swapchain(RHIDevice device, RHISwapchainDesc *desc) {
     };
 
     u32 queue_family_count = vulkan_device->queues.count;
-    rhi::Array<u32> queue_family_indices = rhi::array<u32>(queue_family_count, vk.temp_alloc);
+    sk::Array<u32> queue_family_indices = sk::array<u32>(queue_family_count, vk.temp_alloc);
 
     for (u32 i = 0; i < vulkan_device->queues.count; i++) {
         queue_family_indices.data[i] = vulkan_device->queues.data[i].family;
@@ -2329,7 +2329,7 @@ RHISwapchain vk_create_swapchain(RHIDevice device, RHISwapchainDesc *desc) {
     return swapchain;
 }
 
-void vk_destroy_swapchain(RHIDevice device, RHISwapchain swapchain) {
+void vk_destroy_swapchain(SKDevice device, SKSwapchain swapchain) {
     assert(device);
     assert(swapchain);
 
@@ -2363,7 +2363,7 @@ void vk_destroy_swapchain(RHIDevice device, RHISwapchain swapchain) {
     pfree(vulkan_swapchain);
 }
 
-RHITexture vk_next_backbuffer(RHISwapchain swapchain) {
+SKTexture vk_next_backbuffer(SKSwapchain swapchain) {
     assert(swapchain);
 
     Swapchain *vulkan_swapchain = (Swapchain *) swapchain;
@@ -2421,7 +2421,7 @@ RHITexture vk_next_backbuffer(RHISwapchain swapchain) {
 
 // The shit i have to do to implicitly sync present is dumb
 
-void vk_present(RHISwapchain swapchain, RHITexture texture) {
+void vk_present(SKSwapchain swapchain, SKTexture texture) {
     assert(swapchain);
     assert(texture);
 
@@ -2544,7 +2544,7 @@ void vk_present(RHISwapchain swapchain, RHITexture texture) {
 }
 
 // Semaphores
-RHISemaphore vk_create_semaphore(RHIDevice device, u64 init_value) {
+SKSemaphore vk_create_semaphore(SKDevice device, u64 init_value) {
     assert(device);
 
     Device *vulkan_device = (Device *) device;
@@ -2575,7 +2575,7 @@ RHISemaphore vk_create_semaphore(RHIDevice device, u64 init_value) {
     return semaphore;
 }
 
-void vk_wait_semaphore(RHIDevice device, RHISemaphore sem, u64 value) {
+void vk_wait_semaphore(SKDevice device, SKSemaphore sem, u64 value) {
     assert(device);
     assert(sem);
 
@@ -2594,7 +2594,7 @@ void vk_wait_semaphore(RHIDevice device, RHISemaphore sem, u64 value) {
     }
 }
 
-void vk_destroy_semaphore(RHIDevice device, RHISemaphore sem) {
+void vk_destroy_semaphore(SKDevice device, SKSemaphore sem) {
     assert(device);
     assert(sem);
 
@@ -2606,7 +2606,7 @@ void vk_destroy_semaphore(RHIDevice device, RHISemaphore sem) {
 }
 
 // Commands
-void vk_mem_copy(RHICommandBuffer cb, void *dst_gpu, void *src_gpu, u64 size) {
+void vk_mem_copy(SKCommandBuffer cb, void *dst_gpu, void *src_gpu, u64 size) {
     assert(cb);
     assert(size);
 
@@ -2626,7 +2626,7 @@ void vk_mem_copy(RHICommandBuffer cb, void *dst_gpu, void *src_gpu, u64 size) {
     vkCmdCopyBuffer(command_buffer->command_buffer, src.buffer, dst.buffer, 1, &copy);
 }
 
-void vk_copy_to_texture(RHICommandBuffer cb, RHITexture texture, void *src_gpu) {
+void vk_copy_to_texture(SKCommandBuffer cb, SKTexture texture, void *src_gpu) {
     assert(cb);
     assert(texture);
 
@@ -2650,7 +2650,7 @@ void vk_copy_to_texture(RHICommandBuffer cb, RHITexture texture, void *src_gpu) 
     vkCmdCopyBufferToImage(command_buffer->command_buffer, offset.buffer, tex->image, VK_IMAGE_LAYOUT_GENERAL, 1, &copy);
 }
 
-void vk_copy_from_texture(RHICommandBuffer cb, void *dst_gpu, RHITexture texture) {
+void vk_copy_from_texture(SKCommandBuffer cb, void *dst_gpu, SKTexture texture) {
     assert(cb);
     assert(texture);
 
@@ -2674,7 +2674,7 @@ void vk_copy_from_texture(RHICommandBuffer cb, void *dst_gpu, RHITexture texture
     vkCmdCopyImageToBuffer(command_buffer->command_buffer, tex->image, VK_IMAGE_LAYOUT_GENERAL, offset.buffer, 1, &copy);
 }
 
-void vk_set_active_texture_heap_ptr(RHICommandBuffer cb, void *ptr_gpu, u64 size) {
+void vk_set_active_texture_heap_ptr(SKCommandBuffer cb, void *ptr_gpu, u64 size) {
     assert(cb);
     assert(size);
 
@@ -2693,7 +2693,7 @@ void vk_set_active_texture_heap_ptr(RHICommandBuffer cb, void *ptr_gpu, u64 size
     vkCmdBindResourceHeapEXT(command_buffer->command_buffer, &info);
 }
 
-void vk_barrier(RHICommandBuffer cb, RHIPipelineStage before, RHIPipelineStage after, RHIHazardFlags hazards) {
+void vk_barrier(SKCommandBuffer cb, SKPipelineStage before, SKPipelineStage after, SKHazardFlags hazards) {
     assert(cb);
 
     CommandBuffer *command_buffer = (CommandBuffer *) cb;
@@ -2710,17 +2710,17 @@ void vk_barrier(RHICommandBuffer cb, RHIPipelineStage before, RHIPipelineStage a
         .dstAccessMask = 0,
     };
 
-    if (hazards & RHI_HAZARD_DRAW_ARGUMENTS) {
+    if (hazards & SK_HAZARD_DRAW_ARGUMENTS) {
         mem.srcAccessMask |= VK_ACCESS_INDIRECT_COMMAND_READ_BIT;
         mem.dstStageMask |= VK_PIPELINE_STAGE_DRAW_INDIRECT_BIT;
     }
 
-    if (hazards & RHI_HAZARD_DESCRIPTORS) {
+    if (hazards & SK_HAZARD_DESCRIPTORS) {
         mem.srcAccessMask |= VK_ACCESS_SHADER_READ_BIT;
         mem.dstStageMask |= VK_PIPELINE_STAGE_VERTEX_SHADER_BIT | VK_PIPELINE_STAGE_FRAGMENT_SHADER_BIT | VK_PIPELINE_STAGE_COMPUTE_SHADER_BIT;
     }
 
-    if (hazards & RHI_HAZARD_DEPTH_STENCIL) {
+    if (hazards & SK_HAZARD_DEPTH_STENCIL) {
         mem.srcAccessMask |= VK_ACCESS_DEPTH_STENCIL_ATTACHMENT_WRITE_BIT | VK_ACCESS_DEPTH_STENCIL_ATTACHMENT_READ_BIT;
 
         mem.dstStageMask |= VK_PIPELINE_STAGE_EARLY_FRAGMENT_TESTS_BIT | VK_PIPELINE_STAGE_LATE_FRAGMENT_TESTS_BIT;
@@ -2732,7 +2732,7 @@ void vk_barrier(RHICommandBuffer cb, RHIPipelineStage before, RHIPipelineStage a
     vkCmdPipelineBarrier2(command_buffer->command_buffer, &dep);
 }
 
-void vk_signal_after(RHICommandBuffer cb, RHIPipelineStage before, RHISemaphore sem, u64 value) {
+void vk_signal_after(SKCommandBuffer cb, SKPipelineStage before, SKSemaphore sem, u64 value) {
     assert(cb);
     assert(sem);
 
@@ -2745,10 +2745,10 @@ void vk_signal_after(RHICommandBuffer cb, RHIPipelineStage before, RHISemaphore 
         .value = value,
         .stageMask = vk_get_pipeline_stage(before),
     };
-    rhi::dyn_array_push_back(&command_buffer->signals, semaphore_info, vk.alloc);
+    sk::dyn_array_push_back(&command_buffer->signals, semaphore_info, vk.alloc);
 }
 
-void vk_wait_before(RHICommandBuffer cb, RHIPipelineStage after, RHISemaphore sem, u64 value) {
+void vk_wait_before(SKCommandBuffer cb, SKPipelineStage after, SKSemaphore sem, u64 value) {
     assert(cb);
     assert(sem);
 
@@ -2761,10 +2761,18 @@ void vk_wait_before(RHICommandBuffer cb, RHIPipelineStage after, RHISemaphore se
         .value = value,
         .stageMask = vk_get_pipeline_stage(after),
     };
-    rhi::dyn_array_push_back(&command_buffer->waits, semaphore_info, vk.alloc);
+    sk::dyn_array_push_back(&command_buffer->waits, semaphore_info, vk.alloc);
 }
 
-void vk_set_pipeline(RHICommandBuffer cb, RHIPipeline pipeline) {
+void vk_signal_after2(SKCommandBuffer cb, SKPipelineStage stage, void *gpu_ptr, u64 value, SKSignal signal) {
+    assert(false);
+}
+
+void vk_wait_before2(SKCommandBuffer cb, SKPipelineStage stage, void *gpu_ptr, u64 value, SKOp op, SKHazardFlags hazards, u64 mask) {
+    assert(false);
+}
+
+void vk_set_pipeline(SKCommandBuffer cb, SKPipeline pipeline) {
     assert(cb);
     assert(pipeline);
 
@@ -2778,7 +2786,7 @@ void vk_set_pipeline(RHICommandBuffer cb, RHIPipeline pipeline) {
     vkCmdBindPipeline(command_buffer->command_buffer, p->bind_point, p->pipeline);
 }
 
-void vk_set_depth_stencil_state(RHICommandBuffer cb, RHIDepthStencilState state) {
+void vk_set_depth_stencil_state(SKCommandBuffer cb, SKDepthStencilState state) {
     assert(cb);
     assert(state);
 
@@ -2801,7 +2809,7 @@ void vk_set_depth_stencil_state(RHICommandBuffer cb, RHIDepthStencilState state)
     vkCmdSetStencilCompareMask(command_buffer->command_buffer, VK_STENCIL_FACE_BACK_BIT, depth_stencil->back.compare_mask);
 }
 
-void vk_set_blend_state(RHICommandBuffer cb, RHIBlendState state) {
+void vk_set_blend_state(SKCommandBuffer cb, SKBlendState state) {
     assert(cb);
     assert(state);
 
@@ -2824,7 +2832,7 @@ void vk_set_blend_state(RHICommandBuffer cb, RHIBlendState state) {
     vkCmdSetColorWriteMaskEXT(command_buffer->command_buffer, 0, 1, &blend->color_write_mask);
 }
 
-void vk_dispatch(RHICommandBuffer cb, void *data_gpu, u32 grid_dimensions[3]) {
+void vk_dispatch(SKCommandBuffer cb, void *data_gpu, u32 grid_dimensions[3]) {
     assert(cb);
 
     CommandBuffer *command_buffer = (CommandBuffer *) cb;
@@ -2847,7 +2855,7 @@ void vk_dispatch(RHICommandBuffer cb, void *data_gpu, u32 grid_dimensions[3]) {
     vkCmdDispatch(command_buffer->command_buffer, grid_dimensions[0], grid_dimensions[1], grid_dimensions[2]);
 }
 
-void vk_dispatch_indirect(RHICommandBuffer cb, void *data_gpu, void *grid_dimensions_gpu) {
+void vk_dispatch_indirect(SKCommandBuffer cb, void *data_gpu, void *grid_dimensions_gpu) {
     assert(cb);
 
     CommandBuffer *command_buffer = (CommandBuffer *) cb;
@@ -2872,7 +2880,7 @@ void vk_dispatch_indirect(RHICommandBuffer cb, void *data_gpu, void *grid_dimens
     vkCmdDispatchIndirect(command_buffer->command_buffer, offset.buffer, offset.offset);
 }
 
-void vk_begin_render_pass(RHICommandBuffer cb, RHIRenderPassDesc *desc) {
+void vk_begin_render_pass(SKCommandBuffer cb, SKRenderPassDesc *desc) {
     assert(cb);
     assert(desc);
 
@@ -2887,7 +2895,7 @@ void vk_begin_render_pass(RHICommandBuffer cb, RHIRenderPassDesc *desc) {
     render_area.extent.height = UINT32_MAX;
 
     u32 color_attachment_count = desc->color_attachment_count;
-    rhi::Array<VkRenderingAttachmentInfo> color_attachments = rhi::array<VkRenderingAttachmentInfo>(color_attachment_count, vk.temp_alloc);
+    sk::Array<VkRenderingAttachmentInfo> color_attachments = sk::array<VkRenderingAttachmentInfo>(color_attachment_count, vk.temp_alloc);
 
     for (u32 i = 0; i < desc->color_attachment_count; i++) {
         Texture *texture = (Texture *) desc->color_attachments[i].texture;
@@ -2996,7 +3004,7 @@ void vk_begin_render_pass(RHICommandBuffer cb, RHIRenderPassDesc *desc) {
     vkCmdBeginRendering(command_buffer->command_buffer, &info);
 }
 
-void vk_end_render_pass(RHICommandBuffer cb) {
+void vk_end_render_pass(SKCommandBuffer cb) {
     assert(cb);
 
     CommandBuffer *command_buffer = (CommandBuffer *) cb;
@@ -3004,7 +3012,7 @@ void vk_end_render_pass(RHICommandBuffer cb) {
     vkCmdEndRendering(command_buffer->command_buffer);
 }
 
-void vk_draw_indexed_instanced(RHICommandBuffer cb, void *vertex_data_gpu, void *pixel_data_gpu, void *indices_gpu, u32 index_count, u32 instance_count) {
+void vk_draw_indexed_instanced(SKCommandBuffer cb, void *vertex_data_gpu, void *pixel_data_gpu, void *indices_gpu, u32 index_count, u32 instance_count) {
     assert(cb);
 
     CommandBuffer *command_buffer = (CommandBuffer *) cb;
@@ -3033,7 +3041,7 @@ void vk_draw_indexed_instanced(RHICommandBuffer cb, void *vertex_data_gpu, void 
     vkCmdDrawIndexed(command_buffer->command_buffer, index_count, instance_count, 0, 0, 0);
 }
 
-void vk_draw_indexed_instanced_indirect(RHICommandBuffer cb, void *vertex_data_gpu, void *pixel_data_gpu, void *indices_gpu, void *args_gpu) {
+void vk_draw_indexed_instanced_indirect(SKCommandBuffer cb, void *vertex_data_gpu, void *pixel_data_gpu, void *indices_gpu, void *args_gpu) {
     assert(cb);
 
     CommandBuffer *command_buffer = (CommandBuffer *) cb;
@@ -3064,7 +3072,7 @@ void vk_draw_indexed_instanced_indirect(RHICommandBuffer cb, void *vertex_data_g
     vkCmdDrawIndexedIndirect(command_buffer->command_buffer, indirect_offset.buffer, indirect_offset.offset, 1, 0);
 }
 
-void vk_draw_indexed_instanced_indirect_multi(RHICommandBuffer cb, void *vertex_data_gpu, void *pixel_data_gpu, void *args_gpu, void *draw_count_gpu, u32 stride) {
+void vk_draw_indexed_instanced_indirect_multi(SKCommandBuffer cb, void *vertex_data_gpu, void *pixel_data_gpu, void *args_gpu, void *draw_count_gpu, u32 stride) {
     assert(cb);
 
     CommandBuffer *command_buffer = (CommandBuffer *) cb;
@@ -3093,7 +3101,7 @@ void vk_draw_indexed_instanced_indirect_multi(RHICommandBuffer cb, void *vertex_
     vkCmdDrawIndexedIndirectCount(command_buffer->command_buffer, indirect_offset.buffer, indirect_offset.offset, count_offset.buffer, count_offset.offset, 0, stride);
 }
 
-void vk_draw_meshlets(RHICommandBuffer cb, void *meshlet_data_gpu, void *pixel_data_gpu, u32 dim[3]) {
+void vk_draw_meshlets(SKCommandBuffer cb, void *meshlet_data_gpu, void *pixel_data_gpu, u32 dim[3]) {
     assert(cb);
 
     CommandBuffer *command_buffer = (CommandBuffer *) cb;
@@ -3118,7 +3126,7 @@ void vk_draw_meshlets(RHICommandBuffer cb, void *meshlet_data_gpu, void *pixel_d
     vkCmdDrawMeshTasksEXT(command_buffer->command_buffer, dim[0], dim[1], dim[2]);
 }
 
-void vk_draw_meshlets_indirect(RHICommandBuffer cb, void *meshlet_data_gpu, void *pixel_data_gpu, void *dim_gpu) {
+void vk_draw_meshlets_indirect(SKCommandBuffer cb, void *meshlet_data_gpu, void *pixel_data_gpu, void *dim_gpu) {
     assert(cb);
 
     CommandBuffer *command_buffer = (CommandBuffer *) cb;
@@ -3145,7 +3153,7 @@ void vk_draw_meshlets_indirect(RHICommandBuffer cb, void *meshlet_data_gpu, void
     vkCmdDrawMeshTasksIndirectEXT(command_buffer->command_buffer, offset.buffer, offset.offset, 1, 0);
 }
 
-bool vulkan_init(RHI *rhi, _nullable RHIAllocator *alloc, _nullable RHIAllocator *temp_alloc, _nullable RHILog log) {
+bool vk_init(_nullable SKAllocator *alloc, _nullable SKAllocator *temp_alloc, _nullable SKLog log) {
     loader_init();
 
     vk.log = log;
@@ -3153,12 +3161,12 @@ bool vulkan_init(RHI *rhi, _nullable RHIAllocator *alloc, _nullable RHIAllocator
     if (alloc && alloc->alloc && alloc->free && alloc->reset) {
         vk.alloc = alloc;
     } else if (alloc) {
-        LOG("vulkan_init alloc incomplete", RHI_SEVERITY_ERROR);
+        LOG("vulkan_init alloc incomplete", SK_SEVERITY_ERROR);
         return false;
     } else {
-        vk.alloc = (RHIAllocator *) malloc(sizeof(RHIAllocator));
+        vk.alloc = (SKAllocator *) malloc(sizeof(SKAllocator));
         if (!vk.alloc) {
-            LOG("vulkan_init malloc failed", RHI_SEVERITY_ERROR);
+            LOG("vulkan_init malloc failed", SK_SEVERITY_ERROR);
             return false;
         }
         vk.alloc->alloc = [](u64 size, void *user_data) -> void * {
@@ -3180,28 +3188,28 @@ bool vulkan_init(RHI *rhi, _nullable RHIAllocator *alloc, _nullable RHIAllocator
     if (temp_alloc && temp_alloc->alloc && temp_alloc->free && temp_alloc->reset) {
         vk.temp_alloc = temp_alloc;
     } else if (temp_alloc) {
-        LOG("vulkan_init temp_alloc incomplete", RHI_SEVERITY_ERROR);
+        LOG("vulkan_init temp_alloc incomplete", SK_SEVERITY_ERROR);
         return false;
     } else {
         const u64 default_tem_alloc_size = 1024 * 1024;
 
         TempAllocatorData *data = (TempAllocatorData *) malloc(sizeof(TempAllocatorData));
         if (!data) {
-            LOG("vulkan_init malloc failed", RHI_SEVERITY_ERROR);
+            LOG("vulkan_init malloc failed", SK_SEVERITY_ERROR);
             return false;
         }
         data->capacity = default_tem_alloc_size;
         data->base = (u8 *) malloc(data->capacity);
         if (!data->base) {
-            LOG("vulkan_init malloc failed", RHI_SEVERITY_ERROR);
+            LOG("vulkan_init malloc failed", SK_SEVERITY_ERROR);
             free(data);
             return false;
         }
         data->curr = data->base;
 
-        vk.temp_alloc = (RHIAllocator *) malloc(sizeof(RHIAllocator));
+        vk.temp_alloc = (SKAllocator *) malloc(sizeof(SKAllocator));
         if (!vk.temp_alloc) {
-            LOG("vulkan_init malloc failed", RHI_SEVERITY_ERROR);
+            LOG("vulkan_init malloc failed", SK_SEVERITY_ERROR);
             free(data->base);
             free(data);
             return false;
@@ -3233,9 +3241,9 @@ bool vulkan_init(RHI *rhi, _nullable RHIAllocator *alloc, _nullable RHIAllocator
     if (vkEnumerateInstanceLayerProperties(&layer_count, nullptr) != VK_SUCCESS) {
         assert(false);
     }
-    rhi::Array<VkLayerProperties> layers = rhi::array<VkLayerProperties>(layer_count, vk.temp_alloc);
+    sk::Array<VkLayerProperties> layers = sk::array<VkLayerProperties>(layer_count, vk.temp_alloc);
     if (vkEnumerateInstanceLayerProperties(&layer_count, layers.data) != VK_SUCCESS) {
-        LOG("vulkan_init vkEnumerateInstanceLayerProperties failed", RHI_SEVERITY_ERROR);
+        LOG("vulkan_init vkEnumerateInstanceLayerProperties failed", SK_SEVERITY_ERROR);
         return false;
     }
 
@@ -3256,7 +3264,7 @@ bool vulkan_init(RHI *rhi, _nullable RHIAllocator *alloc, _nullable RHIAllocator
     }
 
     if (!extensions_supported) {
-        LOG("vulkan_init !extensions_supported", RHI_SEVERITY_ERROR);
+        LOG("vulkan_init !extensions_supported", SK_SEVERITY_ERROR);
         return false;
     }
 
@@ -3292,7 +3300,7 @@ bool vulkan_init(RHI *rhi, _nullable RHIAllocator *alloc, _nullable RHIAllocator
     if (enable_validation) {
         extension_count += 1;
     }
-    rhi::Array<const char *> extensions = rhi::array<const char *>(extension_count, vk.temp_alloc);
+    sk::Array<const char *> extensions = sk::array<const char *>(extension_count, vk.temp_alloc);
     platform_get_required_extensions(extensions.data);
     if (enable_validation) {
         extensions.data[extension_count - 1] = VK_EXT_DEBUG_UTILS_EXTENSION_NAME;
@@ -3302,100 +3310,25 @@ bool vulkan_init(RHI *rhi, _nullable RHIAllocator *alloc, _nullable RHIAllocator
     instance_info.ppEnabledExtensionNames = extensions.data;
 
     if (vkCreateInstance(&instance_info, nullptr, &vk.instance) != VK_SUCCESS) {
-        LOG("vulkan_init vkCreateInstance failed", RHI_SEVERITY_ERROR);
+        LOG("vulkan_init vkCreateInstance failed", SK_SEVERITY_ERROR);
         return false;
     }
 
     // load instance-level extension symbols
     if (!load_instance_functions(vk.instance)) {
-        LOG("vulkan_init load_instance_functions failed", RHI_SEVERITY_ERROR);
+        LOG("vulkan_init load_instance_functions failed", SK_SEVERITY_ERROR);
         return false;
     }
 
     if (vkCreateDebugUtilsMessengerEXT(vk.instance, &debug_info, nullptr, &vk.debug_messenger) != VK_SUCCESS) {
-        LOG("vulkan_init vkCreateDebugUtilsMessengerEXT failed", RHI_SEVERITY_ERROR);
+        LOG("vulkan_init vkCreateDebugUtilsMessengerEXT failed", SK_SEVERITY_ERROR);
         return false;
     }
-
-    *rhi = {
-        // Memory
-        vk_alloc,
-        vk_free,
-        vk_host_to_device_pointer,
-
-        // Device
-        vk_create_device,
-        vk_destroy_device,
-        vk_device_wait_idle,
-
-        //Swapchain
-        vk_create_swapchain,
-        vk_destroy_swapchain,
-        vk_next_backbuffer,
-        vk_present,
-
-        //Textures
-        vk_texture_size_align,
-        vk_create_texture,
-        vk_destroy_texture,
-        vk_texture_view_descriptor,
-        vk_rw_texture_view_descriptor,
-
-        // Pipelines
-        vk_create_compute_pipeline,
-        vk_create_graphics_pipeline,
-        vk_create_graphics_meshlet_pipeline,
-        vk_destroy_pipeline,
-
-        // State objects
-        vk_create_depth_stencil_state,
-        vk_create_blend_state,
-        vk_free_depth_stencil_state,
-        vk_free_blend_state,
-
-        // Queue
-        vk_get_queue,
-        vk_start_command_recording,
-        vk_submit,
-
-        // Semaphores
-        vk_create_semaphore,
-        vk_wait_semaphore,
-        vk_destroy_semaphore,
-
-        // Commands
-        vk_mem_copy,
-        vk_copy_to_texture,
-        vk_copy_from_texture,
-
-        vk_set_active_texture_heap_ptr,
-
-        vk_barrier,
-        vk_signal_after,
-        vk_wait_before,
-
-        vk_set_pipeline,
-        vk_set_depth_stencil_state,
-        vk_set_blend_state,
-
-        vk_dispatch,
-        vk_dispatch_indirect,
-
-        vk_begin_render_pass,
-        vk_end_render_pass,
-
-        vk_draw_indexed_instanced,
-        vk_draw_indexed_instanced_indirect,
-        vk_draw_indexed_instanced_indirect_multi,
-
-        vk_draw_meshlets,
-        vk_draw_meshlets_indirect,
-    };
 
     return true;
 }
 
-void vulkan_shutdown() {
+void vk_shutdown() {
     if (vk.instance) {
         if (vk.debug_messenger) {
             vkDestroyDebugUtilsMessengerEXT(vk.instance, vk.debug_messenger, nullptr);
@@ -3412,4 +3345,114 @@ void vulkan_shutdown() {
         }
         loader_shutdown();
     }
+}
+
+void vulkan_load() {
+    sk_init = vk_init;
+    sk_shutdown = vk_shutdown;
+    sk_alloc = vk_alloc;
+    sk_free = vk_free;
+    sk_host_to_device_ptr = vk_host_to_device_pointer;
+    sk_create_device = vk_create_device;
+    sk_destroy_device = vk_destroy_device;
+    sk_device_wait_idle = vk_device_wait_idle;
+    sk_create_swapchain = vk_create_swapchain;
+    sk_destroy_swapchain = vk_destroy_swapchain;
+    sk_next_backbuffer = vk_next_backbuffer;
+    sk_present = vk_present;
+    sk_texture_size_align = vk_texture_size_align;
+    sk_create_texture = vk_create_texture;
+    sk_destroy_texture = vk_destroy_texture;
+    sk_texture_view_descriptor = vk_texture_view_descriptor;
+    sk_rw_texture_view_descriptor = vk_rw_texture_view_descriptor;
+    sk_create_compute_pipeline = vk_create_compute_pipeline;
+    sk_create_graphics_pipeline = vk_create_graphics_pipeline;
+    sk_create_graphics_meshlet_pipeline = vk_create_graphics_meshlet_pipeline;
+    sk_destroy_pipeline = vk_destroy_pipeline;
+    sk_create_depth_stencil_state = vk_create_depth_stencil_state;
+    sk_create_blend_state = vk_create_blend_state;
+    sk_free_depth_stencil_state = vk_free_depth_stencil_state;
+    sk_free_blend_state = vk_free_blend_state;
+    sk_get_queue = vk_get_queue;
+    sk_start_command_recording = vk_start_command_recording;
+    sk_submit = vk_submit;
+    sk_create_semaphore = vk_create_semaphore;
+    sk_wait_semaphore = vk_wait_semaphore;
+    sk_destroy_semaphore = vk_destroy_semaphore;
+    sk_mem_copy = vk_mem_copy;
+    sk_copy_to_texture = vk_copy_to_texture;
+    sk_copy_from_texture = vk_copy_from_texture;
+    sk_set_active_texture_heap_ptr = vk_set_active_texture_heap_ptr;
+    sk_barrier = vk_barrier;
+    sk_signal_after = vk_signal_after;
+    sk_wait_before = vk_wait_before;
+    sk_signal_after2 = vk_signal_after2;
+    sk_wait_before2 = vk_wait_before2;
+    sk_set_pipeline = vk_set_pipeline;
+    sk_set_depth_stencil_state = vk_set_depth_stencil_state;
+    sk_set_blend_state = vk_set_blend_state;
+    sk_dispatch = vk_dispatch;
+    sk_dispatch_indirect = vk_dispatch_indirect;
+    sk_begin_render_pass = vk_begin_render_pass;
+    sk_end_render_pass = vk_end_render_pass;
+    sk_draw_indexed_instanced = vk_draw_indexed_instanced;
+    sk_draw_indexed_instanced_indirect = vk_draw_indexed_instanced_indirect;
+    sk_draw_indexed_instanced_indirect_multi = vk_draw_indexed_instanced_indirect_multi;
+    sk_draw_meshlets = vk_draw_meshlets;
+    sk_draw_meshlets_indirect = vk_draw_meshlets_indirect;
+}
+
+void vulkan_unload() {
+    sk_init = nullptr;
+    sk_shutdown = nullptr;
+    sk_alloc = nullptr;
+    sk_free = nullptr;
+    sk_host_to_device_ptr = nullptr;
+    sk_create_device = nullptr;
+    sk_destroy_device = nullptr;
+    sk_device_wait_idle = nullptr;
+    sk_create_swapchain = nullptr;
+    sk_destroy_swapchain = nullptr;
+    sk_next_backbuffer = nullptr;
+    sk_present = nullptr;
+    sk_texture_size_align = nullptr;
+    sk_create_texture = nullptr;
+    sk_destroy_texture = nullptr;
+    sk_texture_view_descriptor = nullptr;
+    sk_rw_texture_view_descriptor = nullptr;
+    sk_create_compute_pipeline = nullptr;
+    sk_create_graphics_pipeline = nullptr;
+    sk_create_graphics_meshlet_pipeline = nullptr;
+    sk_destroy_pipeline = nullptr;
+    sk_create_depth_stencil_state = nullptr;
+    sk_create_blend_state = nullptr;
+    sk_free_depth_stencil_state = nullptr;
+    sk_free_blend_state = nullptr;
+    sk_get_queue = nullptr;
+    sk_start_command_recording = nullptr;
+    sk_submit = nullptr;
+    sk_create_semaphore = nullptr;
+    sk_wait_semaphore = nullptr;
+    sk_destroy_semaphore = nullptr;
+    sk_mem_copy = nullptr;
+    sk_copy_to_texture = nullptr;
+    sk_copy_from_texture = nullptr;
+    sk_set_active_texture_heap_ptr = nullptr;
+    sk_barrier = nullptr;
+    sk_signal_after = nullptr;
+    sk_wait_before = nullptr;
+    sk_signal_after2 = nullptr;
+    sk_wait_before2 = nullptr;
+    sk_set_pipeline = nullptr;
+    sk_set_depth_stencil_state = nullptr;
+    sk_set_blend_state = nullptr;
+    sk_dispatch = nullptr;
+    sk_dispatch_indirect = nullptr;
+    sk_begin_render_pass = nullptr;
+    sk_end_render_pass = nullptr;
+    sk_draw_indexed_instanced = nullptr;
+    sk_draw_indexed_instanced_indirect = nullptr;
+    sk_draw_indexed_instanced_indirect_multi = nullptr;
+    sk_draw_meshlets = nullptr;
+    sk_draw_meshlets_indirect = nullptr;
 }

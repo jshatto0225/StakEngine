@@ -1,15 +1,15 @@
 #pragma once
 
-// This file is not C compatible and is only intended to be used by the RHI backends
+// This file is not C compatible and is only intended to be used by the SK backends
 
 // All dynamically sized containers (Map, Set, DynamicArray) will check if alloc->free is present.
 // If it is free/alloc may be used on resize, else we don't free the old data.
-// Based on the RHI allocator spec one allocator should be permanent and have an alloc/free pair the other should be temp and have an alloc/reset.
+// Based on the SK allocator spec one allocator should be permanent and have an alloc/free pair the other should be temp and have an alloc/reset.
 // The structs in here do not care weather they get a temp allocator or permantnt allocator.
 // If a permanent allocator is used the objects will free all of the memory they use, if a temp allocator is used
 //   it is up to the caller to free that memory.
 
-#include "RHI.h"
+#include "SK.h"
 
 #include <functional>
 #include <assert.h>
@@ -17,7 +17,7 @@
 #define DEFER_CONCAT_INNER(x, y) x ## y
 #define DEFER_CONCAT(x, y) DEFER_CONCAT_INNER(x, y)
 
-#define defer ::rhi::Defer DEFER_CONCAT(_defer_var_, __LINE__); DEFER_CONCAT(_defer_var_, __LINE__).func = [&]() 
+#define defer ::sk::Defer DEFER_CONCAT(_defer_var_, __LINE__); DEFER_CONCAT(_defer_var_, __LINE__).func = [&]() 
 
 #define for_set(it, set) \
     for (u64 i = 0; i < (set).capacity; ++i) \
@@ -29,7 +29,7 @@
             ((k) = &(map).data[i].key, true) && \
             ((v) = &(map).data[i].value, true))
 
-namespace rhi {
+namespace sk {
 
 struct Defer {
     Defer() = default;
@@ -99,7 +99,7 @@ struct Ringbuffer {
 };
 
 // String
-inline String str_from_cstr(const char *cstr, RHIAllocator *alloc) {
+inline String str_from_cstr(const char *cstr, SKAllocator *alloc) {
     assert(cstr);
     assert(alloc);
     assert(strlen(cstr));
@@ -111,7 +111,7 @@ inline String str_from_cstr(const char *cstr, RHIAllocator *alloc) {
     return s;
 }
 
-inline void str_free(String *str, RHIAllocator *alloc) {
+inline void str_free(String *str, SKAllocator *alloc) {
     assert(str);
     assert(alloc);
     assert(str->length);
@@ -125,7 +125,7 @@ inline void str_free(String *str, RHIAllocator *alloc) {
 
 // Array
 template<typename T>
-inline Array<T> array_from_carr(const T *carr, u64 count, RHIAllocator *alloc) {
+inline Array<T> array_from_carr(const T *carr, u64 count, SKAllocator *alloc) {
     assert(carr);
     assert(alloc);
     assert(count);
@@ -138,7 +138,7 @@ inline Array<T> array_from_carr(const T *carr, u64 count, RHIAllocator *alloc) {
 }
 
 template<typename T>
-inline Array<T> array(u64 count, RHIAllocator *alloc) {
+inline Array<T> array(u64 count, SKAllocator *alloc) {
     assert(alloc);
     assert(count);
 
@@ -149,7 +149,7 @@ inline Array<T> array(u64 count, RHIAllocator *alloc) {
 }
 
 template<typename T>
-inline Array<T> array_clone(Array<T> *arr, RHIAllocator *alloc) {
+inline Array<T> array_clone(Array<T> *arr, SKAllocator *alloc) {
     assert(alloc);
     assert(arr);
     assert(arr->data);
@@ -163,7 +163,7 @@ inline Array<T> array_clone(Array<T> *arr, RHIAllocator *alloc) {
 }
 
 template<typename T>
-inline void array_free(Array<T> *arr, RHIAllocator *alloc) {
+inline void array_free(Array<T> *arr, SKAllocator *alloc) {
     assert(arr);
     assert(alloc);
     assert(arr->data);
@@ -178,7 +178,7 @@ inline void array_free(Array<T> *arr, RHIAllocator *alloc) {
 
 // Dynamic Array
 template<typename T>
-inline DynamicArray<T> dyn_array_from_carr(const T *carr, u64 count, RHIAllocator *alloc) {
+inline DynamicArray<T> dyn_array_from_carr(const T *carr, u64 count, SKAllocator *alloc) {
     assert(carr);
     assert(alloc);
 
@@ -194,7 +194,7 @@ inline DynamicArray<T> dyn_array_from_carr(const T *carr, u64 count, RHIAllocato
 }
 
 template<typename T>
-inline DynamicArray<T> dyn_array(u64 size, u64 capacity, RHIAllocator *alloc) {
+inline DynamicArray<T> dyn_array(u64 size, u64 capacity, SKAllocator *alloc) {
     assert(alloc);
     assert(size <= capacity);
     assert(capacity > 1);
@@ -210,7 +210,7 @@ inline DynamicArray<T> dyn_array(u64 size, u64 capacity, RHIAllocator *alloc) {
 }
 
 template<typename T>
-inline DynamicArray<T> dyn_array_clone(DynamicArray<T> *arr, RHIAllocator *alloc) {
+inline DynamicArray<T> dyn_array_clone(DynamicArray<T> *arr, SKAllocator *alloc) {
     assert(arr);
     assert(alloc);
 
@@ -226,7 +226,7 @@ inline DynamicArray<T> dyn_array_clone(DynamicArray<T> *arr, RHIAllocator *alloc
 }
 
 template<typename T>
-inline void dyn_array_free(DynamicArray<T> *arr, RHIAllocator *alloc) {
+inline void dyn_array_free(DynamicArray<T> *arr, SKAllocator *alloc) {
     assert(arr);
     assert(alloc);
 
@@ -239,7 +239,7 @@ inline void dyn_array_free(DynamicArray<T> *arr, RHIAllocator *alloc) {
 }
 
 template<typename T>
-inline void dyn_array_push_back(DynamicArray<T> *arr, T item, RHIAllocator *alloc) {
+inline void dyn_array_push_back(DynamicArray<T> *arr, T item, SKAllocator *alloc) {
     assert(arr);
     assert(alloc);
 
@@ -278,7 +278,7 @@ inline void dyn_array_clear(DynamicArray<T> *arr) {
 }
 
 template<typename T>
-inline void dyn_array_reserve(DynamicArray<T> *arr, u64 new_capacity, RHIAllocator *alloc) {
+inline void dyn_array_reserve(DynamicArray<T> *arr, u64 new_capacity, SKAllocator *alloc) {
     assert(arr);
     assert(alloc);
     assert(new_capacity > 1);
@@ -298,7 +298,7 @@ inline void dyn_array_reserve(DynamicArray<T> *arr, u64 new_capacity, RHIAllocat
 }
 
 template<typename T>
-inline void dyn_array_resize(DynamicArray<T> *arr, u64 new_size, RHIAllocator *alloc) {
+inline void dyn_array_resize(DynamicArray<T> *arr, u64 new_size, SKAllocator *alloc) {
     assert(arr);
     assert(alloc);
 
@@ -316,7 +316,7 @@ inline void dyn_array_resize(DynamicArray<T> *arr, u64 new_size, RHIAllocator *a
 }
 
 template<typename T>
-inline void dyn_array_insert(DynamicArray<T> *arr, u64 index, T item, RHIAllocator *alloc) {
+inline void dyn_array_insert(DynamicArray<T> *arr, u64 index, T item, SKAllocator *alloc) {
     assert(arr);
     assert(alloc);
     assert(index < arr->count);
@@ -338,7 +338,7 @@ inline void dyn_array_insert(DynamicArray<T> *arr, u64 index, T item, RHIAllocat
     *
     * Generic hash over any struct. hash_bytes(&struct, sizeof(struct)).
     * Still need to do a memcmp over the struct bytes.
-    * RHIAllocator spec of ZII makes padding bytes irrelevant.
+    * SKAllocator spec of ZII makes padding bytes irrelevant.
     */
 uint64_t hash_bytes(const void *data, size_t size) {
     const uint8_t *bytes = (const uint8_t *) data;
@@ -371,7 +371,7 @@ inline u64 next_pow2_u64(u64 v) {
 }
 
 template<typename T>
-inline Set<T> set_from_carr(const T *carr, u64 count, RHIAllocator *alloc) {
+inline Set<T> set_from_carr(const T *carr, u64 count, SKAllocator *alloc) {
     assert(carr);
     assert(alloc);
 
@@ -391,7 +391,7 @@ inline Set<T> set_from_carr(const T *carr, u64 count, RHIAllocator *alloc) {
 }
 
 template<typename T>
-inline Set<T> set(u64 capacity, RHIAllocator *alloc) {
+inline Set<T> set(u64 capacity, SKAllocator *alloc) {
     assert(alloc);
 
     Set<T> set = {};
@@ -404,7 +404,7 @@ inline Set<T> set(u64 capacity, RHIAllocator *alloc) {
 }
 
 template<typename T>
-inline Set<T> set_clone(Set<T> *set, RHIAllocator *alloc) {
+inline Set<T> set_clone(Set<T> *set, SKAllocator *alloc) {
     assert(set);
     assert(alloc);
 
@@ -420,7 +420,7 @@ inline Set<T> set_clone(Set<T> *set, RHIAllocator *alloc) {
 }
 
 template<typename T>
-inline void set_free(Set<T> *set, RHIAllocator *alloc) {
+inline void set_free(Set<T> *set, SKAllocator *alloc) {
     assert(set);
     assert(alloc);
 
@@ -432,7 +432,7 @@ inline void set_free(Set<T> *set, RHIAllocator *alloc) {
 }
 
 template<typename T>
-inline void set_reserve_and_rehash(Set<T> *set, u64 capacity, RHIAllocator *alloc) {
+inline void set_reserve_and_rehash(Set<T> *set, u64 capacity, SKAllocator *alloc) {
     assert(set);
     assert(alloc);
 
@@ -463,7 +463,7 @@ inline void set_reserve_and_rehash(Set<T> *set, u64 capacity, RHIAllocator *allo
 }
 
 template<typename T>
-inline void set_insert(Set<T> *set, T item, RHIAllocator *alloc) {
+inline void set_insert(Set<T> *set, T item, SKAllocator *alloc) {
     assert(set);
     assert(alloc);
 
@@ -493,7 +493,7 @@ inline void set_insert(Set<T> *set, T item, RHIAllocator *alloc) {
 }
 
 template<typename T>
-inline void set_erase(Set<T> *set, T item, RHIAllocator *alloc) {
+inline void set_erase(Set<T> *set, T item, SKAllocator *alloc) {
     assert(set);
     assert(alloc);
 
@@ -555,7 +555,7 @@ inline bool set_contains(Set<T> *set, T item) {
 
 // Map
 template<typename K, typename V>
-inline Map<K, V> map_from_carr(const K *ckeys, const V *cvalues, u64 count, RHIAllocator *alloc) {
+inline Map<K, V> map_from_carr(const K *ckeys, const V *cvalues, u64 count, SKAllocator *alloc) {
     assert(ckeys);
     assert(cvalues);
     assert(alloc);
@@ -579,7 +579,7 @@ inline Map<K, V> map_from_carr(const K *ckeys, const V *cvalues, u64 count, RHIA
 }
 
 template<typename K, typename V>
-inline Map<K, V> map(u64 capacity, RHIAllocator *alloc) {
+inline Map<K, V> map(u64 capacity, SKAllocator *alloc) {
     assert(alloc);
 
     Map<K, V> map = {};
@@ -596,7 +596,7 @@ inline Map<K, V> map(u64 capacity, RHIAllocator *alloc) {
 }
 
 template<typename K, typename V>
-inline Map<K, V> map_clone(Map<K, V> *map, RHIAllocator *alloc) {
+inline Map<K, V> map_clone(Map<K, V> *map, SKAllocator *alloc) {
     assert(alloc);
     assert(map);
 
@@ -617,7 +617,7 @@ inline Map<K, V> map_clone(Map<K, V> *map, RHIAllocator *alloc) {
 }
 
 template<typename K, typename V>
-inline void map_free(Map<K, V> *map, RHIAllocator *alloc) {
+inline void map_free(Map<K, V> *map, SKAllocator *alloc) {
     assert(map);
     assert(alloc);
 
@@ -631,7 +631,7 @@ inline void map_free(Map<K, V> *map, RHIAllocator *alloc) {
 }
 
 template<typename K, typename V>
-inline void map_reserve_and_rehash(Map<K, V> *map, u64 capacity, RHIAllocator *alloc) {
+inline void map_reserve_and_rehash(Map<K, V> *map, u64 capacity, SKAllocator *alloc) {
     assert(map);
     assert(alloc);
 
@@ -668,7 +668,7 @@ inline void map_reserve_and_rehash(Map<K, V> *map, u64 capacity, RHIAllocator *a
 }
 
 template<typename K, typename V>
-inline void map_insert(Map<K, V> *map, K key, V value, RHIAllocator *alloc) {
+inline void map_insert(Map<K, V> *map, K key, V value, SKAllocator *alloc) {
     assert(map);
     assert(alloc);
 
@@ -706,7 +706,7 @@ inline void map_insert(Map<K, V> *map, K key, V value, RHIAllocator *alloc) {
 }
 
 template<typename K, typename V>
-inline void map_erase(Map<K, V> *map, K key, RHIAllocator *alloc) {
+inline void map_erase(Map<K, V> *map, K key, SKAllocator *alloc) {
     assert(map);
     assert(alloc);
 
@@ -799,7 +799,7 @@ inline V *map_get(Map<K, V> *map, K key) {
 
 // Ringbuffer
 template<typename T>
-inline Ringbuffer<T> ringbuffer_from_carr(const T *carr, u64 count, RHIAllocator *alloc) {
+inline Ringbuffer<T> ringbuffer_from_carr(const T *carr, u64 count, SKAllocator *alloc) {
     assert(carr);
     assert(alloc);
 
@@ -827,7 +827,7 @@ inline Ringbuffer<T> ringbuffer_from_carr(const T *carr, u64 count, RHIAllocator
 }
 
 template<typename T>
-inline Ringbuffer<T> ringbuffer(u64 capacity, RHIAllocator *alloc) {
+inline Ringbuffer<T> ringbuffer(u64 capacity, SKAllocator *alloc) {
     assert(alloc);
 
     Ringbuffer<T> rb = {};
@@ -844,7 +844,7 @@ inline Ringbuffer<T> ringbuffer(u64 capacity, RHIAllocator *alloc) {
 }
 
 template<typename T>
-inline Ringbuffer<T> ringbuffer_clone(const Ringbuffer<T> *src, RHIAllocator *alloc) {
+inline Ringbuffer<T> ringbuffer_clone(const Ringbuffer<T> *src, SKAllocator *alloc) {
     assert(src);
     assert(alloc);
 
@@ -873,7 +873,7 @@ inline Ringbuffer<T> ringbuffer_clone(const Ringbuffer<T> *src, RHIAllocator *al
 }
 
 template<typename T>
-inline void ringbuffer_free(Ringbuffer<T> *rb, RHIAllocator *alloc) {
+inline void ringbuffer_free(Ringbuffer<T> *rb, SKAllocator *alloc) {
     assert(rb);
     assert(alloc);
 
@@ -923,7 +923,7 @@ inline void ringbuffer_relayout_into(const Ringbuffer<T> *rb, T *dst) {
 }
 
 template<typename T>
-inline void ringbuffer_reserve(Ringbuffer<T> *rb, u64 new_capacity, RHIAllocator *alloc) {
+inline void ringbuffer_reserve(Ringbuffer<T> *rb, u64 new_capacity, SKAllocator *alloc) {
     assert(rb);
     assert(alloc);
     if (new_capacity <= rb->capacity) return;
@@ -943,7 +943,7 @@ inline void ringbuffer_reserve(Ringbuffer<T> *rb, u64 new_capacity, RHIAllocator
 }
 
 template<typename T>
-inline void ringbuffer_ensure_capacity(Ringbuffer<T> *rb, u64 min_capacity, RHIAllocator *alloc) {
+inline void ringbuffer_ensure_capacity(Ringbuffer<T> *rb, u64 min_capacity, SKAllocator *alloc) {
     assert(rb);
     assert(alloc);
     if (rb->capacity >= min_capacity) return;
@@ -954,7 +954,7 @@ inline void ringbuffer_ensure_capacity(Ringbuffer<T> *rb, u64 min_capacity, RHIA
 
 // push_back: append at tail (grows when full)
 template<typename T>
-inline void ringbuffer_push_back(Ringbuffer<T> *rb, const T &value, RHIAllocator *alloc) {
+inline void ringbuffer_push_back(Ringbuffer<T> *rb, const T &value, SKAllocator *alloc) {
     assert(rb);
     assert(alloc);
     if (!rb->data || rb->count == rb->capacity) {
@@ -977,7 +977,7 @@ inline bool ringbuffer_pop_back(Ringbuffer<T> *rb) {
 
 // push_front: prepend at head (grows when full)
 template<typename T>
-inline void ringbuffer_push_front(Ringbuffer<T> *rb, const T &value, RHIAllocator *alloc) {
+inline void ringbuffer_push_front(Ringbuffer<T> *rb, const T &value, SKAllocator *alloc) {
     assert(rb);
     assert(alloc);
     if (!rb->data || rb->count == rb->capacity) {

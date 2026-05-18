@@ -2,7 +2,7 @@
 
 #include <imgui.h>
 
-#include "RHI.h"
+#include "SK.h"
 #include "Window.h"
 
 struct Renderer {
@@ -10,11 +10,11 @@ struct Renderer {
 
     Window window;
 
-    RHIDevice device;
-    RHIQueue queue;
-    RHIPipeline pipeline;
-    RHISemaphore semaphore;
-    RHISwapchain swapchain;
+    SKDevice device;
+    SKQueue queue;
+    SKPipeline pipeline;
+    SKSemaphore semaphore;
+    SKSwapchain swapchain;
 
     u64 next_frame;
 };
